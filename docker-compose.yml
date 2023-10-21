@@ -1,0 +1,19 @@
+version: "3.7"
+
+x-api-common: &api-common
+  image: ghcr.io/openfoodfacts/open-prices/api:${TAG:-dev}
+  restart: ${RESTART_POLICY}
+  environment:
+    - SENTRY_DNS
+    - LOG_LEVEL
+  networks:
+    - default
+
+services:
+  api:
+    <<: *api-common
+    ports:
+      - "${API_PORT}:8000"
+
+volumes:
+  rediscache:

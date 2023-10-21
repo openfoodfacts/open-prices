@@ -1,0 +1,18 @@
+version: "3.7"
+# this file setup various thinks that are for dev environment
+
+x-api-base: &api-base
+  build:
+    context: .
+    args:
+      USER_UID: ${USER_UID:-1000}
+      USER_GID: ${USER_GID:-1000}
+  volumes:
+    # mount code dynamically
+    - "./app:/opt/open-prices/app"
+
+services:
+  api:
+    <<: *api-base
+    # uvicorn in reload mode
+    command: ["uvicorn", "app.api:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000", "--reload"]

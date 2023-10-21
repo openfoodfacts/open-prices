@@ -1,0 +1,3 @@
+version: "3.7"
+
+# modifications to docker-compose for production settings
