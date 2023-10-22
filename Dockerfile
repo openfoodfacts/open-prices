@@ -4,7 +4,7 @@ ARG USER_UID=1000
 ARG USER_GID=1000
 
 
-FROM python:3.11
+FROM python:3.12
 # Instructions from https://fastapi.tiangolo.com/deployment/docker/
 ARG USER_UID
 ARG USER_GID
