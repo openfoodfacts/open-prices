@@ -10,9 +10,12 @@ from app.utils import init_sentry
 
 logger = get_logger(level=settings.log_level.to_int())
 
-
+description = """
+Open Prices API allows you to add product prices.
+"""
 app = FastAPI(
-    title="open-prices",
+    title="Open Food Facts open-prices REST API",
+    description=description,
     contact={
         "name": "The Open Food Facts team",
         "url": "https://world.openfoodfacts.org",
