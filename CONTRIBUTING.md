@@ -6,8 +6,10 @@ see [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.
 
 ## Install pre-commit hooks
 
-This repo uses [pre-commit](https://pre-commit.com/) to enforce code styling, etc. To use it, run the following (in your virtual environment):
+This repo uses [pre-commit](https://pre-commit.com/) to enforce code styling, etc. To install it, run the following (in your virtual environment):
 
 ```
-pre-commit run
+pre-commit install
 ```
+
+Now `pre-commit` will run automatically on `git commit` :)

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python 3.12
+- Python 3.10 (lower version may be OK, but untested)
 - pip
 
 ## Setup
@@ -21,6 +21,9 @@ source venv/bin/activate
 
 # install
 pip install -r requirements.txt
+
+# environment variables
+# make a copy of *.env.example* and rename it to *.env*
 ```
 
 ## Run locally
