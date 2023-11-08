@@ -1,7 +1,9 @@
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi import FastAPI
+from fastapi import Request
+from fastapi.responses import HTMLResponse
+from fastapi.responses import PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from openfoodfacts.utils import get_logger
 

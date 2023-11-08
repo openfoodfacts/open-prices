@@ -1,15 +1,15 @@
-from enum import StrEnum
+from enum import Enum
 
 from pydantic_settings import BaseSettings
 
 
-class LoggingLevel(StrEnum):
-    NOTSET = "NOTSET"
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
+class LoggingLevel(Enum):
+    NOTSET: str = "NOTSET"
+    DEBUG: str = "DEBUG"
+    INFO: str = "INFO"
+    WARNING: str = "WARNING"
+    ERROR: str = "ERROR"
+    CRITICAL: str = "CRITICAL"
 
     def to_int(self):
         if self is LoggingLevel.NOTSET:
@@ -27,11 +27,6 @@ class LoggingLevel(StrEnum):
 
 
 class Settings(BaseSettings):
-    postgres_host: str
-    postgres_user: str
-    postgres_password: str
-    postgres_db_name: str
-    postgres_port: int = 5432
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
 
