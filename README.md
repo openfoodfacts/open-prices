@@ -1,9 +1,16 @@
-# Open Prices
+# Open Prices API
 
-An open database of food prices.
+A REST API designed to interact with the Open Food Facts _Open Prices_ database.
 
-### Pre-Commit
-This repo uses [pre-commit](https://pre-commit.com/) to enforce code styling, etc. To use it:
-```console
-pre-commit run
-```
+## Dependencies
+
+* Python 3.12
+* [FastAPI](https://fastapi.tiangolo.com/) framework
+
+## How to install on your local machine
+
+Follow the steps in [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.md)
+
+## Contribute
+
+See [CONTRIBUTING.md](https://github.com/openfoodfacts/open-prices/blob/main/CONTRIBUTING.md)
