@@ -12,7 +12,7 @@ def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None =
             LoggingIntegration(
                 level=logging.INFO,  # Capture info and above as breadcrumbs
                 event_level=logging.WARNING,  # Send warning and errors as events
-            )
+            ),
         )
         sentry_sdk.init(  # type:ignore  # mypy say it's abstract
             sentry_dsn,
