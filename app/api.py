@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.responses import PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from openfoodfacts.utils import get_logger
+from playhouse.postgres_ext import PostgresqlExtDatabase
 
 from app.config import settings
 from app.utils import init_sentry
@@ -30,6 +31,18 @@ app = FastAPI(
 )
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 init_sentry(settings.sentry_dns)
+
+
+@app.on_event("startup")
+async def startup():
+    global db
+    db = PostgresqlExtDatabase(settings.postgres_db_name, user=settings.postgres_user, password=settings.postgres_password, host=settings.postgres_host, port=settings.postgres_port)
+    db.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    db.close()
 
 
 @app.get("/", response_class=HTMLResponse)
