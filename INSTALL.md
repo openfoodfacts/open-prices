@@ -3,9 +3,11 @@
 ## Prerequisites
 
 - Python 3.10 (lower version may be OK, but untested)
-- pip
+- Postgresql 13 (lower version may be OK, but untested)
 
 ## Setup
+
+### Without Docker
 
 ```
 # clone repo
@@ -21,6 +23,12 @@ source venv/bin/activate
 
 # install
 pip install -r requirements.txt
+
+# create Postgresql database
+psql -c "CREATE USER open_prices_team WITH PASSWORD 'password'"
+psql -c "CREATE DATABASE open_prices OWNER open_prices_team"
+psql -c "GRANT ALL PRIVILEGES ON DATABASE open_prices to open_prices_team"
+psql -c "ALTER USER open_prices_team CREATEROLE CREATEDB"
 
 # environment variables
 # make a copy of *.env.example* and rename it to *.env*
