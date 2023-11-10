@@ -8,7 +8,9 @@ from fastapi.templating import Jinja2Templates
 from openfoodfacts.utils import get_logger
 
 from app.config import settings
+from app.db import session
 from app.utils import init_sentry
+
 
 logger = get_logger(level=settings.log_level.to_int())
 
@@ -30,6 +32,17 @@ app = FastAPI(
 )
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 init_sentry(settings.sentry_dns)
+
+
+@app.on_event("startup")
+async def startup():
+    global db
+    db = session()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    db.close()
 
 
 @app.get("/", response_class=HTMLResponse)
