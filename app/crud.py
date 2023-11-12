@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 
+from app.models import Price
 from app.models import User
+from app.schemas import PriceCreate
 from app.schemas import UserBase
 
 
@@ -34,3 +36,11 @@ def delete_user(db: Session, user_id: UserBase):
         db.commit()
         return True
     return False
+
+
+def create_price(db: Session, price: PriceCreate):
+    db_price = Price(**price.dict())
+    db.add(db_price)
+    db.commit()
+    db.refresh(db_price)
+    return db_price

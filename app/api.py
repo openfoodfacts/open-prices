@@ -18,9 +18,9 @@ from fastapi.templating import Jinja2Templates
 from openfoodfacts.utils import get_logger
 
 from app import crud
+from app import schemas
 from app.config import settings
 from app.db import session
-from app.schemas import UserBase
 from app.utils import init_sentry
 
 
@@ -99,7 +99,7 @@ async def authentication(form_data: Annotated[OAuth2PasswordRequestForm, Depends
     r = requests.post(settings.oauth2_server_url, data=data)  # type: ignore
     if r.status_code == 200:
         token = await create_token(form_data.username)
-        user: UserBase = {"user_id": form_data.username, "token": token}  # type: ignore
+        user: schemas.UserBase = {"user_id": form_data.username, "token": token}  # type: ignore
         crud.create_user(db, user=user)  # type: ignore
         return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
@@ -110,6 +110,12 @@ async def authentication(form_data: Annotated[OAuth2PasswordRequestForm, Depends
             headers={"WWW-Authenticate": "Bearer"},
         )
     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server error")
+
+
+@app.post("/prices", response_model=schemas.PriceBase)
+async def create_price(price: schemas.PriceCreate):
+    db_price = crud.create_price(db, price=price)  # type: ignore
+    return db_price
 
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
