@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.responses import PlainTextResponse
+from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 from openfoodfacts.utils import get_logger
 
@@ -32,6 +33,9 @@ app = FastAPI(
 )
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 init_sentry(settings.sentry_dns)
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
 
 @app.on_event("startup")
