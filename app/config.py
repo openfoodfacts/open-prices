@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_host: str
     postgres_port: int = 5432
+    oauth2_server_url: str | None = None
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
 
