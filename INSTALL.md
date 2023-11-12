@@ -21,8 +21,11 @@ apt install python3-virtualenv virtualenv
 python -m venv venv
 source venv/bin/activate
 
-# install
+# install dependencies
 pip install -r requirements.txt
+
+# run migrations
+alembic upgrade head
 ```
 
 ### With Docker
