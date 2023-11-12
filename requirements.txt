@@ -1,4 +1,5 @@
 alembic==1.12.1
+Babel==2.13.1
 fastapi==0.103.1
 jinja2==3.1.2
 openfoodfacts==0.1.10
@@ -8,4 +9,5 @@ python-multipart==0.0.6
 requests==2.31.0
 sentry-sdk[fastapi]==1.31.0
 sqlalchemy==2.0.23
+sqlalchemy-utils==0.41.1
 uvicorn==0.23.2
