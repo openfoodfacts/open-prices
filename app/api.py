@@ -55,6 +55,18 @@ async def create_token(user_id: str):
     return f"{user_id}__U{str(uuid.uuid4())}"
 
 
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    if token and '__U' in token:
+        current_user: schemas.UserBase = crud.update_user_by_token(db, token=token)  # type: ignore
+        if current_user:
+            return current_user
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
 # App startup & shutdown
 # ------------------------------------------------------------------------------
 @app.on_event("startup")
@@ -113,8 +125,8 @@ async def authentication(form_data: Annotated[OAuth2PasswordRequestForm, Depends
 
 
 @app.post("/prices", response_model=schemas.PriceBase)
-async def create_price(price: schemas.PriceCreate):
-    db_price = crud.create_price(db, price=price)  # type: ignore
+async def create_price(price: schemas.PriceCreate, current_user: schemas.UserBase = Depends(get_current_user)):
+    db_price = crud.create_price(db, price=price, user=current_user)  # type: ignore
     return db_price
 
 
