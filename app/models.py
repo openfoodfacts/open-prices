@@ -38,6 +38,7 @@ class Price(Base):
     location_osm_type = Column(ChoiceType(PriceLocationOSMType))
 
     date = Column(Date)
+    owner = Column(String)
 
     created = Column(DateTime(timezone=True), server_default=func.now())
 

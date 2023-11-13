@@ -31,6 +31,7 @@ def upgrade() -> None:
         sa.Column('location_osm_id', sa.BigInteger(), nullable=True),
         sa.Column('location_osm_type', sa.String(length=255), nullable=True),
         sa.Column('date', sa.Date(), nullable=True),
+        sa.Column('owner', sa.String(), nullable=True),
         sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
         sa.PrimaryKeyConstraint('id'),
     )
