@@ -49,8 +49,15 @@ def delete_user(db: Session, user_id: UserBase):
     return False
 
 
-def get_prices(db: Session):
-    return db.query(Price).all()
+def get_prices(db: Session, filters={}):
+    query = db.query(Price)
+    if filters.get("product_code", None):
+        query = query.filter(Price.product_code == filters["product_code"])
+    if filters.get("location_osm_id", None):
+        query = query.filter(Price.location_osm_id == filters["location_osm_id"])
+    if filters.get("date", None):
+        query = query.filter(Price.date == filters["date"])
+    return query.all()
 
 
 def create_price(db: Session, price: PriceCreate, user: UserBase):
