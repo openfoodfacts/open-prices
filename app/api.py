@@ -119,6 +119,12 @@ async def authentication(
     )
 
 
+@app.get("/prices", response_model=list[schemas.PriceBase])
+async def get_price():
+    db_prices = crud.get_prices(db)  # type: ignore
+    return db_prices
+
+
 @app.post("/prices", response_model=schemas.PriceBase)
 async def create_price(
     price: schemas.PriceCreate,

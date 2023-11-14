@@ -49,6 +49,10 @@ def delete_user(db: Session, user_id: UserBase):
     return False
 
 
+def get_prices(db: Session):
+    return db.query(Price).all()
+
+
 def create_price(db: Session, price: PriceCreate, user: UserBase):
     db_price = Price(**price.dict(), owner=user.user_id)
     db.add(db_price)
