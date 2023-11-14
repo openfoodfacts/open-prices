@@ -37,7 +37,6 @@ app = FastAPI(
         "url": "https://www.gnu.org/licenses/agpl-3.0.en.html",
     },
 )
-add_pagination(app)
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 init_sentry(settings.sentry_dns)
 
@@ -111,7 +110,7 @@ async def authentication(
     r = requests.post(settings.oauth2_server_url, data=data)  # type: ignore
     if r.status_code == 200:
         token = await create_token(form_data.username)
-        user: schemas.UserBase = {"user_id": form_data.username, "token": token}  # type: ignore
+        user = schemas.UserBase(user_id=form_data.username, token=token)
         crud.create_user(db, user=user)
         return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
@@ -162,7 +161,7 @@ async def create_price(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Proof does not belong to current user",
                 )
-    db_price = crud.create_price(db, price=price, user=current_user)
+    db_price = crud.create_price(db, price=price.model_dump(), user=current_user)
     return db_price
 
 
@@ -206,3 +205,6 @@ async def status_endpoint():
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
     return """User-agent: *\nDisallow: /"""
+
+
+add_pagination(app)

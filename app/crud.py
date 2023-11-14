@@ -26,9 +26,9 @@ def get_user_by_token(db: Session, token: str):
 
 def create_user(db: Session, user: UserBase):
     # first we delete any existing user
-    delete_user(db, user_id=user["user_id"])
+    delete_user(db, user_id=user.user_id)
     # then we (re)create a user
-    db_user = User(user_id=user["user_id"], token=user["token"])
+    db_user = User(user_id=user.user_id, token=user.token)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -69,7 +69,7 @@ def get_prices(db: Session, filters: PriceFilter | None = None):
 
 
 def create_price(db: Session, price: PriceCreate, user: UserBase):
-    db_price = Price(**price.model_dump(), owner=user.user_id)
+    db_price = Price(**price, owner=user.user_id)
     db.add(db_price)
     db.commit()
     db.refresh(db_price)
