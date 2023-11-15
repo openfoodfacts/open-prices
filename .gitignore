@@ -134,3 +134,8 @@ dmypy.json
 # vscode
 .vscode
 *.code-workspace
+
+
+# Project specific
+
+data/images

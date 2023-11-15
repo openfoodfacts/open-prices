@@ -22,6 +22,7 @@ class PriceCreate(BaseModel):
     location_osm_id: int = Field(gt=0)
     location_osm_type: PriceLocationOSMType
     date: date
+    proof_id: int | None = None
 
     @field_validator("currency")
     def currency_is_valid(cls, v):
@@ -39,4 +40,17 @@ class PriceCreate(BaseModel):
 
 class PriceBase(PriceCreate):
     # owner: str
+    created: datetime
+
+
+class ProofCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+    file_path: str
+    mimetype: str
+
+
+class ProofBase(ProofCreate):
+    id: int
+    owner: str
     created: datetime

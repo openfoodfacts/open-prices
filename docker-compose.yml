@@ -20,6 +20,8 @@ services:
     <<: *api-common
     ports:
       - "${API_PORT}:8000"
+    volumes:
+      - ./data:/opt/open-prices/data
 
   postgres:
     restart: $RESTART_POLICY
