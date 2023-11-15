@@ -1,10 +1,4 @@
-from sqlalchemy import BigInteger
-from sqlalchemy import Column
-from sqlalchemy import Date
-from sqlalchemy import DateTime
-from sqlalchemy import Integer
-from sqlalchemy import Numeric
-from sqlalchemy import String
+from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, Numeric, String
 from sqlalchemy.sql import func
 from sqlalchemy_utils import force_auto_coercion
 from sqlalchemy_utils.types.choice import ChoiceType

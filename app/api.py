@@ -4,25 +4,16 @@ from pathlib import Path
 from typing import Annotated
 
 import requests
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import status
-from fastapi.responses import HTMLResponse
-from fastapi.responses import PlainTextResponse
-from fastapi.security import OAuth2PasswordBearer
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from openfoodfacts.utils import get_logger
 
-from app import crud
-from app import schemas
+from app import crud, schemas
 from app.config import settings
 from app.db import session
 from app.utils import init_sentry
-
 
 logger = get_logger(level=settings.log_level.to_int())
 
@@ -56,7 +47,7 @@ async def create_token(user_id: str):
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    if token and '__U' in token:
+    if token and "__U" in token:
         current_user: schemas.UserBase = crud.update_user_last_used_field(db, token=token)  # type: ignore
         if current_user:
             return current_user
@@ -91,7 +82,9 @@ def main_page(request: Request):
 
 
 @app.post("/auth")
-async def authentication(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response):
+async def authentication(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response
+):
     """
     Authentication: provide username/password and get a bearer token in return
 
@@ -115,17 +108,22 @@ async def authentication(form_data: Annotated[OAuth2PasswordRequestForm, Depends
         crud.create_user(db, user=user)  # type: ignore
         return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
-        await asyncio.sleep(2)   # prevents brute-force
+        await asyncio.sleep(2)  # prevents brute-force
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server error")
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server error"
+    )
 
 
 @app.post("/prices", response_model=schemas.PriceBase)
-async def create_price(price: schemas.PriceCreate, current_user: schemas.UserBase = Depends(get_current_user)):
+async def create_price(
+    price: schemas.PriceCreate,
+    current_user: schemas.UserBase = Depends(get_current_user),
+):
     db_price = crud.create_price(db, price=price, user=current_user)  # type: ignore
     return db_price
 

@@ -1,11 +1,6 @@
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 
-from pydantic import BaseModel
-from pydantic import ConfigDict
-from pydantic import Field
-from pydantic import field_serializer
-from pydantic import field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 from sqlalchemy_utils import Currency
 
 from app.enums import PriceLocationOSMType

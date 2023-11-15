@@ -29,3 +29,16 @@ pytest = "^7.4.3"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.venv
+)/
+'''
+
+[tool.mypy]
+ignore_missing_imports = true
