@@ -112,7 +112,7 @@ async def authentication(
     if r.status_code == 200:
         token = await create_token(form_data.username)
         user: schemas.UserBase = {"user_id": form_data.username, "token": token}  # type: ignore
-        crud.create_user(db, user=user)  # type: ignore
+        crud.create_user(db, user=user)
         return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
         await asyncio.sleep(2)  # prevents brute-force
@@ -161,7 +161,7 @@ async def create_price(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Proof does not belong to current user",
                 )
-    db_price = crud.create_price(db, price=price, user=current_user)  # type: ignore
+    db_price = crud.create_price(db, price=price, user=current_user)
     return db_price
 
 
