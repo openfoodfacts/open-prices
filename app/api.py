@@ -18,6 +18,8 @@ from fastapi import (
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
+from fastapi_pagination import Page, add_pagination
+from fastapi_pagination.ext.sqlalchemy import paginate
 from openfoodfacts.utils import get_logger
 
 from app import crud, schemas
@@ -43,6 +45,7 @@ app = FastAPI(
         "url": "https://www.gnu.org/licenses/agpl-3.0.en.html",
     },
 )
+add_pagination(app)
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 init_sentry(settings.sentry_dns)
 
@@ -129,7 +132,7 @@ async def authentication(
     )
 
 
-@app.get("/prices", response_model=list[schemas.PriceBase])
+@app.get("/prices", response_model=Page[schemas.PriceBase])
 async def get_price(
     product_code: str | None = None,
     location_osm_id: int | None = None,
@@ -140,8 +143,7 @@ async def get_price(
         "location_osm_id": location_osm_id,
         "date": date,
     }
-    db_prices = crud.get_prices(db, filters=filters)  # type: ignore
-    return db_prices
+    return paginate(db, crud.get_prices_query(filters=filters))
 
 
 @app.post("/prices", response_model=schemas.PriceBase)
