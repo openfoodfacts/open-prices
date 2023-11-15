@@ -3,7 +3,6 @@ import uuid
 from datetime import date
 from pathlib import Path
 from typing import Annotated
-from typing import List
 
 import requests
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
@@ -121,9 +120,18 @@ async def authentication(
     )
 
 
-@app.get("/prices", response_model=List[schemas.PriceBase])
-async def get_price(product_code: str | None = None, location_osm_id: int | None = None, date: date | None = None):
-    db_prices = crud.get_prices(db, {"product_code": product_code, "location_osm_id": location_osm_id, "date": date})  # type: ignore
+@app.get("/prices", response_model=list[schemas.PriceBase])
+async def get_price(
+    product_code: str | None = None,
+    location_osm_id: int | None = None,
+    date: date | None = None,
+):
+    filters = {
+        "product_code": product_code,
+        "location_osm_id": location_osm_id,
+        "date": date,
+    }
+    db_prices = crud.get_prices(db, filters=filters)  # type: ignore
     return db_prices
 
 
