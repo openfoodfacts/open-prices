@@ -1,6 +1,9 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 
+from app.models import Price
 from app.models import User
+from app.schemas import PriceCreate
 from app.schemas import UserBase
 
 
@@ -27,6 +30,16 @@ def create_user(db: Session, user: UserBase):
     return db_user
 
 
+def update_user_last_used_field(db: Session, token: str):
+    db_user = get_user_by_token(db, token=token)
+    if db_user:
+        db.query(User).filter(User.user_id == db_user.user_id).update({"last_used": func.now()})
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    return False
+
+
 def delete_user(db: Session, user_id: UserBase):
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:
@@ -34,3 +47,11 @@ def delete_user(db: Session, user_id: UserBase):
         db.commit()
         return True
     return False
+
+
+def create_price(db: Session, price: PriceCreate, user: UserBase):
+    db_price = Price(**price.dict(), owner=user.user_id)
+    db.add(db_price)
+    db.commit()
+    db.refresh(db_price)
+    return db_price
