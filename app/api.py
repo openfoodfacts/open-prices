@@ -9,6 +9,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
+from fastapi_pagination import add_pagination
 from openfoodfacts.utils import get_logger
 
 from app import crud, schemas
@@ -34,6 +35,7 @@ app = FastAPI(
         "url": "https://www.gnu.org/licenses/agpl-3.0.en.html",
     },
 )
+add_pagination(app)
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 init_sentry(settings.sentry_dns)
 

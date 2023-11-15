@@ -21,6 +21,7 @@ sentry-sdk = {extras = ["fastapi"], version = "~1.35.0"}
 sqlalchemy = "~2.0.23"
 sqlalchemy-utils = "~0.41.1"
 uvicorn = "~0.23.2"
+fastapi-pagination = "^0.12.12"
 
 
 [tool.poetry.group.dev.dependencies]
