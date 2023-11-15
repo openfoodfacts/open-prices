@@ -57,7 +57,7 @@ async def create_token(user_id: str):
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     if token and '__U' in token:
-        current_user: schemas.UserBase = crud.update_user_by_token(db, token=token)  # type: ignore
+        current_user: schemas.UserBase = crud.update_user_last_used_field(db, token=token)  # type: ignore
         if current_user:
             return current_user
     raise HTTPException(

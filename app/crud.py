@@ -30,7 +30,7 @@ def create_user(db: Session, user: UserBase):
     return db_user
 
 
-def update_user_by_token(db: Session, token: str):
+def update_user_last_used_field(db: Session, token: str):
     db_user = get_user_by_token(db, token=token)
     if db_user:
         db.query(User).filter(User.user_id == db_user.user_id).update({"last_used": func.now()})
