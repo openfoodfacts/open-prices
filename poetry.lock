@@ -280,6 +280,26 @@ typing-extensions = ">=4.5.0"
 all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.5)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
 
 [[package]]
+name = "fastapi-filter"
+version = "1.0.0"
+description = "FastAPI filter"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "fastapi_filter-1.0.0-py3-none-any.whl", hash = "sha256:8bbdcfe71537ee6a33334d895a4a78098ddd8049e705c9a4dc4d24bca3e6c632"},
+    {file = "fastapi_filter-1.0.0.tar.gz", hash = "sha256:f4ff5eed250d746e19ae4075a04a4bc9d0c46cc49b112c7689e13db978b28c42"},
+]
+
+[package.dependencies]
+fastapi = ">=0.100.0,<1.0"
+pydantic = ">=2.0.0,<3.0.0"
+
+[package.extras]
+all = ["SQLAlchemy (>=1.4.36,<2.1.0)", "mongoengine (>=0.24.1,<0.28.0)"]
+mongoengine = ["mongoengine (>=0.24.1,<0.28.0)"]
+sqlalchemy = ["SQLAlchemy (>=1.4.36,<2.1.0)"]
+
+[[package]]
 name = "fastapi-pagination"
 version = "0.12.12"
 description = "FastAPI pagination"
@@ -1253,4 +1273,4 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d2303c7fd7cf77afff6d61080be615f36b06f9b9590b9bb3a5831256119dbcd4"
+content-hash = "c7601c7b9257f1f122b5a9492b9eb5dc5f5424017cd6b32a1d3906c5081f7c6a"
