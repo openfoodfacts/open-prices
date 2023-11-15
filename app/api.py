@@ -1,4 +1,4 @@
-import time
+import asyncio
 import uuid
 from pathlib import Path
 from typing import Annotated
@@ -103,7 +103,7 @@ async def authentication(form_data: Annotated[OAuth2PasswordRequestForm, Depends
         crud.create_user(db, user=user)  # type: ignore
         return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
-        time.sleep(2)   # prevents brute-force
+        await asyncio.sleep(2)   # prevents brute-force
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
