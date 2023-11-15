@@ -22,6 +22,7 @@ sqlalchemy = "~2.0.23"
 sqlalchemy-utils = "~0.41.1"
 uvicorn = "~0.23.2"
 fastapi-pagination = "^0.12.12"
+fastapi-filter = "^1.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
