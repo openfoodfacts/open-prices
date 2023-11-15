@@ -130,6 +130,11 @@ async def create_price(price: schemas.PriceCreate, current_user: schemas.UserBas
     return db_price
 
 
+@app.get("/status")
+async def status_endpoint():
+    return {"status": "running"}
+
+
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
     return """User-agent: *\nDisallow: /"""
