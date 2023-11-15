@@ -5,7 +5,16 @@ from pathlib import Path
 from typing import Annotated
 
 import requests
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
@@ -140,8 +149,44 @@ async def create_price(
     price: schemas.PriceCreate,
     current_user: schemas.UserBase = Depends(get_current_user),
 ):
+    """Create a new price.
+
+    This endpoint requires authentication.
+    """
+    # check if we have a proof_id provided
+    if price.proof_id is not None:
+        proof = crud.get_proof(db, price.proof_id)
+        if proof is None:
+            # No proof exists with this id
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Proof not found",
+            )
+        else:
+            # Check if the proof belongs to the current user
+            # Only proof uploaded by the user can be used
+            if proof.owner != current_user.user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Proof does not belong to current user",
+                )
     db_price = crud.create_price(db, price=price, user=current_user)  # type: ignore
     return db_price
+
+
+@app.post("/proofs/upload", response_model=schemas.ProofBase)
+def upload_proof(
+    file: UploadFile,
+    current_user: schemas.UserBase = Depends(get_current_user),
+):
+    """Upload a proof file.
+
+    The POST request must be a multipart/form-data request with a file field
+    named "file".
+    """
+    file_path, mimetype = crud.create_proof_file(file)
+    db_proof = crud.create_proof(db, file_path, mimetype, user=current_user)
+    return db_proof
 
 
 @app.get("/status")

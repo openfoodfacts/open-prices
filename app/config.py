@@ -1,6 +1,9 @@
 from enum import Enum
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+ROOT_DIR = Path(__file__).parent.parent
 
 
 class LoggingLevel(Enum):
@@ -35,8 +38,10 @@ class Settings(BaseSettings):
     oauth2_server_url: str | None = None
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
+    images_dir: Path = ROOT_DIR / "data/images"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()
+settings.images_dir.mkdir(parents=True, exist_ok=True)
