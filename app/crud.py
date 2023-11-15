@@ -78,6 +78,10 @@ def get_proof(db: Session, proof_id: int):
     return db.query(Proof).filter(Proof.id == proof_id).first()
 
 
+def get_user_proofs(db: Session, user: UserBase):
+    return db.query(Proof).filter(Proof.owner == user.user_id).all()
+
+
 def create_proof(db: Session, file_path: str, mimetype: str, user: UserBase):
     """Create a proof in the database.
 

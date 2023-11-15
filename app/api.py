@@ -189,6 +189,15 @@ def upload_proof(
     return db_proof
 
 
+@app.get("/proofs", response_model=list[schemas.ProofBase])
+def get_user_proofs(current_user: schemas.UserBase = Depends(get_current_user)):
+    """Get all the proofs uploaded by the current user.
+
+    This endpoint requires authentication.
+    """
+    return crud.get_user_proofs(db, user=current_user)
+
+
 @app.get("/status")
 async def status_endpoint():
     return {"status": "running"}
