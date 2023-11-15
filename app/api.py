@@ -143,7 +143,7 @@ async def get_price(
         "location_osm_id": location_osm_id,
         "date": date,
     }
-    return paginate(db, crud.get_prices_without_db(filters=filters))
+    return paginate(db, crud.get_prices_query(filters=filters))
 
 
 @app.post("/prices", response_model=schemas.PriceBase)
