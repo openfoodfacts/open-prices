@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "open-prices"
 version = "0.1.0"
-description = "An open database of food prices"
+description = "An open database of product prices"
 authors = ["Open Food Facts <contact@openfoodfacts.org>"]
 license = "AGPL-3.0 licence"
 readme = "README.md"
@@ -23,7 +23,6 @@ sqlalchemy-utils = "~0.41.1"
 uvicorn = "~0.23.2"
 fastapi-pagination = "^0.12.12"
 fastapi-filter = "^1.0.0"
-
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

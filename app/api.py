@@ -140,7 +140,8 @@ async def create_price(
     current_user: schemas.UserBase = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Create a new price.
+    """
+    Create a new price.
 
     This endpoint requires authentication.
     """
@@ -169,11 +170,15 @@ async def create_price(
 def upload_proof(
     file: UploadFile,
     current_user: schemas.UserBase = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    """Upload a proof file.
+    """
+    Upload a proof file.
 
     The POST request must be a multipart/form-data request with a file field
     named "file".
+
+    This endpoint requires authentication.
     """
     file_path, mimetype = crud.create_proof_file(file)
     db_proof = crud.create_proof(db, file_path, mimetype, user=current_user)
@@ -181,8 +186,12 @@ def upload_proof(
 
 
 @app.get("/proofs", response_model=list[schemas.ProofBase])
-def get_user_proofs(current_user: schemas.UserBase = Depends(get_current_user)):
-    """Get all the proofs uploaded by the current user.
+def get_user_proofs(
+    current_user: schemas.UserBase = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get all the proofs uploaded by the current user.
 
     This endpoint requires authentication.
     """
