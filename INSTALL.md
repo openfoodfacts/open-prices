@@ -3,9 +3,11 @@
 ## Prerequisites
 
 - Python 3.10 (lower version may be OK, but untested)
-- pip
+- PostgreSQL 13 (lower version may be OK, but untested)
 
 ## Setup
+
+### Without Docker
 
 ```
 # clone repo
@@ -21,10 +23,11 @@ source venv/bin/activate
 
 # install
 pip install -r requirements.txt
-
-# environment variables
-# make a copy of *.env.example* and rename it to *.env*
 ```
+
+### With Docker
+
+TODO
 
 ## Run locally
 
