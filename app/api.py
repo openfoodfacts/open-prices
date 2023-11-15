@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from datetime import date
 from pathlib import Path
 from typing import Annotated
 
@@ -117,6 +118,21 @@ async def authentication(
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server error"
     )
+
+
+@app.get("/prices", response_model=list[schemas.PriceBase])
+async def get_price(
+    product_code: str | None = None,
+    location_osm_id: int | None = None,
+    date: date | None = None,
+):
+    filters = {
+        "product_code": product_code,
+        "location_osm_id": location_osm_id,
+        "date": date,
+    }
+    db_prices = crud.get_prices(db, filters=filters)  # type: ignore
+    return db_prices
 
 
 @app.post("/prices", response_model=schemas.PriceBase)
