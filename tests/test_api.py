@@ -64,7 +64,7 @@ def test_hello():
     assert response.status_code == 200
 
 
-def test_create_price_must_be_authenticated(user, db=override_get_db()):
+def test_create_price(user, db=override_get_db()):
     # without authentication
     response = client.post(
         "/prices",
@@ -126,3 +126,15 @@ def test_get_prices_filters():
     response = client.get("/prices?date=2023-10-31")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
+
+
+def test_get_proofs(user):
+    # without authentication
+    response = client.get("/proofs")
+    assert response.status_code == 401
+    # with authentication
+    response = client.get(
+        "/proofs",
+        headers={"Authorization": f"Bearer {user.token}"},
+    )
+    assert response.status_code == 200
