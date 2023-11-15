@@ -5,10 +5,9 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 
-
 url = URL.create(
     drivername="postgresql",
-    database=settings.postgres_db_name,
+    database=settings.postgres_db,
     username=settings.postgres_user,
     password=settings.postgres_password,
     host=settings.postgres_host,

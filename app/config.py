@@ -1,7 +1,6 @@
 from enum import Enum
 
-from pydantic_settings import BaseSettings
-from pydantic_settings import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class LoggingLevel(Enum):
@@ -28,7 +27,7 @@ class LoggingLevel(Enum):
 
 
 class Settings(BaseSettings):
-    postgres_db_name: str
+    postgres_db: str
     postgres_user: str
     postgres_password: str
     postgres_host: str

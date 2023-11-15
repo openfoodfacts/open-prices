@@ -1,9 +1,15 @@
-version: "3.7"
+version: "3.9"
 
 x-api-common: &api-common
   image: ghcr.io/openfoodfacts/open-prices/api:${TAG:-dev}
   restart: ${RESTART_POLICY}
   environment:
+    - POSTGRES_DB
+    - POSTGRES_USER
+    - POSTGRES_PASSWORD
+    - POSTGRES_HOST
+    - POSTGRES_PORT
+    - OAUTH2_SERVER_URL
     - SENTRY_DNS
     - LOG_LEVEL
   networks:
@@ -15,5 +21,21 @@ services:
     ports:
       - "${API_PORT}:8000"
 
+  postgres:
+    restart: $RESTART_POLICY
+    image: postgres:16.1-alpine
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    command: postgres -c shared_buffers=1024MB -c work_mem=64MB
+    mem_limit: 4g
+    shm_size: 1g
+    ports:
+      - "${POSTGRES_EXPOSE:-127.0.0.1:5432}:5432"
+
 volumes:
+  postgres-data:
   rediscache:
