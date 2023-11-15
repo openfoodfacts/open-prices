@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 
 from app import config
 from app.models import Price, Proof, User
-from app.schemas import PriceCreate, ProofBase, UserBase
+from app.schemas import PriceCreate, ProofBase, UserBase, PriceFilter
 
 
 def get_user(db: Session, user_id: str):
@@ -56,20 +56,15 @@ def delete_user(db: Session, user_id: UserBase):
     return False
 
 
-def get_prices_query(filters: dict | None = None):
+def get_prices_query(filters: PriceFilter = None):
     """Useful for pagination."""
     query = select(Price)
     if filters:
-        if filters.get("product_code", None):
-            query = query.filter(Price.product_code == filters["product_code"])
-        if filters.get("location_osm_id", None):
-            query = query.filter(Price.location_osm_id == filters["location_osm_id"])
-        if filters.get("date", None):
-            query = query.filter(Price.date == filters["date"])
+        query = filters.filter(query)
     return query
 
 
-def get_prices(db: Session, filters: dict | None = None):
+def get_prices(db: Session, filters: PriceFilter = None):
     return db.execute(get_prices_query(filters=filters)).all()
 
 

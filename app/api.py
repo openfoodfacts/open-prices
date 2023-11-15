@@ -1,6 +1,5 @@
 import asyncio
 import uuid
-from datetime import date
 from pathlib import Path
 from typing import Annotated
 
@@ -9,7 +8,6 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
-    Query,
     Request,
     Response,
     UploadFile,
@@ -18,6 +16,7 @@ from fastapi import (
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
+from fastapi_filter import FilterDepends
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
 from openfoodfacts.utils import get_logger
@@ -133,16 +132,7 @@ async def authentication(
 
 
 @app.get("/prices", response_model=Page[schemas.PriceBase])
-async def get_price(
-    product_code: str | None = None,
-    location_osm_id: int | None = None,
-    date: date | None = None,
-):
-    filters = {
-        "product_code": product_code,
-        "location_osm_id": location_osm_id,
-        "date": date,
-    }
+async def get_price(filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter)):
     return paginate(db, crud.get_prices_query(filters=filters))
 
 
