@@ -46,11 +46,12 @@ RUN groupadd -g $OFF_GID off && \
     mkdir -p /opt/open-prices && \
     chown off:off -R /opt/open-prices /home/off
 COPY --chown=off:off app /opt/open-prices/app
+COPY --chown=off:off alembic /opt/open-prices/alembic
 
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-COPY --chown=off:off poetry.lock pyproject.toml /opt/open-prices/
+COPY --chown=off:off poetry.lock pyproject.toml alembic.ini /opt/open-prices/
 
 USER off:off
 WORKDIR /opt/open-prices
