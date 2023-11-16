@@ -144,8 +144,7 @@ jobs:
         script_stop: false
         script: |
           cd ${{ matrix.env }}
-          docker-compose down
-          docker-compose up -d --remove-orphans 2>&1
+          make up
 
     - name: Check services are up
       uses: appleboy/ssh-action@master
@@ -175,4 +174,4 @@ jobs:
         script_stop: false
         script: |
           cd ${{ matrix.env }}
-          docker system prune -af
+          make prune

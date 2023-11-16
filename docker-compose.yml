@@ -40,4 +40,4 @@ services:
 
 volumes:
   postgres-data:
-  rediscache:
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_postgres-data

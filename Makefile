@@ -52,3 +52,24 @@ endif
 down:
 	@echo "🥫 Bringing down containers …"
 	${DOCKER_COMPOSE} down
+
+
+#------------#
+# Production #
+#------------#
+
+# Create all external volumes needed for production. Using external volumes is useful to prevent data loss (as they are not deleted when performing docker down -v)
+create_external_volumes:
+	@echo "🥫 Creating external volumes (production only) …"
+	docker volume create postgres-data
+
+#---------#
+# Cleanup #
+#---------#
+prune:
+	@echo "🥫 Pruning unused Docker artifacts (save space) …"
+	docker system prune -af
+
+prune_cache:
+	@echo "🥫 Pruning Docker builder cache …"
+	docker builder prune -f
