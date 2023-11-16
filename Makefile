@@ -54,6 +54,28 @@ down:
 	${DOCKER_COMPOSE} down
 
 
+hdown:
+	@echo "🥫 Bringing down containers and associated volumes …"
+	${DOCKER_COMPOSE} down -v
+
+
+# pull images from image repository
+pull:
+	${DOCKER_COMPOSE} pull
+
+restart:
+	@echo "🥫 Restarting containers …"
+	${DOCKER_COMPOSE} restart
+
+status:
+	@echo "🥫 Getting container status …"
+	${DOCKER_COMPOSE} ps
+
+log:
+	@echo "🥫 Reading logs (docker-compose) …"
+	${DOCKER_COMPOSE} logs -f api
+
+
 #------------#
 # Production #
 #------------#
@@ -61,7 +83,7 @@ down:
 # Create all external volumes needed for production. Using external volumes is useful to prevent data loss (as they are not deleted when performing docker down -v)
 create_external_volumes:
 	@echo "🥫 Creating external volumes (production only) …"
-	docker volume create postgres-data
+	docker volume create open_prices_postgres-data
 
 #---------#
 # Cleanup #

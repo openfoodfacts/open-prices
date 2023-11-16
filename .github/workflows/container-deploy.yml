@@ -32,7 +32,6 @@ jobs:
     - name: Set common variables
       run: |
         # We use the prod oauth server for all environments
-        echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> $GITHUB_ENV
         echo "SSH_PROXY_HOST=ovh1.openfoodfacts.org" >> $GITHUB_ENV
         echo "SSH_USERNAME=off" >> $GITHUB_ENV
     - name: Set various variable for staging (net) deployment
@@ -108,7 +107,7 @@ jobs:
           # Set Docker Compose variables
           echo "DOCKER_CLIENT_TIMEOUT=180" >> .env
           echo "COMPOSE_HTTP_TIMEOUT=180" >> .env
-          echo "COMPOSE_PROJECT_NAME=open-prices" >> .env
+          echo "COMPOSE_PROJECT_NAME=open_prices" >> .env
           echo "COMPOSE_PATH_SEPARATOR=;" >> .env
           echo "COMPOSE_FILE=docker-compose.yml;docker/prod.yml" >> .env
           # Set docker variables
@@ -116,7 +115,13 @@ jobs:
           echo "RESTART_POLICY=always" >> .env
           # Set App variables
           echo "API_PORT=8190" >> .env
+          echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
           echo "SENTRY_DNS=${{ secrets.SENTRY_DSN }}" >> .env
+          echo "POSTGRES_EXPOSE=127.0.0.1:5433" >> .env
+          echo "POSTGRES_HOST=postgres.open_prices_default" >> .env
+          echo "POSTGRES_DB=postgres" >> .env
+          echo "POSTGRES_USER=postgres" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
 
     - name: Create Docker volumes
       uses: appleboy/ssh-action@master
