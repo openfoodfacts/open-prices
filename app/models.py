@@ -37,7 +37,11 @@ class Location(Base):
     osm_id = Column(BigInteger)
     osm_type = Column(ChoiceType(PriceLocationOSMType))
 
+    osm_name = Column(String)
     osm_display_name = Column(String)
+    osm_address_postcode = Column(String)
+    osm_address_city = Column(String)
+    osm_address_country = Column(String)
     osm_lat = Column(Numeric(precision=11, scale=7))
     osm_lon = Column(Numeric(precision=11, scale=7))
 

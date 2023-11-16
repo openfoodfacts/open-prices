@@ -25,7 +25,11 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("osm_id", sa.BigInteger(), nullable=True),
         sa.Column("osm_type", sa.String(length=255), nullable=True),
+        sa.Column("osm_name", sa.String(), nullable=True),
         sa.Column("osm_display_name", sa.String(), nullable=True),
+        sa.Column("osm_address_postcode", sa.String(), nullable=True),
+        sa.Column("osm_address_city", sa.String(), nullable=True),
+        sa.Column("osm_address_country", sa.String(), nullable=True),
         sa.Column("osm_lat", sa.Numeric(precision=11, scale=7), nullable=True),
         sa.Column("osm_lon", sa.Numeric(precision=11, scale=7), nullable=True),
         sa.Column(
