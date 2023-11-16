@@ -16,6 +16,26 @@ class UserBase(BaseModel):
     token: str
 
 
+class LocationCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+    osm_id: int = Field(gt=0)
+    osm_type: PriceLocationOSMType
+
+
+class LocationBase(LocationCreate):
+    id: int
+    osm_name: str | None
+    osm_display_name: str | None
+    osm_address_postcode: str | None
+    osm_address_city: str | None
+    osm_address_country: str | None
+    osm_lat: float | None
+    osm_lon: float | None
+    created: datetime
+    updated: datetime | None
+
+
 class PriceCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
