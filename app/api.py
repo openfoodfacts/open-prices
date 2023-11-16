@@ -56,11 +56,11 @@ def get_db():
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
 
-async def create_token(user_id: str):
+def create_token(user_id: str):
     return f"{user_id}__U{str(uuid.uuid4())}"
 
 
-async def get_current_user(
+def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
 ):
     if token and "__U" in token:
