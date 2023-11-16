@@ -5,9 +5,8 @@ on:
     branches:
       - main
       - deploy-*
-# only staging for now, not prod
-#     tags:
-#       - v*.*.*
+    tags:
+      - v*.*.*
 
 
 # Note on secrets used for connection
