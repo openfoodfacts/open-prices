@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/openfoodfacts/open-prices/compare/v1.0.0...v1.0.1) (2023-11-16)
+
+
+### Bug Fixes
+
+* transform async func into func ([22a5f0d](https://github.com/openfoodfacts/open-prices/commit/22a5f0d32c44151b6816987c87829877d54ab798))
+
 ## 1.0.0 (2023-11-16)
 
 
