@@ -69,7 +69,7 @@ def get_prices(db: Session, filters: PriceFilter | None = None):
 
 
 def create_price(db: Session, price: PriceCreate, user: UserBase):
-    db_price = Price(**price, owner=user.user_id)
+    db_price = Price(**price.model_dump(), owner=user.user_id)
     db.add(db_price)
     db.commit()
     db.refresh(db_price)

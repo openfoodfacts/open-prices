@@ -161,7 +161,7 @@ async def create_price(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Proof does not belong to current user",
                 )
-    db_price = crud.create_price(db, price=price.model_dump(), user=current_user)
+    db_price = crud.create_price(db, price=price, user=current_user)
     return db_price
 
 
