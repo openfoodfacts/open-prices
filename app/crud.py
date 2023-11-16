@@ -223,9 +223,19 @@ def create_location(db: Session, location: LocationCreate):
 
 
 def get_or_create_location(db: Session, location: LocationCreate):
+    created = False
     db_location = get_location_by_osm_id_and_type(
         db, osm_id=location.osm_id, osm_type=location.osm_type
     )
     if not db_location:
         db_location = create_location(db, location=location)
-    return db_location
+        created = True
+    return db_location, created
+
+
+def update_location(db: Session, location: LocationBase, update_dict: dict):
+    for key, value in update_dict.items():
+        setattr(location, key, value)
+    db.commit()
+    db.refresh(location)
+    return location

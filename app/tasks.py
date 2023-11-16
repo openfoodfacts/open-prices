@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app import crud
 from app.schemas import LocationCreate, PriceBase, ProductCreate
+from app.utils import fetch_location_openstreetmap_details
 
 
 def create_price_product(db: Session, price: PriceBase):
@@ -19,6 +20,15 @@ def create_price_location(db: Session, price: PriceBase):
         location = LocationCreate(
             osm_id=price.location_osm_id, osm_type=price.location_osm_type
         )
-        db_location = crud.get_or_create_location(db, location=location)
+        db_location, created = crud.get_or_create_location(db, location=location)
         # link the location to the price
         crud.set_price_location(db, price=price, location=db_location)
+        # fetch data from OpenStreetMap if created
+        if created:
+            location_openstreetmap_details = fetch_location_openstreetmap_details(
+                location=db_location
+            )
+            if location_openstreetmap_details:
+                crud.update_location(
+                    db, location=db_location, update_dict=location_openstreetmap_details
+                )
