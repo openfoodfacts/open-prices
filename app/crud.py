@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from app import config
-from app.enums import PriceLocationOSMType
+from app.enums import LocationOSMType
 from app.models import Location, Price, Proof, User
 from app.schemas import LocationCreate, PriceCreate, PriceFilter, UserBase
 
@@ -144,7 +144,7 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
 
 
 def get_location_by_osm_id_and_type(
-    db: Session, osm_id: int, osm_type: PriceLocationOSMType
+    db: Session, osm_id: int, osm_type: LocationOSMType
 ):
     return (
         db.query(Location)
