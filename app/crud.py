@@ -8,8 +8,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from app import config
-from app.models import Price, Proof, User
-from app.schemas import PriceCreate, PriceFilter, UserBase
+from app.enums import PriceLocationOSMType
+from app.models import Location, Price, Proof, User
+from app.schemas import LocationCreate, PriceCreate, PriceFilter, UserBase
 
 
 def get_user(db: Session, user_id: str):
@@ -140,3 +141,22 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
 
     file_path = f"{current_dir_id_str}/{file_stem}{extension}"
     return (file_path, mimetype)
+
+
+def get_location_by_osm_id_and_type(
+    db: Session, osm_id: int, osm_type: PriceLocationOSMType
+):
+    return (
+        db.query(Location)
+        .filter(Location.osm_id == osm_id)
+        .filter(Location.osm_type == osm_type)
+        .first()
+    )
+
+
+def create_location(db: Session, location: LocationCreate):
+    db_location = Location(**location.model_dump())
+    db.add(db_location)
+    db.commit()
+    db.refresh(db_location)
+    return db_location
