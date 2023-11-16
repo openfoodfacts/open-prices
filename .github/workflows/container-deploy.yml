@@ -22,9 +22,8 @@ jobs:
     strategy:
       matrix:
         env:
-          # only stagging for now
           # Note: env is also the name of the directory on the server
-          - open-prices-net
+          - ${{ startsWith(github.ref, 'refs/tags/v') && 'open-prices-org' || 'open-prices-net' }}
     environment: ${{ matrix.env }}
     concurrency: ${{ matrix.env }}
     steps:
