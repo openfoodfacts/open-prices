@@ -29,15 +29,20 @@ jobs:
     environment: ${{ matrix.env }}
     concurrency: ${{ matrix.env }}
     steps:
+    - name: Set common variables
+      run: |
+        # We use the prod oauth server for all environments
+        echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> $GITHUB_ENV
+        echo "SSH_PROXY_HOST=ovh1.openfoodfacts.org" >> $GITHUB_ENV
+        echo "SSH_USERNAME=off" >> $GITHUB_ENV
     - name: Set various variable for staging (net) deployment
       if: matrix.env == 'open-prices-net'
       run: |
-        # direct container access
-        echo "OPENFOODFACTS_API_URL=https://off:off@world.openfoodfacts.net" >> $GITHUB_ENV
-        # deploy target
         echo "SSH_HOST=10.1.0.200" >> $GITHUB_ENV
-        echo "SSH_PROXY_HOST=ovh1.openfoodfacts.org" >> $GITHUB_ENV
-        echo "SSH_USERNAME=off" >> $GITHUB_ENV
+    - name: Set various variable for production deployment
+      if: matrix.env == 'robotoff-org'
+      run: |
+        echo "SSH_HOST=10.1.0.201" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
@@ -106,13 +111,11 @@ jobs:
           echo "COMPOSE_PROJECT_NAME=open-prices" >> .env
           echo "COMPOSE_PATH_SEPARATOR=;" >> .env
           echo "COMPOSE_FILE=docker-compose.yml;docker/prod.yml" >> .env
-          # Copy variables that are same as dev
-          grep '\(STACK_VERSION\|ES_PORT\)' .env-dev >> .env
           # Set docker variables
           echo "TAG=sha-${{ github.sha }}" >> .env
           echo "RESTART_POLICY=always" >> .env
           # Set App variables
-          echo "API_PORT=8180" >> .env
+          echo "API_PORT=8190" >> .env
           echo "SENTRY_DNS=${{ secrets.SENTRY_DSN }}" >> .env
 
     - name: Create Docker volumes
@@ -173,11 +176,3 @@ jobs:
         script: |
           cd ${{ matrix.env }}
           docker system prune -af
-
-    - uses: frankie567/grafana-annotation-action@v1.0.3
-      if: ${{ always() }}
-      with:
-        apiHost: https://grafana.openfoodfacts.org
-        apiToken: ${{ secrets.GRAFANA_API_TOKEN }}
-        text: <a href="https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}">Deployment ${{ steps.livecheck.outcome }} on ${{ matrix.env }}</a>
-        tags: type:deployment,origin:github,status:${{ steps.livecheck.outcome }},repo:${{ github.repository }},sha:${{ github.sha }},app:robotoff,env:${{ matrix.env }}
