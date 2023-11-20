@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/openfoodfacts/open-prices/compare/v1.0.2...v1.0.3) (2023-11-20)
+
+
+### Bug Fixes
+
+* fix container deploy config ([36c4f1b](https://github.com/openfoodfacts/open-prices/commit/36c4f1b060045a98d9a00065664d945d3cd7e5b1))
+
 ## [1.0.2](https://github.com/openfoodfacts/open-prices/compare/v1.0.1...v1.0.2) (2023-11-16)
 
 
