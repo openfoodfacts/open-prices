@@ -1,3 +1,23 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true
+
 [tool.poetry]
 name = "open-prices"
 version = "0.1.0"
@@ -32,23 +52,9 @@ isort = "^5.12.0"
 pytest-cov = "^4.1.0"
 httpx = "^0.25.1"
 pre-commit = "^3.5.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.mypy_cache
-  | \.venv
-)/
-'''
-
-[tool.isort]
-profile = "black"
-
-[tool.mypy]
-ignore_missing_imports = true
+mkdocs = "~1.5.3"
+mkdocs-material = "~9.4.10"
+mkdocs-awesome-pages-plugin = "~2.9.2"
+mdx-truly-sane-lists = "^1.3"
+toml-sort = "^0.23.1"
+mypy = "^1.7.0"

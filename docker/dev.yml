@@ -10,6 +10,13 @@ x-api-base: &api-base
   volumes:
     # mount code dynamically
     - "./app:/opt/open-prices/app"
+    - ./pyproject.toml:/opt/open-prices/pyproject.toml
+    # make doc generation available
+    - ./mkdocs.yml:/opt/open-prices/mkdocs.yml
+    - ./build_mkdocs.sh:/opt/open-prices/build_mkdocs.sh
+    - ./README.md:/opt/open-prices/README.md
+    - ./docs:/opt/open-prices/docs
+    - ./gh_pages:/opt/open-prices/gh_pages
 
 services:
   api:

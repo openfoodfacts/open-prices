@@ -13,6 +13,9 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 COMPOSE_PROJECT_NAME ?= $(shell grep COMPOSE_PROJECT_NAME ${ENV_FILE} | cut -d '=' -f 2)
 DOCKER_COMPOSE=docker-compose --env-file=${ENV_FILE}
 
+# avoid target corresponding to file names, to depends on them
+.PHONY: *
+
 #------------#
 # Production #
 #------------#
@@ -74,6 +77,40 @@ status:
 log:
 	@echo "🥫 Reading logs (docker-compose) …"
 	${DOCKER_COMPOSE} logs -f api
+
+
+#------------#
+# Quality    #
+#------------#
+toml-check:
+	${DOCKER_COMPOSE} run --rm --no-deps api poetry run toml-sort --check pyproject.toml
+
+toml-lint:
+	${DOCKER_COMPOSE} run --rm --no-deps api poetry run toml-sort --in-place pyproject.toml
+
+flake8:
+	${DOCKER_COMPOSE} run --rm --no-deps api flake8
+
+black-check:
+	${DOCKER_COMPOSE} run --rm --no-deps api black --check .
+
+black:
+	${DOCKER_COMPOSE} run --rm --no-deps api black .
+
+mypy:
+	${DOCKER_COMPOSE} run --rm --no-deps api mypy .
+
+isort-check:
+	${DOCKER_COMPOSE} run --rm --no-deps api isort --check .
+
+isort:
+	${DOCKER_COMPOSE} run --rm --no-deps api isort .
+
+docs:
+	@echo "🥫 Generationg doc…"
+	${DOCKER_COMPOSE} run --rm --no-deps api ./build_mkdocs.sh
+
+checks: toml-check flake8 black-check mypy isort-check docs
 
 
 #------------#

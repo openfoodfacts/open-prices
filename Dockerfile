@@ -80,6 +80,6 @@ COPY .flake8 pyproject.toml ./
 # create folders that we mount in dev to avoid permission problems
 USER root
 RUN \
-    mkdir -p /opt/open-prices/.cov && \
-    chown -R off:off /opt/open-prices/.cov
+    mkdir -p /opt/open-prices/.cov /opt/open-prices/docs /opt/open-prices/gh_pages && \
+    chown -R off:off /opt/open-prices/.cov /opt/open-prices/docs /opt/open-prices/gh_pages
 USER off
