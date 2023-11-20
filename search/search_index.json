@@ -1,0 +1,1 @@
+{"config":{"lang":["en"],"separator":"[\\s\\-]+","pipeline":["stopWordFilter"]},"docs":[{"location":"","title":"Open Prices","text":"<p>Open Prices is a project to collect and share prices of food products around the world.</p> <p>It consists of:</p> <ul> <li>a REST API, built using FastAPI</li> <li>a PostgreSQL database</li> </ul>"}]}
