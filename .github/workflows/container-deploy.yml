@@ -37,7 +37,7 @@ jobs:
       run: |
         echo "SSH_HOST=10.1.0.200" >> $GITHUB_ENV
     - name: Set various variable for production deployment
-      if: matrix.env == 'robotoff-org'
+      if: matrix.env == 'open-prices-org'
       run: |
         echo "SSH_HOST=10.1.0.201" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
