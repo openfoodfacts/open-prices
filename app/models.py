@@ -15,7 +15,7 @@ from sqlalchemy_utils.types.choice import ChoiceType
 from sqlalchemy_utils.types.currency import CurrencyType
 
 from app.db import Base
-from app.enums import PriceLocationOSMType
+from app.enums import LocationOSMType
 
 force_auto_coercion()
 
@@ -35,7 +35,7 @@ class Location(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     osm_id = Column(BigInteger)
-    osm_type = Column(ChoiceType(PriceLocationOSMType))
+    osm_type = Column(ChoiceType(LocationOSMType))
 
     osm_name = Column(String)
     osm_display_name = Column(String)
@@ -75,7 +75,7 @@ class Price(Base):
     currency = Column(CurrencyType)
 
     location_osm_id = Column(BigInteger, index=True)
-    location_osm_type = Column(ChoiceType(PriceLocationOSMType))
+    location_osm_type = Column(ChoiceType(LocationOSMType))
 
     date = Column(Date)
 

@@ -5,7 +5,7 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 from sqlalchemy_utils import Currency
 
-from app.enums import PriceLocationOSMType
+from app.enums import LocationOSMType
 from app.models import Price
 
 
@@ -20,7 +20,7 @@ class LocationCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     osm_id: int = Field(gt=0)
-    osm_type: PriceLocationOSMType
+    osm_type: LocationOSMType
 
 
 class LocationBase(LocationCreate):
@@ -43,7 +43,7 @@ class PriceCreate(BaseModel):
     price: float
     currency: str | Currency
     location_osm_id: int = Field(gt=0)
-    location_osm_type: PriceLocationOSMType
+    location_osm_type: LocationOSMType
     date: date
     proof_id: int | None = None
 
@@ -82,7 +82,7 @@ class ProofBase(ProofCreate):
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
     location_osm_id: Optional[int] | None = None
-    location_osm_type: Optional[PriceLocationOSMType] | None = None
+    location_osm_type: Optional[LocationOSMType] | None = None
     price: Optional[int] | None = None
     currency: Optional[str] | None = None
     price__gt: Optional[int] | None = None
