@@ -171,6 +171,7 @@ async def create_price(
                     detail="Proof does not belong to current user",
                 )
     db_price = crud.create_price(db, price=price, user=current_user)
+    background_tasks.add_task(tasks.create_price_product, db, db_price)
     background_tasks.add_task(tasks.create_price_location, db, db_price)
     return db_price
 
