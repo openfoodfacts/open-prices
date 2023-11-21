@@ -2,10 +2,17 @@ from datetime import date, datetime
 from typing import Optional
 
 from fastapi_filter.contrib.sqlalchemy import Filter
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+)
 from sqlalchemy_utils import Currency
 
-from app.enums import LocationOSMType
+from app.enums import LocationOSMType, ProductOFFSource
 from app.models import Price
 
 
@@ -14,6 +21,22 @@ class UserBase(BaseModel):
 
     user_id: str
     token: str
+
+
+class ProductCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+    code: str
+
+
+class ProductBase(BaseModel):
+    id: int
+    off_source: ProductOFFSource | None
+    off_name: str | None
+    off_quantity: int | None
+    off_image_url: AnyHttpUrl | None
+    created: datetime
+    updated: datetime | None
 
 
 class LocationCreate(BaseModel):
