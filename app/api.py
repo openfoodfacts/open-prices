@@ -4,7 +4,15 @@ from pathlib import Path
 from typing import Annotated
 
 import requests
-from fastapi import Depends, FastAPI, HTTPException, Request, UploadFile, status
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
@@ -14,7 +22,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from openfoodfacts.utils import get_logger
 from sqlalchemy.orm import Session
 
-from app import crud, schemas
+from app import crud, schemas, tasks
 from app.config import settings
 from app.db import session
 from app.utils import init_sentry
@@ -136,6 +144,7 @@ async def get_price(
 @app.post("/prices", response_model=schemas.PriceBase)
 async def create_price(
     price: schemas.PriceCreate,
+    background_tasks: BackgroundTasks,
     current_user: schemas.UserBase = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -162,6 +171,7 @@ async def create_price(
                     detail="Proof does not belong to current user",
                 )
     db_price = crud.create_price(db, price=price, user=current_user)
+    background_tasks.add_task(tasks.create_price_location, db, db_price)
     return db_price
 
 

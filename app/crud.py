@@ -8,10 +8,20 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from app import config
-from app.models import Price, Proof, User
-from app.schemas import PriceCreate, PriceFilter, UserBase
+from app.enums import LocationOSMType
+from app.models import Location, Price, Proof, User
+from app.schemas import (
+    LocationBase,
+    LocationCreate,
+    PriceBase,
+    PriceCreate,
+    PriceFilter,
+    UserBase,
+)
 
 
+# Users
+# ------------------------------------------------------------------------------
 def get_user(db: Session, user_id: str):
     return db.query(User).filter(User.user_id == user_id).first()
 
@@ -56,6 +66,8 @@ def delete_user(db: Session, user_id: UserBase):
     return False
 
 
+# Prices
+# ------------------------------------------------------------------------------
 def get_prices_query(filters: PriceFilter | None = None):
     """Useful for pagination."""
     query = select(Price)
@@ -76,6 +88,15 @@ def create_price(db: Session, price: PriceCreate, user: UserBase):
     return db_price
 
 
+def set_price_location(db: Session, price: PriceBase, location: LocationBase):
+    price.location_id = location.id
+    db.commit()
+    db.refresh(price)
+    return price
+
+
+# Proofs
+# ------------------------------------------------------------------------------
 def get_proof(db: Session, proof_id: int):
     return db.query(Proof).filter(Proof.id == proof_id).first()
 
@@ -140,3 +161,33 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
 
     file_path = f"{current_dir_id_str}/{file_stem}{extension}"
     return (file_path, mimetype)
+
+
+# Locations
+# ------------------------------------------------------------------------------
+def get_location_by_osm_id_and_type(
+    db: Session, osm_id: int, osm_type: LocationOSMType
+):
+    return (
+        db.query(Location)
+        .filter(Location.osm_id == osm_id)
+        .filter(Location.osm_type == osm_type)
+        .first()
+    )
+
+
+def create_location(db: Session, location: LocationCreate):
+    db_location = Location(**location.model_dump())
+    db.add(db_location)
+    db.commit()
+    db.refresh(db_location)
+    return db_location
+
+
+def get_or_create_location(db: Session, location: LocationCreate):
+    db_location = get_location_by_osm_id_and_type(
+        db, osm_id=location.osm_id, osm_type=location.osm_type
+    )
+    if not db_location:
+        db_location = create_location(db, location=location)
+    return db_location

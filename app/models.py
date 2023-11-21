@@ -45,6 +45,8 @@ class Location(Base):
     osm_lat = Column(Numeric(precision=11, scale=7))
     osm_lon = Column(Numeric(precision=11, scale=7))
 
+    prices: Mapped[list["Price"]] = relationship(back_populates="location")
+
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -76,6 +78,8 @@ class Price(Base):
 
     location_osm_id = Column(BigInteger, index=True)
     location_osm_type = Column(ChoiceType(LocationOSMType))
+    location_id: Mapped[int] = mapped_column(ForeignKey("locations.id"), nullable=True)
+    location: Mapped[Location] = relationship(back_populates="prices")
 
     date = Column(Date)
 
