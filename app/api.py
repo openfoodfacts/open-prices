@@ -207,6 +207,17 @@ def get_user_proofs(
     return crud.get_user_proofs(db, user=current_user)
 
 
+@app.get("/locations/{location_id}", response_model=schemas.LocationBase)
+async def get_location(location_id: int, db: Session = Depends(get_db)):
+    db_location = crud.get_location_by_id(db, id=location_id)
+    if not db_location:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Location with id {location_id} not found",
+        )
+    return db_location
+
+
 @app.get("/status")
 async def status_endpoint():
     return {"status": "running"}

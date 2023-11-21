@@ -176,6 +176,10 @@ def get_location_by_osm_id_and_type(
     )
 
 
+def get_location_by_id(db: Session, id: int):
+    return db.query(Location).filter(Location.id == id).first()
+
+
 def create_location(db: Session, location: LocationCreate):
     db_location = Location(**location.model_dump())
     db.add(db_location)

@@ -8,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 from app import crud
 from app.api import app, get_db
 from app.db import Base
-from app.schemas import PriceCreate, UserBase
+from app.schemas import LocationCreate, PriceCreate, UserBase
 
 # database setup
 # ------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 USER = UserBase(user_id="user1", token="user1__Utoken")
-
+LOCATION = LocationCreate(osm_id=3344841823, osm_type="NODE")
 PRICE_1 = PriceCreate(
     product_code="1111111111111",
     price=3.5,
@@ -55,6 +55,12 @@ PRICE_1 = PriceCreate(
 def user(db=override_get_db()):
     db_user = crud.create_user(next(db), USER)
     return db_user
+
+
+@pytest.fixture(scope="module")
+def location(db=override_get_db()):
+    db_location = crud.create_location(next(db), LOCATION)
+    return db_location
 
 
 # Tests
@@ -107,6 +113,8 @@ def test_get_prices():
     response = client.get("/prices")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
+    for price_field in ["location_id", "proof_id"]:
+        assert price_field in response.json()["items"][0]
 
 
 def test_get_prices_pagination():
@@ -138,3 +146,12 @@ def test_get_proofs(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 200
+
+
+def test_get_location(location):
+    # location exists
+    response = client.get(f"/locations/{location.id}")
+    assert response.status_code == 200
+    # location does not exist
+    response = client.get(f"/locations/{location.id+1}")
+    assert response.status_code == 404
