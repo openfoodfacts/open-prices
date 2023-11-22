@@ -208,6 +208,17 @@ def get_user_proofs(
     return crud.get_user_proofs(db, user=current_user)
 
 
+@app.get("/products/{product_id}", response_model=schemas.ProductBase)
+async def get_product(product_id: int, db: Session = Depends(get_db)):
+    db_product = crud.get_product_by_id(db, id=product_id)
+    if not db_product:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Product with id {product_id} not found",
+        )
+    return db_product
+
+
 @app.get("/locations/{location_id}", response_model=schemas.LocationBase)
 async def get_location(location_id: int, db: Session = Depends(get_db)):
     db_location = crud.get_location_by_id(db, id=location_id)
