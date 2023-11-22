@@ -21,8 +21,9 @@ def create_price_product(db: Session, price: PriceBase):
                 product=db_product
             )
             if product_openfoodfacts_details:
-                # TODO
-                pass
+                crud.update_product(
+                    db, location=db_product, update_dict=product_openfoodfacts_details
+                )
 
 
 def create_price_location(db: Session, price: PriceBase):

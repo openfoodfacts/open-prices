@@ -95,6 +95,14 @@ def get_or_create_product(db: Session, product: ProductCreate):
     return db_product, created
 
 
+def update_product(db: Session, product: ProductBase, update_dict: dict):
+    for key, value in update_dict.items():
+        setattr(product, key, value)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
 # Prices
 # ------------------------------------------------------------------------------
 def get_prices_query(filters: PriceFilter | None = None):
