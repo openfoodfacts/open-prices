@@ -95,7 +95,7 @@ def main_page(request: Request):
 
 
 @app.post("/auth")
-async def authentication(
+def authentication(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Session = Depends(get_db),
 ):
@@ -134,7 +134,7 @@ async def authentication(
 
 
 @app.get("/prices", response_model=Page[schemas.PriceBase])
-async def get_price(
+def get_price(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
 ):
@@ -142,7 +142,7 @@ async def get_price(
 
 
 @app.post("/prices", response_model=schemas.PriceBase)
-async def create_price(
+def create_price(
     price: schemas.PriceCreate,
     background_tasks: BackgroundTasks,
     current_user: schemas.UserBase = Depends(get_current_user),
@@ -209,7 +209,7 @@ def get_user_proofs(
 
 
 @app.get("/products/{product_id}", response_model=schemas.ProductBase)
-async def get_product(product_id: int, db: Session = Depends(get_db)):
+def get_product(product_id: int, db: Session = Depends(get_db)):
     db_product = crud.get_product_by_id(db, id=product_id)
     if not db_product:
         raise HTTPException(
@@ -220,7 +220,7 @@ async def get_product(product_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/locations/{location_id}", response_model=schemas.LocationBase)
-async def get_location(location_id: int, db: Session = Depends(get_db)):
+def get_location(location_id: int, db: Session = Depends(get_db)):
     db_location = crud.get_location_by_id(db, id=location_id)
     if not db_location:
         raise HTTPException(
@@ -231,7 +231,7 @@ async def get_location(location_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/status")
-async def status_endpoint():
+def status_endpoint():
     return {"status": "running"}
 
 
