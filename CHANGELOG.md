@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.1.0](https://github.com/openfoodfacts/open-prices/compare/v1.0.3...v1.1.0) (2023-11-22)
+
+
+### Features
+
+* fetch location data from OpenStreetMap Nominatim ([#38](https://github.com/openfoodfacts/open-prices/issues/38)) ([2044e6b](https://github.com/openfoodfacts/open-prices/commit/2044e6bdc287e361e891505dca55df8ce9140082))
+* fetch product data from OpenFoodFacts ([#49](https://github.com/openfoodfacts/open-prices/issues/49)) ([cc5a778](https://github.com/openfoodfacts/open-prices/commit/cc5a778d11bb0596582c488614b45c176ea7b123))
+* GET /locations/id endpoint to get location details ([#37](https://github.com/openfoodfacts/open-prices/issues/37)) ([4a4eca1](https://github.com/openfoodfacts/open-prices/commit/4a4eca1c1a8fc4e618d189f66a6e2bea5467c6d4))
+* GET /products/id endpoint to get product details ([#46](https://github.com/openfoodfacts/open-prices/issues/46)) ([74f011c](https://github.com/openfoodfacts/open-prices/commit/74f011ce1d112445f18a132de060edf612683e53))
+* on Price create, create (or get) Location, and link them ([#36](https://github.com/openfoodfacts/open-prices/issues/36)) ([003de11](https://github.com/openfoodfacts/open-prices/commit/003de11bb2ffc30e0e4af5631b1aa1fabc24a763))
+* on Price create, create (or get) Product, and link them ([#45](https://github.com/openfoodfacts/open-prices/issues/45)) ([71cf40a](https://github.com/openfoodfacts/open-prices/commit/71cf40ac914599d7884f848ae09dde02402cf1c7))
+* simple Location model ([#35](https://github.com/openfoodfacts/open-prices/issues/35)) ([32562ad](https://github.com/openfoodfacts/open-prices/commit/32562adcf52544a0ac388bdefa7df0cccdc3fb67))
+* simple Product model ([#44](https://github.com/openfoodfacts/open-prices/issues/44)) ([2bfa8f6](https://github.com/openfoodfacts/open-prices/commit/2bfa8f682148b97299be2c7e483e16e93d743d0c))
+
+
+### Bug Fixes
+
+* fix landing page ([cf9bb9d](https://github.com/openfoodfacts/open-prices/commit/cf9bb9d44c324e7b7a016be9ff2e1fdc23795917))
+* fix some typos in the landing page ([#51](https://github.com/openfoodfacts/open-prices/issues/51)) ([e5fee84](https://github.com/openfoodfacts/open-prices/commit/e5fee84246304e375c3fa0421e08cdd53ba07ad1))
+
 ## [1.0.3](https://github.com/openfoodfacts/open-prices/compare/v1.0.2...v1.0.3) (2023-11-20)
 
 
