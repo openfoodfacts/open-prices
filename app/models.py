@@ -42,6 +42,8 @@ class Product(Base):
     product_quantity = Column(Integer)
     image_url = Column(String)
 
+    prices: Mapped[list["Price"]] = relationship(back_populates="product")
+
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -88,6 +90,8 @@ class Price(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     product_code = Column(String, index=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=True)
+    product: Mapped[Product] = relationship(back_populates="prices")
 
     price = Column(Numeric(precision=10, scale=2))
     currency = Column(CurrencyType)

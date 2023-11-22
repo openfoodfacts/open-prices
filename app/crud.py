@@ -9,13 +9,15 @@ from sqlalchemy.sql import func
 
 from app import config
 from app.enums import LocationOSMType
-from app.models import Location, Price, Proof, User
+from app.models import Location, Price, Product, Proof, User
 from app.schemas import (
     LocationBase,
     LocationCreate,
     PriceBase,
     PriceCreate,
     PriceFilter,
+    ProductBase,
+    ProductCreate,
     UserBase,
 )
 
@@ -66,6 +68,27 @@ def delete_user(db: Session, user_id: UserBase):
     return False
 
 
+# Products
+# ------------------------------------------------------------------------------
+def get_product_by_code(db: Session, code: str):
+    return db.query(Product).filter(Product.code == code).first()
+
+
+def create_product(db: Session, product: ProductCreate):
+    db_product = Product(**product.model_dump())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
+def get_or_create_product(db: Session, product: ProductCreate):
+    db_product = get_product_by_code(db, code=product.code)
+    if not db_product:
+        db_product = create_product(db, product=product)
+    return db_product
+
+
 # Prices
 # ------------------------------------------------------------------------------
 def get_prices_query(filters: PriceFilter | None = None):
@@ -86,6 +109,13 @@ def create_price(db: Session, price: PriceCreate, user: UserBase):
     db.commit()
     db.refresh(db_price)
     return db_price
+
+
+def set_price_product(db: Session, price: PriceBase, product: ProductBase):
+    price.product_id = product.id
+    db.commit()
+    db.refresh(price)
+    return price
 
 
 def set_price_location(db: Session, price: PriceBase, location: LocationBase):

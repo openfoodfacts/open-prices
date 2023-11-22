@@ -1,7 +1,16 @@
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.schemas import LocationCreate, PriceBase
+from app.schemas import LocationCreate, PriceBase, ProductCreate
+
+
+def create_price_product(db: Session, price: PriceBase):
+    if price.product_code:
+        # get or create the corresponding product
+        product = ProductCreate(code=price.product_code)
+        db_product = crud.get_or_create_product(db, product=product)
+        # link the product to the price
+        crud.set_price_product(db, price=price, product=db_product)
 
 
 def create_price_location(db: Session, price: PriceBase):
