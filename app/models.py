@@ -1,3 +1,4 @@
+from openfoodfacts import Flavor
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -15,7 +16,7 @@ from sqlalchemy_utils.types.choice import ChoiceType
 from sqlalchemy_utils.types.currency import CurrencyType
 
 from app.db import Base
-from app.enums import LocationOSMType, ProductOFFSource
+from app.enums import LocationOSMType
 
 force_auto_coercion()
 
@@ -36,7 +37,7 @@ class Product(Base):
 
     code = Column(String, unique=True, index=True)
 
-    off_source = Column(ChoiceType(ProductOFFSource))
+    off_source = Column(ChoiceType(Flavor))
     off_name = Column(String)
     off_quantity = Column(Integer)
     off_image_url = Column(String)

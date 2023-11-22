@@ -2,6 +2,7 @@ from datetime import date, datetime
 from typing import Optional
 
 from fastapi_filter.contrib.sqlalchemy import Filter
+from openfoodfacts import Flavor
 from pydantic import (
     AnyHttpUrl,
     BaseModel,
@@ -12,7 +13,7 @@ from pydantic import (
 )
 from sqlalchemy_utils import Currency
 
-from app.enums import LocationOSMType, ProductOFFSource
+from app.enums import LocationOSMType
 from app.models import Price
 
 
@@ -31,7 +32,7 @@ class ProductCreate(BaseModel):
 
 class ProductBase(BaseModel):
     id: int
-    off_source: ProductOFFSource | None
+    off_source: Flavor | None
     off_name: str | None
     off_quantity: int | None
     off_image_url: AnyHttpUrl | None
