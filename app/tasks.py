@@ -9,9 +9,13 @@ def create_price_product(db: Session, price: PriceBase):
     if price.product_code:
         # get or create the corresponding product
         product = ProductCreate(code=price.product_code)
-        db_product = crud.get_or_create_product(db, product=product)
+        db_product, created = crud.get_or_create_product(db, product=product)
         # link the product to the price
         crud.set_price_product(db, price=price, product=db_product)
+        # fetch data from OpenFoodFacts if created
+        if created:
+            # TODO
+            pass
 
 
 def create_price_location(db: Session, price: PriceBase):

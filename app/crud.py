@@ -87,10 +87,12 @@ def create_product(db: Session, product: ProductCreate):
 
 
 def get_or_create_product(db: Session, product: ProductCreate):
+    created = False
     db_product = get_product_by_code(db, code=product.code)
     if not db_product:
         db_product = create_product(db, product=product)
-    return db_product
+        created = True
+    return db_product, created
 
 
 # Prices
