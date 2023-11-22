@@ -1,11 +1,14 @@
 import logging
 
 import sentry_sdk
+from openfoodfacts.utils import get_logger
 from OSMPythonTools.nominatim import Nominatim
 from sentry_sdk.integrations import Integration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from app.schemas import LocationBase
+
+logger = get_logger(__name__)
 
 
 def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None = None):
@@ -49,7 +52,6 @@ def fetch_location_openstreetmap_details(location: LocationBase):
                         ] = response[0]["address"][osm_address_field]
 
         return location_openstreetmap_details
-    except Exception as e:
-        print("fetch_location_openstreetmap_details: error returned from OpenStreetMap")
-        print(e)
+    except Exception:
+        logger.exception("error returned from OpenStreetMap")
         return

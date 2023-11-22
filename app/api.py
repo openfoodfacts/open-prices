@@ -117,12 +117,12 @@ def authentication(
     data = {"user_id": form_data.username, "password": form_data.password}
     r = requests.post(settings.oauth2_server_url, data=data)  # type: ignore
     if r.status_code == 200:
-        token = await create_token(form_data.username)
+        token = create_token(form_data.username)
         user = schemas.UserBase(user_id=form_data.username, token=token)
         crud.create_user(db, user=user)
         return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
-        await asyncio.sleep(2)  # prevents brute-force
+        asyncio.sleep(2)  # prevents brute-force
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
