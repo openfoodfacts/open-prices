@@ -37,10 +37,10 @@ class Product(Base):
 
     code = Column(String, unique=True, index=True)
 
-    off_source = Column(ChoiceType(Flavor))
-    off_name = Column(String)
-    off_quantity = Column(Integer)
-    off_image_url = Column(String)
+    source = Column(ChoiceType(Flavor))
+    product_name = Column(String)
+    product_quantity = Column(Integer)
+    image_url = Column(String)
 
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())

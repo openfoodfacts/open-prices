@@ -32,10 +32,10 @@ class ProductCreate(BaseModel):
 
 class ProductBase(BaseModel):
     id: int
-    off_source: Flavor | None
-    off_name: str | None
-    off_quantity: int | None
-    off_image_url: AnyHttpUrl | None
+    source: Flavor | None
+    product_name: str | None
+    product_quantity: int | None
+    image_url: AnyHttpUrl | None
     created: datetime
     updated: datetime | None
 
