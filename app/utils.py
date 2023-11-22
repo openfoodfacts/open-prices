@@ -1,16 +1,19 @@
 import logging
 
 import sentry_sdk
+from openfoodfacts import API, APIVersion, Country, Environment, Flavor
 from openfoodfacts.utils import get_logger
 from OSMPythonTools.nominatim import Nominatim
 from sentry_sdk.integrations import Integration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-from app.schemas import LocationBase
+from app.schemas import LocationBase, ProductBase
 
 logger = get_logger(__name__)
 
 
+# Sentry
+# ------------------------------------------------------------------------------
 def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None = None):
     if sentry_dsn:
         integrations = integrations or []
@@ -26,6 +29,39 @@ def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None =
         )
 
 
+# OpenFoodFacts
+# ------------------------------------------------------------------------------
+def openfoodfacts_product_search(code: str):
+    client = API(
+        username=None,
+        password=None,
+        country=Country.world,
+        flavor=Flavor.off,
+        version=APIVersion.v2,
+        environment=Environment.org,
+    )
+    return client.product.get(code)
+
+
+def fetch_product_openfoodfacts_details(product: ProductBase):
+    product_openfoodfacts_details = dict()
+    try:
+        response = openfoodfacts_product_search(code=product.code)
+        if response["status"]:
+            product_openfoodfacts_details["source"] = Flavor.off
+            for off_field in ["product_name", "product_quantity", "image_url"]:
+                if off_field in response["product"]:
+                    product_openfoodfacts_details[off_field] = response["product"][
+                        off_field
+                    ]
+        return product_openfoodfacts_details
+    except Exception:
+        logger.exception("Error returned from OpenFoodFacts")
+        return
+
+
+# OpenStreetMap
+# ------------------------------------------------------------------------------
 def openstreetmap_nominatim_search(osm_id: int, osm_type: str):
     client = Nominatim()
     search_query = f"{osm_type}/{osm_id}"
@@ -53,5 +89,5 @@ def fetch_location_openstreetmap_details(location: LocationBase):
 
         return location_openstreetmap_details
     except Exception:
-        logger.exception("error returned from OpenStreetMap")
+        logger.exception("Error returned from OpenStreetMap")
         return
