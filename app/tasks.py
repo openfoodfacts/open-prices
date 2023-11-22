@@ -2,7 +2,10 @@ from sqlalchemy.orm import Session
 
 from app import crud
 from app.schemas import LocationCreate, PriceBase, ProductCreate
-from app.utils import fetch_location_openstreetmap_details
+from app.utils import (
+    fetch_location_openstreetmap_details,
+    fetch_product_openfoodfacts_details,
+)
 
 
 def create_price_product(db: Session, price: PriceBase):
@@ -14,8 +17,12 @@ def create_price_product(db: Session, price: PriceBase):
         crud.set_price_product(db, price=price, product=db_product)
         # fetch data from OpenFoodFacts if created
         if created:
-            # TODO
-            pass
+            product_openfoodfacts_details = fetch_product_openfoodfacts_details(
+                product=db_product
+            )
+            if product_openfoodfacts_details:
+                # TODO
+                pass
 
 
 def create_price_location(db: Session, price: PriceBase):
