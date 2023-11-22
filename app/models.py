@@ -1,3 +1,4 @@
+from openfoodfacts import Flavor
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -31,12 +32,27 @@ class User(Base):
     __tablename__ = "users"
 
 
+class Product(Base):
+    id = Column(Integer, primary_key=True, index=True)
+
+    code = Column(String, unique=True, index=True)
+
+    source = Column(ChoiceType(Flavor))
+    product_name = Column(String)
+    product_quantity = Column(Integer)
+    image_url = Column(String)
+
+    created = Column(DateTime(timezone=True), server_default=func.now())
+    updated = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __tablename__ = "products"
+
+
 class Location(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     osm_id = Column(BigInteger)
     osm_type = Column(ChoiceType(LocationOSMType))
-
     osm_name = Column(String)
     osm_display_name = Column(String)
     osm_address_postcode = Column(String)

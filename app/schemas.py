@@ -2,7 +2,15 @@ from datetime import date, datetime
 from typing import Optional
 
 from fastapi_filter.contrib.sqlalchemy import Filter
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from openfoodfacts import Flavor
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+)
 from sqlalchemy_utils import Currency
 
 from app.enums import LocationOSMType
@@ -14,6 +22,22 @@ class UserBase(BaseModel):
 
     user_id: str
     token: str
+
+
+class ProductCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+    code: str
+
+
+class ProductBase(BaseModel):
+    id: int
+    source: Flavor | None
+    product_name: str | None
+    product_quantity: int | None
+    image_url: AnyHttpUrl | None
+    created: datetime
+    updated: datetime | None
 
 
 class LocationCreate(BaseModel):
