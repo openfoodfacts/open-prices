@@ -70,6 +70,10 @@ def delete_user(db: Session, user_id: UserBase):
 
 # Products
 # ------------------------------------------------------------------------------
+def get_product_by_id(db: Session, id: int):
+    return db.query(Product).filter(Product.id == id).first()
+
+
 def get_product_by_code(db: Session, code: str):
     return db.query(Product).filter(Product.code == code).first()
 
@@ -195,6 +199,10 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
 
 # Locations
 # ------------------------------------------------------------------------------
+def get_location_by_id(db: Session, id: int):
+    return db.query(Location).filter(Location.id == id).first()
+
+
 def get_location_by_osm_id_and_type(
     db: Session, osm_id: int, osm_type: LocationOSMType
 ):
@@ -204,10 +212,6 @@ def get_location_by_osm_id_and_type(
         .filter(Location.osm_type == osm_type)
         .first()
     )
-
-
-def get_location_by_id(db: Session, id: int):
-    return db.query(Location).filter(Location.id == id).first()
 
 
 def create_location(db: Session, location: LocationCreate):
