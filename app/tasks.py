@@ -22,7 +22,7 @@ def create_price_product(db: Session, price: PriceBase):
             )
             if product_openfoodfacts_details:
                 crud.update_product(
-                    db, location=db_product, update_dict=product_openfoodfacts_details
+                    db, product=db_product, update_dict=product_openfoodfacts_details
                 )
 
 

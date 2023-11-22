@@ -50,13 +50,13 @@ def fetch_product_openfoodfacts_details(product: ProductBase):
         if response["status"]:
             product_openfoodfacts_details["source"] = Flavor.off
             for off_field in ["product_name", "product_quantity", "image_url"]:
-                if off_field in response[0]:
+                if off_field in response["product"]:
                     product_openfoodfacts_details[off_field] = response["product"][
                         off_field
                     ]
         return product_openfoodfacts_details
     except Exception:
-        logger.exception("error returned from OpenFoodFacts")
+        logger.exception("Error returned from OpenFoodFacts")
         return
 
 
@@ -89,5 +89,5 @@ def fetch_location_openstreetmap_details(location: LocationBase):
 
         return location_openstreetmap_details
     except Exception:
-        logger.exception("error returned from OpenStreetMap")
+        logger.exception("Error returned from OpenStreetMap")
         return
