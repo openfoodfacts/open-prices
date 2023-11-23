@@ -9,6 +9,8 @@ from app.utils import (
 
 
 def create_price_product(db: Session, price: PriceBase):
+    # The price may not have a product code, if it's the price of a
+    # barcode-less product
     if price.product_code:
         # get or create the corresponding product
         product = ProductCreate(code=price.product_code)

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+import datetime
 from typing import Optional
 
 from fastapi_filter.contrib.sqlalchemy import Filter
@@ -10,6 +10,7 @@ from pydantic import (
     Field,
     field_serializer,
     field_validator,
+    model_validator,
 )
 from sqlalchemy_utils import Currency
 
@@ -36,8 +37,8 @@ class ProductBase(BaseModel):
     product_name: str | None
     product_quantity: int | None
     image_url: AnyHttpUrl | None
-    created: datetime
-    updated: datetime | None
+    created: datetime.datetime
+    updated: datetime.datetime | None
 
 
 class LocationCreate(BaseModel):
@@ -56,20 +57,64 @@ class LocationBase(LocationCreate):
     osm_address_country: str | None
     osm_lat: float | None
     osm_lon: float | None
-    created: datetime
-    updated: datetime | None
+    created: datetime.datetime
+    updated: datetime.datetime | None
 
 
 class PriceCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+    product_code: str | None = Field(
+        default=None,
+        min_length=1,
+        pattern="^[0-9]+$",
+        description="barcode (EAN) of the product, as a string.",
+        examples=["16584958", "1234567890123"],
+    )
+    category_tag: str | None = Field(
+        default=None,
+        min_length=3,
+        pattern=r"^[a-z]{2,}:[a-zA-Z\-]+$",
+        examples=["en:tomatoes", "en:apples"],
+        description="""ID of the Open Food Facts category of the product for
+        products without barcode.
 
-    product_code: str = Field(min_length=1, pattern="^[0-9]+$")
-    price: float
-    currency: str | Currency
-    location_osm_id: int = Field(gt=0)
-    location_osm_type: LocationOSMType
-    date: date
-    proof_id: int | None = None
+        This is mostly for raw products such as vegetables or fruits. This
+        field is exclusive with `product_code`: if this field is set, it means
+        that the product does not have a barcode.
+
+        This ID must be a canonical category ID in the Open Food Facts taxonomy.
+        If the ID is not valid, the price will be rejected.""",
+    )
+    price: float = Field(
+        gt=0,
+        description="price of the product, without its currency, taxes included.",
+        examples=["1.99"],
+    )
+    currency: str | Currency = Field(
+        description="currency of the price, as a string. "
+        "The currency must be a valid currency code. "
+        "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
+        examples=["EUR", "USD"],
+    )
+    location_osm_id: int = Field(
+        gt=0,
+        description="ID of the location in OpenStreetMap: the store where the product was bought.",
+        examples=[1234567890],
+    )
+    location_osm_type: LocationOSMType = Field(
+        description="type of the OpenStreetMap location object. Stores can be represented as nodes, "
+        "ways or relations in OpenStreetMap. It is necessary to be able to fetch the correct "
+        "information about the store using the ID.",
+    )
+    date: datetime.date = Field(description="date when the product was bought.")
+    proof_id: int | None = Field(
+        default=None,
+        description="ID of the proof, if any. The proof is a file (receipt or price tag image) "
+        "uploaded by the user to prove the price of the product. "
+        "The proof must be uploaded before the price, and the authenticated user must be the "
+        "owner of the proof.",
+        examples=[15],
+    )
 
     @field_validator("currency")
     def currency_is_valid(cls, v):
@@ -84,12 +129,24 @@ class PriceCreate(BaseModel):
             return currency.code
         return currency
 
+    @model_validator(mode="after")
+    def product_code_and_category_tag_are_exclusive(self):
+        """Validator that checks that `product_code` and `category_tag` are
+        exclusive, and that at least one of them is set."""
+        if self.product_code is not None and self.category_tag is not None:
+            raise ValueError(
+                "`product_code` and `category_tag` are exclusive, you can't set both"
+            )
+        if self.product_code is None and self.category_tag is None:
+            raise ValueError("either `product_code` or `category_tag` must be set")
+        return self
+
 
 class PriceBase(PriceCreate):
     product_id: int | None
     location_id: int | None
     # owner: str
-    created: datetime
+    created: datetime.datetime
 
 
 class ProofCreate(BaseModel):
@@ -102,7 +159,7 @@ class ProofCreate(BaseModel):
 class ProofBase(ProofCreate):
     id: int
     owner: str
-    created: datetime
+    created: datetime.datetime
 
 
 class PriceFilter(Filter):

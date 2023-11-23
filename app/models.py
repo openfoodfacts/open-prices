@@ -89,7 +89,8 @@ class Proof(Base):
 class Price(Base):
     id = Column(Integer, primary_key=True, index=True)
 
-    product_code = Column(String, index=True)
+    product_code = Column(String, nullable=True, index=True)
+    category_tag = Column(String, nullable=True, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=True)
     product: Mapped[Product] = relationship(back_populates="prices")
 
