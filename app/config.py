@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_host: str
     postgres_port: int = 5432
+    cors_allow_origins: list = []
     oauth2_server_url: str | None = None
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
