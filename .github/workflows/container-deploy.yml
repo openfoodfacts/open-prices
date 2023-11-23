@@ -147,10 +147,16 @@ jobs:
         script_stop: false
         script: |
           cd ${{ matrix.env }}
+          # Get the latest version (to apply migration next)
+          make pull
+          # Apply migrations
+          make migrate-db
+          # Launch new version
           make up
 
     - name: Check services are up
       uses: appleboy/ssh-action@master
+      id: livecheck
       if: ${{ always() }}
       with:
         host: ${{ env.SSH_HOST }}
@@ -162,6 +168,8 @@ jobs:
         script_stop: false
         script: |
           cd ${{ matrix.env }}
+          # Let 10s to the API to be up
+          sleep 10
           make livecheck
 
     - name: Cleanup obsolete Docker objects
