@@ -37,12 +37,19 @@ class ProductCreate(BaseModel):
 
 class ProductBase(ProductCreate):
     id: int
-    source: Flavor | None
-    product_name: str | None
-    product_quantity: int | None
-    image_url: AnyHttpUrl | None
-    created: datetime.datetime
-    updated: datetime.datetime | None
+    source: Flavor | None = Field(
+        description="source of data, either `off` (Open Food Facts), "
+        "`obf` (Open Beauty Facts), `opff` (Open Pet Food Facts) or `obf` (Open Beauty Facts)"
+    )
+    product_name: str | None = Field(description="name of the product.")
+    product_quantity: int | None = Field(
+        description="quantity of the product, normalized in g or mL (depending on the product)."
+    )
+    image_url: AnyHttpUrl | None = Field(description="URL of the product image.")
+    created: datetime.datetime = Field(description="datetime of the creation.")
+    updated: datetime.datetime | None = Field(
+        description="datetime of the last update."
+    )
 
 
 class LocationCreate(BaseModel):
