@@ -31,7 +31,7 @@ class ProductCreate(BaseModel):
     code: str
 
 
-class ProductBase(BaseModel):
+class ProductBase(ProductCreate):
     id: int
     source: Flavor | None
     product_name: str | None
