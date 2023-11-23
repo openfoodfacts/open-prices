@@ -32,6 +32,7 @@ class ProductCreate(BaseModel):
         min_length=1,
         pattern="^[0-9]+$",
         description="barcode (EAN) of the product, as a string.",
+        examples=["8001505005707"],
     )
 
 
@@ -41,11 +42,19 @@ class ProductBase(ProductCreate):
         description="source of data, either `off` (Open Food Facts), "
         "`obf` (Open Beauty Facts), `opff` (Open Pet Food Facts) or `obf` (Open Beauty Facts)"
     )
-    product_name: str | None = Field(description="name of the product.")
-    product_quantity: int | None = Field(
-        description="quantity of the product, normalized in g or mL (depending on the product)."
+    product_name: str | None = Field(
+        description="name of the product.", examples=["Nocciolata"]
     )
-    image_url: AnyHttpUrl | None = Field(description="URL of the product image.")
+    product_quantity: int | None = Field(
+        description="quantity of the product, normalized in g or mL (depending on the product).",
+        examples=[700],
+    )
+    image_url: AnyHttpUrl | None = Field(
+        description="URL of the product image.",
+        examples=[
+            "https://images.openfoodfacts.org/images/products/800/150/500/5707/front_fr.161.400.jpg"
+        ],
+    )
     created: datetime.datetime = Field(description="datetime of the creation.")
     updated: datetime.datetime | None = Field(
         description="datetime of the last update."
@@ -79,7 +88,7 @@ class PriceCreate(BaseModel):
         min_length=1,
         pattern="^[0-9]+$",
         description="barcode (EAN) of the product, as a string.",
-        examples=["16584958", "1234567890123"],
+        examples=["16584958", "8001505005707"],
     )
     category_tag: str | None = Field(
         default=None,
