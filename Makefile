@@ -122,6 +122,11 @@ create_external_volumes:
 	@echo "🥫 Creating external volumes (production only) …"
 	docker volume create open_prices_postgres-data
 
+
+migrate-db:
+	@echo "🥫 Migrating database …"
+	${DOCKER_COMPOSE} run --rm --no-deps api poetry run alembic upgrade head
+
 #---------#
 # Cleanup #
 #---------#
