@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).parent.parent
@@ -35,8 +36,8 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_password: str
     postgres_host: str
-    postgres_port: int = 5432
-    cors_allow_origins: list = []
+    postgres_port: int = Field(default=5432)
+    cors_allow_origins: list[str] = Field(default=[])
     oauth2_server_url: str | None = None
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
