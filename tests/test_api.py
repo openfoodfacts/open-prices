@@ -132,6 +132,21 @@ def test_create_price_product_code_pattern_validation(user):
         assert response.status_code == 422
 
 
+def test_create_price_category_tag_pattern_validation(user):
+    # category_tag must follow a certain pattern (ex: "en:tomatoes")
+    WRONG_PRICE_CATEGORY_TAGS = ["", ":", "en", ":tomatoes"]
+    for wrong_price_category_tag in WRONG_PRICE_CATEGORY_TAGS:
+        PRICE_WITH_CATEGORY_TAG_ERROR = PRICE_1.model_copy(
+            update={"product_code": None, "category_tag": wrong_price_category_tag}
+        )
+        response = client.post(
+            "/prices",
+            json=jsonable_encoder(PRICE_WITH_CATEGORY_TAG_ERROR),
+            headers={"Authorization": f"Bearer {user.token}"},
+        )
+        assert response.status_code == 422
+
+
 def test_create_price_code_category_exclusive_validation(user):
     # both product_code & category_tag missing: error
     PRICE_WITH_CODE_AND_CATEGORY_MISSING = PRICE_1.model_copy(
