@@ -179,7 +179,9 @@ def get_price(
     return paginate(db, crud.get_prices_query(filters=filters))
 
 
-@app.post("/prices", response_model=schemas.PriceBase)
+@app.post(
+    "/prices", response_model=schemas.PriceBase, status_code=status.HTTP_201_CREATED
+)
 def create_price(
     price: schemas.PriceCreate,
     background_tasks: BackgroundTasks,
@@ -236,7 +238,11 @@ def create_price(
     return db_price
 
 
-@app.post("/proofs/upload", response_model=schemas.ProofBase)
+@app.post(
+    "/proofs/upload",
+    response_model=schemas.ProofBase,
+    status_code=status.HTTP_201_CREATED,
+)
 def upload_proof(
     file: UploadFile,
     current_user: schemas.UserBase = Depends(get_current_user),
