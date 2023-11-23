@@ -194,6 +194,17 @@ def create_price(
                 detail=f"Invalid category tag: category '{price.category_tag}' does not exist in the taxonomy",
             )
 
+    if price.labels_tags is not None:
+        # lowercase the labels tags to perform the match
+        price.labels_tags = [label_tag.lower() for label_tag in price.labels_tags]
+        labels_taxonomy = get_taxonomy("label")
+        for label_tag in price.labels_tags:
+            if label_tag not in labels_taxonomy:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid label tag: label '{label_tag}' does not exist in the taxonomy",
+                )
+
     db_price = crud.create_price(db, price=price, user=current_user)
     background_tasks.add_task(tasks.create_price_product, db, db_price)
     background_tasks.add_task(tasks.create_price_location, db, db_price)

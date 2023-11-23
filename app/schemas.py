@@ -105,9 +105,25 @@ class PriceCreate(BaseModel):
         This ID must be a canonical category ID in the Open Food Facts taxonomy.
         If the ID is not valid, the price will be rejected.""",
     )
+    labels_tags: list[str] | None = Field(
+        default=None,
+        description="""labels of the product, only for products without barcode.
+
+        The labels must be valid labels in the Open Food Facts taxonomy.
+        If one of the labels is not valid, the price will be rejected.
+
+        The most common labels are:
+        - `en:organic`: the product is organic
+        - `en:fair-trade`: the product is fair-trade
+
+        Other labels can be provided if relevant.
+        """,
+    )
     price: float = Field(
         gt=0,
-        description="price of the product, without its currency, taxes included.",
+        description="price of the product, without its currency, taxes included. "
+        "If the price is about a barcode-less product, it must be the price per "
+        "kilogram or per liter.",
         examples=["1.99"],
     )
     currency: str | Currency = Field(
@@ -142,6 +158,12 @@ class PriceCreate(BaseModel):
             return Currency(v).code
         except ValueError:
             raise ValueError("not a valid currency code")
+
+    @field_validator("labels_tags")
+    def labels_tags_is_valid(cls, v):
+        if v is not None:
+            if len(v) == 0:
+                raise ValueError("`labels_tags` cannot be empty")
 
     @field_serializer("currency")
     def serialize_currency(self, currency: Currency, _info):
