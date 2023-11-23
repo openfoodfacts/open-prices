@@ -9,13 +9,15 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
+    Query,
     Request,
+    Response,
     UploadFile,
     status,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, PlainTextResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi_filter import FilterDepends
@@ -26,6 +28,7 @@ from openfoodfacts.utils import get_logger
 from sqlalchemy.orm import Session
 
 from app import crud, schemas, tasks
+from app.auth import OAuth2PasswordBearerOrAuthCookie
 from app.config import settings
 from app.db import session
 from app.utils import init_sentry
@@ -74,7 +77,7 @@ def get_db():
 
 # Authentication helpers
 # ------------------------------------------------------------------------------
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
+oauth2_scheme = OAuth2PasswordBearerOrAuthCookie(tokenUrl="auth")
 
 
 def create_token(user_id: str):
@@ -110,16 +113,30 @@ def main_page(request: Request):
 @app.post("/auth")
 def authentication(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    response: Response,
+    set_cookie: Annotated[
+        bool,
+        Query(
+            description="if set to 1, the token is also set as a cookie "
+            "named 'session' in the response. This parameter must be passed "
+            "as a query parameter, e.g.: /auth?set_cookie=1"
+        ),
+    ] = False,
     db: Session = Depends(get_db),
 ):
     """
-    Authentication: provide username/password and get a bearer token in return
+    Authentication: provide username/password and get a bearer token in return.
 
     - **username**: Open Food Facts user_id (not email)
     - **password**: user password (clear text, but HTTPS encrypted)
 
-    a **token** is returned
-    to be used in requests with usual "Authorization: bearer token" header
+    A **token** is returned. If the **set_cookie** parameter is set to 1,
+    the token is also set as a cookie named "session" in the response.
+
+    To authenticate, you can either:
+    - use the **Authorization** header with the **Bearer** scheme,
+      e.g.: "Authorization: bearer token"
+    - use the **session** cookie, e.g.: "Cookie: session=token"
     """
     if "oauth2_server_url" not in settings.model_dump():
         raise HTTPException(
@@ -133,6 +150,14 @@ def authentication(
         token = create_token(form_data.username)
         user = schemas.UserBase(user_id=form_data.username, token=token)
         crud.create_user(db, user=user)
+
+        # set the cookie if requested
+        if set_cookie:
+            # Don't add httponly=True or secure=True as it's still in
+            # development phase, but it should be added once the front-end
+            # is ready
+            response.set_cookie(key="session", value=token)
+
         return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
         time.sleep(2)  # prevents brute-force
