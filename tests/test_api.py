@@ -147,6 +147,21 @@ def test_create_price_category_tag_pattern_validation(user):
         assert response.status_code == 422
 
 
+def test_create_price_currency_validation(user):
+    # currency must have a specific format (ex: "EUR")
+    WRONG_PRICE_CURRENCIES = ["", "€", "euro"]
+    for wrong_price_currency in WRONG_PRICE_CURRENCIES:
+        PRICE_WITH_CATEGORY_TAG_ERROR = PRICE_1.model_copy(
+            update={"currency": wrong_price_currency}
+        )
+        response = client.post(
+            "/prices",
+            json=jsonable_encoder(PRICE_WITH_CATEGORY_TAG_ERROR),
+            headers={"Authorization": f"Bearer {user.token}"},
+        )
+        assert response.status_code == 422
+
+
 def test_create_price_code_category_exclusive_validation(user):
     # both product_code & category_tag missing: error
     PRICE_WITH_CODE_AND_CATEGORY_MISSING = PRICE_1.model_copy(
