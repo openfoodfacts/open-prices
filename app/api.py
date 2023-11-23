@@ -1,4 +1,4 @@
-import asyncio
+import time
 import uuid
 from pathlib import Path
 from typing import Annotated
@@ -124,7 +124,7 @@ def authentication(
         crud.create_user(db, user=user)
         return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
-        asyncio.sleep(2)  # prevents brute-force
+        time.sleep(2)  # prevents brute-force
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
