@@ -15,6 +15,7 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page, add_pagination
@@ -253,3 +254,4 @@ def robots_txt():
 
 
 add_pagination(app)
+app.mount("/images", StaticFiles(directory=str(settings.images_dir)), name="images")
