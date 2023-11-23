@@ -117,7 +117,22 @@ def test_create_price_required_fields_validation(user):
         assert response.status_code == 422
 
 
-def test_create_price_code_or_category_exclusive_validation(user):
+def test_create_price_product_code_pattern_validation(user):
+    # product_code cannot be an empty string, nor contain letters
+    WRONG_PRICE_PRODUCT_CODES = ["", "en:tomates", "8001505005707XYZ"]
+    for wrong_price_product_code in WRONG_PRICE_PRODUCT_CODES:
+        PRICE_WITH_PRODUCT_CODE_ERROR = PRICE_1.model_copy(
+            update={"product_code": wrong_price_product_code}
+        )
+        response = client.post(
+            "/prices",
+            json=jsonable_encoder(PRICE_WITH_PRODUCT_CODE_ERROR),
+            headers={"Authorization": f"Bearer {user.token}"},
+        )
+        assert response.status_code == 422
+
+
+def test_create_price_code_category_exclusive_validation(user):
     # both product_code & category_tag missing: error
     PRICE_WITH_CODE_AND_CATEGORY_MISSING = PRICE_1.model_copy(
         update={"product_code": None}
