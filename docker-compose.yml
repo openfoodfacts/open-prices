@@ -9,6 +9,7 @@ x-api-common: &api-common
     - POSTGRES_PASSWORD
     - POSTGRES_HOST
     - POSTGRES_PORT
+    - CORS_ALLOW_ORIGINS
     - OAUTH2_SERVER_URL
     - SENTRY_DNS
     - LOG_LEVEL
