@@ -9,6 +9,7 @@ from sqlalchemy import (
     Numeric,
     String,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy_utils import force_auto_coercion
@@ -91,6 +92,7 @@ class Price(Base):
 
     product_code = Column(String, nullable=True, index=True)
     category_tag = Column(String, nullable=True, index=True)
+    labels_tags = Column(JSONB, nullable=True, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=True)
     product: Mapped[Product] = relationship(back_populates="prices")
 
