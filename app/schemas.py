@@ -28,7 +28,11 @@ class UserBase(BaseModel):
 class ProductCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
-    code: str
+    code: str = Field(
+        min_length=1,
+        pattern="^[0-9]+$",
+        description="barcode (EAN) of the product, as a string.",
+    )
 
 
 class ProductBase(ProductCreate):
