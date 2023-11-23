@@ -14,15 +14,13 @@
 git clone https://github.com/openfoodfacts/open-prices.git
 cd open-prices
 
-# required packages to setup a virtualenv (optional, but recommended)
-apt install python3-virtualenv virtualenv
+# install poetry (Python dependency manager)
+# see https://python-poetry.org/docs/
 
-# create and switch to virtualenv
-python -m venv venv
-source venv/bin/activate
+# install dependencies (pyproject.toml)
+poetry install
 
-# install dependencies
-pip install -r requirements.txt
+# note: all future commands should be prefixed with `poetry run`
 
 # run migrations
 alembic upgrade head
