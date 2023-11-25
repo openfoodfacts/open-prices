@@ -14,10 +14,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy_utils import force_auto_coercion
 from sqlalchemy_utils.types.choice import ChoiceType
-from sqlalchemy_utils.types.currency import CurrencyType
 
 from app.db import Base
-from app.enums import LocationOSMType
+from app.enums import CurrencyEnum, LocationOSMType
 
 force_auto_coercion()
 
@@ -97,7 +96,7 @@ class Price(Base):
     product: Mapped[Product] = relationship(back_populates="prices")
 
     price = Column(Numeric(precision=10, scale=2))
-    currency = Column(CurrencyType)
+    currency = Column(ChoiceType(CurrencyEnum))
 
     location_osm_id = Column(BigInteger, index=True)
     location_osm_type = Column(ChoiceType(LocationOSMType))

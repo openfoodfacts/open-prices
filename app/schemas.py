@@ -8,13 +8,11 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    field_serializer,
     field_validator,
     model_validator,
 )
-from sqlalchemy_utils import Currency
 
-from app.enums import LocationOSMType
+from app.enums import CurrencyEnum, LocationOSMType
 from app.models import Price
 
 
@@ -126,7 +124,7 @@ class PriceCreate(BaseModel):
         "kilogram or per liter.",
         examples=["1.99"],
     )
-    currency: str | Currency = Field(
+    currency: CurrencyEnum = Field(
         description="currency of the price, as a string. "
         "The currency must be a valid currency code. "
         "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
@@ -152,24 +150,11 @@ class PriceCreate(BaseModel):
         examples=[15],
     )
 
-    @field_validator("currency")
-    def currency_is_valid(cls, v):
-        try:
-            return Currency(v).code
-        except ValueError:
-            raise ValueError("not a valid currency code")
-
     @field_validator("labels_tags")
     def labels_tags_is_valid(cls, v):
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`labels_tags` cannot be empty")
-
-    @field_serializer("currency")
-    def serialize_currency(self, currency: Currency, _info):
-        if type(currency) is Currency:
-            return currency.code
-        return currency
 
     @model_validator(mode="after")
     def product_code_and_category_tag_are_exclusive(self):
