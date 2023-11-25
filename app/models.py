@@ -16,7 +16,7 @@ from sqlalchemy_utils import force_auto_coercion
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from app.db import Base
-from app.enums import CurrencyEnum, LocationOSMEnum
+from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
 
 force_auto_coercion()
 
@@ -76,6 +76,8 @@ class Proof(Base):
 
     file_path = Column(String, nullable=False)
     mimetype = Column(String, index=True)
+
+    type = Column(ChoiceType(ProofTypeEnum))
 
     prices: Mapped[list["Price"]] = relationship(back_populates="proof")
 
