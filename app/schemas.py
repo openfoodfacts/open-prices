@@ -12,7 +12,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.enums import CurrencyEnum, LocationOSMType
+from app.enums import CurrencyEnum, LocationOSMEnum
 from app.models import Price
 
 
@@ -63,7 +63,7 @@ class LocationCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     osm_id: int = Field(gt=0)
-    osm_type: LocationOSMType
+    osm_type: LocationOSMEnum
 
 
 class LocationBase(LocationCreate):
@@ -135,7 +135,7 @@ class PriceCreate(BaseModel):
         description="ID of the location in OpenStreetMap: the store where the product was bought.",
         examples=[1234567890],
     )
-    location_osm_type: LocationOSMType = Field(
+    location_osm_type: LocationOSMEnum = Field(
         description="type of the OpenStreetMap location object. Stores can be represented as nodes, "
         "ways or relations in OpenStreetMap. It is necessary to be able to fetch the correct "
         "information about the store using the ID.",
@@ -192,7 +192,7 @@ class ProofBase(ProofCreate):
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
     location_osm_id: Optional[int] | None = None
-    location_osm_type: Optional[LocationOSMType] | None = None
+    location_osm_type: Optional[LocationOSMEnum] | None = None
     price: Optional[int] | None = None
     currency: Optional[str] | None = None
     price__gt: Optional[int] | None = None

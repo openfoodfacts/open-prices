@@ -7,7 +7,7 @@ CURRENCIES = [(currency, currency) for currency in list_currencies()]
 CurrencyEnum = Enum("CurrencyEnum", CURRENCIES)
 
 
-class LocationOSMType(Enum):
+class LocationOSMEnum(Enum):
     NODE = "NODE"
     WAY = "WAY"
     RELATION = "RELATION"
