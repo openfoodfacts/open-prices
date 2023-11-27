@@ -17,4 +17,3 @@ class ProofTypeEnum(Enum):
     PRICE_TAG = "PRICE_TAG"
     RECEIPT = "RECEIPT"
     GDPR_REQUEST = "GDPR_REQUEST"
-    RETAILER = "RETAILER"
