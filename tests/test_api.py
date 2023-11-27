@@ -151,12 +151,26 @@ def test_create_price_currency_validation(user):
     # currency must have a specific format (ex: "EUR")
     WRONG_PRICE_CURRENCIES = ["", "€", "euro"]
     for wrong_price_currency in WRONG_PRICE_CURRENCIES:
-        PRICE_WITH_CATEGORY_TAG_ERROR = PRICE_1.model_copy(
+        PRICE_WITH_CURRENCY_ERROR = PRICE_1.model_copy(
             update={"currency": wrong_price_currency}
         )
         response = client.post(
             "/prices",
-            json=jsonable_encoder(PRICE_WITH_CATEGORY_TAG_ERROR),
+            json=jsonable_encoder(PRICE_WITH_CURRENCY_ERROR),
+            headers={"Authorization": f"Bearer {user.token}"},
+        )
+        assert response.status_code == 422
+
+
+def test_create_price_location_osm_type_validation(user):
+    WRONG_PRICE_LOCATION_OSM_TYPES = ["", "node"]
+    for wrong_price_location_osm_type in WRONG_PRICE_LOCATION_OSM_TYPES:
+        PRICE_WITH_LOCATION_OSM_TYPE_ERROR = PRICE_1.model_copy(
+            update={"location_osm_type": wrong_price_location_osm_type}
+        )
+        response = client.post(
+            "/prices",
+            json=jsonable_encoder(PRICE_WITH_LOCATION_OSM_TYPE_ERROR),
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
@@ -207,12 +221,12 @@ def test_create_price_labels_tags_pattern_validation(user):
     # product_code cannot be an empty string, nor contain letters
     WRONG_PRICE_LABELS_TAGS = [[]]
     for wrong_price_labels_tags in WRONG_PRICE_LABELS_TAGS:
-        PRICE_WITH_PRODUCT_CODE_ERROR = PRICE_1.model_copy(
+        PRICE_WITH_LABELS_TAGS_ERROR = PRICE_1.model_copy(
             update={"labels_tags": wrong_price_labels_tags}
         )
         response = client.post(
             "/prices",
-            json=jsonable_encoder(PRICE_WITH_PRODUCT_CODE_ERROR),
+            json=jsonable_encoder(PRICE_WITH_LABELS_TAGS_ERROR),
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
