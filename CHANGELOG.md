@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.2.0](https://github.com/openfoodfacts/open-prices/compare/v1.1.0...v1.2.0) (2023-11-27)
+
+
+### Features
+
+* add CORS configuration ([#62](https://github.com/openfoodfacts/open-prices/issues/62)) ([79de31b](https://github.com/openfoodfacts/open-prices/commit/79de31bb867c1ea945adf8bab6f12d841012d207))
+* add labels_tags field ([ea2bdb0](https://github.com/openfoodfacts/open-prices/commit/ea2bdb07e66a6c302a929a6f1ca348f3f5bf5a54))
+* add Proof.type field ([#68](https://github.com/openfoodfacts/open-prices/issues/68)) ([d211c0a](https://github.com/openfoodfacts/open-prices/commit/d211c0a8b920bc8dc1b9e19c6af0995fed9c15eb))
+* add support for cookie authentication ([9e8413d](https://github.com/openfoodfacts/open-prices/commit/9e8413d83ed1916cf170a0d1c286a4990adcd540))
+* additional tests on Price create ([#60](https://github.com/openfoodfacts/open-prices/issues/60)) ([bcbcc2a](https://github.com/openfoodfacts/open-prices/commit/bcbcc2aa96767e5ce5abbcb1155f4b5208236e71))
+* allow to upload price of barcode-less products ([#53](https://github.com/openfoodfacts/open-prices/issues/53)) ([d44d86d](https://github.com/openfoodfacts/open-prices/commit/d44d86df2829b62db5441904a0644f062923cde3))
+* simply Price.currency validation ([#67](https://github.com/openfoodfacts/open-prices/issues/67)) ([d7dfb0c](https://github.com/openfoodfacts/open-prices/commit/d7dfb0cbb3d8e8efeb2f5e6b92cffb5296ab9863))
+
+
+### Bug Fixes
+
+* add image serving ([5808b7a](https://github.com/openfoodfacts/open-prices/commit/5808b7a1effad8ccccdf88681f5a31aa2c77a891))
+* CORS: revert configuration. add openfoodfacts-explorer to whitelist ([e3e9098](https://github.com/openfoodfacts/open-prices/commit/e3e9098a766785833500f4bcd0db545f4a374bbd))
+* CORS: temporarily allow all origins in deployed envs. ref [#65](https://github.com/openfoodfacts/open-prices/issues/65) ([06f2560](https://github.com/openfoodfacts/open-prices/commit/06f2560906f64ceb5add4d850cb15ec15a98b425))
+* fix labels_tags field validator ([#69](https://github.com/openfoodfacts/open-prices/issues/69)) ([5f23977](https://github.com/openfoodfacts/open-prices/commit/5f23977116d846acf288a031f70da0adac5ce34f))
+* improve landing page ([#71](https://github.com/openfoodfacts/open-prices/issues/71)) ([ec79ccc](https://github.com/openfoodfacts/open-prices/commit/ec79ccc3ff1eac44e65b98ed2e3561227648e674))
+* lint last alembic version ([1b0667d](https://github.com/openfoodfacts/open-prices/commit/1b0667d09b19c4dc531c74eabdec85ec44caa23c))
+* return 201 instead of 200 on price (& proof) create ([#66](https://github.com/openfoodfacts/open-prices/issues/66)) ([af543cf](https://github.com/openfoodfacts/open-prices/commit/af543cf924f7502000d13b369717d7c22967d980))
+* use time.sleep instead of asyncio.sleep in non-corountine function ([1ccffd6](https://github.com/openfoodfacts/open-prices/commit/1ccffd6f5dfb22342bea65f63cb2cde39d5ac352))
+
 ## [1.1.0](https://github.com/openfoodfacts/open-prices/compare/v1.0.3...v1.1.0) (2023-11-22)
 
 
