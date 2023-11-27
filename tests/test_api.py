@@ -91,7 +91,7 @@ def test_create_price(user, db=override_get_db()):
         json=jsonable_encoder(PRICE_1),
         headers={"Authorization": f"Bearer {user.token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_1.product_code
     assert "id" not in response.json()
     assert "owner" not in response.json()
@@ -180,7 +180,7 @@ def test_create_price_code_category_exclusive_validation(user):
         json=jsonable_encoder(PRICE_WITH_ONLY_PRODUCT_CODE),
         headers={"Authorization": f"Bearer {user.token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     # only category_tag: ok
     PRICE_WITH_ONLY_CATEGORY = PRICE_1.model_copy(
         update={"product_code": None, "category_tag": "en:tomatoes"}
@@ -190,7 +190,7 @@ def test_create_price_code_category_exclusive_validation(user):
         json=jsonable_encoder(PRICE_WITH_ONLY_CATEGORY),
         headers={"Authorization": f"Bearer {user.token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     # both product_code & category_tag present: error
     PRICE_WITH_BOTH_CODE_AND_CATEGORY = PRICE_1.model_copy(
         update={"category_tag": "en:tomatoes"}
