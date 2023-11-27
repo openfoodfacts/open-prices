@@ -155,6 +155,7 @@ class PriceCreate(BaseModel):
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`labels_tags` cannot be empty")
+        return v
 
     @model_validator(mode="after")
     def product_code_and_category_tag_are_exclusive(self):
