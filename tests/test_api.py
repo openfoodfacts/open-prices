@@ -91,7 +91,7 @@ def test_create_price(user, db=override_get_db()):
         json=jsonable_encoder(PRICE_1),
         headers={"Authorization": f"Bearer {user.token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_1.product_code
     assert "id" not in response.json()
     assert "owner" not in response.json()
@@ -151,12 +151,26 @@ def test_create_price_currency_validation(user):
     # currency must have a specific format (ex: "EUR")
     WRONG_PRICE_CURRENCIES = ["", "€", "euro"]
     for wrong_price_currency in WRONG_PRICE_CURRENCIES:
-        PRICE_WITH_CATEGORY_TAG_ERROR = PRICE_1.model_copy(
+        PRICE_WITH_CURRENCY_ERROR = PRICE_1.model_copy(
             update={"currency": wrong_price_currency}
         )
         response = client.post(
             "/prices",
-            json=jsonable_encoder(PRICE_WITH_CATEGORY_TAG_ERROR),
+            json=jsonable_encoder(PRICE_WITH_CURRENCY_ERROR),
+            headers={"Authorization": f"Bearer {user.token}"},
+        )
+        assert response.status_code == 422
+
+
+def test_create_price_location_osm_type_validation(user):
+    WRONG_PRICE_LOCATION_OSM_TYPES = ["", "node"]
+    for wrong_price_location_osm_type in WRONG_PRICE_LOCATION_OSM_TYPES:
+        PRICE_WITH_LOCATION_OSM_TYPE_ERROR = PRICE_1.model_copy(
+            update={"location_osm_type": wrong_price_location_osm_type}
+        )
+        response = client.post(
+            "/prices",
+            json=jsonable_encoder(PRICE_WITH_LOCATION_OSM_TYPE_ERROR),
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
@@ -180,7 +194,7 @@ def test_create_price_code_category_exclusive_validation(user):
         json=jsonable_encoder(PRICE_WITH_ONLY_PRODUCT_CODE),
         headers={"Authorization": f"Bearer {user.token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     # only category_tag: ok
     PRICE_WITH_ONLY_CATEGORY = PRICE_1.model_copy(
         update={"product_code": None, "category_tag": "en:tomatoes"}
@@ -190,7 +204,7 @@ def test_create_price_code_category_exclusive_validation(user):
         json=jsonable_encoder(PRICE_WITH_ONLY_CATEGORY),
         headers={"Authorization": f"Bearer {user.token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     # both product_code & category_tag present: error
     PRICE_WITH_BOTH_CODE_AND_CATEGORY = PRICE_1.model_copy(
         update={"category_tag": "en:tomatoes"}
@@ -201,6 +215,21 @@ def test_create_price_code_category_exclusive_validation(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 422
+
+
+def test_create_price_labels_tags_pattern_validation(user):
+    # product_code cannot be an empty string, nor contain letters
+    WRONG_PRICE_LABELS_TAGS = [[]]
+    for wrong_price_labels_tags in WRONG_PRICE_LABELS_TAGS:
+        PRICE_WITH_LABELS_TAGS_ERROR = PRICE_1.model_copy(
+            update={"labels_tags": wrong_price_labels_tags}
+        )
+        response = client.post(
+            "/prices",
+            json=jsonable_encoder(PRICE_WITH_LABELS_TAGS_ERROR),
+            headers={"Authorization": f"Bearer {user.token}"},
+        )
+        assert response.status_code == 422
 
 
 def test_get_prices():

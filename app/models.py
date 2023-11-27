@@ -1,5 +1,6 @@
 from openfoodfacts import Flavor
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Column,
     Date,
@@ -19,6 +20,7 @@ from app.db import Base
 from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
 
 force_auto_coercion()
+JSONVariant = JSON().with_variant(JSONB(), "postgresql")
 
 
 class User(Base):
@@ -93,7 +95,7 @@ class Price(Base):
 
     product_code = Column(String, nullable=True, index=True)
     category_tag = Column(String, nullable=True, index=True)
-    labels_tags = Column(JSONB, nullable=True, index=True)
+    labels_tags = Column(JSONVariant, nullable=True, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=True)
     product: Mapped[Product] = relationship(back_populates="prices")
 
