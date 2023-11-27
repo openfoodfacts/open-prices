@@ -12,7 +12,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.enums import CurrencyEnum, LocationOSMEnum
+from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
 from app.models import Price
 
 
@@ -182,6 +182,7 @@ class ProofCreate(BaseModel):
 
     file_path: str
     mimetype: str
+    type: ProofTypeEnum
 
 
 class ProofBase(ProofCreate):
