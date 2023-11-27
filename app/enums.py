@@ -1,7 +1,13 @@
 from enum import Enum
 
+from babel.numbers import list_currencies
 
-class LocationOSMType(Enum):
+CURRENCIES = [(currency, currency) for currency in list_currencies()]
+
+CurrencyEnum = Enum("CurrencyEnum", CURRENCIES)
+
+
+class LocationOSMEnum(Enum):
     NODE = "NODE"
     WAY = "WAY"
     RELATION = "RELATION"

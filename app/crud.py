@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from app import config
-from app.enums import LocationOSMType
+from app.enums import LocationOSMEnum
 from app.models import Location, Price, Product, Proof, User
 from app.schemas import (
     LocationBase,
@@ -214,7 +214,7 @@ def get_location_by_id(db: Session, id: int):
 
 
 def get_location_by_osm_id_and_type(
-    db: Session, osm_id: int, osm_type: LocationOSMType
+    db: Session, osm_id: int, osm_type: LocationOSMEnum
 ):
     return (
         db.query(Location)

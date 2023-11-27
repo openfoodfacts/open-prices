@@ -8,13 +8,11 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    field_serializer,
     field_validator,
     model_validator,
 )
-from sqlalchemy_utils import Currency
 
-from app.enums import LocationOSMType
+from app.enums import CurrencyEnum, LocationOSMEnum
 from app.models import Price
 
 
@@ -65,7 +63,7 @@ class LocationCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     osm_id: int = Field(gt=0)
-    osm_type: LocationOSMType
+    osm_type: LocationOSMEnum
 
 
 class LocationBase(LocationCreate):
@@ -126,7 +124,7 @@ class PriceCreate(BaseModel):
         "kilogram or per liter.",
         examples=["1.99"],
     )
-    currency: str | Currency = Field(
+    currency: CurrencyEnum = Field(
         description="currency of the price, as a string. "
         "The currency must be a valid currency code. "
         "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
@@ -137,7 +135,7 @@ class PriceCreate(BaseModel):
         description="ID of the location in OpenStreetMap: the store where the product was bought.",
         examples=[1234567890],
     )
-    location_osm_type: LocationOSMType = Field(
+    location_osm_type: LocationOSMEnum = Field(
         description="type of the OpenStreetMap location object. Stores can be represented as nodes, "
         "ways or relations in OpenStreetMap. It is necessary to be able to fetch the correct "
         "information about the store using the ID.",
@@ -152,24 +150,11 @@ class PriceCreate(BaseModel):
         examples=[15],
     )
 
-    @field_validator("currency")
-    def currency_is_valid(cls, v):
-        try:
-            return Currency(v).code
-        except ValueError:
-            raise ValueError("not a valid currency code")
-
     @field_validator("labels_tags")
     def labels_tags_is_valid(cls, v):
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`labels_tags` cannot be empty")
-
-    @field_serializer("currency")
-    def serialize_currency(self, currency: Currency, _info):
-        if type(currency) is Currency:
-            return currency.code
-        return currency
 
     @model_validator(mode="after")
     def product_code_and_category_tag_are_exclusive(self):
@@ -207,7 +192,7 @@ class ProofBase(ProofCreate):
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
     location_osm_id: Optional[int] | None = None
-    location_osm_type: Optional[LocationOSMType] | None = None
+    location_osm_type: Optional[LocationOSMEnum] | None = None
     price: Optional[int] | None = None
     currency: Optional[str] | None = None
     price__gt: Optional[int] | None = None
