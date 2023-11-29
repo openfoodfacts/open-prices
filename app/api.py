@@ -110,7 +110,7 @@ def main_page(request: Request):
     )
 
 
-@app.post("/auth")
+@app.post("/api/v1/auth")
 def authentication(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     response: Response,
@@ -171,7 +171,7 @@ def authentication(
     )
 
 
-@app.get("/prices", response_model=Page[schemas.PriceBase])
+@app.get("/api/v1/prices", response_model=Page[schemas.PriceBase])
 def get_price(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
@@ -180,7 +180,9 @@ def get_price(
 
 
 @app.post(
-    "/prices", response_model=schemas.PriceBase, status_code=status.HTTP_201_CREATED
+    "/api/v1/prices",
+    response_model=schemas.PriceBase,
+    status_code=status.HTTP_201_CREATED,
 )
 def create_price(
     price: schemas.PriceCreate,
@@ -239,7 +241,7 @@ def create_price(
 
 
 @app.post(
-    "/proofs/upload",
+    "/api/v1/proofs/upload",
     response_model=schemas.ProofBase,
     status_code=status.HTTP_201_CREATED,
 )
@@ -261,7 +263,7 @@ def upload_proof(
     return db_proof
 
 
-@app.get("/proofs", response_model=list[schemas.ProofBase])
+@app.get("/api/v1/proofs", response_model=list[schemas.ProofBase])
 def get_user_proofs(
     current_user: schemas.UserBase = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -274,7 +276,7 @@ def get_user_proofs(
     return crud.get_user_proofs(db, user=current_user)
 
 
-@app.get("/products/{product_id}", response_model=schemas.ProductBase)
+@app.get("/api/v1/products/{product_id}", response_model=schemas.ProductBase)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     db_product = crud.get_product_by_id(db, id=product_id)
     if not db_product:
@@ -285,7 +287,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return db_product
 
 
-@app.get("/locations/{location_id}", response_model=schemas.LocationBase)
+@app.get("/api/v1/locations/{location_id}", response_model=schemas.LocationBase)
 def get_location(location_id: int, db: Session = Depends(get_db)):
     db_location = crud.get_location_by_id(db, id=location_id)
     if not db_location:
@@ -296,7 +298,7 @@ def get_location(location_id: int, db: Session = Depends(get_db)):
     return db_location
 
 
-@app.get("/status")
+@app.get("/api/v1/status")
 def status_endpoint():
     return {"status": "running"}
 

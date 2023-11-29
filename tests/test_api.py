@@ -81,13 +81,13 @@ def test_hello():
 def test_create_price(user, db=override_get_db()):
     # without authentication
     response = client.post(
-        "/prices",
+        "/api/v1/prices",
         json=jsonable_encoder(PRICE_1),
     )
     assert response.status_code == 401
     # with authentication
     response = client.post(
-        "/prices",
+        "/api/v1/prices",
         json=jsonable_encoder(PRICE_1),
         headers={"Authorization": f"Bearer {user.token}"},
     )
@@ -110,7 +110,7 @@ def test_create_price_required_fields_validation(user):
     for price_field in REQUIRED_FIELDS:
         PRICE_WITH_FIELD_MISSING = PRICE_1.model_copy(update={price_field: None})
         response = client.post(
-            "/prices",
+            "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_FIELD_MISSING),
             headers={"Authorization": f"Bearer {user.token}"},
         )
@@ -125,7 +125,7 @@ def test_create_price_product_code_pattern_validation(user):
             update={"product_code": wrong_price_product_code}
         )
         response = client.post(
-            "/prices",
+            "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_PRODUCT_CODE_ERROR),
             headers={"Authorization": f"Bearer {user.token}"},
         )
@@ -140,7 +140,7 @@ def test_create_price_category_tag_pattern_validation(user):
             update={"product_code": None, "category_tag": wrong_price_category_tag}
         )
         response = client.post(
-            "/prices",
+            "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_CATEGORY_TAG_ERROR),
             headers={"Authorization": f"Bearer {user.token}"},
         )
@@ -155,7 +155,7 @@ def test_create_price_currency_validation(user):
             update={"currency": wrong_price_currency}
         )
         response = client.post(
-            "/prices",
+            "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_CURRENCY_ERROR),
             headers={"Authorization": f"Bearer {user.token}"},
         )
@@ -169,7 +169,7 @@ def test_create_price_location_osm_type_validation(user):
             update={"location_osm_type": wrong_price_location_osm_type}
         )
         response = client.post(
-            "/prices",
+            "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_LOCATION_OSM_TYPE_ERROR),
             headers={"Authorization": f"Bearer {user.token}"},
         )
@@ -182,7 +182,7 @@ def test_create_price_code_category_exclusive_validation(user):
         update={"product_code": None}
     )
     response = client.post(
-        "/prices",
+        "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_CODE_AND_CATEGORY_MISSING),
         headers={"Authorization": f"Bearer {user.token}"},
     )
@@ -190,7 +190,7 @@ def test_create_price_code_category_exclusive_validation(user):
     # only product_code: ok
     PRICE_WITH_ONLY_PRODUCT_CODE = PRICE_1.model_copy()
     response = client.post(
-        "/prices",
+        "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_ONLY_PRODUCT_CODE),
         headers={"Authorization": f"Bearer {user.token}"},
     )
@@ -200,7 +200,7 @@ def test_create_price_code_category_exclusive_validation(user):
         update={"product_code": None, "category_tag": "en:tomatoes"}
     )
     response = client.post(
-        "/prices",
+        "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_ONLY_CATEGORY),
         headers={"Authorization": f"Bearer {user.token}"},
     )
@@ -210,7 +210,7 @@ def test_create_price_code_category_exclusive_validation(user):
         update={"category_tag": "en:tomatoes"}
     )
     response = client.post(
-        "/prices",
+        "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_BOTH_CODE_AND_CATEGORY),
         headers={"Authorization": f"Bearer {user.token}"},
     )
@@ -225,7 +225,7 @@ def test_create_price_labels_tags_pattern_validation(user):
             update={"labels_tags": wrong_price_labels_tags}
         )
         response = client.post(
-            "/prices",
+            "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_LABELS_TAGS_ERROR),
             headers={"Authorization": f"Bearer {user.token}"},
         )
@@ -233,7 +233,7 @@ def test_create_price_labels_tags_pattern_validation(user):
 
 
 def test_get_prices():
-    response = client.get("/prices")
+    response = client.get("/api/v1/prices")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 3
     for price_field in ["product_id", "location_id", "proof_id"]:
@@ -241,31 +241,31 @@ def test_get_prices():
 
 
 def test_get_prices_pagination():
-    response = client.get("/prices")
+    response = client.get("/api/v1/prices")
     assert response.status_code == 200
     for key in ["items", "total", "page", "size", "pages"]:
         assert key in response.json()
 
 
 def test_get_prices_filters():
-    response = client.get(f"/prices?product_code={PRICE_1.product_code}")
+    response = client.get(f"/api/v1/prices?product_code={PRICE_1.product_code}")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 2
-    response = client.get("/prices?price__gt=5")
+    response = client.get("/api/v1/prices?price__gt=5")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 0
-    response = client.get("/prices?date=2023-10-31")
+    response = client.get("/api/v1/prices?date=2023-10-31")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 3
 
 
 def test_get_proofs(user):
     # without authentication
-    response = client.get("/proofs")
+    response = client.get("/api/v1/proofs")
     assert response.status_code == 401
     # with authentication
     response = client.get(
-        "/proofs",
+        "/api/v1/proofs",
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 200
@@ -273,17 +273,17 @@ def test_get_proofs(user):
 
 def test_get_product(product):
     # product exists
-    response = client.get(f"/products/{product.id}")
+    response = client.get(f"/api/v1/products/{product.id}")
     assert response.status_code == 200
     # product does not exist
-    response = client.get(f"/products/{product.id+1}")
+    response = client.get(f"/api/v1/products/{product.id+1}")
     assert response.status_code == 404
 
 
 def test_get_location(location):
     # location exists
-    response = client.get(f"/locations/{location.id}")
+    response = client.get(f"/api/v1/locations/{location.id}")
     assert response.status_code == 200
     # location does not exist
-    response = client.get(f"/locations/{location.id+1}")
+    response = client.get(f"/api/v1/locations/{location.id+1}")
     assert response.status_code == 404
