@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.1](https://github.com/openfoodfacts/open-prices/compare/v1.2.0...v1.2.1) (2023-12-04)
+
+
+### Bug Fixes
+
+* add /api/v1 prefix to all relevant routes ([#74](https://github.com/openfoodfacts/open-prices/issues/74)) ([353e59f](https://github.com/openfoodfacts/open-prices/commit/353e59fb772c3067a1db5db4ecd8d6ad3fe49e60))
+* bump release please version ([a37e7da](https://github.com/openfoodfacts/open-prices/commit/a37e7daf66548b3c168491d7c68585ed4753c90e))
+* fix github config ([7edfa8d](https://github.com/openfoodfacts/open-prices/commit/7edfa8dd9b777c50be2f4f78aa43ef87dd7c93e2))
+* fix release please ([#78](https://github.com/openfoodfacts/open-prices/issues/78)) ([86bb591](https://github.com/openfoodfacts/open-prices/commit/86bb5911758c359d6e2218ac836191f58b91fc4f))
+
 ## [1.2.0](https://github.com/openfoodfacts/open-prices/compare/v1.1.0...v1.2.0) (2023-11-27)
 
 
