@@ -44,6 +44,7 @@ PRODUCT = ProductCreate(code="8001505005592")
 LOCATION = LocationCreate(osm_id=3344841823, osm_type="NODE")
 PRICE_1 = PriceCreate(
     product_code="8001505005707",
+    product_name="PATE NOCCIOLATA BIO 700G",
     # category="en:tomatoes",
     price=3.5,
     currency="EUR",

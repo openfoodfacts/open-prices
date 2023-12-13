@@ -81,12 +81,19 @@ class LocationBase(LocationCreate):
 
 class PriceCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
     product_code: str | None = Field(
         default=None,
         min_length=1,
         pattern="^[0-9]+$",
         description="barcode (EAN) of the product, as a string.",
         examples=["16584958", "8001505005707"],
+    )
+    product_name: str | None = Field(
+        defaul=None,
+        min_length=1,
+        description="name of the product, as displayed on the receipt or the price tag.",
+        examples=["PATE NOCCIOLATA BIO 700G"],
     )
     category_tag: str | None = Field(
         default=None,
