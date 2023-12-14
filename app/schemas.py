@@ -90,7 +90,7 @@ class PriceCreate(BaseModel):
         examples=["16584958", "8001505005707"],
     )
     product_name: str | None = Field(
-        defaul=None,
+        default=None,
         min_length=1,
         description="name of the product, as displayed on the receipt or the price tag.",
         examples=["PATE NOCCIOLATA BIO 700G"],

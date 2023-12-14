@@ -94,7 +94,7 @@ class Price(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     product_code = Column(String, nullable=True, index=True)
-    product_name = Column(String, nullable=True, index=True)
+    product_name = Column(String, nullable=True)
     category_tag = Column(String, nullable=True, index=True)
     labels_tags = Column(JSONVariant, nullable=True, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=True)
