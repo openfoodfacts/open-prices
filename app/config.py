@@ -5,7 +5,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).parent.parent
-DATA_DIR = ROOT_DIR / "data"
+STATIC_DIR = ROOT_DIR / "static"
 
 
 class LoggingLevel(Enum):
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     oauth2_server_url: str | None = None
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
-    images_dir: Path = DATA_DIR / "images"
+    images_dir: Path = STATIC_DIR / "img"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

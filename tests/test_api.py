@@ -73,11 +73,6 @@ def location(db=override_get_db()):
 
 # Tests
 # ------------------------------------------------------------------------------
-def test_hello():
-    response = client.get("/")
-    assert response.status_code == 200
-
-
 def test_create_price(user, db=override_get_db()):
     # without authentication
     response = client.post(

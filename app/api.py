@@ -10,15 +10,12 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Query,
-    Request,
     Response,
     UploadFile,
     status,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page, add_pagination
@@ -50,6 +47,8 @@ app = FastAPI(
         "name": " AGPL-3.0",
         "url": "https://www.gnu.org/licenses/agpl-3.0.en.html",
     },
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
 )
 
 app.add_middleware(
@@ -102,12 +101,6 @@ def get_current_user(
 
 # Routes
 # ------------------------------------------------------------------------------
-@app.get("/", response_class=HTMLResponse)
-def main_page(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request},
-    )
 
 
 @app.post("/api/v1/auth")
@@ -303,10 +296,4 @@ def status_endpoint():
     return {"status": "running"}
 
 
-@app.get("/robots.txt", response_class=PlainTextResponse)
-def robots_txt():
-    return """User-agent: *\nDisallow: /"""
-
-
 add_pagination(app)
-app.mount("/images", StaticFiles(directory=str(settings.images_dir)), name="images")
