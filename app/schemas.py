@@ -182,7 +182,7 @@ class ProofCreate(BaseModel):
 
     file_path: str
     mimetype: str
-    type: ProofTypeEnum
+    type: ProofTypeEnum | None = None
 
 
 class ProofBase(ProofCreate):
