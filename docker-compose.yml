@@ -19,10 +19,8 @@ x-api-common: &api-common
 services:
   api:
     <<: *api-common
-    ports:
-      - "${API_PORT}:8000"
     volumes:
-      - ./data:/opt/open-prices/data
+      - ./static:/opt/open-prices/static
 
   postgres:
     restart: $RESTART_POLICY
@@ -38,6 +36,16 @@ services:
     shm_size: 1g
     ports:
       - "${POSTGRES_EXPOSE:-127.0.0.1:5432}:5432"
+
+  nginx: 
+    image: nginx:1.25-alpine
+    volumes:
+      # Mount the nginx configuration file
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      # Mount the static files
+      - ./static:/var/static
+    ports:
+      - ${API_PORT}:80
 
 volumes:
   postgres-data:
