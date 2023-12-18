@@ -193,7 +193,11 @@ def test_create_price_code_category_exclusive_validation(user):
     assert response.status_code == 201
     # only category_tag: ok
     PRICE_WITH_ONLY_CATEGORY = PRICE_1.model_copy(
-        update={"product_code": None, "category_tag": "en:tomatoes"}
+        update={
+            "product_code": None,
+            "category_tag": "en:tomatoes",
+            "date": "2023-10-01",
+        }
     )
     response = client.post(
         "/api/v1/prices",
@@ -254,7 +258,19 @@ def test_get_prices_filters():
     assert len(response.json()["items"]) == 0
     response = client.get("/api/v1/prices?date=2023-10-31")
     assert response.status_code == 200
-    assert len(response.json()["items"]) == 3
+    assert len(response.json()["items"]) == 2
+
+
+def test_get_prices_orders():
+    response = client.get("/api/v1/prices")
+    assert response.status_code == 200
+    assert (response.json()["items"][0]["date"]) == "2023-10-31"
+    response = client.get("/api/v1/prices?order_by=date")  # ASC
+    assert response.status_code == 200
+    assert (response.json()["items"][0]["date"]) == "2023-10-01"
+    response = client.get("/api/v1/prices?order_by=-date")  # DESC
+    assert response.status_code == 200
+    assert (response.json()["items"][0]["date"]) == "2023-10-31"
 
 
 def test_get_proofs(user):

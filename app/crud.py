@@ -116,6 +116,7 @@ def get_prices_query(
         query = query.options(joinedload(Price.location))
     if filters:
         query = filters.filter(query)
+        query = filters.sort(query)
     return query
 
 

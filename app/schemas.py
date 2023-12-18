@@ -218,6 +218,7 @@ class PriceFilter(Filter):
     date__gte: Optional[str] | None = None
     date__lt: Optional[str] | None = None
     date__lte: Optional[str] | None = None
+    order_by: Optional[list[str]] | None = None
 
     class Constants(Filter.Constants):
         model = Price
