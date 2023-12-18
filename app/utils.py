@@ -31,6 +31,9 @@ def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None =
 
 # OpenFoodFacts
 # ------------------------------------------------------------------------------
+OFF_FIELDS = ["product_name", "product_quantity", "brands", "image_url"]
+
+
 def openfoodfacts_product_search(code: str):
     client = API(
         username=None,
@@ -49,7 +52,7 @@ def fetch_product_openfoodfacts_details(product: ProductBase):
         response = openfoodfacts_product_search(code=product.code)
         if response["status"]:
             product_openfoodfacts_details["source"] = Flavor.off
-            for off_field in ["product_name", "product_quantity", "image_url"]:
+            for off_field in OFF_FIELDS:
                 if off_field in response["product"]:
                     product_openfoodfacts_details[off_field] = response["product"][
                         off_field
@@ -62,6 +65,10 @@ def fetch_product_openfoodfacts_details(product: ProductBase):
 
 # OpenStreetMap
 # ------------------------------------------------------------------------------
+OSM_FIELDS = ["name", "display_name", "lat", "lon"]
+OSM_ADDRESS_FIELDS = ["postcode", "city", "country"]
+
+
 def openstreetmap_nominatim_search(osm_id: int, osm_type: str):
     client = Nominatim()
     search_query = f"{osm_type}/{osm_id}"
@@ -75,13 +82,13 @@ def fetch_location_openstreetmap_details(location: LocationBase):
             osm_id=location.osm_id, osm_type=location.osm_type.value.lower()
         )
         if len(response):
-            for osm_field in ["name", "display_name", "lat", "lon"]:
+            for osm_field in OSM_FIELDS:
                 if osm_field in response[0]:
                     location_openstreetmap_details[f"osm_{osm_field}"] = response[0][
                         osm_field
                     ]
             if "address" in response[0]:
-                for osm_address_field in ["postcode", "city", "country"]:
+                for osm_address_field in OSM_ADDRESS_FIELDS:
                     if osm_address_field in response[0]["address"]:
                         location_openstreetmap_details[
                             f"osm_address_{osm_address_field}"
