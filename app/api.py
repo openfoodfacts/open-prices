@@ -164,7 +164,7 @@ def authentication(
     )
 
 
-@app.get("/api/v1/prices", response_model=Page[schemas.PriceBase], tags=["Prices"])
+@app.get("/api/v1/prices", response_model=Page[schemas.PriceFull], tags=["Prices"])
 def get_price(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),

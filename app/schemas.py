@@ -184,6 +184,11 @@ class PriceBase(PriceCreate):
     created: datetime.datetime
 
 
+class PriceFull(PriceBase):
+    product: ProductBase | None
+    location: LocationBase | None
+
+
 class ProofCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
