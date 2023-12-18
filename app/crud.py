@@ -110,6 +110,7 @@ def get_prices_query(filters: PriceFilter | None = None):
     query = select(Price)
     if filters:
         query = filters.filter(query)
+        query = filters.sort(query)
     return query
 
 
