@@ -234,6 +234,8 @@ def test_get_prices():
     assert len(response.json()["items"]) == 3
     for price_field in ["product_id", "location_id", "proof_id"]:
         assert price_field in response.json()["items"][0]
+    for price_relationship in ["product", "location"]:
+        assert price_relationship in response.json()["items"][0]
 
 
 def test_get_prices_pagination():
