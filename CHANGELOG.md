@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.3.0](https://github.com/openfoodfacts/open-prices/compare/v1.2.1...v1.3.0) (2023-12-18)
+
+
+### Features
+
+* add openapi tags on endpoints ([#88](https://github.com/openfoodfacts/open-prices/issues/88)) ([e7b0c14](https://github.com/openfoodfacts/open-prices/commit/e7b0c14f88e8ae11279ffe7abed06172fda1998b))
+* add Price.product_name field ([#83](https://github.com/openfoodfacts/open-prices/issues/83)) ([36d551f](https://github.com/openfoodfacts/open-prices/commit/36d551f441c2cbe83c76680a0f69e98c34a963c4))
+* add relationship objects in response of GET /prices ([#92](https://github.com/openfoodfacts/open-prices/issues/92)) ([2156690](https://github.com/openfoodfacts/open-prices/commit/21566904373fde48a4b5f5a7af11450bf2606896))
+* add sorting on GET /prices ([#90](https://github.com/openfoodfacts/open-prices/issues/90)) ([7139ec9](https://github.com/openfoodfacts/open-prices/commit/7139ec950fd44d42d9d6e3a6816c579ca91a4dde))
+* add vue.js frontend on /app ([ca38cbf](https://github.com/openfoodfacts/open-prices/commit/ca38cbf0fd5222be59c53e650ea114d249c72834))
+
+
+### Bug Fixes
+
+* fix ProofCreate schema ([ed34567](https://github.com/openfoodfacts/open-prices/commit/ed345675a414a6f6aea43036de52a914239f9fc6))
+
+
+### Technical
+
+* make migration files available in dev ([494bb96](https://github.com/openfoodfacts/open-prices/commit/494bb96564830d4557c935e54fac8d105238e73d))
+
 ## [1.2.1](https://github.com/openfoodfacts/open-prices/compare/v1.2.0...v1.2.1) (2023-12-04)
 
 
