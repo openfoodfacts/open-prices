@@ -42,6 +42,7 @@ class Product(Base):
     source = Column(ChoiceType(Flavor))
     product_name = Column(String)
     product_quantity = Column(Integer)
+    brands = Column(String)
     image_url = Column(String)
 
     prices: Mapped[list["Price"]] = relationship(back_populates="product")
