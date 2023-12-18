@@ -4,7 +4,7 @@ from mimetypes import guess_extension
 
 from fastapi import UploadFile
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 
 from app import config
@@ -105,9 +105,15 @@ def update_product(db: Session, product: ProductBase, update_dict: dict):
 
 # Prices
 # ------------------------------------------------------------------------------
-def get_prices_query(filters: PriceFilter | None = None):
+def get_prices_query(
+    with_join_product=True, with_join_location=True, filters: PriceFilter | None = None
+):
     """Useful for pagination."""
     query = select(Price)
+    if with_join_product:
+        query = query.options(joinedload(Price.product))
+    if with_join_location:
+        query = query.options(joinedload(Price.location))
     if filters:
         query = filters.filter(query)
     return query
