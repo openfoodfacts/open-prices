@@ -103,7 +103,7 @@ def get_current_user(
 # ------------------------------------------------------------------------------
 
 
-@app.post("/api/v1/auth")
+@app.post("/api/v1/auth", tags=["Auth"])
 def authentication(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     response: Response,
@@ -164,7 +164,7 @@ def authentication(
     )
 
 
-@app.get("/api/v1/prices", response_model=Page[schemas.PriceBase])
+@app.get("/api/v1/prices", response_model=Page[schemas.PriceBase], tags=["Prices"])
 def get_price(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
@@ -176,6 +176,7 @@ def get_price(
     "/api/v1/prices",
     response_model=schemas.PriceBase,
     status_code=status.HTTP_201_CREATED,
+    tags=["Prices"],
 )
 def create_price(
     price: schemas.PriceCreate,
@@ -237,6 +238,7 @@ def create_price(
     "/api/v1/proofs/upload",
     response_model=schemas.ProofBase,
     status_code=status.HTTP_201_CREATED,
+    tags=["Proofs"],
 )
 def upload_proof(
     file: UploadFile,
@@ -256,7 +258,7 @@ def upload_proof(
     return db_proof
 
 
-@app.get("/api/v1/proofs", response_model=list[schemas.ProofBase])
+@app.get("/api/v1/proofs", response_model=list[schemas.ProofBase], tags=["Proofs"])
 def get_user_proofs(
     current_user: schemas.UserBase = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -269,7 +271,11 @@ def get_user_proofs(
     return crud.get_user_proofs(db, user=current_user)
 
 
-@app.get("/api/v1/products/{product_id}", response_model=schemas.ProductBase)
+@app.get(
+    "/api/v1/products/{product_id}",
+    response_model=schemas.ProductBase,
+    tags=["Products"],
+)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     db_product = crud.get_product_by_id(db, id=product_id)
     if not db_product:
@@ -280,7 +286,11 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return db_product
 
 
-@app.get("/api/v1/locations/{location_id}", response_model=schemas.LocationBase)
+@app.get(
+    "/api/v1/locations/{location_id}",
+    response_model=schemas.LocationBase,
+    tags=["Locations"],
+)
 def get_location(location_id: int, db: Session = Depends(get_db)):
     db_location = crud.get_location_by_id(db, id=location_id)
     if not db_location:
