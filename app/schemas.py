@@ -189,16 +189,18 @@ class PriceFull(PriceBase):
     location: LocationBase | None
 
 
-class ProofCreate(BaseModel):
+# class ProofCreate(BaseModel):
+#     file: UploadFile
+#     type: ProofTypeEnum
+
+
+class ProofBase(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
+    id: int
     file_path: str
     mimetype: str
     type: ProofTypeEnum | None = None
-
-
-class ProofBase(ProofCreate):
-    id: int
     owner: str
     created: datetime.datetime
 

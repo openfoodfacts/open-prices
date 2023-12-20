@@ -8,6 +8,7 @@ from fastapi import (
     BackgroundTasks,
     Depends,
     FastAPI,
+    Form,
     HTTPException,
     Query,
     Response,
@@ -28,6 +29,7 @@ from app import crud, schemas, tasks
 from app.auth import OAuth2PasswordBearerOrAuthCookie
 from app.config import settings
 from app.db import session
+from app.enums import ProofTypeEnum
 from app.utils import init_sentry
 
 logger = get_logger(level=settings.log_level.to_int())
@@ -242,6 +244,7 @@ def create_price(
 )
 def upload_proof(
     file: UploadFile,
+    type: ProofTypeEnum = Form(),
     current_user: schemas.UserBase = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -254,7 +257,7 @@ def upload_proof(
     This endpoint requires authentication.
     """
     file_path, mimetype = crud.create_proof_file(file)
-    db_proof = crud.create_proof(db, file_path, mimetype, user=current_user)
+    db_proof = crud.create_proof(db, file_path, mimetype, type=type, user=current_user)
     return db_proof
 
 

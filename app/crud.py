@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 
 from app import config
-from app.enums import LocationOSMEnum
+from app.enums import LocationOSMEnum, ProofTypeEnum
 from app.models import Location, Price, Product, Proof, User
 from app.schemas import (
     LocationBase,
@@ -156,7 +156,9 @@ def get_user_proofs(db: Session, user: UserBase):
     return db.query(Proof).filter(Proof.owner == user.user_id).all()
 
 
-def create_proof(db: Session, file_path: str, mimetype: str, user: UserBase):
+def create_proof(
+    db: Session, file_path: str, mimetype: str, type: ProofTypeEnum, user: UserBase
+):
     """Create a proof in the database.
 
     :param db: the database session
@@ -165,7 +167,9 @@ def create_proof(db: Session, file_path: str, mimetype: str, user: UserBase):
     :param user: the user who uploaded the file
     :return: the created proof
     """
-    db_proof = Proof(file_path=file_path, mimetype=mimetype, owner=user.user_id)
+    db_proof = Proof(
+        file_path=file_path, mimetype=mimetype, type=type, owner=user.user_id
+    )
     db.add(db_proof)
     db.commit()
     db.refresh(db_proof)
