@@ -183,33 +183,37 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
     # This name will be used to display the image to the client, so it
     # shouldn't be discoverable
     file_stem = "".join(random.choices(string.ascii_letters + string.digits, k=10))
-    mimetype = file.content_type
     # get the extension of the file, or default to .bin
-    extension = guess_extension(mimetype) if mimetype else ".bin"
-    images_dir = config.settings.images_dir
+    # also manage webp case: https://stackoverflow.com/a/67938698/4293684
+    mimetype = file.content_type
+    extension = guess_extension(mimetype)
+    if not extension:
+        if mimetype == "image/webp":
+            extension = ".webp"
+        else:
+            extension = ".bin"
     # We store the images in directories containing up to 1000 images
     # Once we reach 1000 images, we create a new directory by increasing
     # the directory ID
     # This is used to prevent the base image directory from containing too many
     # files
+    images_dir = config.settings.images_dir
     current_dir_id = max(
         (int(p.name) for p in images_dir.iterdir() if p.is_dir() and p.name.isdigit()),
         default=1,
     )
     current_dir_id_str = f"{current_dir_id:04d}"
     current_dir = images_dir / current_dir_id_str
-
     if current_dir.exists() and len(list(current_dir.iterdir())) >= 1_000:
         # if the current directory contains 1000 images, we create a new one
         current_dir_id += 1
         current_dir = images_dir / str(current_dir_id)
-
     current_dir.mkdir(exist_ok=True)
     full_file_path = current_dir / f"{file_stem}{extension}"
     # write the content of the file to the new file
     with full_file_path.open("wb") as f:
         f.write(file.file.read())
-
+    # Build file_path
     file_path = f"{current_dir_id_str}/{file_stem}{extension}"
     return (file_path, mimetype)
 
