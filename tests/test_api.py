@@ -1,3 +1,5 @@
+import io
+
 import pytest
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
@@ -273,6 +275,42 @@ def test_get_prices_orders():
     assert (response.json()["items"][0]["date"]) == "2023-10-31"
 
 
+def test_create_proof(user):
+    # without authentication
+    response = client.post(
+        "/api/v1/proofs/upload",
+    )
+    assert response.status_code == 401
+    # with authentication but validation error (file & type missing)
+    response = client.post(
+        "/api/v1/proofs/upload",
+        headers={"Authorization": f"Bearer {user.token}"},
+    )
+    assert response.status_code == 422
+    # with authentication but validation error (type missing)
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        headers={"Authorization": f"Bearer {user.token}"},
+    )
+    assert response.status_code == 422
+    # with authentication but validation error (file missing)
+    response = client.post(
+        "/api/v1/proofs/upload",
+        data={"type": "PRICE_TAG"},
+        headers={"Authorization": f"Bearer {user.token}"},
+    )
+    assert response.status_code == 422
+    # with authentication and no validation error
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "PRICE_TAG"},
+        headers={"Authorization": f"Bearer {user.token}"},
+    )
+    assert response.status_code == 201
+
+
 def test_get_proofs(user):
     # without authentication
     response = client.get("/api/v1/proofs")
@@ -283,6 +321,7 @@ def test_get_proofs(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 200
+    assert len(response.json()) == 1
 
 
 def test_get_product(product):
