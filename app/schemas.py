@@ -47,6 +47,10 @@ class ProductBase(ProductCreate):
         description="quantity of the product, normalized in g or mL (depending on the product).",
         examples=[700],
     )
+    brands: int | None = Field(
+        description="brand(s) of the product.",
+        examples=["Rigoni di Asiago", "Lindt"],
+    )
     image_url: AnyHttpUrl | None = Field(
         description="URL of the product image.",
         examples=[
