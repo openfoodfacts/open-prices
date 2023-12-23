@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.0](https://github.com/openfoodfacts/open-prices/compare/v1.3.0...v1.4.0) (2023-12-23)
+
+
+### Features
+
+* add extra filters on GET /prices ([#100](https://github.com/openfoodfacts/open-prices/issues/100)) ([27edae3](https://github.com/openfoodfacts/open-prices/commit/27edae3db6fb00b352192b3e9cdb30f05d6c87e2))
+* ask for proof type when creating ([#95](https://github.com/openfoodfacts/open-prices/issues/95)) ([529cdce](https://github.com/openfoodfacts/open-prices/commit/529cdcebb75d95f8f1e3e5596da36cdc51c8b444))
+* manage webp proof uploads ([#98](https://github.com/openfoodfacts/open-prices/issues/98)) ([830315b](https://github.com/openfoodfacts/open-prices/commit/830315bff181761eb9c015d931471f81db9a429b))
+* new Product.brands field ([#93](https://github.com/openfoodfacts/open-prices/issues/93)) ([fd359dc](https://github.com/openfoodfacts/open-prices/commit/fd359dc3b6635455e21c1df8393559d0a7c62224))
+
 ## [1.3.0](https://github.com/openfoodfacts/open-prices/compare/v1.2.1...v1.3.0) (2023-12-18)
 
 
