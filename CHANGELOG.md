@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/openfoodfacts/open-prices/compare/v1.4.1...v1.4.2) (2023-12-23)
+
+
+### Bug Fixes
+
+* better fetch location city from OSM. ref [#38](https://github.com/openfoodfacts/open-prices/issues/38) ([c37e7a6](https://github.com/openfoodfacts/open-prices/commit/c37e7a6e85b4999622cd503d7f65481f69050540))
+
 ## [1.4.1](https://github.com/openfoodfacts/open-prices/compare/v1.4.0...v1.4.1) (2023-12-23)
 
 
