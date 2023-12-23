@@ -211,8 +211,10 @@ class ProofBase(BaseModel):
 
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
+    product_id: Optional[int] | None = None
     location_osm_id: Optional[int] | None = None
     location_osm_type: Optional[LocationOSMEnum] | None = None
+    location_id: Optional[int] | None = None
     price: Optional[int] | None = None
     currency: Optional[str] | None = None
     price__gt: Optional[int] | None = None
@@ -224,6 +226,7 @@ class PriceFilter(Filter):
     date__gte: Optional[str] | None = None
     date__lt: Optional[str] | None = None
     date__lte: Optional[str] | None = None
+    owner: Optional[str] | None = None
     order_by: Optional[list[str]] | None = None
 
     class Constants(Filter.Constants):
