@@ -66,7 +66,9 @@ def fetch_product_openfoodfacts_details(product: ProductBase):
 # OpenStreetMap
 # ------------------------------------------------------------------------------
 OSM_FIELDS = ["name", "display_name", "lat", "lon"]
-OSM_ADDRESS_FIELDS = ["postcode", "city", "country"]
+OSM_ADDRESS_FIELDS = ["postcode", "country"]  # 'city" is managed seperately
+# https://wiki.openstreetmap.org/wiki/Key:place
+OSM_ADDRESS_PLACE_FIELDS = ["village", "town", "city", "municipality"]
 
 
 def openstreetmap_nominatim_search(osm_id: int, osm_type: str):
@@ -93,6 +95,14 @@ def fetch_location_openstreetmap_details(location: LocationBase):
                         location_openstreetmap_details[
                             f"osm_address_{osm_address_field}"
                         ] = response[0]["address"][osm_address_field]
+                # manage city
+                location_openstreetmap_details["osm_address_city"] = None
+                for osm_address_place_field in OSM_ADDRESS_PLACE_FIELDS:
+                    if osm_address_place_field in response[0]["address"]:
+                        if not location_openstreetmap_details["osm_address_city"]:
+                            location_openstreetmap_details[
+                                "osm_address_city"
+                            ] = response[0]["address"][osm_address_place_field]
 
         return location_openstreetmap_details
     except Exception:
