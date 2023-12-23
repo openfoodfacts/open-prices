@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/openfoodfacts/open-prices/compare/v1.4.0...v1.4.1) (2023-12-23)
+
+
+### Bug Fixes
+
+* Product.brands should be a string. ref [#93](https://github.com/openfoodfacts/open-prices/issues/93) ([7bbf1fc](https://github.com/openfoodfacts/open-prices/commit/7bbf1fcdf470bf74546ac740870694017b1a35a1))
+
 ## [1.4.0](https://github.com/openfoodfacts/open-prices/compare/v1.3.0...v1.4.0) (2023-12-23)
 
 
