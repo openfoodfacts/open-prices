@@ -184,7 +184,7 @@ class PriceCreate(BaseModel):
 class PriceBase(PriceCreate):
     product_id: int | None
     location_id: int | None
-    # owner: str
+    owner: str
     created: datetime.datetime
 
 
