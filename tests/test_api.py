@@ -334,9 +334,23 @@ def test_get_product(product):
 
 
 def test_get_location(location):
-    # location exists
+    # by id: location exists
     response = client.get(f"/api/v1/locations/{location.id}")
     assert response.status_code == 200
-    # location does not exist
+    # by id: location does not exist
     response = client.get(f"/api/v1/locations/{location.id+1}")
+    assert response.status_code == 404
+    # by osm id & type: location exists
+    response = client.get(
+        f"/api/v1/locations/osm/{location.osm_type.value}/{location.osm_id}"
+    )
+    assert response.status_code == 200
+    response = client.get(
+        f"/api/v1/locations/osm/{location.osm_type.value.lower()}/{location.osm_id}"
+    )
+    assert response.status_code == 200
+    # by osm id & type: location does not exist
+    response = client.get(
+        f"/api/v1/locations/osm/{location.osm_type.value}/{location.osm_id+1}"
+    )
     assert response.status_code == 404
