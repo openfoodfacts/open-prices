@@ -1,3 +1,4 @@
+import datetime
 import io
 
 import pytest
@@ -36,6 +37,7 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
+db_session = pytest.fixture(override_get_db, scope="module")
 
 # client setup & fixtures
 # ------------------------------------------------------------------------------
@@ -57,26 +59,32 @@ PRICE_1 = PriceCreate(
 
 
 @pytest.fixture(scope="module")
-def user(db=override_get_db()):
-    db_user = crud.create_user(next(db), USER)
+def user(db_session):
+    db_user = crud.create_user(db_session, USER)
     return db_user
 
 
 @pytest.fixture(scope="module")
-def product(db=override_get_db()):
-    db_product = crud.create_product(next(db), PRODUCT)
+def product(db_session):
+    db_product = crud.create_product(db_session, PRODUCT)
     return db_product
 
 
 @pytest.fixture(scope="module")
-def location(db=override_get_db()):
-    db_location = crud.create_location(next(db), LOCATION)
+def location(db_session):
+    db_location = crud.create_location(db_session, LOCATION)
     return db_location
+
+
+@pytest.fixture(scope="function")
+def clean_prices(db_session):
+    db_session.query(crud.Price).delete()
+    db_session.commit()
 
 
 # Tests
 # ------------------------------------------------------------------------------
-def test_create_price(user, db=override_get_db()):
+def test_create_price(db_session, user, clean_prices):
     # without authentication
     response = client.post(
         "/api/v1/prices",
@@ -92,12 +100,37 @@ def test_create_price(user, db=override_get_db()):
     assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_1.product_code
     assert "id" not in response.json()
-    db_prices = crud.get_prices(next(db))
-    assert len(db_prices) == 1
+    assert len(crud.get_prices(db_session)) == 1
     # assert db_prices[0]["owner"] == user.user_id
 
 
-def test_create_price_required_fields_validation(user):
+def test_create_price_with_category_tag(db_session, user, clean_prices):
+    PRICE_WITH_CATEGORY_TAG = PRICE_1.model_copy(
+        update={
+            "product_code": None,
+            "category_tag": "en:tomatoes",
+            "labels_tags": ["en:Organic"],
+            "origins_tags": ["en:France"],
+            "date": "2023-12-01",
+        }
+    )
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_WITH_CATEGORY_TAG),
+        headers={"Authorization": f"Bearer {user.token}"},
+    )
+    json_response = response.json()
+    assert response.status_code == 201
+    assert json_response.get("category_tag") == "en:tomatoes"
+    assert json_response.get("labels_tags") == ["en:organic"]
+    assert json_response.get("origins_tags") == ["en:france"]
+    assert json_response.get("date") == "2023-12-01"
+    assert "id" not in response.json()
+    db_prices = crud.get_prices(db_session)
+    assert len(db_prices) == 1
+
+
+def test_create_price_required_fields_validation(db_session, user, clean_prices):
     REQUIRED_FIELDS = [
         "price",
         "location_osm_id",
@@ -112,9 +145,10 @@ def test_create_price_required_fields_validation(user):
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
+        assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_product_code_pattern_validation(user):
+def test_create_price_product_code_pattern_validation(db_session, user, clean_prices):
     # product_code cannot be an empty string, nor contain letters
     WRONG_PRICE_PRODUCT_CODES = ["", "en:tomates", "8001505005707XYZ"]
     for wrong_price_product_code in WRONG_PRICE_PRODUCT_CODES:
@@ -127,9 +161,10 @@ def test_create_price_product_code_pattern_validation(user):
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
+        assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_category_tag_pattern_validation(user):
+def test_create_price_category_tag_pattern_validation(db_session, user, clean_prices):
     # category_tag must follow a certain pattern (ex: "en:tomatoes")
     WRONG_PRICE_CATEGORY_TAGS = ["", ":", "en", ":tomatoes"]
     for wrong_price_category_tag in WRONG_PRICE_CATEGORY_TAGS:
@@ -142,9 +177,10 @@ def test_create_price_category_tag_pattern_validation(user):
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
+        assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_currency_validation(user):
+def test_create_price_currency_validation(db_session, user, clean_prices):
     # currency must have a specific format (ex: "EUR")
     WRONG_PRICE_CURRENCIES = ["", "€", "euro"]
     for wrong_price_currency in WRONG_PRICE_CURRENCIES:
@@ -157,9 +193,10 @@ def test_create_price_currency_validation(user):
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
+        assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_location_osm_type_validation(user):
+def test_create_price_location_osm_type_validation(db_session, user, clean_prices):
     WRONG_PRICE_LOCATION_OSM_TYPES = ["", "node"]
     for wrong_price_location_osm_type in WRONG_PRICE_LOCATION_OSM_TYPES:
         PRICE_WITH_LOCATION_OSM_TYPE_ERROR = PRICE_1.model_copy(
@@ -171,9 +208,12 @@ def test_create_price_location_osm_type_validation(user):
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
+        assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_code_category_exclusive_validation(user):
+def test_create_price_code_category_exclusive_validation(
+    db_session, user, clean_prices
+):
     # both product_code & category_tag missing: error
     PRICE_WITH_CODE_AND_CATEGORY_MISSING = PRICE_1.model_copy(
         update={"product_code": None}
@@ -184,6 +224,7 @@ def test_create_price_code_category_exclusive_validation(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 422
+    assert len(crud.get_prices(db_session)) == 0
     # only product_code: ok
     PRICE_WITH_ONLY_PRODUCT_CODE = PRICE_1.model_copy()
     response = client.post(
@@ -192,6 +233,7 @@ def test_create_price_code_category_exclusive_validation(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 201
+    assert len(crud.get_prices(db_session)) == 1
     # only category_tag: ok
     PRICE_WITH_ONLY_CATEGORY = PRICE_1.model_copy(
         update={
@@ -206,6 +248,7 @@ def test_create_price_code_category_exclusive_validation(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 201
+    assert len(crud.get_prices(db_session)) == 2
     # both product_code & category_tag present: error
     PRICE_WITH_BOTH_CODE_AND_CATEGORY = PRICE_1.model_copy(
         update={"category_tag": "en:tomatoes"}
@@ -216,9 +259,10 @@ def test_create_price_code_category_exclusive_validation(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 422
+    assert len(crud.get_prices(db_session)) == 2
 
 
-def test_create_price_labels_tags_pattern_validation(user):
+def test_create_price_labels_tags_pattern_validation(db_session, user, clean_prices):
     # product_code cannot be an empty string, nor contain letters
     WRONG_PRICE_LABELS_TAGS = [[]]
     for wrong_price_labels_tags in WRONG_PRICE_LABELS_TAGS:
@@ -231,9 +275,14 @@ def test_create_price_labels_tags_pattern_validation(user):
             headers={"Authorization": f"Bearer {user.token}"},
         )
         assert response.status_code == 422
+        assert len(crud.get_prices(db_session)) == 0
 
 
-def test_get_prices():
+def test_get_prices(db_session, user, clean_prices):
+    for _ in range(3):
+        crud.create_price(db_session, PRICE_1, user)
+
+    assert len(crud.get_prices(db_session)) == 3
     response = client.get("/api/v1/prices")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 3
@@ -250,19 +299,42 @@ def test_get_prices_pagination():
         assert key in response.json()
 
 
-def test_get_prices_filters():
+def test_get_prices_filters(db_session, user, clean_prices):
+    crud.create_price(db_session, PRICE_1, user)
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(
+            update={"price": 3.99, "date": datetime.date.fromisoformat("2023-11-01")}
+        ),
+        user,
+    )
+    crud.create_price(db_session, PRICE_1.model_copy(update={"price": 5.10}), user)
+
+    assert len(crud.get_prices(db_session)) == 3
+
     response = client.get(f"/api/v1/prices?product_code={PRICE_1.product_code}")
     assert response.status_code == 200
-    assert len(response.json()["items"]) == 2
+    # 3 prices with the same product_code
+    assert len(response.json()["items"]) == 3
     response = client.get("/api/v1/prices?price__gt=5")
     assert response.status_code == 200
-    assert len(response.json()["items"]) == 0
+    # 1 price with price > 5
+    assert len(response.json()["items"]) == 1
     response = client.get("/api/v1/prices?date=2023-10-31")
     assert response.status_code == 200
+    # 2 prices with date = 2023-10-31
     assert len(response.json()["items"]) == 2
 
 
-def test_get_prices_orders():
+def test_get_prices_orders(db_session, user, clean_prices):
+    crud.create_price(db_session, PRICE_1, user)
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(
+            update={"price": 3.99, "date": datetime.date.fromisoformat("2023-10-01")}
+        ),
+        user,
+    )
     response = client.get("/api/v1/prices")
     assert response.status_code == 200
     assert (response.json()["items"][0]["date"]) == "2023-10-31"
