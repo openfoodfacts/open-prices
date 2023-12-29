@@ -3,6 +3,7 @@ from typing import Optional
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from openfoodfacts import Flavor
+from openfoodfacts.taxonomy import get_taxonomy
 from pydantic import (
     AnyHttpUrl,
     BaseModel,
@@ -123,10 +124,23 @@ class PriceCreate(BaseModel):
 
         The most common labels are:
         - `en:organic`: the product is organic
+        - `fr:ab-agriculture-biologique`: the product is organic, in France
         - `en:fair-trade`: the product is fair-trade
 
         Other labels can be provided if relevant.
         """,
+        examples=["en:organic", "fr:ab-agriculture-biologique", "en:fair-trade"],
+    )
+    origins_tags: list[str] | None = Field(
+        default=None,
+        description="""origins of the product, only for products without barcode.
+
+        This field is a list as some products may be a mix of several origins,
+        but most products have only one origin.
+
+        The origins must be valid origins in the Open Food Facts taxonomy.
+        If one of the origins is not valid, the price will be rejected.""",
+        examples=["en:california", "en:france", "en:italy", "en:spain"],
     )
     price: float = Field(
         gt=0,
@@ -162,20 +176,61 @@ class PriceCreate(BaseModel):
     )
 
     @field_validator("labels_tags")
-    def labels_tags_is_valid(cls, v):
+    def labels_tags_is_valid(cls, v: list[str] | None):
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`labels_tags` cannot be empty")
+            v = [label_tag.lower() for label_tag in v]
+            labels_taxonomy = get_taxonomy("label")
+            for label_tag in v:
+                if label_tag not in labels_taxonomy:
+                    raise ValueError(
+                        f"Invalid label tag: label '{label_tag}' does not exist in the taxonomy",
+                    )
+        return v
+
+    @field_validator("origins_tags")
+    def origins_tags_is_valid(cls, v: list[str] | None):
+        if v is not None:
+            if len(v) == 0:
+                raise ValueError("`origins_tags` cannot be empty")
+            v = [origin_tag.lower() for origin_tag in v]
+            origins_taxonomy = get_taxonomy("origin")
+            for origin_tag in v:
+                if origin_tag not in origins_taxonomy:
+                    raise ValueError(
+                        f"Invalid origin tag: origin '{origin_tag}' does not exist in the taxonomy",
+                    )
+        return v
+
+    @field_validator("category_tag")
+    def category_tag_is_valid(cls, v: str | None):
+        if v is not None:
+            v = v.lower()
+            category_taxonomy = get_taxonomy("category")
+            if v not in category_taxonomy:
+                raise ValueError(
+                    f"Invalid category tag: category '{v}' does not exist in the taxonomy"
+                )
         return v
 
     @model_validator(mode="after")
     def product_code_and_category_tag_are_exclusive(self):
         """Validator that checks that `product_code` and `category_tag` are
         exclusive, and that at least one of them is set."""
-        if self.product_code is not None and self.category_tag is not None:
-            raise ValueError(
-                "`product_code` and `category_tag` are exclusive, you can't set both"
-            )
+        if self.product_code is not None:
+            if self.category_tag is not None:
+                raise ValueError(
+                    "`product_code` and `category_tag` are exclusive, you can't set both"
+                )
+            if self.labels_tags is not None:
+                raise ValueError(
+                    "`labels_tags` can only be set for products without barcode"
+                )
+            if self.origins_tags is not None:
+                raise ValueError(
+                    "`origins_tags` can only be set for products without barcode"
+                )
         if self.product_code is None and self.category_tag is None:
             raise ValueError("either `product_code` or `category_tag` must be set")
         return self

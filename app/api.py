@@ -21,7 +21,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
-from openfoodfacts.taxonomy import get_taxonomy
 from openfoodfacts.utils import get_logger
 from sqlalchemy.orm import Session
 
@@ -207,27 +206,6 @@ def create_price(
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Proof does not belong to current user",
-                )
-
-    if price.category_tag is not None:
-        # lowercase the category tag to perform the match
-        price.category_tag = price.category_tag.lower()
-        category_taxonomy = get_taxonomy("category")
-        if price.category_tag not in category_taxonomy:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid category tag: category '{price.category_tag}' does not exist in the taxonomy",
-            )
-
-    if price.labels_tags is not None:
-        # lowercase the labels tags to perform the match
-        price.labels_tags = [label_tag.lower() for label_tag in price.labels_tags]
-        labels_taxonomy = get_taxonomy("label")
-        for label_tag in price.labels_tags:
-            if label_tag not in labels_taxonomy:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid label tag: label '{label_tag}' does not exist in the taxonomy",
                 )
 
     db_price = crud.create_price(db, price=price, user=current_user)
