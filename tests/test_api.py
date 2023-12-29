@@ -92,7 +92,6 @@ def test_create_price(user, db=override_get_db()):
     assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_1.product_code
     assert "id" not in response.json()
-    assert "owner" not in response.json()
     db_prices = crud.get_prices(next(db))
     assert len(db_prices) == 1
     # assert db_prices[0]["owner"] == user.user_id
@@ -238,7 +237,7 @@ def test_get_prices():
     response = client.get("/api/v1/prices")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 3
-    for price_field in ["product_id", "location_id", "proof_id"]:
+    for price_field in ["owner", "product_id", "location_id", "proof_id"]:
         assert price_field in response.json()["items"][0]
     for price_relationship in ["product", "location"]:
         assert price_relationship in response.json()["items"][0]
@@ -325,11 +324,17 @@ def test_get_proofs(user):
 
 
 def test_get_product(product):
-    # product exists
+    # by id: product exists
     response = client.get(f"/api/v1/products/{product.id}")
     assert response.status_code == 200
-    # product does not exist
+    # by id: product does not exist
     response = client.get(f"/api/v1/products/{product.id+1}")
+    assert response.status_code == 404
+    # by code: product exists
+    response = client.get(f"/api/v1/products/code/{product.code}")
+    assert response.status_code == 200
+    # by code: product does not exist
+    response = client.get(f"/api/v1/products/code/{product.code+'X'}")
     assert response.status_code == 404
 
 

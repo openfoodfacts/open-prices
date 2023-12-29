@@ -275,11 +275,26 @@ def get_user_proofs(
 
 
 @app.get(
+    "/api/v1/products/code/{product_code}",
+    response_model=schemas.ProductBase,
+    tags=["Products"],
+)
+def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
+    db_product = crud.get_product_by_code(db, code=product_code)
+    if not db_product:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Product with code {product_code} not found",
+        )
+    return db_product
+
+
+@app.get(
     "/api/v1/products/{product_id}",
     response_model=schemas.ProductBase,
     tags=["Products"],
 )
-def get_product(product_id: int, db: Session = Depends(get_db)):
+def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
     db_product = crud.get_product_by_id(db, id=product_id)
     if not db_product:
         raise HTTPException(
