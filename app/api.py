@@ -305,11 +305,30 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
 
 
 @app.get(
+    "/api/v1/locations/osm/{location_osm_type}/{location_osm_id}",
+    response_model=schemas.LocationBase,
+    tags=["Locations"],
+)
+def get_location_by_osm(
+    location_osm_type: str, location_osm_id: int, db: Session = Depends(get_db)
+):
+    db_location = crud.get_location_by_osm_id_and_type(
+        db, osm_id=location_osm_id, osm_type=location_osm_type.upper()
+    )
+    if not db_location:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Location with type {location_osm_type} & id {location_osm_id} not found",
+        )
+    return db_location
+
+
+@app.get(
     "/api/v1/locations/{location_id}",
     response_model=schemas.LocationBase,
     tags=["Locations"],
 )
-def get_location(location_id: int, db: Session = Depends(get_db)):
+def get_location_by_id(location_id: int, db: Session = Depends(get_db)):
     db_location = crud.get_location_by_id(db, id=location_id)
     if not db_location:
         raise HTTPException(
