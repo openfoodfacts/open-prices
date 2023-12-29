@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.5.0](https://github.com/openfoodfacts/open-prices/compare/v1.4.2...v1.5.0) (2023-12-29)
+
+
+### Features
+
+* add endpoint to retrieve location by osm data ([#108](https://github.com/openfoodfacts/open-prices/issues/108)) ([b317014](https://github.com/openfoodfacts/open-prices/commit/b3170148fb4585448de82336fcb871c315228130))
+* add endpoint to retrieve product by code ([#106](https://github.com/openfoodfacts/open-prices/issues/106)) ([70f4567](https://github.com/openfoodfacts/open-prices/commit/70f4567bf5a97d7014064bae2b0454e04cd6f7e1))
+* add price.origins_tags field ([#110](https://github.com/openfoodfacts/open-prices/issues/110)) ([46e0c7f](https://github.com/openfoodfacts/open-prices/commit/46e0c7fc8de9bf66dd401786cfd83fc7468f6584))
+* return Price.owner info ([6e922f3](https://github.com/openfoodfacts/open-prices/commit/6e922f30029a9f9558ff070d3dc7c4330dd7e08f))
+
+
+### Technical
+
+* improve landing page ([#109](https://github.com/openfoodfacts/open-prices/issues/109)) ([ee2cbd8](https://github.com/openfoodfacts/open-prices/commit/ee2cbd869f25157204d942db3ce2c3e17b4439b5))
+
 ## [1.4.2](https://github.com/openfoodfacts/open-prices/compare/v1.4.1...v1.4.2) (2023-12-23)
 
 
