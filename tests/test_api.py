@@ -304,7 +304,11 @@ def test_get_prices_filters(db_session, user, clean_prices):
     crud.create_price(
         db_session,
         PRICE_1.model_copy(
-            update={"price": 3.99, "date": datetime.date.fromisoformat("2023-11-01")}
+            update={
+                "price": 3.99,
+                "currency": "USD",
+                "date": datetime.date.fromisoformat("2023-11-01"),
+            }
         ),
         user,
     )
@@ -342,6 +346,10 @@ def test_get_prices_filters(db_session, user, clean_prices):
     assert len(response.json()["items"]) == 1
     # 1 price with price > 5
     response = client.get("/api/v1/prices?price__gt=5")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 price with currency USD
+    response = client.get("/api/v1/prices?currency=USD")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
     # 2 prices with date = 2023-10-31
