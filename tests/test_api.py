@@ -304,26 +304,58 @@ def test_get_prices_filters(db_session, user, clean_prices):
     crud.create_price(
         db_session,
         PRICE_1.model_copy(
-            update={"price": 3.99, "date": datetime.date.fromisoformat("2023-11-01")}
+            update={
+                "price": 3.99,
+                "currency": "USD",
+                "date": datetime.date.fromisoformat("2023-11-01"),
+            }
         ),
         user,
     )
     crud.create_price(db_session, PRICE_1.model_copy(update={"price": 5.10}), user)
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(
+            update={
+                "product_code": None,
+                "category_tag": "en:tomatoes",
+                "labels_tags": ["en:organic"],
+                "origins_tags": ["en:spain"],
+            }
+        ),
+        user,
+    )
 
-    assert len(crud.get_prices(db_session)) == 3
+    assert len(crud.get_prices(db_session)) == 4
 
+    # 3 prices with the same product_code
     response = client.get(f"/api/v1/prices?product_code={PRICE_1.product_code}")
     assert response.status_code == 200
-    # 3 prices with the same product_code
     assert len(response.json()["items"]) == 3
+    # 1 price with a category_tag
+    response = client.get("/api/v1/prices?category_tag=en:tomatoes")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 price with labels_tags
+    response = client.get("/api/v1/prices?labels_tags__like=en:organic")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 price with origins_tags
+    response = client.get("/api/v1/prices?origins_tags__like=en:spain")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 price with price > 5
     response = client.get("/api/v1/prices?price__gt=5")
     assert response.status_code == 200
-    # 1 price with price > 5
     assert len(response.json()["items"]) == 1
-    response = client.get("/api/v1/prices?date=2023-10-31")
+    # 1 price with currency USD
+    response = client.get("/api/v1/prices?currency=USD")
     assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
     # 2 prices with date = 2023-10-31
-    assert len(response.json()["items"]) == 2
+    response = client.get(f"/api/v1/prices?date={PRICE_1.date}")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 3
 
 
 def test_get_prices_orders(db_session, user, clean_prices):
