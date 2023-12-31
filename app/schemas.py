@@ -267,6 +267,7 @@ class ProofBase(BaseModel):
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
     product_id: Optional[int] | None = None
+    category_tag: Optional[str] | None = None
     location_osm_id: Optional[int] | None = None
     location_osm_type: Optional[LocationOSMEnum] | None = None
     location_id: Optional[int] | None = None
