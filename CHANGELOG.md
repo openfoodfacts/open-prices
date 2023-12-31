@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/openfoodfacts/open-prices/compare/v1.5.0...v1.6.0) (2023-12-31)
+
+
+### Features
+
+* add price filters on category_tag, labels_tags & origins_tags ([#113](https://github.com/openfoodfacts/open-prices/issues/113)) ([2a1e350](https://github.com/openfoodfacts/open-prices/commit/2a1e350e7ecc5bb6b3aaa0d9042f96a6153c219e))
+
+
+### Technical
+
+* add a link to the frontend repo ([#111](https://github.com/openfoodfacts/open-prices/issues/111)) ([cd2f34b](https://github.com/openfoodfacts/open-prices/commit/cd2f34b90d454ae708e08fb5994b0cecb256e728))
+
 ## [1.5.0](https://github.com/openfoodfacts/open-prices/compare/v1.4.2...v1.5.0) (2023-12-29)
 
 
