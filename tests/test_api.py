@@ -312,7 +312,12 @@ def test_get_prices_filters(db_session, user, clean_prices):
     crud.create_price(
         db_session,
         PRICE_1.model_copy(
-            update={"product_code": None, "category_tag": "en:tomatoes"}
+            update={
+                "product_code": None,
+                "category_tag": "en:tomatoes",
+                "labels_tags": ["en:organic"],
+                "origins_tags": ["en:spain"],
+            }
         ),
         user,
     )
@@ -323,8 +328,16 @@ def test_get_prices_filters(db_session, user, clean_prices):
     response = client.get(f"/api/v1/prices?product_code={PRICE_1.product_code}")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 3
-    # 1 price with a category
+    # 1 price with a category_tag
     response = client.get("/api/v1/prices?category_tag=en:tomatoes")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 price with labels_tags
+    response = client.get("/api/v1/prices?labels_tags__like=en:organic")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 price with origins_tags
+    response = client.get("/api/v1/prices?origins_tags__like=en:spain")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
     # 1 price with price > 5
