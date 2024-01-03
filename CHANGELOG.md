@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.1](https://github.com/openfoodfacts/open-prices/compare/v1.6.0...v1.6.1) (2024-01-03)
+
+
+### Bug Fixes
+
+* improve price fetch performance ([#118](https://github.com/openfoodfacts/open-prices/issues/118)) ([1b65ea2](https://github.com/openfoodfacts/open-prices/commit/1b65ea22e31fdf38bcbadb58314e200ff095964c))
+
+
+### Technical
+
+* add tutorial + improve main doc page ([#116](https://github.com/openfoodfacts/open-prices/issues/116)) ([a01a5a0](https://github.com/openfoodfacts/open-prices/commit/a01a5a0b043954fb0f5b7c7d078cfed5c91e55fb))
+
 ## [1.6.0](https://github.com/openfoodfacts/open-prices/compare/v1.5.0...v1.6.0) (2023-12-31)
 
 
