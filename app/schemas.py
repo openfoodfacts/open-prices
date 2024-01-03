@@ -175,6 +175,15 @@ class PriceCreate(BaseModel):
         examples=[15],
     )
 
+
+class PriceCreateWithValidation(PriceCreate):
+    """A version of `PriceCreate` with taxonomy validations.
+
+    These validations are not done in the `PriceCreate` model because they
+    they are time-consuming and only necessary when creating a price from
+    the API.
+    """
+
     @field_validator("labels_tags")
     def labels_tags_is_valid(cls, v: list[str] | None):
         if v is not None:

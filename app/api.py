@@ -180,7 +180,7 @@ def get_price(
     tags=["Prices"],
 )
 def create_price(
-    price: schemas.PriceCreate,
+    price: schemas.PriceCreateWithValidation,
     background_tasks: BackgroundTasks,
     current_user: schemas.UserBase = Depends(get_current_user),
     db: Session = Depends(get_db),
