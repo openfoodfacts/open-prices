@@ -1,7 +1,6 @@
 import datetime
-from typing import Optional
 
-from fastapi_filter.contrib.sqlalchemy import Filter
+from fastapi_filters import FilterField, FilterOperator
 from openfoodfacts import Flavor
 from openfoodfacts.taxonomy import get_taxonomy
 from pydantic import (
@@ -14,7 +13,6 @@ from pydantic import (
 )
 
 from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
-from app.models import Price
 
 
 class UserBase(BaseModel):
@@ -277,29 +275,35 @@ class ProofBase(BaseModel):
     created: datetime.datetime
 
 
-class PriceFilter(Filter):
-    product_code: Optional[str] | None = None
-    product_id: Optional[int] | None = None
-    category_tag: Optional[str] | None = None
-    labels_tags__like: Optional[str] | None = None
-    origins_tags__like: Optional[str] | None = None
-    location_osm_id: Optional[int] | None = None
-    location_osm_type: Optional[LocationOSMEnum] | None = None
-    location_id: Optional[int] | None = None
-    price: Optional[int] | None = None
-    price__gt: Optional[int] | None = None
-    price__gte: Optional[int] | None = None
-    price__lt: Optional[int] | None = None
-    price__lte: Optional[int] | None = None
-    currency: Optional[str] | None = None
-    date: Optional[str] | None = None
-    date__gt: Optional[str] | None = None
-    date__gte: Optional[str] | None = None
-    date__lt: Optional[str] | None = None
-    date__lte: Optional[str] | None = None
-    owner: Optional[str] | None = None
-
-    order_by: Optional[list[str]] | None = None
-
-    class Constants(Filter.Constants):
-        model = Price
+PRICE_FILTERS = {
+    "product_code": FilterField(str, operators={FilterOperator.eq}),
+    "product_id": FilterField(int, operators={FilterOperator.eq}),
+    "category_tag": FilterField(str, operators={FilterOperator.eq}),
+    "labels_tags": FilterField(list[str], operators={FilterOperator.like}),
+    "origins_tags": FilterField(list[str], operators={FilterOperator.like}),
+    "location_osm_id": FilterField(int, operators={FilterOperator.eq}),
+    "location_osm_type": FilterField(LocationOSMEnum, operators={FilterOperator.eq}),
+    "location_id": FilterField(int, operators={FilterOperator.eq}),
+    "price": FilterField(
+        float,
+        operators={
+            FilterOperator.eq,
+            FilterOperator.gt,
+            FilterOperator.lt,
+            FilterOperator.ge,
+            FilterOperator.le,
+        },
+    ),
+    "currency": FilterField(str, operators={FilterOperator.eq}),
+    "date": FilterField(
+        datetime.date,
+        operators={
+            FilterOperator.eq,
+            FilterOperator.gt,
+            FilterOperator.lt,
+            FilterOperator.ge,
+            FilterOperator.le,
+        },
+    ),
+    "owner": FilterField(str, operators={FilterOperator.eq}),
+}

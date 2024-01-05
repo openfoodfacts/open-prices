@@ -18,10 +18,12 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
-from fastapi_filter import FilterDepends
+from fastapi_filters import FilterValues, SortingValues, create_filters, create_sorting
+from fastapi_filters.ext.sqlalchemy import apply_filters_and_sorting, apply_sorting
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
 from openfoodfacts.utils import get_logger
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import crud, schemas, tasks
@@ -29,6 +31,7 @@ from app.auth import OAuth2PasswordBearerOrAuthCookie
 from app.config import settings
 from app.db import session
 from app.enums import ProofTypeEnum
+from app.models import Product
 from app.utils import init_sentry
 
 logger = get_logger(level=settings.log_level.to_int())
@@ -167,10 +170,13 @@ def authentication(
 
 @app.get("/api/v1/prices", response_model=Page[schemas.PriceFull], tags=["Prices"])
 def get_price(
-    filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
+    filters: FilterValues = Depends(create_filters(**schemas.PRICE_FILTERS)),
+    sorting: SortingValues = Depends(create_sorting("date", "price")),
 ):
-    return paginate(db, crud.get_prices_query(filters=filters))
+    return paginate(
+        db, apply_filters_and_sorting(crud.get_prices_query(), filters, sorting)
+    )
 
 
 @app.post(
@@ -265,6 +271,16 @@ def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
             detail=f"Product with code {product_code} not found",
         )
     return db_product
+
+
+@app.get(
+    "/api/v1/products", response_model=Page[schemas.ProductBase], tags=["Products"]
+)
+def get_products(
+    db: Session = Depends(get_db),
+    sorting: SortingValues = Depends(create_sorting(("unique_scans_n", "smaller"))),
+):
+    return paginate(db, apply_sorting(select(Product), sorting))
 
 
 @app.get(
