@@ -111,11 +111,16 @@ def import_product_db(db: Session, batch_size: int = 1000):
     start_datetime = datetime.datetime.now(tz=datetime.timezone.utc).replace(
         hour=0, minute=0, second=0
     )
+    seen_codes = set()
     for product in tqdm.tqdm(dataset):
         if "code" not in product:
             continue
 
         product_code = product["code"]
+        # Some products are duplicated in the dataset, we skip them
+        if product_code in seen_codes:
+            continue
+        seen_codes.add(product_code)
         images: JSONType = product.get("images", {})
         last_modified_t = product.get("last_modified_t")
         last_modified = (
