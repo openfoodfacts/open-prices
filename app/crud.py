@@ -15,7 +15,6 @@ from app.schemas import (
     LocationCreate,
     PriceBase,
     PriceCreate,
-    PriceFilter,
     ProductBase,
     ProductCreate,
     UserBase,
@@ -105,23 +104,18 @@ def update_product(db: Session, product: ProductBase, update_dict: dict):
 
 # Prices
 # ------------------------------------------------------------------------------
-def get_prices_query(
-    with_join_product=True, with_join_location=True, filters: PriceFilter | None = None
-):
+def get_prices_query(with_join_product=True, with_join_location=True):
     """Useful for pagination."""
     query = select(Price)
     if with_join_product:
         query = query.options(joinedload(Price.product))
     if with_join_location:
         query = query.options(joinedload(Price.location))
-    if filters:
-        query = filters.filter(query)
-        query = filters.sort(query)
     return query
 
 
-def get_prices(db: Session, filters: PriceFilter | None = None):
-    return db.execute(get_prices_query(filters=filters)).all()
+def get_prices(db: Session):
+    return db.execute(get_prices_query()).all()
 
 
 def create_price(db: Session, price: PriceCreate, user: UserBase):

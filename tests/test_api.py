@@ -337,15 +337,15 @@ def test_get_prices_filters(db_session, user, clean_prices):
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
     # 1 price with labels_tags
-    response = client.get("/api/v1/prices?labels_tags__like=en:organic")
+    response = client.get("/api/v1/prices?labels_tags[like]=en:organic")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
     # 1 price with origins_tags
-    response = client.get("/api/v1/prices?origins_tags__like=en:spain")
+    response = client.get("/api/v1/prices?origins_tags[like]=en:spain")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
     # 1 price with price > 5
-    response = client.get("/api/v1/prices?price__gt=5")
+    response = client.get("/api/v1/prices?price[gt]=5")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
     # 1 price with currency USD
@@ -370,10 +370,10 @@ def test_get_prices_orders(db_session, user, clean_prices):
     response = client.get("/api/v1/prices")
     assert response.status_code == 200
     assert (response.json()["items"][0]["date"]) == "2023-10-31"
-    response = client.get("/api/v1/prices?order_by=date")  # ASC
+    response = client.get("/api/v1/prices?sort=%2Bdate")  # ASC
     assert response.status_code == 200
     assert (response.json()["items"][0]["date"]) == "2023-10-01"
-    response = client.get("/api/v1/prices?order_by=-date")  # DESC
+    response = client.get("/api/v1/prices?sort=-date")  # DESC
     assert response.status_code == 200
     assert (response.json()["items"][0]["date"]) == "2023-10-31"
 
