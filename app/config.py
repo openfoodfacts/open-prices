@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
 
+from openfoodfacts import Environment
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -42,6 +43,7 @@ class Settings(BaseSettings):
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
     images_dir: Path = STATIC_DIR / "img"
+    environment: Environment = Environment.org
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

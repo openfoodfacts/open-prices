@@ -1,12 +1,13 @@
 import logging
 
 import sentry_sdk
-from openfoodfacts import API, APIVersion, Country, Environment, Flavor
+from openfoodfacts import API, APIVersion, Country, Flavor
 from openfoodfacts.utils import get_logger
 from OSMPythonTools.nominatim import Nominatim
 from sentry_sdk.integrations import Integration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
+from app.config import settings
 from app.schemas import LocationBase, ProductBase
 
 logger = get_logger(__name__)
@@ -31,7 +32,13 @@ def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None =
 
 # OpenFoodFacts
 # ------------------------------------------------------------------------------
-OFF_FIELDS = ["product_name", "product_quantity", "brands", "image_url"]
+OFF_FIELDS = [
+    "product_name",
+    "product_quantity",
+    "brands",
+    "image_url",
+    "unique_scans_n",
+]
 
 
 def openfoodfacts_product_search(code: str):
@@ -41,7 +48,7 @@ def openfoodfacts_product_search(code: str):
         country=Country.world,
         flavor=Flavor.off,
         version=APIVersion.v2,
-        environment=Environment.org,
+        environment=settings.environment,
     )
     return client.product.get(code)
 

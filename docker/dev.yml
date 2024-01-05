@@ -25,3 +25,7 @@ services:
     <<: *api-base
     # uvicorn in reload mode
     command: ["uvicorn", "app.api:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  scheduler:
+    <<: *api-base
+    command: ["python", "-m", "app", "run-scheduler"]
