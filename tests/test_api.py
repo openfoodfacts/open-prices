@@ -45,6 +45,30 @@ client = TestClient(app)
 
 USER = UserBase(user_id="user1", token="user1__Utoken")
 PRODUCT = ProductCreate(code="8001505005592")
+PRODUCT_1 = ProductCreate(
+    code="0022314010025",
+    product_name="Chestnut spread 500 g",
+    product_quantity=500,
+    brands="Clément Faugier",
+    source="off",
+    unique_scans_n=20,
+)
+PRODUCT_2 = ProductCreate(
+    code="0022314010100",
+    product_name="Chestnut spread 100 g",
+    product_quantity=100,
+    brands="Clément Faugier",
+    source="off",
+    unique_scans_n=10,
+)
+PRODUCT_3 = ProductCreate(
+    code="3760091721969",
+    product_name="Crème bio de châtaignes 320 g",
+    product_quantity=320,
+    brands="Ethiquable",
+    source="off",
+    unique_scans_n=0,
+)
 LOCATION = LocationCreate(osm_id=3344841823, osm_type="NODE")
 PRICE_1 = PriceCreate(
     product_code="8001505005707",
@@ -82,7 +106,13 @@ def clean_prices(db_session):
     db_session.commit()
 
 
-# Tests
+@pytest.fixture(scope="function")
+def clean_products(db_session):
+    db_session.query(crud.Product).delete()
+    db_session.commit()
+
+
+# Test prices
 # ------------------------------------------------------------------------------
 def test_create_price(db_session, user, clean_prices):
     # without authentication
@@ -378,6 +408,8 @@ def test_get_prices_orders(db_session, user, clean_prices):
     assert (response.json()["items"][0]["date"]) == "2023-10-31"
 
 
+# Test proofs
+# ------------------------------------------------------------------------------
 def test_create_proof(user):
     # without authentication
     response = client.post(
@@ -427,21 +459,72 @@ def test_get_proofs(user):
     assert len(response.json()) == 1
 
 
-def test_get_product(product):
+# Test products
+# ------------------------------------------------------------------------------
+def test_get_products(db_session, clean_products):
+    crud.create_product(db_session, PRODUCT_1)
+    crud.create_product(db_session, PRODUCT_2)
+    crud.create_product(db_session, PRODUCT_3)
+
+    assert len(crud.get_products(db_session)) == 3
+    response = client.get("/api/v1/products")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 3
+
+
+def test_get_products_pagination(clean_products):
+    response = client.get("/api/v1/products")
+    assert response.status_code == 200
+    for key in ["items", "total", "page", "size", "pages"]:
+        assert key in response.json()
+
+
+# def test_get_products_filters(db_session, clean_products):
+#     crud.create_product(db_session, PRODUCT_1)
+#     crud.create_product(db_session, PRODUCT_2)
+#     crud.create_product(db_session, PRODUCT_3)
+
+#     assert len(crud.get_products(db_session)) == 3
+
+#     # 3 prices with the same source
+#     response = client.get("/api/v1/products?source=off")
+#     assert response.status_code == 200
+#     assert len(response.json()["items"]) == 3
+#     # 1 price with a specific product_name
+#     response = client.get("/api/v1/products?product_name__like=châtaignes")
+#     assert response.status_code == 200
+#     assert len(response.json()["items"]) == 1
+#     # 2 prices with the same brand
+#     response = client.get("/api/v1/products?brands__like=Clément Faugier")
+#     assert response.status_code == 200
+#     assert len(response.json()["items"]) == 2
+#     # 2 prices with a positive unique_scans_n
+#     response = client.get("/api/v1/products?unique_scans_n__gte=1")
+#     assert response.status_code == 200
+#     assert len(response.json()["items"]) == 2
+
+
+def test_get_product(db_session, clean_products):
+    crud.create_product(db_session, PRODUCT_1)
+    crud.create_product(db_session, PRODUCT_2)
+    last_product = crud.create_product(db_session, PRODUCT_3)
+
     # by id: product exists
-    response = client.get(f"/api/v1/products/{product.id}")
+    response = client.get(f"/api/v1/products/{last_product.id}")
     assert response.status_code == 200
     # by id: product does not exist
-    response = client.get(f"/api/v1/products/{product.id+1}")
+    response = client.get(f"/api/v1/products/{last_product.id+1}")
     assert response.status_code == 404
     # by code: product exists
-    response = client.get(f"/api/v1/products/code/{product.code}")
+    response = client.get(f"/api/v1/products/code/{last_product.code}")
     assert response.status_code == 200
     # by code: product does not exist
-    response = client.get(f"/api/v1/products/code/{product.code+'X'}")
+    response = client.get(f"/api/v1/products/code/{last_product.code+'X'}")
     assert response.status_code == 404
 
 
+# Test locations
+# ------------------------------------------------------------------------------
 def test_get_location(location):
     # by id: location exists
     response = client.get(f"/api/v1/locations/{location.id}")
