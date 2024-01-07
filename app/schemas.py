@@ -14,7 +14,7 @@ from pydantic import (
 )
 
 from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
-from app.models import Price
+from app.models import Price, Product
 
 
 class UserBase(BaseModel):
@@ -303,3 +303,16 @@ class PriceFilter(Filter):
 
     class Constants(Filter.Constants):
         model = Price
+
+
+class ProductFilter(Filter):
+    code: Optional[str] | None = None
+    source: Optional[Flavor] | None = None
+    product_name__like: Optional[str] | None = None
+    brands__like: Optional[str] | None = None
+    unique_scans_n__gte: Optional[int] | None = None
+
+    order_by: Optional[list[str]] | None = None
+
+    class Constants(Filter.Constants):
+        model = Product
