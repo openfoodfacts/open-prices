@@ -18,6 +18,7 @@ from app.schemas import (
     PriceFilter,
     ProductBase,
     ProductCreate,
+    ProductFilter,
     UserBase,
 )
 
@@ -70,6 +71,19 @@ def delete_user(db: Session, user_id: UserBase):
 
 # Products
 # ------------------------------------------------------------------------------
+def get_products_query(filters: ProductFilter | None = None):
+    """Useful for pagination."""
+    query = select(Product)
+    if filters:
+        query = filters.filter(query)
+        query = filters.sort(query)
+    return query
+
+
+def get_products(db: Session, filters: ProductFilter | None = None):
+    return db.execute(get_products_query(filters=filters)).all()
+
+
 def get_product_by_id(db: Session, id: int):
     return db.query(Product).filter(Product.id == id).first()
 

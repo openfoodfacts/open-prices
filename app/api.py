@@ -253,6 +253,16 @@ def get_user_proofs(
 
 
 @app.get(
+    "/api/v1/products", response_model=Page[schemas.ProductBase], tags=["Products"]
+)
+def get_products(
+    filters: schemas.ProductFilter = FilterDepends(schemas.ProductFilter),
+    db: Session = Depends(get_db),
+):
+    return paginate(db, crud.get_products_query(filters=filters))
+
+
+@app.get(
     "/api/v1/products/code/{product_code}",
     response_model=schemas.ProductBase,
     tags=["Products"],
