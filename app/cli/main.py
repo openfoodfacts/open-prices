@@ -4,7 +4,7 @@ app = typer.Typer()
 
 
 @app.command()
-def import_product_db() -> None:
+def import_product_db(batch_size: int = 1000) -> None:
     """Import from DB JSONL dump to insert/update product table."""
     from app.db import session
     from app.tasks import import_product_db
@@ -12,7 +12,7 @@ def import_product_db() -> None:
 
     get_logger()
     db = session()
-    import_product_db(db)
+    import_product_db(db, batch_size=batch_size)
 
 
 @app.command()
