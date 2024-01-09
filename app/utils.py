@@ -54,19 +54,22 @@ def openfoodfacts_product_search(code: str):
 
 
 def fetch_product_openfoodfacts_details(product: ProductBase):
-    product_openfoodfacts_details = dict()
+    product = {}
     try:
         response = openfoodfacts_product_search(code=product.code)
         if response["status"]:
-            product_openfoodfacts_details["source"] = Flavor.off
+            product["source"] = Flavor.off
             for off_field in OFF_FIELDS:
                 if off_field in response["product"]:
-                    product_openfoodfacts_details[off_field] = response["product"][
-                        off_field
-                    ]
-        return product_openfoodfacts_details
+                    product[off_field] = response["product"][off_field]
+            if product.get("product_quantity", 0) >= 100_000:
+                # If the product quantity is too high, it's probably an
+                # error, and cause an OutOfRangeError in the database
+                product["product_quantity"] = None
+
+        return product
     except Exception:
-        logger.exception("Error returned from OpenFoodFacts")
+        logger.exception("Error returned from Open Food Facts")
         return
 
 

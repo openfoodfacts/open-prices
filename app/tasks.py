@@ -142,6 +142,12 @@ def import_product_db(db: Session, batch_size: int = 1000):
             item = {"code": product_code, "source": Flavor.off}
             for key in OFF_FIELDS:
                 item[key] = product[key] if key in product else None
+
+            if product.get("product_quantity", 0) >= 100_000:
+                # If the product quantity is too high, it's probably an
+                # error, and causes an OutOfRangeError in the database
+                product["product_quantity"] = None
+
             item["image_url"] = generate_main_image_url(
                 product_code, images, product["lang"]
             )
