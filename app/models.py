@@ -44,7 +44,7 @@ class Product(Base):
     product_quantity = Column(Integer)
     brands = Column(String)
     image_url = Column(String)
-    unique_scans_n = Column(Integer, nullable=True)
+    unique_scans_n = Column(Integer, nullable=False, server_default=0)
 
     prices: Mapped[list["Price"]] = relationship(back_populates="product")
 
