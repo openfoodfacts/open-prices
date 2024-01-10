@@ -58,9 +58,10 @@ class ProductBase(ProductCreate):
             "https://images.openfoodfacts.org/images/products/800/150/500/5707/front_fr.161.400.jpg"
         ],
     )
-    unique_scans_n: int | None = Field(
+    unique_scans_n: int = Field(
         description="number of unique scans of the product on Open Food Facts.",
         examples=[15],
+        default=0,
     )
     created: datetime.datetime = Field(description="datetime of the creation.")
     updated: datetime.datetime | None = Field(

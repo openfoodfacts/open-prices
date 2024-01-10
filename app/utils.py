@@ -2,6 +2,7 @@ import logging
 
 import sentry_sdk
 from openfoodfacts import API, APIVersion, Country, Flavor
+from openfoodfacts.types import JSONType
 from openfoodfacts.utils import get_logger
 from OSMPythonTools.nominatim import Nominatim
 from sentry_sdk.integrations import Integration
@@ -53,6 +54,27 @@ def openfoodfacts_product_search(code: str):
     return client.product.get(code)
 
 
+def normalize_product_fields(product: JSONType) -> JSONType:
+    """Normalize product fields and return a product dict
+    ready to be inserted in the database.
+
+    :param product: the product to normalize
+    :return: the normalized product
+    """
+    product = product.copy()
+    product_quantity = int(product.get("product_quantity") or 0)
+    if product_quantity >= 100_000:
+        # If the product quantity is too high, it's probably an
+        # error, and cause an OutOfRangeError in the database
+        product["product_quantity"] = None
+
+    # Some products have null unique_scans_n
+    if product["unique_scans_n"] is None:
+        product["unique_scans_n"] = 0
+
+    return product
+
+
 def fetch_product_openfoodfacts_details(product: ProductBase):
     product = {}
     try:
@@ -62,15 +84,7 @@ def fetch_product_openfoodfacts_details(product: ProductBase):
             for off_field in OFF_FIELDS:
                 if off_field in response["product"]:
                     product[off_field] = response["product"][off_field]
-            if product.get("product_quantity", 0) >= 100_000:
-                # If the product quantity is too high, it's probably an
-                # error, and cause an OutOfRangeError in the database
-                product["product_quantity"] = None
-
-            # Some products have null unique_scans_n
-            if product["unique_scans_n"] is None:
-                product["unique_scans_n"] = 0
-
+            product = normalize_product_fields(product)
         return product
     except Exception:
         logger.exception("Error returned from Open Food Facts")

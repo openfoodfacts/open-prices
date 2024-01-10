@@ -16,6 +16,7 @@ from app.utils import (
     OFF_FIELDS,
     fetch_location_openstreetmap_details,
     fetch_product_openfoodfacts_details,
+    normalize_product_fields,
 )
 
 logger = get_logger(__name__)
@@ -143,15 +144,7 @@ def import_product_db(db: Session, batch_size: int = 1000):
             for key in OFF_FIELDS:
                 item[key] = product[key] if key in product else None
 
-            # Some products have null unique_scans_n
-            if item["unique_scans_n"] is None:
-                item["unique_scans_n"] = 0
-
-            if product.get("product_quantity", 0) >= 100_000:
-                # If the product quantity is too high, it's probably an
-                # error, and causes an OutOfRangeError in the database
-                product["product_quantity"] = None
-
+            item = normalize_product_fields(item)
             item["image_url"] = generate_main_image_url(
                 product_code, images, product["lang"]
             )
@@ -164,6 +157,7 @@ def import_product_db(db: Session, batch_size: int = 1000):
             item["image_url"] = generate_main_image_url(
                 product_code, images, product["lang"]
             )
+            item = normalize_product_fields(item)
             execute_result = db.execute(
                 Product.__table__.update()
                 .where(Product.code == product_code)
