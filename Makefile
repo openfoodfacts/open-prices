@@ -16,6 +16,17 @@ DOCKER_COMPOSE=docker-compose --env-file=${ENV_FILE}
 # avoid target corresponding to file names, to depends on them
 .PHONY: *
 
+#-----------#
+# Utilities #
+#-----------#
+
+guard-%: # guard clause for targets that require an environment variable (usually used as an argument)
+	@ if [ "${${*}}" = "" ]; then \
+   		echo "Environment variable '$*' is mandatory"; \
+   		echo use "make ${MAKECMDGOALS} $*=you-args"; \
+   		exit 1; \
+	fi;
+
 #------------#
 # Production #
 #------------#
@@ -126,6 +137,9 @@ create_external_volumes:
 migrate-db:
 	@echo "🥫 Migrating database …"
 	${DOCKER_COMPOSE} run --rm --no-deps api poetry run alembic upgrade head
+
+add-db-revision: guard-message
+	${DOCKER_COMPOSE} run --rm --no-deps api alembic revision --autogenerate -m "${message}"
 
 #---------#
 # Cleanup #

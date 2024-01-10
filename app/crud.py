@@ -171,7 +171,12 @@ def get_user_proofs(db: Session, user: UserBase):
 
 
 def create_proof(
-    db: Session, file_path: str, mimetype: str, type: ProofTypeEnum, user: UserBase
+    db: Session,
+    file_path: str,
+    mimetype: str,
+    type: ProofTypeEnum,
+    user: UserBase,
+    is_public: bool = True,
 ):
     """Create a proof in the database.
 
@@ -179,10 +184,15 @@ def create_proof(
     :param file_path: the path to the file
     :param mimetype: the mimetype of the file
     :param user: the user who uploaded the file
+    :param is_public: whether the proof is public or not
     :return: the created proof
     """
     db_proof = Proof(
-        file_path=file_path, mimetype=mimetype, type=type, owner=user.user_id
+        file_path=file_path,
+        mimetype=mimetype,
+        type=type,
+        owner=user.user_id,
+        is_public=is_public,
     )
     db.add(db_proof)
     db.commit()

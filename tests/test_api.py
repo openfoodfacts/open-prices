@@ -411,6 +411,7 @@ def test_get_prices_orders(db_session, user, clean_prices):
 # Test proofs
 # ------------------------------------------------------------------------------
 def test_create_proof(user):
+    # This test depends on the previous test_create_price
     # without authentication
     response = client.post(
         "/api/v1/proofs/upload",
@@ -436,11 +437,30 @@ def test_create_proof(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 422
+
+    # Check that is_public = False is not allowed for types other than RECEIPT
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "PRICE_TAG", "is_public": "false"},
+        headers={"Authorization": f"Bearer {user.token}"},
+    )
+    assert response.status_code == 422
+
     # with authentication and no validation error
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
         data={"type": "PRICE_TAG"},
+        headers={"Authorization": f"Bearer {user.token}"},
+    )
+    assert response.status_code == 201
+
+    # with authentication and is_public = False
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "RECEIPT", "is_public": "false"},
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 201
@@ -456,7 +476,27 @@ def test_get_proofs(user):
         headers={"Authorization": f"Bearer {user.token}"},
     )
     assert response.status_code == 200
-    assert len(response.json()) == 1
+    data = response.json()
+    assert len(data) == 2
+
+    for item in data:
+        assert set(item.keys()) == {
+            "id",
+            "file_path",
+            "mimetype",
+            "type",
+            "owner",
+            "created",
+            "is_public",
+        }
+
+    for i, item in enumerate(data):
+        assert item["id"] == i + 1
+        assert item["file_path"].startswith("0001/")
+        assert item["file_path"].endswith(".webp")
+        assert item["type"] == ("PRICE_TAG" if i == 0 else "RECEIPT")
+        assert item["owner"] == "user1"
+        assert item["is_public"] == (True if i == 0 else False)
 
 
 # Test products

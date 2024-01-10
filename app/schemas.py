@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from openfoodfacts import Flavor
@@ -275,6 +275,14 @@ class ProofBase(BaseModel):
     type: ProofTypeEnum | None = None
     owner: str
     created: datetime.datetime
+    is_public: Annotated[
+        bool,
+        Field(
+            default=True,
+            description="if true, the proof is public and is included in the API response. "
+            "Set false if only if the proof contains personal information.",
+        ),
+    ]
 
 
 class PriceFilter(Filter):
