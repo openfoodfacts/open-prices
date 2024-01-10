@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.7.0](https://github.com/openfoodfacts/open-prices/compare/v1.6.1...v1.7.0) (2024-01-10)
+
+
+### Features
+
+* add proof.is_public field ([#126](https://github.com/openfoodfacts/open-prices/issues/126)) ([20a4b16](https://github.com/openfoodfacts/open-prices/commit/20a4b16651467c82c134f5e5532e3b44a23802b0))
+* import product DB every day ([#119](https://github.com/openfoodfacts/open-prices/issues/119)) ([b60c3ac](https://github.com/openfoodfacts/open-prices/commit/b60c3ac867d972f31a2c8dd731246d21437e2ecc))
+* products GET endpoint ([#122](https://github.com/openfoodfacts/open-prices/issues/122)) ([f80d80b](https://github.com/openfoodfacts/open-prices/commit/f80d80bf6370f80da5fe4eaa6551a92b01459e88))
+
+
+### Bug Fixes
+
+* add --batch-size param to CLI command ([dca9098](https://github.com/openfoodfacts/open-prices/commit/dca9098e949c538e811ecb34a3439ad79137212c))
+* fix db error ([#125](https://github.com/openfoodfacts/open-prices/issues/125)) ([57e4adb](https://github.com/openfoodfacts/open-prices/commit/57e4adb41bf29ef94fc5542e3179141f28727c09))
+* fix duplicate key error due to duplicate products ([bd6ff9c](https://github.com/openfoodfacts/open-prices/commit/bd6ff9c8b2d531a83469c232988a6c0352583887))
+* fix product_quantity DB error ([8196bc2](https://github.com/openfoodfacts/open-prices/commit/8196bc238b645d3f22d50e87bf3ba3d038fa7f85))
+* fix product.unique_scans_n server_default ([54202d0](https://github.com/openfoodfacts/open-prices/commit/54202d002aad78f0ab3adf036f8eb8b1f7f27403))
+* fix unique_scans_n null values ([b967d5a](https://github.com/openfoodfacts/open-prices/commit/b967d5a4eb3a09f93aab4562f7c052d8db7f684a))
+
 ## [1.6.1](https://github.com/openfoodfacts/open-prices/compare/v1.6.0...v1.6.1) (2024-01-03)
 
 
