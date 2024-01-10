@@ -67,6 +67,10 @@ def fetch_product_openfoodfacts_details(product: ProductBase):
                 # error, and cause an OutOfRangeError in the database
                 product["product_quantity"] = None
 
+            # Some products have null unique_scans_n
+            if product["unique_scans_n"] is None:
+                product["unique_scans_n"] = 0
+
         return product
     except Exception:
         logger.exception("Error returned from Open Food Facts")
