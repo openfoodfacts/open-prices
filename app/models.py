@@ -2,6 +2,7 @@ from openfoodfacts import Flavor
 from sqlalchemy import (
     JSON,
     BigInteger,
+    Boolean,
     Column,
     Date,
     DateTime,
@@ -88,6 +89,8 @@ class Proof(Base):
     owner = Column(String, index=True)
 
     created = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    is_public = Column(Boolean, nullable=False, server_default="true", index=True)
 
     __tablename__ = "proofs"
 

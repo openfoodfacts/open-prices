@@ -222,7 +222,12 @@ def create_price(
 )
 def upload_proof(
     file: UploadFile,
-    type: ProofTypeEnum = Form(),
+    type: Annotated[ProofTypeEnum, Form(description="The type of the proof")],
+    is_public: bool = Form(
+        default=True,
+        description="if true, the proof is public and is included in the API response. "
+        "Set false only for RECEIPT proofs that contain personal information.",
+    ),
     current_user: schemas.UserBase = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -234,8 +239,15 @@ def upload_proof(
 
     This endpoint requires authentication.
     """
+    if not is_public and type is not ProofTypeEnum.RECEIPT:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Only receipts can be private",
+        )
     file_path, mimetype = crud.create_proof_file(file)
-    db_proof = crud.create_proof(db, file_path, mimetype, type=type, user=current_user)
+    db_proof = crud.create_proof(
+        db, file_path, mimetype, type=type, user=current_user, is_public=is_public
+    )
     return db_proof
 
 
