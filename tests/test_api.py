@@ -75,6 +75,7 @@ PRICE_1 = PriceCreate(
     product_name="PATE NOCCIOLATA BIO 700G",
     # category="en:tomatoes",
     price=3.5,
+    price_without_discount=4.5,
     currency="EUR",
     location_osm_id=123,
     location_osm_type="NODE",
