@@ -63,12 +63,12 @@ class ProductBase(ProductCreate):
         examples=[15],
         default=0,
     )
+    price_count: int = Field(
+        description="number of prices for this product.", examples=[15], default=0
+    )
     created: datetime.datetime = Field(description="datetime of the creation.")
     updated: datetime.datetime | None = Field(
         description="datetime of the last update."
-    )
-    price_count: int = Field(
-        description="number of prices for this product.", examples=[15], default=0
     )
 
 
@@ -355,6 +355,9 @@ class ProductFilter(Filter):
     product_name__like: Optional[str] | None = None
     brands__like: Optional[str] | None = None
     unique_scans_n__gte: Optional[int] | None = None
+    price_count: Optional[int] | None = None
+    price_count__gte: Optional[int] | None = None
+    price_count__lte: Optional[int] | None = None
 
     order_by: Optional[list[str]] | None = None
 
