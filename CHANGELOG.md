@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.9.0](https://github.com/openfoodfacts/open-prices/compare/v1.8.0...v1.9.0) (2024-01-11)
+
+
+### Features
+
+* add product filter on price_count ([#134](https://github.com/openfoodfacts/open-prices/issues/134)) ([3f687d2](https://github.com/openfoodfacts/open-prices/commit/3f687d257f8470a74fadf439731cd8c7201d8ae9))
+
+
+### Bug Fixes
+
+* always return proof.file_path for proof uploaded by the user ([#132](https://github.com/openfoodfacts/open-prices/issues/132)) ([fe14346](https://github.com/openfoodfacts/open-prices/commit/fe14346286fd5b645d610598bc3f70e5d8e8d831))
+
 ## [1.8.0](https://github.com/openfoodfacts/open-prices/compare/v1.7.0...v1.8.0) (2024-01-11)
 
 
