@@ -152,10 +152,14 @@ class PriceCreate(BaseModel):
     )
     price: float = Field(
         gt=0,
-        description="price of the product, without its currency, taxes included. "
-        "If the price is about a barcode-less product, it must be the price per "
-        "kilogram or per liter.",
+        description="price of the product, without its currency, taxes included.",
         examples=["1.99"],
+    )
+    price_without_discount: float | None = Field(
+        default=None,
+        description="price of the product without discount, without its currency, taxes included. "
+        "If the product is not discounted, this field must be null. ",
+        examples=["2.99"],
     )
     price_per: PricePerEnum | None = Field(
         default=PricePerEnum.KILOGRAM,
@@ -265,6 +269,16 @@ class PriceCreateWithValidation(PriceCreate):
         """Validator that sets `price_per` to null if `product_code` is set."""
         if self.product_code is not None:
             self.price_per = None
+        return self
+
+    @model_validator(mode="after")
+    def check_price_without_discout(self):
+        """Check that `price_without_discount` is greater than `price`."""
+        if self.price_without_discount is not None:
+            if self.price_without_discount <= self.price:
+                raise ValueError(
+                    "`price_without_discount` must be greater than `price`"
+                )
         return self
 
 
