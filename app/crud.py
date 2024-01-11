@@ -48,7 +48,7 @@ def create_user(db: Session, user: UserBase):
     return db_user
 
 
-def update_user_last_used_field(db: Session, token: str):
+def update_user_last_used_field(db: Session, token: str) -> UserBase | None:
     db_user = get_user_by_token(db, token=token)
     if db_user:
         db.query(User).filter(User.user_id == db_user.user_id).update(
@@ -57,7 +57,7 @@ def update_user_last_used_field(db: Session, token: str):
         db.commit()
         db.refresh(db_user)
         return db_user
-    return False
+    return None
 
 
 def delete_user(db: Session, user_id: UserBase):
