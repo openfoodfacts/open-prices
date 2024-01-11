@@ -51,7 +51,7 @@ class Product(Base):
 
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())
-    price_count = Column(Integer, nullable=False, server_default="0")
+    price_count = Column(Integer, nullable=False, server_default="0", index=True)
 
     __tablename__ = "products"
 
