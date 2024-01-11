@@ -92,19 +92,40 @@ def get_product_by_code(db: Session, code: str):
     return db.query(Product).filter(Product.code == code).first()
 
 
-def create_product(db: Session, product: ProductCreate):
-    db_product = Product(**product.model_dump())
+def create_product(
+    db: Session, product: ProductCreate, price_count: int = 0
+) -> Product:
+    """Create a product in the database.
+
+    :param db: the database session
+    :param product: the product to create
+    :param price_count: the number of prices linked to the product, defaults
+        to 0
+    :return: the created product
+    """
+    db_product = Product(price_count=price_count, **product.model_dump())
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
     return db_product
 
 
-def get_or_create_product(db: Session, product: ProductCreate):
+def get_or_create_product(
+    db: Session, product: ProductCreate, init_price_count: int = 0
+):
+    """Get or create a product in the database.
+
+    :param db: the database session
+    :param product: the product to create
+    :param init_price_count: the initial number of prices linked to the
+        product if a product is created, defaults to 0
+    :return: the created product and a boolean indicating whether the product
+        was created or not
+    """
     created = False
     db_product = get_product_by_code(db, code=product.code)
     if not db_product:
-        db_product = create_product(db, product=product)
+        db_product = create_product(db, product=product, price_count=init_price_count)
         created = True
     return db_product, created
 
@@ -112,6 +133,17 @@ def get_or_create_product(db: Session, product: ProductCreate):
 def update_product(db: Session, product: ProductBase, update_dict: dict):
     for key, value in update_dict.items():
         setattr(product, key, value)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+def increment_product_price_count(db: Session, product: ProductBase):
+    """Increment the price count of a product.
+
+    This is used to keep track of the number of prices linked to a product.
+    """
+    product.price_count += 1
     db.commit()
     db.refresh(product)
     return product
@@ -146,7 +178,11 @@ def create_price(db: Session, price: PriceCreate, user: UserBase):
     return db_price
 
 
-def set_price_product(db: Session, price: PriceBase, product: ProductBase):
+def link_price_product(
+    db: Session, price: PriceBase, product: ProductBase
+) -> PriceBase:
+    """Link the product DB object to the price DB object and return the updated
+    price."""
     price.product_id = product.id
     db.commit()
     db.refresh(price)
