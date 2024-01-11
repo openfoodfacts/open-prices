@@ -142,6 +142,7 @@ def test_create_price_with_category_tag(db_session, user, clean_prices):
             "labels_tags": ["en:Organic"],
             "origins_tags": ["en:France"],
             "date": "2023-12-01",
+            "price_per": "UNIT",
         }
     )
     response = client.post(
@@ -155,6 +156,7 @@ def test_create_price_with_category_tag(db_session, user, clean_prices):
     assert json_response.get("labels_tags") == ["en:organic"]
     assert json_response.get("origins_tags") == ["en:france"]
     assert json_response.get("date") == "2023-12-01"
+    assert json_response.get("price_per") == "UNIT"
     assert "id" not in response.json()
     db_prices = crud.get_prices(db_session)
     assert len(db_prices) == 1

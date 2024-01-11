@@ -18,7 +18,7 @@ from sqlalchemy_utils import force_auto_coercion
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from app.db import Base
-from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
+from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
 
 force_auto_coercion()
 JSONVariant = JSON().with_variant(JSONB(), "postgresql")
@@ -108,6 +108,7 @@ class Price(Base):
 
     price = Column(Numeric(precision=10, scale=2))
     currency = Column(ChoiceType(CurrencyEnum))
+    price_per = Column(ChoiceType(PricePerEnum))
 
     location_osm_id = Column(BigInteger, index=True)
     location_osm_type = Column(ChoiceType(LocationOSMEnum))
