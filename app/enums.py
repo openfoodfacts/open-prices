@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, unique
 
 from babel.numbers import list_currencies
 
@@ -17,3 +17,13 @@ class ProofTypeEnum(Enum):
     PRICE_TAG = "PRICE_TAG"
     RECEIPT = "RECEIPT"
     GDPR_REQUEST = "GDPR_REQUEST"
+
+
+@unique
+class PricePerEnum(Enum):
+    """For raw products (fruits, vegetables, etc.), the price is either
+    per unit or per kilogram. This enum is used to store this information.
+    """
+
+    UNIT = "UNIT"
+    KILOGRAM = "KILOGRAM"

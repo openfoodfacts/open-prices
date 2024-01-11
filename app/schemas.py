@@ -13,7 +13,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
+from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
 from app.models import Price, Product
 
 
@@ -154,6 +154,14 @@ class PriceCreate(BaseModel):
         "kilogram or per liter.",
         examples=["1.99"],
     )
+    price_per: PricePerEnum | None = Field(
+        default=PricePerEnum.KILOGRAM,
+        description="""if the price is about a barcode-less product
+        (if `category_tag` is provided), this field must be set to `KILOGRAM`
+        or `UNIT` (KILOGRAM by default).
+        This field is set to null and ignored if `product_code` is provided.
+        """,
+    )
     currency: CurrencyEnum = Field(
         description="currency of the price, as a string. "
         "The currency must be a valid currency code. "
@@ -247,6 +255,13 @@ class PriceCreateWithValidation(PriceCreate):
                 )
         if self.product_code is None and self.category_tag is None:
             raise ValueError("either `product_code` or `category_tag` must be set")
+        return self
+
+    @model_validator(mode="after")
+    def set_price_per_to_null_if_barcode(self):
+        """Validator that sets `price_per` to null if `product_code` is set."""
+        if self.product_code is not None:
+            self.price_per = None
         return self
 
 
