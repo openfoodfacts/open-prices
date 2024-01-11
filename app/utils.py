@@ -75,7 +75,7 @@ def normalize_product_fields(product: JSONType) -> JSONType:
     return product
 
 
-def fetch_product_openfoodfacts_details(product: ProductBase):
+def fetch_product_openfoodfacts_details(product: ProductBase) -> JSONType | None:
     product = {}
     try:
         response = openfoodfacts_product_search(code=product.code)

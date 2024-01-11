@@ -88,7 +88,7 @@ def get_product_by_id(db: Session, id: int):
     return db.query(Product).filter(Product.id == id).first()
 
 
-def get_product_by_code(db: Session, code: str):
+def get_product_by_code(db: Session, code: str) -> Product:
     return db.query(Product).filter(Product.code == code).first()
 
 
