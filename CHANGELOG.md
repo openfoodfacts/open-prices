@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.8.0](https://github.com/openfoodfacts/open-prices/compare/v1.7.0...v1.8.0) (2024-01-11)
+
+
+### Features
+
+* add price.price_per field ([#127](https://github.com/openfoodfacts/open-prices/issues/127)) ([5740271](https://github.com/openfoodfacts/open-prices/commit/57402714cb0eee7962d48d340da07e76115ffe33))
+* add price.price_without_discount field ([#130](https://github.com/openfoodfacts/open-prices/issues/130)) ([5e3be73](https://github.com/openfoodfacts/open-prices/commit/5e3be7309572bd2082023f5775f16c34875bfedc))
+* add product.price_count field to keep track of number of prices ([#129](https://github.com/openfoodfacts/open-prices/issues/129)) ([73b32e6](https://github.com/openfoodfacts/open-prices/commit/73b32e69377075e24d4768503c1530c483f9115e))
+* add proof object in price response ([#131](https://github.com/openfoodfacts/open-prices/issues/131)) ([450b82e](https://github.com/openfoodfacts/open-prices/commit/450b82eb7d4da22d06eda4e9a29662a42e3a1a47))
+
+
+### Bug Fixes
+
+* add index on products.price_count field ([9fdfdcd](https://github.com/openfoodfacts/open-prices/commit/9fdfdcd14fc8322697f6d35a27846c310d552122))
+
+
+### Technical
+
+* add typing information ([cc5e383](https://github.com/openfoodfacts/open-prices/commit/cc5e383c88bfb9fd69a309230ad691f3b1ac5757))
+
 ## [1.7.0](https://github.com/openfoodfacts/open-prices/compare/v1.6.1...v1.7.0) (2024-01-10)
 
 
