@@ -29,6 +29,7 @@ from app.auth import OAuth2PasswordBearerOrAuthCookie
 from app.config import settings
 from app.db import session
 from app.enums import ProofTypeEnum
+from app.models import Price
 from app.utils import init_sentry
 
 logger = get_logger(level=settings.log_level.to_int())
@@ -165,12 +166,26 @@ def authentication(
     )
 
 
+def price_transformer(prices: list[Price]) -> list[Price]:
+    """Transformer function used to remove the file_path of private proofs.
+
+    :param prices: the list of prices to transform
+    :return: the transformed list of prices
+    """
+    for price in prices:
+        if price.proof and price.proof.is_public is False:
+            price.proof.file_path = None
+    return prices
+
+
 @app.get("/api/v1/prices", response_model=Page[schemas.PriceFull], tags=["Prices"])
 def get_price(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
 ):
-    return paginate(db, crud.get_prices_query(filters=filters))
+    return paginate(
+        db, crud.get_prices_query(filters=filters), transformer=price_transformer
+    )
 
 
 @app.post(

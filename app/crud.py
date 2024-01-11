@@ -152,7 +152,10 @@ def increment_product_price_count(db: Session, product: ProductBase):
 # Prices
 # ------------------------------------------------------------------------------
 def get_prices_query(
-    with_join_product=True, with_join_location=True, filters: PriceFilter | None = None
+    with_join_product: bool = True,
+    with_join_location: bool = True,
+    with_join_proof: bool = True,
+    filters: PriceFilter | None = None,
 ):
     """Useful for pagination."""
     query = select(Price)
@@ -160,6 +163,8 @@ def get_prices_query(
         query = query.options(joinedload(Price.product))
     if with_join_location:
         query = query.options(joinedload(Price.location))
+    if with_join_proof:
+        query = query.options(joinedload(Price.proof))
     if filters:
         query = filters.filter(query)
         query = filters.sort(query)

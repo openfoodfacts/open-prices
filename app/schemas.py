@@ -289,11 +289,6 @@ class PriceBase(PriceCreate):
     created: datetime.datetime
 
 
-class PriceFull(PriceBase):
-    product: ProductBase | None
-    location: LocationBase | None
-
-
 # class ProofCreate(BaseModel):
 #     file: UploadFile
 #     type: ProofTypeEnum
@@ -303,7 +298,9 @@ class ProofBase(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     id: int
-    file_path: str
+    # file_path is str | null because we can mask the file path in the response
+    # if the proof is not public
+    file_path: str | None
     mimetype: str
     type: ProofTypeEnum | None = None
     owner: str
@@ -316,6 +313,12 @@ class ProofBase(BaseModel):
             "Set false if only if the proof contains personal information.",
         ),
     ]
+
+
+class PriceFull(PriceBase):
+    product: ProductBase | None
+    proof: ProofBase | None
+    location: LocationBase | None
 
 
 class PriceFilter(Filter):
