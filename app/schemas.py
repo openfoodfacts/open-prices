@@ -67,6 +67,9 @@ class ProductBase(ProductCreate):
     updated: datetime.datetime | None = Field(
         description="datetime of the last update."
     )
+    price_count: int = Field(
+        description="number of prices for this product.", examples=[15], default=0
+    )
 
 
 class LocationCreate(BaseModel):

@@ -28,9 +28,11 @@ def create_price_product(db: Session, price: PriceBase):
     if price.product_code:
         # get or create the corresponding product
         product = ProductCreate(code=price.product_code)
-        db_product, created = crud.get_or_create_product(db, product=product)
+        db_product, created = crud.get_or_create_product(
+            db, product=product, init_price_count=1
+        )
         # link the product to the price
-        crud.set_price_product(db, price=price, product=db_product)
+        crud.link_price_product(db, price=price, product=db_product)
         # fetch data from OpenFoodFacts if created
         if created:
             product_openfoodfacts_details = fetch_product_openfoodfacts_details(
@@ -40,6 +42,9 @@ def create_price_product(db: Session, price: PriceBase):
                 crud.update_product(
                     db, product=db_product, update_dict=product_openfoodfacts_details
                 )
+        else:
+            # Increment the price count of the product
+            crud.increment_product_price_count(db, product=db_product)
 
 
 def create_price_location(db: Session, price: PriceBase):
