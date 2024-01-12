@@ -324,6 +324,7 @@ class PriceFull(PriceBase):
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
     product_id: Optional[int] | None = None
+    product_id__isnull: Optional[bool] | None = None
     category_tag: Optional[str] | None = None
     labels_tags__like: Optional[str] | None = None
     origins_tags__like: Optional[str] | None = None
