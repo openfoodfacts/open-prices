@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/openfoodfacts/open-prices/compare/v1.9.0...v1.9.1) (2024-01-12)
+
+
+### Bug Fixes
+
+* add missing filter on Product.product_id field. ref [#134](https://github.com/openfoodfacts/open-prices/issues/134) ([0ab9f9d](https://github.com/openfoodfacts/open-prices/commit/0ab9f9d286e83c926ece1e8719ab2323a88b1596))
+
 ## [1.9.0](https://github.com/openfoodfacts/open-prices/compare/v1.8.0...v1.9.0) (2024-01-11)
 
 
