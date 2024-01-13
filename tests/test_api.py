@@ -551,19 +551,19 @@ def test_get_products_pagination(clean_products):
 
 #     assert len(crud.get_products(db_session)) == 3
 
-#     # 3 prices with the same source
+#     # 3 products with the same source
 #     response = client.get("/api/v1/products?source=off")
 #     assert response.status_code == 200
 #     assert len(response.json()["items"]) == 3
-#     # 1 price with a specific product_name
+#     # 1 product with a specific product_name
 #     response = client.get("/api/v1/products?product_name__like=châtaignes")
 #     assert response.status_code == 200
 #     assert len(response.json()["items"]) == 1
-#     # 2 prices with the same brand
+#     # 2 products with the same brand
 #     response = client.get("/api/v1/products?brands__like=Clément Faugier")
 #     assert response.status_code == 200
 #     assert len(response.json()["items"]) == 2
-#     # 2 prices with a positive unique_scans_n
+#     # 2 products with a positive unique_scans_n
 #     response = client.get("/api/v1/products?unique_scans_n__gte=1")
 #     assert response.status_code == 200
 #     assert len(response.json()["items"]) == 2
@@ -605,6 +605,22 @@ def test_get_locations_pagination(clean_locations):
     assert response.status_code == 200
     for key in ["items", "total", "page", "size", "pages"]:
         assert key in response.json()
+
+
+# def test_get_locations_filters(db_session, clean_locations):
+#     crud.create_location(db_session, LOCATION_1)
+#     crud.create_location(db_session, LOCATION_2)
+
+#     assert len(crud.get_locations(db_session)) == 2
+
+#     # 1 location Monoprix
+#     response = client.get("/api/v1/locations?osm_name__like=Monoprix")
+#     assert response.status_code == 200
+#     assert len(response.json()["items"]) == 1
+#     # 1 location in France
+#     response = client.get("/api/v1/locations?osm_address_country__like=France")  # noqa
+#     assert response.status_code == 200
+#     assert len(response.json()["items"]) == 1
 
 
 def test_get_location(location):

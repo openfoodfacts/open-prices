@@ -382,9 +382,10 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
     "/api/v1/locations", response_model=Page[schemas.LocationBase], tags=["Locations"]
 )
 def get_locations(
+    filters: schemas.LocationFilter = FilterDepends(schemas.LocationFilter),
     db: Session = Depends(get_db),
 ):
-    return paginate(db, crud.get_locations_query())
+    return paginate(db, crud.get_locations_query(filters=filters))
 
 
 @app.get(
