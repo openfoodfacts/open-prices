@@ -289,6 +289,10 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
 
 # Locations
 # ------------------------------------------------------------------------------
+def get_locations(db: Session):
+    return db.query(Location).all()
+
+
 def get_location_by_id(db: Session, id: int):
     return db.query(Location).filter(Location.id == id).first()
 

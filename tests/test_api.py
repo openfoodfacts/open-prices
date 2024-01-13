@@ -70,6 +70,22 @@ PRODUCT_3 = ProductCreate(
     unique_scans_n=0,
 )
 LOCATION = LocationCreate(osm_id=3344841823, osm_type="NODE")
+LOCATION_1 = LocationCreate(
+    osm_id=652825274,
+    osm_type="NODE",
+    osm_name="Monoprix",
+    osm_address_postcode="38000",
+    osm_address_city="Grenoble",
+    osm_address_country="France",
+)
+LOCATION_2 = LocationCreate(
+    osm_id=6509705997,
+    osm_type="NODE",
+    osm_name="Carrefour",
+    osm_address_postcode="1000",
+    osm_address_city="Bruxelles - Brussel",
+    osm_address_country="België / Belgique / Belgien",
+)
 PRICE_1 = PriceCreate(
     product_code="8001505005707",
     product_name="PATE NOCCIOLATA BIO 700G",
@@ -110,6 +126,12 @@ def clean_prices(db_session):
 @pytest.fixture(scope="function")
 def clean_products(db_session):
     db_session.query(crud.Product).delete()
+    db_session.commit()
+
+
+@pytest.fixture(scope="function")
+def clean_locations(db_session):
+    db_session.query(crud.Location).delete()
     db_session.commit()
 
 
@@ -568,6 +590,16 @@ def test_get_product(db_session, clean_products):
 
 # Test locations
 # ------------------------------------------------------------------------------
+def test_get_locations(db_session, clean_locations):
+    crud.create_location(db_session, LOCATION_1)
+    crud.create_location(db_session, LOCATION_2)
+
+    assert len(crud.get_locations(db_session)) == 2
+    response = client.get("/api/v1/locations")
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+
+
 def test_get_location(location):
     # by id: location exists
     response = client.get(f"/api/v1/locations/{location.id}")
