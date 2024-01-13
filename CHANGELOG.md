@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/openfoodfacts/open-prices/compare/v1.9.1...v1.10.0) (2024-01-13)
+
+
+### Features
+
+* locations GET endpoint ([#138](https://github.com/openfoodfacts/open-prices/issues/138)) ([300697f](https://github.com/openfoodfacts/open-prices/commit/300697f0f7c12ae308a5e0a04cd5515afdda720f))
+
 ## [1.9.1](https://github.com/openfoodfacts/open-prices/compare/v1.9.0...v1.9.1) (2024-01-12)
 
 
