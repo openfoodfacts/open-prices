@@ -597,7 +597,14 @@ def test_get_locations(db_session, clean_locations):
     assert len(crud.get_locations(db_session)) == 2
     response = client.get("/api/v1/locations")
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    assert len(response.json()["items"]) == 2
+
+
+def test_get_locations_pagination(clean_locations):
+    response = client.get("/api/v1/locations")
+    assert response.status_code == 200
+    for key in ["items", "total", "page", "size", "pages"]:
+        assert key in response.json()
 
 
 def test_get_location(location):

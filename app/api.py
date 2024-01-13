@@ -379,12 +379,12 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
 # Routes: Locations
 # ------------------------------------------------------------------------------
 @app.get(
-    "/api/v1/locations", response_model=list[schemas.LocationBase], tags=["Locations"]
+    "/api/v1/locations", response_model=Page[schemas.LocationBase], tags=["Locations"]
 )
 def get_locations(
     db: Session = Depends(get_db),
 ):
-    return crud.get_locations(db)
+    return paginate(db, crud.get_locations_query())
 
 
 @app.get(
