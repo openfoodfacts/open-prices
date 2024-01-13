@@ -136,6 +136,9 @@ def get_current_user_optional(
 
 # Routes
 # ------------------------------------------------------------------------------
+@app.get("/api/v1/status")
+def status_endpoint():
+    return {"status": "running"}
 
 
 @app.post("/api/v1/auth", tags=["Auth"])
@@ -199,6 +202,8 @@ def authentication(
     )
 
 
+# Routes: Prices
+# ------------------------------------------------------------------------------
 def price_transformer(
     prices: list[Price], current_user: schemas.UserBase | None = None
 ) -> list[Price]:
@@ -277,6 +282,8 @@ def create_price(
     return db_price
 
 
+# Routes: Proofs
+# ------------------------------------------------------------------------------
 @app.post(
     "/api/v1/proofs/upload",
     response_model=schemas.ProofBase,
@@ -327,6 +334,8 @@ def get_user_proofs(
     return crud.get_user_proofs(db, user=current_user)
 
 
+# Routes: Products
+# ------------------------------------------------------------------------------
 @app.get(
     "/api/v1/products", response_model=Page[schemas.ProductBase], tags=["Products"]
 )
@@ -367,6 +376,18 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
     return db_product
 
 
+# Routes: Locations
+# ------------------------------------------------------------------------------
+@app.get(
+    "/api/v1/locations", response_model=Page[schemas.LocationBase], tags=["Locations"]
+)
+def get_locations(
+    filters: schemas.LocationFilter = FilterDepends(schemas.LocationFilter),
+    db: Session = Depends(get_db),
+):
+    return paginate(db, crud.get_locations_query(filters=filters))
+
+
 @app.get(
     "/api/v1/locations/osm/{location_osm_type}/{location_osm_id}",
     response_model=schemas.LocationBase,
@@ -399,11 +420,6 @@ def get_location_by_id(location_id: int, db: Session = Depends(get_db)):
             detail=f"Location with id {location_id} not found",
         )
     return db_location
-
-
-@app.get("/api/v1/status")
-def status_endpoint():
-    return {"status": "running"}
 
 
 add_pagination(app)

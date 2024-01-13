@@ -48,10 +48,10 @@ class Product(Base):
     unique_scans_n = Column(Integer, nullable=False, server_default="0")
 
     prices: Mapped[list["Price"]] = relationship(back_populates="product")
+    price_count = Column(Integer, nullable=False, server_default="0", index=True)
 
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())
-    price_count = Column(Integer, nullable=False, server_default="0", index=True)
 
     __tablename__ = "products"
 
@@ -84,14 +84,13 @@ class Proof(Base):
     mimetype = Column(String, index=True)
 
     type = Column(ChoiceType(ProofTypeEnum))
+    is_public = Column(Boolean, nullable=False, server_default="true", index=True)
 
     prices: Mapped[list["Price"]] = relationship(back_populates="proof")
 
     owner = Column(String, index=True)
 
     created = Column(DateTime(timezone=True), server_default=func.now(), index=True)
-
-    is_public = Column(Boolean, nullable=False, server_default="true", index=True)
 
     __tablename__ = "proofs"
 

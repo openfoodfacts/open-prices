@@ -13,6 +13,7 @@ from app.models import Location, Price, Product, Proof, User
 from app.schemas import (
     LocationBase,
     LocationCreate,
+    LocationFilter,
     PriceBase,
     PriceCreate,
     PriceFilter,
@@ -289,6 +290,19 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
 
 # Locations
 # ------------------------------------------------------------------------------
+def get_locations_query(filters: LocationFilter | None = None):
+    """Useful for pagination."""
+    query = select(Location)
+    if filters:
+        query = filters.filter(query)
+        query = filters.sort(query)
+    return query
+
+
+def get_locations(db: Session):
+    return db.execute(get_locations_query()).all()
+
+
 def get_location_by_id(db: Session, id: int):
     return db.query(Location).filter(Location.id == id).first()
 
