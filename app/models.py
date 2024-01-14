@@ -29,6 +29,7 @@ class User(Base):
     token = Column(String, unique=True, index=True)
 
     last_used = Column(DateTime(timezone=True))
+    price_count = Column(Integer, nullable=False, server_default="0", index=True)
 
     created = Column(DateTime(timezone=True), server_default=func.now())
 
