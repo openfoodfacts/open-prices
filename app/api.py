@@ -288,7 +288,7 @@ def create_price(
 # ------------------------------------------------------------------------------
 @app.post(
     "/api/v1/proofs/upload",
-    response_model=schemas.ProofBase,
+    response_model=schemas.ProofFull,
     status_code=status.HTTP_201_CREATED,
     tags=["Proofs"],
 )
@@ -323,7 +323,7 @@ def upload_proof(
     return db_proof
 
 
-@app.get("/api/v1/proofs", response_model=list[schemas.ProofBase], tags=["Proofs"])
+@app.get("/api/v1/proofs", response_model=list[schemas.ProofFull], tags=["Proofs"])
 def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),

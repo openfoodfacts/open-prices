@@ -99,6 +99,32 @@ class LocationFull(LocationCreate):
     updated: datetime.datetime | None
 
 
+# class ProofCreate(BaseModel):
+#     file: UploadFile
+#     type: ProofTypeEnum
+
+
+class ProofFull(BaseModel):
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+    id: int
+    # file_path is str | null because we can mask the file path in the response
+    # if the proof is not public
+    file_path: str | None
+    mimetype: str
+    type: ProofTypeEnum | None = None
+    owner: str
+    created: datetime.datetime
+    is_public: Annotated[
+        bool,
+        Field(
+            default=True,
+            description="if true, the proof is public and is included in the API response. "
+            "Set false if only if the proof contains personal information.",
+        ),
+    ]
+
+
 class PriceCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -296,35 +322,9 @@ class PriceBase(PriceCreate):
     created: datetime.datetime
 
 
-# class ProofCreate(BaseModel):
-#     file: UploadFile
-#     type: ProofTypeEnum
-
-
-class ProofBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
-
-    id: int
-    # file_path is str | null because we can mask the file path in the response
-    # if the proof is not public
-    file_path: str | None
-    mimetype: str
-    type: ProofTypeEnum | None = None
-    owner: str
-    created: datetime.datetime
-    is_public: Annotated[
-        bool,
-        Field(
-            default=True,
-            description="if true, the proof is public and is included in the API response. "
-            "Set false if only if the proof contains personal information.",
-        ),
-    ]
-
-
 class PriceFull(PriceBase):
     product: ProductFull | None
-    proof: ProofBase | None
+    proof: ProofFull | None
     location: LocationFull | None
 
 
