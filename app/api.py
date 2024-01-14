@@ -93,7 +93,7 @@ def create_token(user_id: str):
 
 def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
-) -> schemas.UserBase:
+) -> schemas.UserCreate:
     """Get the current user if authenticated.
 
     This function is used as a dependency in endpoints that require
@@ -119,7 +119,7 @@ def get_current_user(
 def get_current_user_optional(
     token: Annotated[str, Depends(oauth2_scheme_no_error)],
     db: Session = Depends(get_db),
-) -> schemas.UserBase | None:
+) -> schemas.UserCreate | None:
     """Get the current user if authenticated, None otherwise.
 
     This function is used as a dependency in endpoints that require
@@ -181,7 +181,7 @@ def authentication(
     r = requests.post(settings.oauth2_server_url, data=data)  # type: ignore
     if r.status_code == 200:
         token = create_token(form_data.username)
-        user = schemas.UserBase(user_id=form_data.username, token=token)
+        user = schemas.UserCreate(user_id=form_data.username, token=token)
         db_user, created = crud.get_or_create_user(db, user=user)
         user = crud.update_user_last_used_field(db, user=db_user)
         # set the cookie if requested
@@ -206,7 +206,7 @@ def authentication(
 # Routes: Prices
 # ------------------------------------------------------------------------------
 def price_transformer(
-    prices: list[Price], current_user: schemas.UserBase | None = None
+    prices: list[Price], current_user: schemas.UserCreate | None = None
 ) -> list[Price]:
     """Transformer function used to remove the file_path of private proofs.
 
@@ -229,11 +229,15 @@ def price_transformer(
     return prices
 
 
-@app.get("/api/v1/prices", response_model=Page[schemas.PriceFull], tags=["Prices"])
+@app.get(
+    "/api/v1/prices",
+    response_model=Page[schemas.PriceFullWithRelations],
+    tags=["Prices"],
+)
 def get_price(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
-    current_user: schemas.UserBase | None = Depends(get_current_user_optional),
+    current_user: schemas.UserCreate | None = Depends(get_current_user_optional),
 ):
     return paginate(
         db,
@@ -244,14 +248,14 @@ def get_price(
 
 @app.post(
     "/api/v1/prices",
-    response_model=schemas.PriceBase,
+    response_model=schemas.PriceFull,
     status_code=status.HTTP_201_CREATED,
     tags=["Prices"],
 )
 def create_price(
     price: schemas.PriceCreateWithValidation,
     background_tasks: BackgroundTasks,
-    current_user: schemas.UserBase = Depends(get_current_user),
+    current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -288,7 +292,7 @@ def create_price(
 # ------------------------------------------------------------------------------
 @app.post(
     "/api/v1/proofs/upload",
-    response_model=schemas.ProofBase,
+    response_model=schemas.ProofFull,
     status_code=status.HTTP_201_CREATED,
     tags=["Proofs"],
 )
@@ -300,7 +304,7 @@ def upload_proof(
         description="if true, the proof is public and is included in the API response. "
         "Set false only for RECEIPT proofs that contain personal information.",
     ),
-    current_user: schemas.UserBase = Depends(get_current_user),
+    current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -323,9 +327,9 @@ def upload_proof(
     return db_proof
 
 
-@app.get("/api/v1/proofs", response_model=list[schemas.ProofBase], tags=["Proofs"])
+@app.get("/api/v1/proofs", response_model=list[schemas.ProofFull], tags=["Proofs"])
 def get_user_proofs(
-    current_user: schemas.UserBase = Depends(get_current_user),
+    current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -339,7 +343,7 @@ def get_user_proofs(
 # Routes: Products
 # ------------------------------------------------------------------------------
 @app.get(
-    "/api/v1/products", response_model=Page[schemas.ProductBase], tags=["Products"]
+    "/api/v1/products", response_model=Page[schemas.ProductFull], tags=["Products"]
 )
 def get_products(
     filters: schemas.ProductFilter = FilterDepends(schemas.ProductFilter),
@@ -350,7 +354,7 @@ def get_products(
 
 @app.get(
     "/api/v1/products/code/{product_code}",
-    response_model=schemas.ProductBase,
+    response_model=schemas.ProductFull,
     tags=["Products"],
 )
 def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
@@ -365,7 +369,7 @@ def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
 
 @app.get(
     "/api/v1/products/{product_id}",
-    response_model=schemas.ProductBase,
+    response_model=schemas.ProductFull,
     tags=["Products"],
 )
 def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
@@ -381,7 +385,7 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
 # Routes: Locations
 # ------------------------------------------------------------------------------
 @app.get(
-    "/api/v1/locations", response_model=Page[schemas.LocationBase], tags=["Locations"]
+    "/api/v1/locations", response_model=Page[schemas.LocationFull], tags=["Locations"]
 )
 def get_locations(
     filters: schemas.LocationFilter = FilterDepends(schemas.LocationFilter),
@@ -392,7 +396,7 @@ def get_locations(
 
 @app.get(
     "/api/v1/locations/osm/{location_osm_type}/{location_osm_id}",
-    response_model=schemas.LocationBase,
+    response_model=schemas.LocationFull,
     tags=["Locations"],
 )
 def get_location_by_osm(
@@ -411,7 +415,7 @@ def get_location_by_osm(
 
 @app.get(
     "/api/v1/locations/{location_id}",
-    response_model=schemas.LocationBase,
+    response_model=schemas.LocationFull,
     tags=["Locations"],
 )
 def get_location_by_id(location_id: int, db: Session = Depends(get_db)):

@@ -17,14 +17,21 @@ from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
 from app.models import Location, Price, Product
 
 
+# User
+# ------------------------------------------------------------------------------
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     user_id: str
-    token: str
     price_count: int = 0
 
 
+class UserCreate(UserBase):
+    token: str
+
+
+# Product
+# ------------------------------------------------------------------------------
 class ProductCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -36,7 +43,7 @@ class ProductCreate(BaseModel):
     )
 
 
-class ProductBase(ProductCreate):
+class ProductFull(ProductCreate):
     id: int
     source: Flavor | None = Field(
         description="source of data, either `off` (Open Food Facts), "
@@ -73,6 +80,8 @@ class ProductBase(ProductCreate):
     )
 
 
+# Location
+# ------------------------------------------------------------------------------
 class LocationCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -80,7 +89,7 @@ class LocationCreate(BaseModel):
     osm_type: LocationOSMEnum
 
 
-class LocationBase(LocationCreate):
+class LocationFull(LocationCreate):
     id: int
     osm_name: str | None
     osm_display_name: str | None
@@ -96,6 +105,36 @@ class LocationBase(LocationCreate):
     updated: datetime.datetime | None
 
 
+# Proof
+# ------------------------------------------------------------------------------
+# class ProofCreate(BaseModel):
+#     file: UploadFile
+#     type: ProofTypeEnum
+
+
+class ProofFull(BaseModel):
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+    id: int
+    # file_path is str | null because we can mask the file path in the response
+    # if the proof is not public
+    file_path: str | None
+    mimetype: str
+    type: ProofTypeEnum | None = None
+    owner: str
+    created: datetime.datetime
+    is_public: Annotated[
+        bool,
+        Field(
+            default=True,
+            description="if true, the proof is public and is included in the API response. "
+            "Set false if only if the proof contains personal information.",
+        ),
+    ]
+
+
+# Price
+# ------------------------------------------------------------------------------
 class PriceCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -286,45 +325,21 @@ class PriceCreateWithValidation(PriceCreate):
         return self
 
 
-class PriceBase(PriceCreate):
+class PriceFull(PriceCreate):
     product_id: int | None
     location_id: int | None
     owner: str
     created: datetime.datetime
 
 
-# class ProofCreate(BaseModel):
-#     file: UploadFile
-#     type: ProofTypeEnum
+class PriceFullWithRelations(PriceFull):
+    product: ProductFull | None
+    proof: ProofFull | None
+    location: LocationFull | None
 
 
-class ProofBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
-
-    id: int
-    # file_path is str | null because we can mask the file path in the response
-    # if the proof is not public
-    file_path: str | None
-    mimetype: str
-    type: ProofTypeEnum | None = None
-    owner: str
-    created: datetime.datetime
-    is_public: Annotated[
-        bool,
-        Field(
-            default=True,
-            description="if true, the proof is public and is included in the API response. "
-            "Set false if only if the proof contains personal information.",
-        ),
-    ]
-
-
-class PriceFull(PriceBase):
-    product: ProductBase | None
-    proof: ProofBase | None
-    location: LocationBase | None
-
-
+# Filters
+# ------------------------------------------------------------------------------
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
     product_id: Optional[int] | None = None

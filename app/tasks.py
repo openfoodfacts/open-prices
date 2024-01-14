@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import crud
 from app.models import Product
-from app.schemas import LocationCreate, PriceBase, ProductCreate, UserBase
+from app.schemas import LocationCreate, PriceFull, ProductCreate, UserCreate
 from app.utils import (
     OFF_FIELDS,
     fetch_location_openstreetmap_details,
@@ -23,13 +23,13 @@ logger = get_logger(__name__)
 
 # Users
 # ------------------------------------------------------------------------------
-def increment_user_price_count(db: Session, user: UserBase):
+def increment_user_price_count(db: Session, user: UserCreate):
     crud.increment_user_price_count(db, user=user)
 
 
 # Products
 # ------------------------------------------------------------------------------
-def create_price_product(db: Session, price: PriceBase):
+def create_price_product(db: Session, price: PriceFull):
     # The price may not have a product code, if it's the price of a
     # barcode-less product
     if price.product_code:
@@ -148,7 +148,7 @@ def import_product_db(db: Session, batch_size: int = 1000):
 
 # Locations
 # ------------------------------------------------------------------------------
-def create_price_location(db: Session, price: PriceBase):
+def create_price_location(db: Session, price: PriceFull):
     if price.location_osm_id and price.location_osm_type:
         # get or create the corresponding location
         location = LocationCreate(

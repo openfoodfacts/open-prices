@@ -11,16 +11,16 @@ from app import config
 from app.enums import LocationOSMEnum, ProofTypeEnum
 from app.models import Location, Price, Product, Proof, User
 from app.schemas import (
-    LocationBase,
     LocationCreate,
     LocationFilter,
-    PriceBase,
+    LocationFull,
     PriceCreate,
     PriceFilter,
-    ProductBase,
+    PriceFull,
     ProductCreate,
     ProductFilter,
-    UserBase,
+    ProductFull,
+    UserCreate,
 )
 
 
@@ -38,7 +38,7 @@ def get_user_by_token(db: Session, token: str):
     return db.query(User).filter(User.token == token).first()
 
 
-def create_user(db: Session, user: UserBase) -> User:
+def create_user(db: Session, user: UserCreate) -> User:
     """Create a user in the database.
 
     :param db: the database session
@@ -52,7 +52,7 @@ def create_user(db: Session, user: UserBase) -> User:
     return db_user
 
 
-def get_or_create_user(db: Session, user: UserBase):
+def get_or_create_user(db: Session, user: UserCreate):
     created = False
     db_user = get_user_by_user_id(db, user_id=user.user_id)
     if not db_user:
@@ -61,7 +61,7 @@ def get_or_create_user(db: Session, user: UserBase):
     return db_user, created
 
 
-def update_user(db: Session, user: UserBase, update_dict: dict):
+def update_user(db: Session, user: UserCreate, update_dict: dict):
     for key, value in update_dict.items():
         setattr(user, key, value)
     db.commit()
@@ -69,11 +69,11 @@ def update_user(db: Session, user: UserBase, update_dict: dict):
     return user
 
 
-def update_user_last_used_field(db: Session, user: UserBase) -> UserBase | None:
+def update_user_last_used_field(db: Session, user: UserCreate) -> UserCreate | None:
     return update_user(db, user, {"last_used": func.now()})
 
 
-def increment_user_price_count(db: Session, user: UserBase):
+def increment_user_price_count(db: Session, user: UserCreate):
     """Increment the price count of a user.
 
     This is used to keep track of the number of prices linked to a user.
@@ -84,7 +84,7 @@ def increment_user_price_count(db: Session, user: UserBase):
     return user
 
 
-def delete_user(db: Session, user_id: UserBase):
+def delete_user(db: Session, user_id: UserCreate):
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:
         db.delete(db_user)
@@ -154,7 +154,7 @@ def get_or_create_product(
     return db_product, created
 
 
-def update_product(db: Session, product: ProductBase, update_dict: dict):
+def update_product(db: Session, product: ProductFull, update_dict: dict):
     for key, value in update_dict.items():
         setattr(product, key, value)
     db.commit()
@@ -162,7 +162,7 @@ def update_product(db: Session, product: ProductBase, update_dict: dict):
     return product
 
 
-def increment_product_price_count(db: Session, product: ProductBase):
+def increment_product_price_count(db: Session, product: ProductFull):
     """Increment the price count of a product.
 
     This is used to keep track of the number of prices linked to a product.
@@ -199,7 +199,7 @@ def get_prices(db: Session, filters: PriceFilter | None = None):
     return db.execute(get_prices_query(filters=filters)).all()
 
 
-def create_price(db: Session, price: PriceCreate, user: UserBase):
+def create_price(db: Session, price: PriceCreate, user: UserCreate):
     db_price = Price(**price.model_dump(), owner=user.user_id)
     db.add(db_price)
     db.commit()
@@ -208,8 +208,8 @@ def create_price(db: Session, price: PriceCreate, user: UserBase):
 
 
 def link_price_product(
-    db: Session, price: PriceBase, product: ProductBase
-) -> PriceBase:
+    db: Session, price: PriceFull, product: ProductFull
+) -> PriceFull:
     """Link the product DB object to the price DB object and return the updated
     price."""
     price.product_id = product.id
@@ -218,7 +218,7 @@ def link_price_product(
     return price
 
 
-def set_price_location(db: Session, price: PriceBase, location: LocationBase):
+def set_price_location(db: Session, price: PriceFull, location: LocationFull):
     price.location_id = location.id
     db.commit()
     db.refresh(price)
@@ -231,7 +231,7 @@ def get_proof(db: Session, proof_id: int):
     return db.query(Proof).filter(Proof.id == proof_id).first()
 
 
-def get_user_proofs(db: Session, user: UserBase):
+def get_user_proofs(db: Session, user: UserCreate):
     return db.query(Proof).filter(Proof.owner == user.user_id).all()
 
 
@@ -240,7 +240,7 @@ def create_proof(
     file_path: str,
     mimetype: str,
     type: ProofTypeEnum,
-    user: UserBase,
+    user: UserCreate,
     is_public: bool = True,
 ):
     """Create a proof in the database.
@@ -383,7 +383,7 @@ def get_or_create_location(
     return db_location, created
 
 
-def update_location(db: Session, location: LocationBase, update_dict: dict):
+def update_location(db: Session, location: LocationFull, update_dict: dict):
     for key, value in update_dict.items():
         setattr(location, key, value)
     db.commit()
@@ -391,7 +391,7 @@ def update_location(db: Session, location: LocationBase, update_dict: dict):
     return location
 
 
-def increment_location_price_count(db: Session, location: LocationBase):
+def increment_location_price_count(db: Session, location: LocationFull):
     """Increment the price count of a location.
 
     This is used to keep track of the number of prices linked to a location.

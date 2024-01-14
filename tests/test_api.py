@@ -11,7 +11,7 @@ from sqlalchemy.pool import StaticPool
 from app import crud
 from app.api import app, get_db
 from app.db import Base
-from app.schemas import LocationCreate, PriceCreate, ProductCreate, UserBase
+from app.schemas import LocationCreate, PriceCreate, ProductCreate, UserCreate
 
 # database setup
 # ------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ db_session = pytest.fixture(override_get_db, scope="module")
 # ------------------------------------------------------------------------------
 client = TestClient(app)
 
-USER = UserBase(user_id="user1", token="user1__Utoken")
+USER = UserCreate(user_id="user1", token="user1__Utoken")
 PRODUCT = ProductCreate(code="8001505005592")
 PRODUCT_1 = ProductCreate(
     code="0022314010025",
