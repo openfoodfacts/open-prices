@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.0](https://github.com/openfoodfacts/open-prices/compare/v1.10.0...v1.11.0) (2024-01-14)
+
+
+### Features
+
+* add location filter on price_count ([#142](https://github.com/openfoodfacts/open-prices/issues/142)) ([1237687](https://github.com/openfoodfacts/open-prices/commit/12376873395eedebcd9f0246c9a7cb5ebffa9ff7))
+* add location.price_count to keep track of number of prices ([#140](https://github.com/openfoodfacts/open-prices/issues/140)) ([817663f](https://github.com/openfoodfacts/open-prices/commit/817663f4d2564fb3e0b3e0ba913652ac934a7b74))
+
 ## [1.10.0](https://github.com/openfoodfacts/open-prices/compare/v1.9.1...v1.10.0) (2024-01-13)
 
 
