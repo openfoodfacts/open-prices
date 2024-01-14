@@ -43,7 +43,9 @@ db_session = pytest.fixture(override_get_db, scope="module")
 # ------------------------------------------------------------------------------
 client = TestClient(app)
 
-USER = UserCreate(user_id="user1", token="user1__Utoken")
+USER = UserCreate(user_id="user", token="user__Utoken")
+USER_1 = UserCreate(user_id="user1", token="user1__Utoken1")
+USER_2 = UserCreate(user_id="user2", token="user2__Utoken2")
 PRODUCT = ProductCreate(code="8001505005592")
 PRODUCT_1 = ProductCreate(
     code="0022314010025",
@@ -118,6 +120,12 @@ def location(db_session):
 
 
 @pytest.fixture(scope="function")
+def clean_users(db_session):
+    db_session.query(crud.User).delete()
+    db_session.commit()
+
+
+@pytest.fixture(scope="function")
 def clean_prices(db_session):
     db_session.query(crud.Price).delete()
     db_session.commit()
@@ -133,6 +141,22 @@ def clean_products(db_session):
 def clean_locations(db_session):
     db_session.query(crud.Location).delete()
     db_session.commit()
+
+
+# Test users
+# ------------------------------------------------------------------------------
+def test_get_users(db_session, clean_users):
+    crud.create_user(db_session, USER_1)
+    crud.create_user(db_session, USER_2)
+
+    assert len(crud.get_users(db_session)) == 2
+    response = client.get("/api/v1/users")
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+    for user_field in ["id", "token"]:
+        assert user_field not in response.json()[0]
+    for user_field in ["user_id", "price_count"]:
+        assert user_field in response.json()[0]
 
 
 # Test prices
@@ -527,7 +551,7 @@ def test_get_proofs(user):
         assert item["file_path"].startswith("0001/")
         assert item["file_path"].endswith(".webp")
         assert item["type"] == ("PRICE_TAG" if i == 0 else "RECEIPT")
-        assert item["owner"] == "user1"
+        assert item["owner"] == "user"
         assert item["is_public"] == (True if i == 0 else False)
 
 

@@ -26,6 +26,10 @@ from app.schemas import (
 
 # Users
 # ------------------------------------------------------------------------------
+def get_users(db: Session):
+    return db.query(User).all()
+
+
 def get_user(db: Session, user_id: str):
     return db.query(User).filter(User.user_id == user_id).first()
 
