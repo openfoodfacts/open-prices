@@ -53,7 +53,9 @@ def create_price_location(db: Session, price: PriceBase):
         location = LocationCreate(
             osm_id=price.location_osm_id, osm_type=price.location_osm_type
         )
-        db_location, created = crud.get_or_create_location(db, location=location)
+        db_location, created = crud.get_or_create_location(
+            db, location=location, init_price_count=1
+        )
         # link the location to the price
         crud.set_price_location(db, price=price, location=db_location)
         # fetch data from OpenStreetMap if created
@@ -65,6 +67,9 @@ def create_price_location(db: Session, price: PriceBase):
                 crud.update_location(
                     db, location=db_location, update_dict=location_openstreetmap_details
                 )
+        else:
+            # Increment the price count of the location
+            crud.increment_location_price_count(db, location=db_location)
 
 
 def generate_main_image_url(code: str, images: JSONType, lang: str) -> str | None:

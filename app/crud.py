@@ -318,21 +318,44 @@ def get_location_by_osm_id_and_type(
     )
 
 
-def create_location(db: Session, location: LocationCreate):
-    db_location = Location(**location.model_dump())
+def create_location(
+    db: Session, location: LocationCreate, price_count: int = 0
+) -> Location:
+    """Create a location in the database.
+
+    :param db: the database session
+    :param location: the location to create
+    :param price_count: the number of prices linked to the location, defaults
+        to 0
+    :return: the created location
+    """
+    db_location = Location(price_count=price_count, **location.model_dump())
     db.add(db_location)
     db.commit()
     db.refresh(db_location)
     return db_location
 
 
-def get_or_create_location(db: Session, location: LocationCreate):
+def get_or_create_location(
+    db: Session, location: LocationCreate, init_price_count: int = 0
+):
+    """Get or create a location in the database.
+
+    :param db: the database session
+    :param location: the location to create
+    :param init_price_count: the initial number of prices linked to the
+        location if a location is created, defaults to 0
+    :return: the created location and a boolean indicating whether the location
+        was created or not
+    """
     created = False
     db_location = get_location_by_osm_id_and_type(
         db, osm_id=location.osm_id, osm_type=location.osm_type
     )
     if not db_location:
-        db_location = create_location(db, location=location)
+        db_location = create_location(
+            db, location=location, price_count=init_price_count
+        )
         created = True
     return db_location, created
 
@@ -340,6 +363,17 @@ def get_or_create_location(db: Session, location: LocationCreate):
 def update_location(db: Session, location: LocationBase, update_dict: dict):
     for key, value in update_dict.items():
         setattr(location, key, value)
+    db.commit()
+    db.refresh(location)
+    return location
+
+
+def increment_location_price_count(db: Session, location: LocationBase):
+    """Increment the price count of a location.
+
+    This is used to keep track of the number of prices linked to a location.
+    """
+    location.price_count += 1
     db.commit()
     db.refresh(location)
     return location
