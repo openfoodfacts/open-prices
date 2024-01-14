@@ -21,8 +21,11 @@ class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     user_id: str
-    token: str
     price_count: int = 0
+
+
+class UserCreate(UserBase):
+    token: str
 
 
 class ProductCreate(BaseModel):

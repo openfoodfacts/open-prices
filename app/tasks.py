@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import crud
 from app.models import Product
-from app.schemas import LocationCreate, PriceBase, ProductCreate, UserBase
+from app.schemas import LocationCreate, PriceBase, ProductCreate, UserCreate
 from app.utils import (
     OFF_FIELDS,
     fetch_location_openstreetmap_details,
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 
 # Users
 # ------------------------------------------------------------------------------
-def increment_user_price_count(db: Session, user: UserBase):
+def increment_user_price_count(db: Session, user: UserCreate):
     crud.increment_user_price_count(db, user=user)
 
 

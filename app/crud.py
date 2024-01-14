@@ -20,7 +20,7 @@ from app.schemas import (
     ProductBase,
     ProductCreate,
     ProductFilter,
-    UserBase,
+    UserCreate,
 )
 
 
@@ -38,7 +38,7 @@ def get_user_by_token(db: Session, token: str):
     return db.query(User).filter(User.token == token).first()
 
 
-def create_user(db: Session, user: UserBase) -> User:
+def create_user(db: Session, user: UserCreate) -> User:
     """Create a user in the database.
 
     :param db: the database session
@@ -52,7 +52,7 @@ def create_user(db: Session, user: UserBase) -> User:
     return db_user
 
 
-def get_or_create_user(db: Session, user: UserBase):
+def get_or_create_user(db: Session, user: UserCreate):
     created = False
     db_user = get_user_by_user_id(db, user_id=user.user_id)
     if not db_user:
@@ -61,7 +61,7 @@ def get_or_create_user(db: Session, user: UserBase):
     return db_user, created
 
 
-def update_user(db: Session, user: UserBase, update_dict: dict):
+def update_user(db: Session, user: UserCreate, update_dict: dict):
     for key, value in update_dict.items():
         setattr(user, key, value)
     db.commit()
@@ -69,11 +69,11 @@ def update_user(db: Session, user: UserBase, update_dict: dict):
     return user
 
 
-def update_user_last_used_field(db: Session, user: UserBase) -> UserBase | None:
+def update_user_last_used_field(db: Session, user: UserCreate) -> UserCreate | None:
     return update_user(db, user, {"last_used": func.now()})
 
 
-def increment_user_price_count(db: Session, user: UserBase):
+def increment_user_price_count(db: Session, user: UserCreate):
     """Increment the price count of a user.
 
     This is used to keep track of the number of prices linked to a user.
@@ -84,7 +84,7 @@ def increment_user_price_count(db: Session, user: UserBase):
     return user
 
 
-def delete_user(db: Session, user_id: UserBase):
+def delete_user(db: Session, user_id: UserCreate):
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:
         db.delete(db_user)
@@ -199,7 +199,7 @@ def get_prices(db: Session, filters: PriceFilter | None = None):
     return db.execute(get_prices_query(filters=filters)).all()
 
 
-def create_price(db: Session, price: PriceCreate, user: UserBase):
+def create_price(db: Session, price: PriceCreate, user: UserCreate):
     db_price = Price(**price.model_dump(), owner=user.user_id)
     db.add(db_price)
     db.commit()
@@ -231,7 +231,7 @@ def get_proof(db: Session, proof_id: int):
     return db.query(Proof).filter(Proof.id == proof_id).first()
 
 
-def get_user_proofs(db: Session, user: UserBase):
+def get_user_proofs(db: Session, user: UserCreate):
     return db.query(Proof).filter(Proof.owner == user.user_id).all()
 
 
@@ -240,7 +240,7 @@ def create_proof(
     file_path: str,
     mimetype: str,
     type: ProofTypeEnum,
-    user: UserBase,
+    user: UserCreate,
     is_public: bool = True,
 ):
     """Create a proof in the database.
