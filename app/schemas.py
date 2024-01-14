@@ -83,7 +83,7 @@ class LocationCreate(BaseModel):
     osm_type: LocationOSMEnum
 
 
-class LocationBase(LocationCreate):
+class LocationFull(LocationCreate):
     id: int
     osm_name: str | None
     osm_display_name: str | None
@@ -325,7 +325,7 @@ class ProofBase(BaseModel):
 class PriceFull(PriceBase):
     product: ProductFull | None
     proof: ProofBase | None
-    location: LocationBase | None
+    location: LocationFull | None
 
 
 class PriceFilter(Filter):

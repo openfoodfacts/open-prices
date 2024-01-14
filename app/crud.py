@@ -11,9 +11,9 @@ from app import config
 from app.enums import LocationOSMEnum, ProofTypeEnum
 from app.models import Location, Price, Product, Proof, User
 from app.schemas import (
-    LocationBase,
     LocationCreate,
     LocationFilter,
+    LocationFull,
     PriceBase,
     PriceCreate,
     PriceFilter,
@@ -218,7 +218,7 @@ def link_price_product(
     return price
 
 
-def set_price_location(db: Session, price: PriceBase, location: LocationBase):
+def set_price_location(db: Session, price: PriceBase, location: LocationFull):
     price.location_id = location.id
     db.commit()
     db.refresh(price)
@@ -383,7 +383,7 @@ def get_or_create_location(
     return db_location, created
 
 
-def update_location(db: Session, location: LocationBase, update_dict: dict):
+def update_location(db: Session, location: LocationFull, update_dict: dict):
     for key, value in update_dict.items():
         setattr(location, key, value)
     db.commit()
@@ -391,7 +391,7 @@ def update_location(db: Session, location: LocationBase, update_dict: dict):
     return location
 
 
-def increment_location_price_count(db: Session, location: LocationBase):
+def increment_location_price_count(db: Session, location: LocationFull):
     """Increment the price count of a location.
 
     This is used to keep track of the number of prices linked to a location.

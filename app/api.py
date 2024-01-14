@@ -381,7 +381,7 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
 # Routes: Locations
 # ------------------------------------------------------------------------------
 @app.get(
-    "/api/v1/locations", response_model=Page[schemas.LocationBase], tags=["Locations"]
+    "/api/v1/locations", response_model=Page[schemas.LocationFull], tags=["Locations"]
 )
 def get_locations(
     filters: schemas.LocationFilter = FilterDepends(schemas.LocationFilter),
@@ -392,7 +392,7 @@ def get_locations(
 
 @app.get(
     "/api/v1/locations/osm/{location_osm_type}/{location_osm_id}",
-    response_model=schemas.LocationBase,
+    response_model=schemas.LocationFull,
     tags=["Locations"],
 )
 def get_location_by_osm(
@@ -411,7 +411,7 @@ def get_location_by_osm(
 
 @app.get(
     "/api/v1/locations/{location_id}",
-    response_model=schemas.LocationBase,
+    response_model=schemas.LocationFull,
     tags=["Locations"],
 )
 def get_location_by_id(location_id: int, db: Session = Depends(get_db)):

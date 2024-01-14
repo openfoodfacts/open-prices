@@ -10,7 +10,7 @@ from sentry_sdk.integrations import Integration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from app.config import settings
-from app.schemas import LocationBase, ProductFull
+from app.schemas import LocationFull, ProductFull
 
 logger = get_logger(__name__)
 
@@ -135,7 +135,7 @@ def openstreetmap_nominatim_search(osm_id: int, osm_type: str):
     return client.query(search_query, lookup=True).toJSON()
 
 
-def fetch_location_openstreetmap_details(location: LocationBase):
+def fetch_location_openstreetmap_details(location: LocationFull):
     location_openstreetmap_details = dict()
     try:
         response = openstreetmap_nominatim_search(
