@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.12.0](https://github.com/openfoodfacts/open-prices/compare/v1.11.0...v1.12.0) (2024-01-14)
+
+
+### Features
+
+* add user.price_count to keep track of number of prices ([#143](https://github.com/openfoodfacts/open-prices/issues/143)) ([0f13566](https://github.com/openfoodfacts/open-prices/commit/0f135668cc949c5d19d4fa0bbb6d5bb396576428))
+* **auth:** avoid recreating existing user on login ([#144](https://github.com/openfoodfacts/open-prices/issues/144)) ([502539c](https://github.com/openfoodfacts/open-prices/commit/502539cfbbc06a70912ee153744658526f4dd6a4))
+* users GET endpoint ([#147](https://github.com/openfoodfacts/open-prices/issues/147)) ([6fdb640](https://github.com/openfoodfacts/open-prices/commit/6fdb640ade463d35356f8c6dfde56808520ebe00))
+
+
+### Bug Fixes
+
+* fix locations GET filters. ref [#138](https://github.com/openfoodfacts/open-prices/issues/138) ([3d75e16](https://github.com/openfoodfacts/open-prices/commit/3d75e165d76b74e1ca352c080533d11cc66e0699))
+
+
+### Technical
+
+* rename schemas to clarify ([#146](https://github.com/openfoodfacts/open-prices/issues/146)) ([e0e3896](https://github.com/openfoodfacts/open-prices/commit/e0e3896777b84b1d572a2a82056f7247aed49e3e))
+
 ## [1.11.0](https://github.com/openfoodfacts/open-prices/compare/v1.10.0...v1.11.0) (2024-01-14)
 
 
