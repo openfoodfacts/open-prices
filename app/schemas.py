@@ -315,14 +315,14 @@ class PriceCreateWithValidation(PriceCreate):
         return self
 
 
-class PriceBase(PriceCreate):
+class PriceFull(PriceCreate):
     product_id: int | None
     location_id: int | None
     owner: str
     created: datetime.datetime
 
 
-class PriceFull(PriceBase):
+class PriceFullWithRelations(PriceFull):
     product: ProductFull | None
     proof: ProofFull | None
     location: LocationFull | None

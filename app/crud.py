@@ -14,9 +14,9 @@ from app.schemas import (
     LocationCreate,
     LocationFilter,
     LocationFull,
-    PriceBase,
     PriceCreate,
     PriceFilter,
+    PriceFull,
     ProductCreate,
     ProductFilter,
     ProductFull,
@@ -208,8 +208,8 @@ def create_price(db: Session, price: PriceCreate, user: UserCreate):
 
 
 def link_price_product(
-    db: Session, price: PriceBase, product: ProductFull
-) -> PriceBase:
+    db: Session, price: PriceFull, product: ProductFull
+) -> PriceFull:
     """Link the product DB object to the price DB object and return the updated
     price."""
     price.product_id = product.id
@@ -218,7 +218,7 @@ def link_price_product(
     return price
 
 
-def set_price_location(db: Session, price: PriceBase, location: LocationFull):
+def set_price_location(db: Session, price: PriceFull, location: LocationFull):
     price.location_id = location.id
     db.commit()
     db.refresh(price)

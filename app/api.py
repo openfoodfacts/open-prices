@@ -229,7 +229,11 @@ def price_transformer(
     return prices
 
 
-@app.get("/api/v1/prices", response_model=Page[schemas.PriceFull], tags=["Prices"])
+@app.get(
+    "/api/v1/prices",
+    response_model=Page[schemas.PriceFullWithRelations],
+    tags=["Prices"],
+)
 def get_price(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
@@ -244,7 +248,7 @@ def get_price(
 
 @app.post(
     "/api/v1/prices",
-    response_model=schemas.PriceBase,
+    response_model=schemas.PriceFull,
     status_code=status.HTTP_201_CREATED,
     tags=["Prices"],
 )
