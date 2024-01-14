@@ -73,6 +73,17 @@ def update_user_last_used_field(db: Session, user: UserBase) -> UserBase | None:
     return update_user(db, user, {"last_used": func.now()})
 
 
+def increment_user_price_count(db: Session, user: UserBase):
+    """Increment the price count of a user.
+
+    This is used to keep track of the number of prices linked to a user.
+    """
+    user.price_count += 1
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def delete_user(db: Session, user_id: UserBase):
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:

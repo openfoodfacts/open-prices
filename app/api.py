@@ -278,8 +278,9 @@ def create_price(
                 )
 
     db_price = crud.create_price(db, price=price, user=current_user)
-    background_tasks.add_task(tasks.create_price_product, db, db_price)
-    background_tasks.add_task(tasks.create_price_location, db, db_price)
+    background_tasks.add_task(tasks.create_price_product, db, price=db_price)
+    background_tasks.add_task(tasks.create_price_location, db, price=db_price)
+    background_tasks.add_task(tasks.increment_user_price_count, db, user=current_user)
     return db_price
 
 

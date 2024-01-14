@@ -22,6 +22,7 @@ class UserBase(BaseModel):
 
     user_id: str
     token: str
+    price_count: int = 0
 
 
 class ProductCreate(BaseModel):
