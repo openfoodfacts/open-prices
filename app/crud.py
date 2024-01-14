@@ -38,10 +38,13 @@ def get_user_by_token(db: Session, token: str):
     return db.query(User).filter(User.token == token).first()
 
 
-def create_user(db: Session, user: UserBase):
-    # first we delete any existing user
-    delete_user(db, user_id=user.user_id)
-    # then we (re)create a user
+def create_user(db: Session, user: UserBase) -> User:
+    """Create a user in the database.
+
+    :param db: the database session
+    :param product: the user to create
+    :return: the created user
+    """
     db_user = User(user_id=user.user_id, token=user.token)
     db.add(db_user)
     db.commit()
@@ -49,16 +52,25 @@ def create_user(db: Session, user: UserBase):
     return db_user
 
 
-def update_user_last_used_field(db: Session, token: str) -> UserBase | None:
-    db_user = get_user_by_token(db, token=token)
-    if db_user:
-        db.query(User).filter(User.user_id == db_user.user_id).update(
-            {"last_used": func.now()}
-        )
-        db.commit()
-        db.refresh(db_user)
-        return db_user
-    return None
+def get_or_create_user(db: Session, user: UserBase):
+    created = False
+    db_user = get_user_by_user_id(db, user_id=user.user_id)
+    if not db_user:
+        db_user = create_user(db, user=user)
+        created = True
+    return db_user, created
+
+
+def update_user(db: Session, user: UserBase, update_dict: dict):
+    for key, value in update_dict.items():
+        setattr(user, key, value)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_user_last_used_field(db: Session, user: UserBase) -> UserBase | None:
+    return update_user(db, user, {"last_used": func.now()})
 
 
 def delete_user(db: Session, user_id: UserBase):
