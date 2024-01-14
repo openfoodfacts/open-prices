@@ -335,8 +335,8 @@ def get_locations_query(filters: LocationFilter | None = None):
     return query
 
 
-def get_locations(db: Session):
-    return db.execute(get_locations_query()).all()
+def get_locations(db: Session, filters: LocationFilter | None = None):
+    return db.execute(get_locations_query(filters=filters)).all()
 
 
 def get_location_by_id(db: Session, id: int):
