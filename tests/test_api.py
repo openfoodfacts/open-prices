@@ -44,8 +44,8 @@ db_session = pytest.fixture(override_get_db, scope="module")
 client = TestClient(app)
 
 USER = UserCreate(user_id="user", token="user__Utoken")
-USER_1 = UserCreate(user_id="user1", token="user1__Utoken1")
-USER_2 = UserCreate(user_id="user2", token="user2__Utoken2")
+USER_1 = UserCreate(user_id="user1", token="user1__Utoken1", price_count=0)
+USER_2 = UserCreate(user_id="user2", token="user2__Utoken2", price_count=1)
 PRODUCT = ProductCreate(code="8001505005592")
 PRODUCT_1 = ProductCreate(
     code="0022314010025",
@@ -164,6 +164,17 @@ def test_get_users_pagination(clean_users):
     assert response.status_code == 200
     for key in ["items", "total", "page", "size", "pages"]:
         assert key in response.json()
+
+
+# def test_get_users_filters(db_session, clean_users):
+#     crud.create_user(db_session, USER_1)
+#     crud.create_user(db_session, USER_2)
+
+#     assert len(crud.get_users(db_session)) == 2
+
+#     response = client.get("/api/v1/users?price_count__gte=1")
+#     assert response.status_code == 200
+#     assert len(response.json()["items"]) == 1
 
 
 # Test prices

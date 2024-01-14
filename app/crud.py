@@ -26,14 +26,17 @@ from app.schemas import (
 
 # Users
 # ------------------------------------------------------------------------------
-def get_users_query():
+def get_users_query(filters: ProductFilter | None = None):
     """Useful for pagination."""
     query = select(User)
+    if filters:
+        query = filters.filter(query)
+        query = filters.sort(query)
     return query
 
 
-def get_users(db: Session):
-    return db.execute(get_users_query()).all()
+def get_users(db: Session, filters: ProductFilter | None = None):
+    return db.execute(get_users_query(filters=filters)).all()
 
 
 def get_user(db: Session, user_id: str):

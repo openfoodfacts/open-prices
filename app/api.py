@@ -210,8 +210,9 @@ def authentication(
 @app.get("/api/v1/users", response_model=Page[schemas.UserBase], tags=["Users"])
 def get_users(
     db: Session = Depends(get_db),
+    filters: schemas.UserFilter = FilterDepends(schemas.UserFilter),
 ):
-    return paginate(db, crud.get_users_query())
+    return paginate(db, crud.get_users_query(filters=filters))
 
 
 # Routes: Prices
