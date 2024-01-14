@@ -17,6 +17,8 @@ from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
 from app.models import Location, Price, Product
 
 
+# User
+# ------------------------------------------------------------------------------
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -28,6 +30,8 @@ class UserCreate(UserBase):
     token: str
 
 
+# Product
+# ------------------------------------------------------------------------------
 class ProductCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -76,6 +80,8 @@ class ProductFull(ProductCreate):
     )
 
 
+# Location
+# ------------------------------------------------------------------------------
 class LocationCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -99,6 +105,8 @@ class LocationFull(LocationCreate):
     updated: datetime.datetime | None
 
 
+# Proof
+# ------------------------------------------------------------------------------
 # class ProofCreate(BaseModel):
 #     file: UploadFile
 #     type: ProofTypeEnum
@@ -125,6 +133,8 @@ class ProofFull(BaseModel):
     ]
 
 
+# Price
+# ------------------------------------------------------------------------------
 class PriceCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -328,6 +338,8 @@ class PriceFullWithRelations(PriceFull):
     location: LocationFull | None
 
 
+# Filters
+# ------------------------------------------------------------------------------
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
     product_id: Optional[int] | None = None
