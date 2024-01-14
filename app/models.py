@@ -70,6 +70,7 @@ class Location(Base):
     osm_lon = Column(Numeric(precision=11, scale=7))
 
     prices: Mapped[list["Price"]] = relationship(back_populates="location")
+    price_count = Column(Integer, nullable=False, server_default="0", index=True)
 
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())

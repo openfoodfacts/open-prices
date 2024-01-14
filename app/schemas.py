@@ -88,6 +88,9 @@ class LocationBase(LocationCreate):
     osm_address_country: str | None
     osm_lat: float | None
     osm_lon: float | None
+    price_count: int = Field(
+        description="number of prices for this location.", examples=[15], default=0
+    )
     created: datetime.datetime
     updated: datetime.datetime | None
 
