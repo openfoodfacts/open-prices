@@ -207,11 +207,11 @@ def authentication(
 
 # Routes: Users
 # ------------------------------------------------------------------------------
-@app.get("/api/v1/users", response_model=list[schemas.UserBase], tags=["Users"])
+@app.get("/api/v1/users", response_model=Page[schemas.UserBase], tags=["Users"])
 def get_users(
     db: Session = Depends(get_db),
 ):
-    return crud.get_users(db)
+    return paginate(db, crud.get_users_query())
 
 
 # Routes: Prices

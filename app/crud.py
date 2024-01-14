@@ -26,8 +26,14 @@ from app.schemas import (
 
 # Users
 # ------------------------------------------------------------------------------
+def get_users_query():
+    """Useful for pagination."""
+    query = select(User)
+    return query
+
+
 def get_users(db: Session):
-    return db.query(User).all()
+    return db.execute(get_users_query()).all()
 
 
 def get_user(db: Session, user_id: str):

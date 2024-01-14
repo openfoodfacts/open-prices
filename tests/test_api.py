@@ -152,11 +152,18 @@ def test_get_users(db_session, clean_users):
     assert len(crud.get_users(db_session)) == 2
     response = client.get("/api/v1/users")
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    assert len(response.json()["items"]) == 2
     for user_field in ["id", "token"]:
-        assert user_field not in response.json()[0]
+        assert user_field not in response.json()["items"][0]
     for user_field in ["user_id", "price_count"]:
-        assert user_field in response.json()[0]
+        assert user_field in response.json()["items"][0]
+
+
+def test_get_users_pagination(clean_users):
+    response = client.get("/api/v1/users")
+    assert response.status_code == 200
+    for key in ["items", "total", "page", "size", "pages"]:
+        assert key in response.json()
 
 
 # Test prices
