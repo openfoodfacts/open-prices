@@ -143,6 +143,8 @@ def status_endpoint():
     return {"status": "running"}
 
 
+# Routes: Auth
+# ------------------------------------------------------------------------------
 @app.post("/api/v1/auth", tags=["Auth"])
 def authentication(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -201,6 +203,16 @@ def authentication(
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server error"
     )
+
+
+# Routes: Users
+# ------------------------------------------------------------------------------
+@app.get("/api/v1/users", response_model=Page[schemas.UserBase], tags=["Users"])
+def get_users(
+    db: Session = Depends(get_db),
+    filters: schemas.UserFilter = FilterDepends(schemas.UserFilter),
+):
+    return paginate(db, crud.get_users_query(filters=filters))
 
 
 # Routes: Prices
