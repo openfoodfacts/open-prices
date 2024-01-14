@@ -144,6 +144,13 @@ def test_create_price(db_session, user, clean_prices):
         json=jsonable_encoder(PRICE_1),
     )
     assert response.status_code == 401
+    # with wrong authentication
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_1),
+        headers={"Authorization": f"Bearer {user.token}X"},
+    )
+    assert response.status_code == 401
     # with authentication
     response = client.post(
         "/api/v1/prices",
