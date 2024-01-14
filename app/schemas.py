@@ -39,7 +39,7 @@ class ProductCreate(BaseModel):
     )
 
 
-class ProductBase(ProductCreate):
+class ProductFull(ProductCreate):
     id: int
     source: Flavor | None = Field(
         description="source of data, either `off` (Open Food Facts), "
@@ -323,7 +323,7 @@ class ProofBase(BaseModel):
 
 
 class PriceFull(PriceBase):
-    product: ProductBase | None
+    product: ProductFull | None
     proof: ProofBase | None
     location: LocationBase | None
 

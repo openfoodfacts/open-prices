@@ -339,7 +339,7 @@ def get_user_proofs(
 # Routes: Products
 # ------------------------------------------------------------------------------
 @app.get(
-    "/api/v1/products", response_model=Page[schemas.ProductBase], tags=["Products"]
+    "/api/v1/products", response_model=Page[schemas.ProductFull], tags=["Products"]
 )
 def get_products(
     filters: schemas.ProductFilter = FilterDepends(schemas.ProductFilter),
@@ -350,7 +350,7 @@ def get_products(
 
 @app.get(
     "/api/v1/products/code/{product_code}",
-    response_model=schemas.ProductBase,
+    response_model=schemas.ProductFull,
     tags=["Products"],
 )
 def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
@@ -365,7 +365,7 @@ def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
 
 @app.get(
     "/api/v1/products/{product_id}",
-    response_model=schemas.ProductBase,
+    response_model=schemas.ProductFull,
     tags=["Products"],
 )
 def get_product_by_id(product_id: int, db: Session = Depends(get_db)):

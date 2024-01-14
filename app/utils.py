@@ -10,7 +10,7 @@ from sentry_sdk.integrations import Integration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from app.config import settings
-from app.schemas import LocationBase, ProductBase
+from app.schemas import LocationBase, ProductFull
 
 logger = get_logger(__name__)
 
@@ -105,7 +105,7 @@ def generate_openfoodfacts_main_image_url(
     return None
 
 
-def fetch_product_openfoodfacts_details(product: ProductBase) -> JSONType | None:
+def fetch_product_openfoodfacts_details(product: ProductFull) -> JSONType | None:
     product = {}
     try:
         response = openfoodfacts_product_search(code=product.code)

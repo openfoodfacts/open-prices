@@ -17,9 +17,9 @@ from app.schemas import (
     PriceBase,
     PriceCreate,
     PriceFilter,
-    ProductBase,
     ProductCreate,
     ProductFilter,
+    ProductFull,
     UserCreate,
 )
 
@@ -154,7 +154,7 @@ def get_or_create_product(
     return db_product, created
 
 
-def update_product(db: Session, product: ProductBase, update_dict: dict):
+def update_product(db: Session, product: ProductFull, update_dict: dict):
     for key, value in update_dict.items():
         setattr(product, key, value)
     db.commit()
@@ -162,7 +162,7 @@ def update_product(db: Session, product: ProductBase, update_dict: dict):
     return product
 
 
-def increment_product_price_count(db: Session, product: ProductBase):
+def increment_product_price_count(db: Session, product: ProductFull):
     """Increment the price count of a product.
 
     This is used to keep track of the number of prices linked to a product.
@@ -208,7 +208,7 @@ def create_price(db: Session, price: PriceCreate, user: UserCreate):
 
 
 def link_price_product(
-    db: Session, price: PriceBase, product: ProductBase
+    db: Session, price: PriceBase, product: ProductFull
 ) -> PriceBase:
     """Link the product DB object to the price DB object and return the updated
     price."""
