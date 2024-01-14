@@ -2,26 +2,33 @@ import datetime
 
 import tqdm
 from openfoodfacts import DatasetType, Flavor, ProductDataset
-from openfoodfacts.images import generate_image_url
 from openfoodfacts.types import JSONType
 from openfoodfacts.utils import get_logger
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.config import settings
 from app.models import Product
-from app.schemas import LocationCreate, PriceBase, ProductCreate
+from app.schemas import LocationCreate, PriceBase, ProductCreate, UserBase
 from app.utils import (
     OFF_FIELDS,
     fetch_location_openstreetmap_details,
     fetch_product_openfoodfacts_details,
+    generate_openfoodfacts_main_image_url,
     normalize_product_fields,
 )
 
 logger = get_logger(__name__)
 
 
+# Users
+# ------------------------------------------------------------------------------
+def increment_user_price_count(db: Session, user: UserBase):
+    crud.increment_user_price_count(db, user=user)
+
+
+# Products
+# ------------------------------------------------------------------------------
 def create_price_product(db: Session, price: PriceBase):
     # The price may not have a product code, if it's the price of a
     # barcode-less product
@@ -45,58 +52,6 @@ def create_price_product(db: Session, price: PriceBase):
         else:
             # Increment the price count of the product
             crud.increment_product_price_count(db, product=db_product)
-
-
-def create_price_location(db: Session, price: PriceBase):
-    if price.location_osm_id and price.location_osm_type:
-        # get or create the corresponding location
-        location = LocationCreate(
-            osm_id=price.location_osm_id, osm_type=price.location_osm_type
-        )
-        db_location, created = crud.get_or_create_location(
-            db, location=location, init_price_count=1
-        )
-        # link the location to the price
-        crud.set_price_location(db, price=price, location=db_location)
-        # fetch data from OpenStreetMap if created
-        if created:
-            location_openstreetmap_details = fetch_location_openstreetmap_details(
-                location=db_location
-            )
-            if location_openstreetmap_details:
-                crud.update_location(
-                    db, location=db_location, update_dict=location_openstreetmap_details
-                )
-        else:
-            # Increment the price count of the location
-            crud.increment_location_price_count(db, location=db_location)
-
-
-def generate_main_image_url(code: str, images: JSONType, lang: str) -> str | None:
-    """Generate the URL of the main image of a product.
-
-    :param code: The code of the product
-    :param images: The images of the product
-    :param lang: The main language of the product
-    :return: The URL of the main image of the product or None if no image is
-      available.
-    """
-    image_key = None
-    if f"front_{lang}" in images:
-        image_key = f"front_{lang}"
-    else:
-        for key in (k for k in images if k.startswith("front_")):
-            image_key = key
-            break
-
-    if image_key:
-        image_rev = images[image_key]["rev"]
-        image_id = f"{image_key}.{image_rev}.400"
-        return generate_image_url(
-            code, image_id=image_id, flavor=Flavor.off, environment=settings.environment
-        )
-
-    return None
 
 
 def import_product_db(db: Session, batch_size: int = 1000):
@@ -155,7 +110,7 @@ def import_product_db(db: Session, batch_size: int = 1000):
                 item[key] = product[key] if key in product else None
 
             item = normalize_product_fields(item)
-            item["image_url"] = generate_main_image_url(
+            item["image_url"] = generate_openfoodfacts_main_image_url(
                 product_code, images, product["lang"]
             )
             db.add(Product(**item))
@@ -164,7 +119,7 @@ def import_product_db(db: Session, batch_size: int = 1000):
 
         else:
             item = {key: product[key] if key in product else None for key in OFF_FIELDS}
-            item["image_url"] = generate_main_image_url(
+            item["image_url"] = generate_openfoodfacts_main_image_url(
                 product_code, images, product["lang"]
             )
             item = normalize_product_fields(item)
@@ -189,3 +144,30 @@ def import_product_db(db: Session, batch_size: int = 1000):
             db.commit()
             logger.info(f"Products: {added_count} added, {updated_count} updated")
             buffer_len = 0
+
+
+# Locations
+# ------------------------------------------------------------------------------
+def create_price_location(db: Session, price: PriceBase):
+    if price.location_osm_id and price.location_osm_type:
+        # get or create the corresponding location
+        location = LocationCreate(
+            osm_id=price.location_osm_id, osm_type=price.location_osm_type
+        )
+        db_location, created = crud.get_or_create_location(
+            db, location=location, init_price_count=1
+        )
+        # link the location to the price
+        crud.set_price_location(db, price=price, location=db_location)
+        # fetch data from OpenStreetMap if created
+        if created:
+            location_openstreetmap_details = fetch_location_openstreetmap_details(
+                location=db_location
+            )
+            if location_openstreetmap_details:
+                crud.update_location(
+                    db, location=db_location, update_dict=location_openstreetmap_details
+                )
+        else:
+            # Increment the price count of the location
+            crud.increment_location_price_count(db, location=db_location)

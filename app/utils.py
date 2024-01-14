@@ -2,6 +2,7 @@ import logging
 
 import sentry_sdk
 from openfoodfacts import API, APIVersion, Country, Flavor
+from openfoodfacts.images import generate_image_url
 from openfoodfacts.types import JSONType
 from openfoodfacts.utils import get_logger
 from OSMPythonTools.nominatim import Nominatim
@@ -73,6 +74,35 @@ def normalize_product_fields(product: JSONType) -> JSONType:
         product["unique_scans_n"] = 0
 
     return product
+
+
+def generate_openfoodfacts_main_image_url(
+    code: str, images: JSONType, lang: str
+) -> str | None:
+    """Generate the URL of the main image of a product.
+
+    :param code: The code of the product
+    :param images: The images of the product
+    :param lang: The main language of the product
+    :return: The URL of the main image of the product or None if no image is
+      available.
+    """
+    image_key = None
+    if f"front_{lang}" in images:
+        image_key = f"front_{lang}"
+    else:
+        for key in (k for k in images if k.startswith("front_")):
+            image_key = key
+            break
+
+    if image_key:
+        image_rev = images[image_key]["rev"]
+        image_id = f"{image_key}.{image_rev}.400"
+        return generate_image_url(
+            code, image_id=image_id, flavor=Flavor.off, environment=settings.environment
+        )
+
+    return None
 
 
 def fetch_product_openfoodfacts_details(product: ProductBase) -> JSONType | None:
