@@ -44,6 +44,8 @@ db_session = pytest.fixture(override_get_db, scope="module")
 # ------------------------------------------------------------------------------
 client = TestClient(app)
 
+PAGINATION_KEYS = ["items", "total", "page", "size", "pages"]
+
 USER = UserCreate(user_id="user", token="user__Utoken")
 USER_1 = UserCreate(user_id="user1", token="user1__Utoken1", price_count=0)
 USER_2 = UserCreate(user_id="user2", token="user2__Utoken2", price_count=1)
@@ -169,7 +171,7 @@ def test_get_users(db_session, clean_users):
 def test_get_users_pagination(clean_users):
     response = client.get("/api/v1/users")
     assert response.status_code == 200
-    for key in ["items", "total", "page", "size", "pages"]:
+    for key in PAGINATION_KEYS:
         assert key in response.json()
 
 
@@ -420,7 +422,7 @@ def test_get_prices(db_session, user_session: SessionModel, clean_prices):
 def test_get_prices_pagination():
     response = client.get("/api/v1/prices")
     assert response.status_code == 200
-    for key in ["items", "total", "page", "size", "pages"]:
+    for key in PAGINATION_KEYS:
         assert key in response.json()
 
 
@@ -573,7 +575,12 @@ def test_get_proofs(user_session: SessionModel):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 200
-    data = response.json()
+
+    # has pagination
+    for key in PAGINATION_KEYS:
+        assert key in response.json()
+
+    data = response.json()["items"]
     assert len(data) == 2
 
     for item in data:
@@ -612,7 +619,7 @@ def test_get_products(db_session, clean_products):
 def test_get_products_pagination(clean_products):
     response = client.get("/api/v1/products")
     assert response.status_code == 200
-    for key in ["items", "total", "page", "size", "pages"]:
+    for key in PAGINATION_KEYS:
         assert key in response.json()
 
 
@@ -675,7 +682,7 @@ def test_get_locations(db_session, clean_locations):
 def test_get_locations_pagination(clean_locations):
     response = client.get("/api/v1/locations")
     assert response.status_code == 200
-    for key in ["items", "total", "page", "size", "pages"]:
+    for key in PAGINATION_KEYS:
         assert key in response.json()
 
 

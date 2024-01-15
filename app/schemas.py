@@ -14,7 +14,7 @@ from pydantic import (
 )
 
 from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
-from app.models import Location, Price, Product, User
+from app.models import Location, Price, Product, Proof, User
 
 
 # User
@@ -122,15 +122,15 @@ class ProofFull(BaseModel):
     mimetype: str
     type: ProofTypeEnum | None = None
     owner: str
-    created: datetime.datetime
     is_public: Annotated[
         bool,
         Field(
             default=True,
             description="if true, the proof is public and is included in the API response. "
-            "Set false if only if the proof contains personal information.",
+            "Set false only if the proof contains personal information.",
         ),
     ]
+    created: datetime.datetime
 
 
 # Price
@@ -367,6 +367,13 @@ class PriceFilter(Filter):
 
     class Constants(Filter.Constants):
         model = Price
+
+
+class ProofFilter(Filter):
+    owner: Optional[str] | None = None
+
+    class Constants(Filter.Constants):
+        model = Proof
 
 
 class ProductFilter(Filter):

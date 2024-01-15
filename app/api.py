@@ -339,9 +339,10 @@ def upload_proof(
     return db_proof
 
 
-@app.get("/api/v1/proofs", response_model=list[schemas.ProofFull], tags=["Proofs"])
+@app.get("/api/v1/proofs", response_model=Page[schemas.ProofFull], tags=["Proofs"])
 def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
+    filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
     db: Session = Depends(get_db),
 ):
     """
@@ -349,7 +350,8 @@ def get_user_proofs(
 
     This endpoint requires authentication.
     """
-    return crud.get_user_proofs(db, user=current_user)
+    filters.owner = current_user.user_id
+    return paginate(db, crud.get_proofs_query(filters=filters))
 
 
 # Routes: Products
