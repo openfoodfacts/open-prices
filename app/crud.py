@@ -9,7 +9,9 @@ from sqlalchemy.sql import func
 
 from app import config
 from app.enums import LocationOSMEnum, ProofTypeEnum
-from app.models import Location, Price, Product, Proof, User
+from app.models import Location, Price, Product, Proof
+from app.models import Session as SessionModel
+from app.models import User
 from app.schemas import (
     LocationCreate,
     LocationFilter,
@@ -35,55 +37,91 @@ def get_users_query(filters: ProductFilter | None = None):
     return query
 
 
-def get_users(db: Session, filters: ProductFilter | None = None):
+def get_users(db: Session, filters: ProductFilter | None = None) -> list[User]:
+    """Return a list of users from the database.
+
+    :param db: the database session
+    :param filters: the filters to apply to the query, defaults to None
+    :return: the list of users
+    """
     return db.execute(get_users_query(filters=filters)).all()
 
 
-def get_user(db: Session, user_id: str):
+def get_user_by_user_id(db: Session, user_id: str) -> User:
     return db.query(User).filter(User.user_id == user_id).first()
 
 
-def get_user_by_user_id(db: Session, user_id: str):
-    return db.query(User).filter(User.user_id == user_id).first()
+def get_session_by_token(db: Session, token: str) -> SessionModel:
+    """Return the session linked to the token.
+
+    :param db: the database session
+    :param token: the session token
+    :return: the session
+    """
+    return db.query(SessionModel).join(User).filter(SessionModel.token == token).first()
 
 
-def get_user_by_token(db: Session, token: str):
-    return db.query(User).filter(User.token == token).first()
-
-
-def create_user(db: Session, user: UserCreate) -> User:
+def create_user(db: Session, user_id: str) -> User:
     """Create a user in the database.
 
     :param db: the database session
-    :param product: the user to create
+    :param user_id: the Open Food Facts user ID
+    :param token: the session token
     :return: the created user
     """
-    db_user = User(user_id=user.user_id, token=user.token)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
-
-def get_or_create_user(db: Session, user: UserCreate):
-    created = False
-    db_user = get_user_by_user_id(db, user_id=user.user_id)
-    if not db_user:
-        db_user = create_user(db, user=user)
-        created = True
-    return db_user, created
-
-
-def update_user(db: Session, user: UserCreate, update_dict: dict):
-    for key, value in update_dict.items():
-        setattr(user, key, value)
+    user = User(user_id=user_id)
+    db.add(user)
     db.commit()
     db.refresh(user)
     return user
 
 
-def update_user_last_used_field(db: Session, user: UserCreate) -> UserCreate | None:
-    return update_user(db, user, {"last_used": func.now()})
+def _create_session(db: Session, user: User, token: str) -> SessionModel:
+    """Create a session in the database.
+
+    :param db: the database session
+    :param user: the user linked to the session
+    :param token: the session token
+    :return: the created session
+    """
+    session = SessionModel(token=token, user=user)
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+def create_session(
+    db: Session, user_id: str, token: str
+) -> tuple[SessionModel, User, bool]:
+    """Create a new session (and optionally the user if it doesn't exist) in
+    DB.
+
+    :param db: the database session
+    :param user_id: the Open Food Facts user ID
+    :param token: the session token
+    :return: the created session, the user and a boolean indicating whether the
+        user was created or not
+    """
+    created = False
+    user = get_user_by_user_id(db, user_id=user_id)
+    if not user:
+        user = create_user(db, user_id=user_id)
+        session = _create_session(db, user=user, token=token)
+        created = True
+    else:
+        session = get_session_by_token(db, token=token)
+        if not session:
+            session = _create_session(db, user=user, token=token)
+    return session, user, created
+
+
+def update_session_last_used_field(db: Session, session: SessionModel) -> SessionModel:
+    """Update the last_used field of a session to the current time."""
+    session.last_used = func.now()
+    db.commit()
+    db.refresh(session)
+    return session
 
 
 def increment_user_price_count(db: Session, user: UserCreate):

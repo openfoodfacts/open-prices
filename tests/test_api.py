@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 from app import crud
 from app.api import app, get_db
 from app.db import Base
+from app.models import Session as SessionModel
 from app.schemas import LocationCreate, PriceCreate, ProductCreate, UserCreate
 
 # database setup
@@ -103,8 +104,14 @@ PRICE_1 = PriceCreate(
 
 @pytest.fixture(scope="module")
 def user(db_session):
-    db_user = crud.create_user(db_session, USER)
+    db_user = crud.create_user(db_session, USER.user_id)
     return db_user
+
+
+@pytest.fixture(scope="module")
+def user_session(db_session) -> SessionModel:
+    session, *_ = crud.create_session(db_session, USER.user_id, USER.token)
+    return session
 
 
 @pytest.fixture(scope="module")
@@ -146,8 +153,8 @@ def clean_locations(db_session):
 # Test users
 # ------------------------------------------------------------------------------
 def test_get_users(db_session, clean_users):
-    crud.create_user(db_session, USER_1)
-    crud.create_user(db_session, USER_2)
+    crud.create_user(db_session, USER_1.user_id)
+    crud.create_user(db_session, USER_2.user_id)
 
     assert len(crud.get_users(db_session)) == 2
     response = client.get("/api/v1/users")
@@ -179,7 +186,7 @@ def test_get_users_pagination(clean_users):
 
 # Test prices
 # ------------------------------------------------------------------------------
-def test_create_price(db_session, user, clean_prices):
+def test_create_price(db_session, user_session: SessionModel, clean_prices):
     # without authentication
     response = client.post(
         "/api/v1/prices",
@@ -190,14 +197,14 @@ def test_create_price(db_session, user, clean_prices):
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_1),
-        headers={"Authorization": f"Bearer {user.token}X"},
+        headers={"Authorization": f"Bearer {user_session.token}X"},
     )
     assert response.status_code == 401
     # with authentication
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_1),
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_1.product_code
@@ -206,7 +213,9 @@ def test_create_price(db_session, user, clean_prices):
     # assert db_prices[0]["owner"] == user.user_id
 
 
-def test_create_price_with_category_tag(db_session, user, clean_prices):
+def test_create_price_with_category_tag(
+    db_session, user_session: SessionModel, clean_prices
+):
     PRICE_WITH_CATEGORY_TAG = PRICE_1.model_copy(
         update={
             "product_code": None,
@@ -220,7 +229,7 @@ def test_create_price_with_category_tag(db_session, user, clean_prices):
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_CATEGORY_TAG),
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     json_response = response.json()
     assert response.status_code == 201
@@ -234,7 +243,9 @@ def test_create_price_with_category_tag(db_session, user, clean_prices):
     assert len(db_prices) == 1
 
 
-def test_create_price_required_fields_validation(db_session, user, clean_prices):
+def test_create_price_required_fields_validation(
+    db_session, user_session: SessionModel, clean_prices
+):
     REQUIRED_FIELDS = [
         "price",
         "location_osm_id",
@@ -246,13 +257,15 @@ def test_create_price_required_fields_validation(db_session, user, clean_prices)
         response = client.post(
             "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_FIELD_MISSING),
-            headers={"Authorization": f"Bearer {user.token}"},
+            headers={"Authorization": f"Bearer {user_session.token}"},
         )
         assert response.status_code == 422
         assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_product_code_pattern_validation(db_session, user, clean_prices):
+def test_create_price_product_code_pattern_validation(
+    db_session, user_session, clean_prices
+):
     # product_code cannot be an empty string, nor contain letters
     WRONG_PRICE_PRODUCT_CODES = ["", "en:tomates", "8001505005707XYZ"]
     for wrong_price_product_code in WRONG_PRICE_PRODUCT_CODES:
@@ -262,13 +275,15 @@ def test_create_price_product_code_pattern_validation(db_session, user, clean_pr
         response = client.post(
             "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_PRODUCT_CODE_ERROR),
-            headers={"Authorization": f"Bearer {user.token}"},
+            headers={"Authorization": f"Bearer {user_session.token}"},
         )
         assert response.status_code == 422
         assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_category_tag_pattern_validation(db_session, user, clean_prices):
+def test_create_price_category_tag_pattern_validation(
+    db_session, user_session: SessionModel, clean_prices
+):
     # category_tag must follow a certain pattern (ex: "en:tomatoes")
     WRONG_PRICE_CATEGORY_TAGS = ["", ":", "en", ":tomatoes"]
     for wrong_price_category_tag in WRONG_PRICE_CATEGORY_TAGS:
@@ -278,13 +293,15 @@ def test_create_price_category_tag_pattern_validation(db_session, user, clean_pr
         response = client.post(
             "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_CATEGORY_TAG_ERROR),
-            headers={"Authorization": f"Bearer {user.token}"},
+            headers={"Authorization": f"Bearer {user_session.token}"},
         )
         assert response.status_code == 422
         assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_currency_validation(db_session, user, clean_prices):
+def test_create_price_currency_validation(
+    db_session, user_session: SessionModel, clean_prices
+):
     # currency must have a specific format (ex: "EUR")
     WRONG_PRICE_CURRENCIES = ["", "€", "euro"]
     for wrong_price_currency in WRONG_PRICE_CURRENCIES:
@@ -294,13 +311,15 @@ def test_create_price_currency_validation(db_session, user, clean_prices):
         response = client.post(
             "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_CURRENCY_ERROR),
-            headers={"Authorization": f"Bearer {user.token}"},
+            headers={"Authorization": f"Bearer {user_session.token}"},
         )
         assert response.status_code == 422
         assert len(crud.get_prices(db_session)) == 0
 
 
-def test_create_price_location_osm_type_validation(db_session, user, clean_prices):
+def test_create_price_location_osm_type_validation(
+    db_session, user_session: SessionModel, clean_prices
+):
     WRONG_PRICE_LOCATION_OSM_TYPES = ["", "node"]
     for wrong_price_location_osm_type in WRONG_PRICE_LOCATION_OSM_TYPES:
         PRICE_WITH_LOCATION_OSM_TYPE_ERROR = PRICE_1.model_copy(
@@ -309,14 +328,14 @@ def test_create_price_location_osm_type_validation(db_session, user, clean_price
         response = client.post(
             "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_LOCATION_OSM_TYPE_ERROR),
-            headers={"Authorization": f"Bearer {user.token}"},
+            headers={"Authorization": f"Bearer {user_session.token}"},
         )
         assert response.status_code == 422
         assert len(crud.get_prices(db_session)) == 0
 
 
 def test_create_price_code_category_exclusive_validation(
-    db_session, user, clean_prices
+    db_session, user_session: SessionModel, clean_prices
 ):
     # both product_code & category_tag missing: error
     PRICE_WITH_CODE_AND_CATEGORY_MISSING = PRICE_1.model_copy(
@@ -325,7 +344,7 @@ def test_create_price_code_category_exclusive_validation(
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_CODE_AND_CATEGORY_MISSING),
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 422
     assert len(crud.get_prices(db_session)) == 0
@@ -334,7 +353,7 @@ def test_create_price_code_category_exclusive_validation(
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_ONLY_PRODUCT_CODE),
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
     assert len(crud.get_prices(db_session)) == 1
@@ -349,7 +368,7 @@ def test_create_price_code_category_exclusive_validation(
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_ONLY_CATEGORY),
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
     assert len(crud.get_prices(db_session)) == 2
@@ -360,13 +379,15 @@ def test_create_price_code_category_exclusive_validation(
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_WITH_BOTH_CODE_AND_CATEGORY),
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 422
     assert len(crud.get_prices(db_session)) == 2
 
 
-def test_create_price_labels_tags_pattern_validation(db_session, user, clean_prices):
+def test_create_price_labels_tags_pattern_validation(
+    db_session, user_session: SessionModel, clean_prices
+):
     # product_code cannot be an empty string, nor contain letters
     WRONG_PRICE_LABELS_TAGS = [[]]
     for wrong_price_labels_tags in WRONG_PRICE_LABELS_TAGS:
@@ -376,15 +397,15 @@ def test_create_price_labels_tags_pattern_validation(db_session, user, clean_pri
         response = client.post(
             "/api/v1/prices",
             json=jsonable_encoder(PRICE_WITH_LABELS_TAGS_ERROR),
-            headers={"Authorization": f"Bearer {user.token}"},
+            headers={"Authorization": f"Bearer {user_session.token}"},
         )
         assert response.status_code == 422
         assert len(crud.get_prices(db_session)) == 0
 
 
-def test_get_prices(db_session, user, clean_prices):
+def test_get_prices(db_session, user_session: SessionModel, clean_prices):
     for _ in range(3):
-        crud.create_price(db_session, PRICE_1, user)
+        crud.create_price(db_session, PRICE_1, user_session.user)
 
     assert len(crud.get_prices(db_session)) == 3
     response = client.get("/api/v1/prices")
@@ -403,8 +424,8 @@ def test_get_prices_pagination():
         assert key in response.json()
 
 
-def test_get_prices_filters(db_session, user, clean_prices):
-    crud.create_price(db_session, PRICE_1, user)
+def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices):
+    crud.create_price(db_session, PRICE_1, user_session.user)
     crud.create_price(
         db_session,
         PRICE_1.model_copy(
@@ -414,9 +435,11 @@ def test_get_prices_filters(db_session, user, clean_prices):
                 "date": datetime.date.fromisoformat("2023-11-01"),
             }
         ),
-        user,
+        user_session.user,
     )
-    crud.create_price(db_session, PRICE_1.model_copy(update={"price": 5.10}), user)
+    crud.create_price(
+        db_session, PRICE_1.model_copy(update={"price": 5.10}), user_session.user
+    )
     crud.create_price(
         db_session,
         PRICE_1.model_copy(
@@ -427,7 +450,7 @@ def test_get_prices_filters(db_session, user, clean_prices):
                 "origins_tags": ["en:spain"],
             }
         ),
-        user,
+        user_session.user,
     )
 
     assert len(crud.get_prices(db_session)) == 4
@@ -462,14 +485,14 @@ def test_get_prices_filters(db_session, user, clean_prices):
     assert len(response.json()["items"]) == 3
 
 
-def test_get_prices_orders(db_session, user, clean_prices):
-    crud.create_price(db_session, PRICE_1, user)
+def test_get_prices_orders(db_session, user_session: SessionModel, clean_prices):
+    crud.create_price(db_session, PRICE_1, user_session.user)
     crud.create_price(
         db_session,
         PRICE_1.model_copy(
             update={"price": 3.99, "date": datetime.date.fromisoformat("2023-10-01")}
         ),
-        user,
+        user_session.user,
     )
     response = client.get("/api/v1/prices")
     assert response.status_code == 200
@@ -484,7 +507,7 @@ def test_get_prices_orders(db_session, user, clean_prices):
 
 # Test proofs
 # ------------------------------------------------------------------------------
-def test_create_proof(user):
+def test_create_proof(user_session: SessionModel):
     # This test depends on the previous test_create_price
     # without authentication
     response = client.post(
@@ -494,21 +517,21 @@ def test_create_proof(user):
     # with authentication but validation error (file & type missing)
     response = client.post(
         "/api/v1/proofs/upload",
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 422
     # with authentication but validation error (type missing)
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 422
     # with authentication but validation error (file missing)
     response = client.post(
         "/api/v1/proofs/upload",
         data={"type": "PRICE_TAG"},
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 422
 
@@ -517,7 +540,7 @@ def test_create_proof(user):
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
         data={"type": "PRICE_TAG", "is_public": "false"},
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 422
 
@@ -526,7 +549,7 @@ def test_create_proof(user):
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
         data={"type": "PRICE_TAG"},
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
 
@@ -535,19 +558,19 @@ def test_create_proof(user):
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
         data={"type": "RECEIPT", "is_public": "false"},
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
 
 
-def test_get_proofs(user):
+def test_get_proofs(user_session: SessionModel):
     # without authentication
     response = client.get("/api/v1/proofs")
     assert response.status_code == 401
     # with authentication
     response = client.get(
         "/api/v1/proofs",
-        headers={"Authorization": f"Bearer {user.token}"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 200
     data = response.json()
