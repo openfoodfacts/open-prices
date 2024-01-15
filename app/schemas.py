@@ -372,6 +372,8 @@ class PriceFilter(Filter):
 class ProofFilter(Filter):
     owner: Optional[str] | None = None
 
+    order_by: Optional[list[str]] | None = None
+
     class Constants(Filter.Constants):
         model = Proof
 

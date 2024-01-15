@@ -284,15 +284,12 @@ def get_proofs_query(filters: ProofFilter | None = None):
     query = select(Proof)
     if filters:
         query = filters.filter(query)
+        query = filters.sort(query)
     return query
 
 
 def get_proof(db: Session, proof_id: int):
     return db.query(Proof).filter(Proof.id == proof_id).first()
-
-
-def get_user_proofs(db: Session, user: UserCreate):
-    return db.query(Proof).filter(Proof.owner == user.user_id).all()
 
 
 def create_proof(
