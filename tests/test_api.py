@@ -12,7 +12,13 @@ from app import crud
 from app.api import app, get_db
 from app.db import Base
 from app.models import Session as SessionModel
-from app.schemas import LocationCreate, PriceCreate, ProductCreate, UserCreate
+from app.schemas import (
+    LocationCreate,
+    PriceCreate,
+    ProductCreate,
+    ProofFilter,
+    UserCreate,
+)
 
 # database setup
 # ------------------------------------------------------------------------------
@@ -601,6 +607,38 @@ def test_get_proofs(user_session: SessionModel):
         assert item["type"] == ("PRICE_TAG" if i == 0 else "RECEIPT")
         assert item["owner"] == "user"
         assert item["is_public"] == (True if i == 0 else False)
+
+
+def test_get_proofs_filters(db_session, user_session: SessionModel):
+    assert (
+        len(
+            crud.get_proofs(db_session, filters=ProofFilter(owner=user_session.user_id))
+        )
+        == 2
+    )
+
+    # 1 proof is a receipt
+    response = client.get(
+        "/api/v1/proofs?type=RECEIPT",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # # order by most recent  # error because same timestamp...
+    # response = client.get(
+    #     "/api/v1/proofs?order_by=created",
+    #     headers={"Authorization": f"Bearer {user_session.token}"},
+    # )
+    # assert response.status_code == 200
+    # assert len(response.json()["items"]) == 2
+    # assert response.json()["items"][0]["id"] < response.json()["items"][1]["id"]  # noqa
+    # response = client.get(
+    #     "/api/v1/proofs?order_by=-created",
+    #     headers={"Authorization": f"Bearer {user_session.token}"},
+    # )
+    # assert response.status_code == 200
+    # assert len(response.json()["items"]) == 2
+    # assert response.json()["items"][0]["id"] > response.json()["items"][1]["id"]  # noqa
 
 
 # Test products

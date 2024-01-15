@@ -288,6 +288,10 @@ def get_proofs_query(filters: ProofFilter | None = None):
     return query
 
 
+def get_proofs(db: Session, filters: ProofFilter | None = None):
+    return db.execute(get_proofs_query(filters=filters)).all()
+
+
 def get_proof(db: Session, proof_id: int):
     return db.query(Proof).filter(Proof.id == proof_id).first()
 
