@@ -12,7 +12,13 @@ from app import crud
 from app.api import app, get_db
 from app.db import Base
 from app.models import Session as SessionModel
-from app.schemas import LocationCreate, PriceCreate, ProductCreate, UserCreate
+from app.schemas import (
+    LocationCreate,
+    PriceCreate,
+    ProductCreate,
+    ProofFilter,
+    UserCreate,
+)
 
 # database setup
 # ------------------------------------------------------------------------------
@@ -43,6 +49,8 @@ db_session = pytest.fixture(override_get_db, scope="module")
 # client setup & fixtures
 # ------------------------------------------------------------------------------
 client = TestClient(app)
+
+PAGINATION_KEYS = ["items", "total", "page", "size", "pages"]
 
 USER = UserCreate(user_id="user", token="user__Utoken")
 USER_1 = UserCreate(user_id="user1", token="user1__Utoken1", price_count=0)
@@ -169,7 +177,7 @@ def test_get_users(db_session, clean_users):
 def test_get_users_pagination(clean_users):
     response = client.get("/api/v1/users")
     assert response.status_code == 200
-    for key in ["items", "total", "page", "size", "pages"]:
+    for key in PAGINATION_KEYS:
         assert key in response.json()
 
 
@@ -420,7 +428,7 @@ def test_get_prices(db_session, user_session: SessionModel, clean_prices):
 def test_get_prices_pagination():
     response = client.get("/api/v1/prices")
     assert response.status_code == 200
-    for key in ["items", "total", "page", "size", "pages"]:
+    for key in PAGINATION_KEYS:
         assert key in response.json()
 
 
@@ -573,7 +581,12 @@ def test_get_proofs(user_session: SessionModel):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 200
-    data = response.json()
+
+    # has pagination
+    for key in PAGINATION_KEYS:
+        assert key in response.json()
+
+    data = response.json()["items"]
     assert len(data) == 2
 
     for item in data:
@@ -596,6 +609,38 @@ def test_get_proofs(user_session: SessionModel):
         assert item["is_public"] == (True if i == 0 else False)
 
 
+def test_get_proofs_filters(db_session, user_session: SessionModel):
+    assert (
+        len(
+            crud.get_proofs(db_session, filters=ProofFilter(owner=user_session.user_id))
+        )
+        == 2
+    )
+
+    # 1 proof is a receipt
+    response = client.get(
+        "/api/v1/proofs?type=RECEIPT",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # # order by most recent  # error because same timestamp...
+    # response = client.get(
+    #     "/api/v1/proofs?order_by=created",
+    #     headers={"Authorization": f"Bearer {user_session.token}"},
+    # )
+    # assert response.status_code == 200
+    # assert len(response.json()["items"]) == 2
+    # assert response.json()["items"][0]["id"] < response.json()["items"][1]["id"]  # noqa
+    # response = client.get(
+    #     "/api/v1/proofs?order_by=-created",
+    #     headers={"Authorization": f"Bearer {user_session.token}"},
+    # )
+    # assert response.status_code == 200
+    # assert len(response.json()["items"]) == 2
+    # assert response.json()["items"][0]["id"] > response.json()["items"][1]["id"]  # noqa
+
+
 # Test products
 # ------------------------------------------------------------------------------
 def test_get_products(db_session, clean_products):
@@ -612,7 +657,7 @@ def test_get_products(db_session, clean_products):
 def test_get_products_pagination(clean_products):
     response = client.get("/api/v1/products")
     assert response.status_code == 200
-    for key in ["items", "total", "page", "size", "pages"]:
+    for key in PAGINATION_KEYS:
         assert key in response.json()
 
 
@@ -675,7 +720,7 @@ def test_get_locations(db_session, clean_locations):
 def test_get_locations_pagination(clean_locations):
     response = client.get("/api/v1/locations")
     assert response.status_code == 200
-    for key in ["items", "total", "page", "size", "pages"]:
+    for key in PAGINATION_KEYS:
         assert key in response.json()
 
 

@@ -22,6 +22,7 @@ from app.schemas import (
     ProductCreate,
     ProductFilter,
     ProductFull,
+    ProofFilter,
     UserCreate,
 )
 
@@ -278,12 +279,21 @@ def set_price_location(db: Session, price: PriceFull, location: LocationFull):
 
 # Proofs
 # ------------------------------------------------------------------------------
+def get_proofs_query(filters: ProofFilter | None = None):
+    """Useful for pagination."""
+    query = select(Proof)
+    if filters:
+        query = filters.filter(query)
+        query = filters.sort(query)
+    return query
+
+
+def get_proofs(db: Session, filters: ProofFilter | None = None):
+    return db.execute(get_proofs_query(filters=filters)).all()
+
+
 def get_proof(db: Session, proof_id: int):
     return db.query(Proof).filter(Proof.id == proof_id).first()
-
-
-def get_user_proofs(db: Session, user: UserCreate):
-    return db.query(Proof).filter(Proof.owner == user.user_id).all()
 
 
 def create_proof(
