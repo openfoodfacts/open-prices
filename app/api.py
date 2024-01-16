@@ -106,9 +106,9 @@ def get_current_user(
     :return: the current user
     """
     if token and "__U" in token:
-        db_user = crud.get_user_by_token(db, token=token)
-        if db_user:
-            return crud.update_user_last_used_field(db, user=db_user)
+        session = crud.get_session_by_token(db, token=token)
+        if session:
+            return crud.update_session_last_used_field(db, session=session).user
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid authentication credentials",
@@ -130,9 +130,9 @@ def get_current_user_optional(
     :return: the current user if authenticated, None otherwise
     """
     if token and "__U" in token:
-        db_user = crud.get_user_by_token(db, token=token)
-        if db_user:
-            return crud.update_user_last_used_field(db, user=db_user)
+        session = crud.get_session_by_token(db, token=token)
+        if session:
+            return crud.update_session_last_used_field(db, session=session).user
     return None
 
 
@@ -179,20 +179,20 @@ def authentication(
             detail="OAUTH2_SERVER_URL environment variable missing",
         )
 
-    data = {"user_id": form_data.username, "password": form_data.password}
+    user_id = form_data.username
+    data = {"user_id": user_id, "password": form_data.password}
     r = requests.post(settings.oauth2_server_url, data=data)  # type: ignore
     if r.status_code == 200:
         token = create_token(form_data.username)
-        user = schemas.UserCreate(user_id=form_data.username, token=token)
-        db_user, created = crud.get_or_create_user(db, user=user)
-        user = crud.update_user_last_used_field(db, user=db_user)
+        session, *_ = crud.create_session(db, user_id=user_id, token=token)
+        session = crud.update_session_last_used_field(db, session=session)
         # set the cookie if requested
         if set_cookie:
             # Don't add httponly=True or secure=True as it's still in
             # development phase, but it should be added once the front-end
             # is ready
-            response.set_cookie(key="session", value=user.token)
-        return {"access_token": user.token, "token_type": "bearer"}
+            response.set_cookie(key="session", value=token)
+        return {"access_token": token, "token_type": "bearer"}
     elif r.status_code == 403:
         time.sleep(2)  # prevents brute-force
         raise HTTPException(

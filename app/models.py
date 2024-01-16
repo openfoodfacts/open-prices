@@ -26,14 +26,24 @@ JSONVariant = JSON().with_variant(JSONB(), "postgresql")
 
 class User(Base):
     user_id = Column(String, primary_key=True, index=True)
-    token = Column(String, unique=True, index=True)
-
-    last_used = Column(DateTime(timezone=True))
     price_count = Column(Integer, nullable=False, server_default="0", index=True)
-
     created = Column(DateTime(timezone=True), server_default=func.now())
+    sessions: Mapped[list["Session"]] = relationship(back_populates="user")
 
     __tablename__ = "users"
+
+
+class Session(Base):
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(String, ForeignKey("users.user_id"), index=True, nullable=False)
+    user: Mapped[User] = relationship("User")
+
+    token = Column(String, unique=True, index=True, nullable=False)
+    created = Column(DateTime(timezone=True), server_default=func.now())
+    last_used = Column(DateTime(timezone=True), nullable=True)
+
+    __tablename__ = "sessions"
 
 
 class Product(Base):
