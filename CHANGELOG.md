@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.13.0](https://github.com/openfoodfacts/open-prices/compare/v1.12.0...v1.13.0) (2024-01-19)
+
+
+### Features
+
+* add user sessions ([#149](https://github.com/openfoodfacts/open-prices/issues/149)) ([a23977e](https://github.com/openfoodfacts/open-prices/commit/a23977e2b1943ecda64fccb22f3b399121c5ab89)), closes [#148](https://github.com/openfoodfacts/open-prices/issues/148)
+* paginate, filter & order proofs ([#150](https://github.com/openfoodfacts/open-prices/issues/150)) ([ed53599](https://github.com/openfoodfacts/open-prices/commit/ed535992b4dc5228a82efe4163125dc45a942b18))
+
+
+### Technical
+
+* add fr landing page ([#155](https://github.com/openfoodfacts/open-prices/issues/155)) ([c163bfd](https://github.com/openfoodfacts/open-prices/commit/c163bfda88c6dd842ce0938bae43c3de69ec3a3e))
+
 ## [1.12.0](https://github.com/openfoodfacts/open-prices/compare/v1.11.0...v1.12.0) (2024-01-14)
 
 
