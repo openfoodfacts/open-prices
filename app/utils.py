@@ -106,16 +106,16 @@ def generate_openfoodfacts_main_image_url(
 
 
 def fetch_product_openfoodfacts_details(product: ProductFull) -> JSONType | None:
-    product = {}
+    product_dict = {}
     try:
         response = openfoodfacts_product_search(code=product.code)
         if response["status"]:
-            product["source"] = Flavor.off
+            product_dict["source"] = Flavor.off
             for off_field in OFF_FIELDS:
                 if off_field in response["product"]:
-                    product[off_field] = response["product"][off_field]
-            product = normalize_product_fields(product)
-        return product
+                    product_dict[off_field] = response["product"][off_field]
+            product_dict = normalize_product_fields(product_dict)
+        return product_dict
     except Exception:
         logger.exception("Error returned from Open Food Facts")
         return
