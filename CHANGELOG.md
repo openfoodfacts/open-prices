@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/openfoodfacts/open-prices/compare/v1.13.0...v1.13.1) (2024-01-24)
+
+
+### Technical
+
+* update tutorial to add a price ([#157](https://github.com/openfoodfacts/open-prices/issues/157)) ([0ebbbe0](https://github.com/openfoodfacts/open-prices/commit/0ebbbe0c9c41dc83377366f29ada964cb5a487b6))
+
 ## [1.13.0](https://github.com/openfoodfacts/open-prices/compare/v1.12.0...v1.13.0) (2024-01-19)
 
 
