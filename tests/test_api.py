@@ -102,7 +102,17 @@ PRICE_1 = PriceCreate(
     product_name="PATE NOCCIOLATA BIO 700G",
     # category="en:tomatoes",
     price=3.5,
-    price_without_discount=4.5,
+    currency="EUR",
+    location_osm_id=123,
+    location_osm_type="NODE",
+    date="2023-10-31",
+)
+PRICE_2 = PriceCreate(
+    product_code="8001505005707",
+    product_name="PATE NOCCIOLATA BIO 700G",
+    price=2.5,
+    price_is_discounted=True,
+    price_without_discount=3.5,
     currency="EUR",
     location_osm_id=123,
     location_osm_type="NODE",
@@ -218,6 +228,17 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     assert response.json()["product_code"] == PRICE_1.product_code
     assert "id" not in response.json()
     assert len(crud.get_prices(db_session)) == 1
+    # assert db_prices[0]["owner"] == user.user_id
+    # price with discount
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_2),
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    assert response.json()["product_code"] == PRICE_2.product_code
+    assert "id" not in response.json()
+    assert len(crud.get_prices(db_session)) == 1 + 1
     # assert db_prices[0]["owner"] == user.user_id
 
 
