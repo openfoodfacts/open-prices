@@ -198,6 +198,11 @@ class PriceCreate(BaseModel):
         description="price of the product, without its currency, taxes included.",
         examples=["1.99"],
     )
+    price_is_discounted: bool = Field(
+        default=False,
+        description="true if the price is discounted.",
+        examples=[True],
+    )
     price_without_discount: float | None = Field(
         default=None,
         description="price of the product without discount, without its currency, taxes included. "
@@ -315,9 +320,17 @@ class PriceCreateWithValidation(PriceCreate):
         return self
 
     @model_validator(mode="after")
-    def check_price_without_discout(self):
-        """Check that `price_without_discount` is greater than `price`."""
+    def check_price_discount(self):
+        """
+        Check that:
+        - `price_is_discounted` is true if `price_without_discount` is passed
+        - `price_without_discount` is greater than `price`
+        """
         if self.price_without_discount is not None:
+            if not self.price_is_discounted:
+                raise ValueError(
+                    "`price_is_discounted` must be true if `price_without_discount` is filled"
+                )
             if self.price_without_discount <= self.price:
                 raise ValueError(
                     "`price_without_discount` must be greater than `price`"
@@ -351,6 +364,7 @@ class PriceFilter(Filter):
     location_osm_type: Optional[LocationOSMEnum] | None = None
     location_id: Optional[int] | None = None
     price: Optional[int] | None = None
+    price_is_discounted: Optional[bool] | None = None
     price__gt: Optional[int] | None = None
     price__gte: Optional[int] | None = None
     price__lt: Optional[int] | None = None

@@ -119,6 +119,7 @@ class Price(Base):
     product: Mapped[Product] = relationship(back_populates="prices")
 
     price = Column(Numeric(precision=10, scale=2))
+    price_is_discounted = Column(Boolean, nullable=False, server_default="false")
     price_without_discount = Column(Numeric(precision=10, scale=2), nullable=True)
     currency = Column(ChoiceType(CurrencyEnum))
     price_per = Column(ChoiceType(PricePerEnum))

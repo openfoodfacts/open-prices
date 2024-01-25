@@ -86,7 +86,21 @@ class TestPriceCreate:
                 date="2021-01-01",
             )
 
-    def test_price_without_discount_raise(self):
+    def test_price_discount_raise(self):
+        with pytest.raises(
+            pydantic.ValidationError,
+            match="`price_is_discounted` must be true if `price_without_discount` is filled",
+        ):
+            PriceCreateWithValidation(
+                product_code="5414661000456",
+                location_osm_id=123,
+                location_osm_type=LocationOSMEnum.NODE,
+                price=1.99,
+                price_is_discounted=False,
+                price_without_discount=1.50,
+                currency="EUR",
+                date="2021-01-01",
+            )
         with pytest.raises(
             pydantic.ValidationError,
             match="`price_without_discount` must be greater than `price`",
@@ -96,6 +110,7 @@ class TestPriceCreate:
                 location_osm_id=123,
                 location_osm_type=LocationOSMEnum.NODE,
                 price=1.99,
+                price_is_discounted=True,
                 price_without_discount=1.50,
                 currency="EUR",
                 date="2021-01-01",
