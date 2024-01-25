@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.14.0](https://github.com/openfoodfacts/open-prices/compare/v1.13.1...v1.14.0) (2024-01-25)
+
+
+### Features
+
+* add price.price_is_discounted field ([#163](https://github.com/openfoodfacts/open-prices/issues/163)) ([a73e460](https://github.com/openfoodfacts/open-prices/commit/a73e4606846e08261a9cc00d1d56fa82c5d23382))
+
+
+### Bug Fixes
+
+* fix AttributeError in fetch_product_openfoodfacts_details ([#161](https://github.com/openfoodfacts/open-prices/issues/161)) ([ffd9d65](https://github.com/openfoodfacts/open-prices/commit/ffd9d65bef7e744bdf6e3171e5cc6a3315287035))
+* fix parsing bug in import_product_db ([#164](https://github.com/openfoodfacts/open-prices/issues/164)) ([40f2c2a](https://github.com/openfoodfacts/open-prices/commit/40f2c2afd094eef225ac8af3a1d89bd34d970e25))
+
 ## [1.13.1](https://github.com/openfoodfacts/open-prices/compare/v1.13.0...v1.13.1) (2024-01-24)
 
 
