@@ -364,6 +364,7 @@ class PriceFilter(Filter):
     location_osm_type: Optional[LocationOSMEnum] | None = None
     location_id: Optional[int] | None = None
     price: Optional[int] | None = None
+    price_is_discounted: Optional[bool] | None = None
     price__gt: Optional[int] | None = None
     price__gte: Optional[int] | None = None
     price__lt: Optional[int] | None = None
