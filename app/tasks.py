@@ -89,6 +89,11 @@ def import_product_db(db: Session, batch_size: int = 1000):
         seen_codes.add(product_code)
         images: JSONType = product.get("images", {})
         last_modified_t = product.get("last_modified_t")
+
+        if isinstance(last_modified_t, str):
+            # Some products have a last_modified_t field with a string value
+            last_modified_t = int(last_modified_t)
+
         last_modified = (
             datetime.datetime.fromtimestamp(last_modified_t, tz=datetime.timezone.utc)
             if last_modified_t
