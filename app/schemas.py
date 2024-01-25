@@ -198,7 +198,7 @@ class PriceCreate(BaseModel):
         description="price of the product, without its currency, taxes included.",
         examples=["1.99"],
     )
-    price_is_discounted: bool | None = Field(
+    price_is_discounted: bool = Field(
         default=False,
         description="true if the price is discounted.",
         examples=[True],
