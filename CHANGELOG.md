@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.15.0](https://github.com/openfoodfacts/open-prices/compare/v1.14.0...v1.15.0) (2024-01-26)
+
+
+### Features
+
+* **price:** add filter on created field ([689d4ab](https://github.com/openfoodfacts/open-prices/commit/689d4abc32ac487863985a896f58d36149dcc3f0))
+
+
+### Bug Fixes
+
+* fix email sign-in ([#170](https://github.com/openfoodfacts/open-prices/issues/170)) ([69d65c0](https://github.com/openfoodfacts/open-prices/commit/69d65c0278092bd43f461caa1913c891fee5174b))
+
+
+### Technical
+
+* **tutorial:** fix OpenStreetMap name ([#168](https://github.com/openfoodfacts/open-prices/issues/168)) ([180c6e6](https://github.com/openfoodfacts/open-prices/commit/180c6e64a6285b5846d0adc61aeb2abcf49cd395))
+
 ## [1.14.0](https://github.com/openfoodfacts/open-prices/compare/v1.13.1...v1.14.0) (2024-01-25)
 
 
