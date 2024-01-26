@@ -91,6 +91,29 @@ def create_token(user_id: str):
     return f"{user_id}__U{str(uuid.uuid4())}"
 
 
+def get_current_session(
+    token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
+) -> schemas.SessionBase:
+    """Get the current user session, if authenticated.
+
+    This function is used as a dependency in endpoints that require
+    authentication. It raises an HTTPException if the user is not
+    authenticated.
+
+    :param token: the authentication token
+    :param db: the database session
+    :raises HTTPException: if the user is not authenticated
+    :return: the current user session
+    """
+    if token and "__U" in token:
+        return crud.get_session_by_token(db, token=token)
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
 def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
 ) -> schemas.UserCreate:
@@ -179,11 +202,15 @@ def authentication(
             detail="OAUTH2_SERVER_URL environment variable missing",
         )
 
-    user_id = form_data.username
-    data = {"user_id": user_id, "password": form_data.password}
-    r = requests.post(settings.oauth2_server_url, data=data)  # type: ignore
+    # By specifying body=1, information about the user is returned in the
+    # response, including the user_id
+    data = {"user_id": form_data.username, "password": form_data.password, "body": 1}
+    r = requests.post(f"{settings.oauth2_server_url}", data=data)  # type: ignore
     if r.status_code == 200:
-        token = create_token(form_data.username)
+        # form_data.username can be the user_id or the email, so we need to
+        # fetch the user_id from the response
+        user_id = r.json()["user_id"]
+        token = create_token(user_id)
         session, *_ = crud.create_session(db, user_id=user_id, token=token)
         session = crud.update_session_last_used_field(db, session=session)
         # set the cookie if requested
@@ -203,6 +230,14 @@ def authentication(
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server error"
     )
+
+
+@app.get("/api/v1/session", response_model=schemas.SessionBase, tags=["Auth"])
+def get_user_session(
+    current_session: schemas.SessionBase = Depends(get_current_session),
+):
+    """Return information about the current user session."""
+    return current_session
 
 
 # Routes: Users

@@ -16,6 +16,17 @@ from pydantic import (
 from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
 from app.models import Location, Price, Product, Proof, User
 
+# Session
+# ------------------------------------------------------------------------------
+
+
+class SessionBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: str
+    created: datetime.datetime
+    last_used: datetime.datetime | None
+
 
 # User
 # ------------------------------------------------------------------------------
