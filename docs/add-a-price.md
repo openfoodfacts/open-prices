@@ -32,6 +32,6 @@ On the first picture, the price tag and the product are visible. However, on the
 
 ### Step 3: Add the location & date
 
-The location is the store where the product was found. This can be a supermarket, a local store, a farmer's market, etc. The only requirement is that it is a physical location where you can buy food. The location needs to be registered in Open Street Map, otherwise you won't be able to select it. If your store is not in Open Street Map, you can add it there first (ask for help if you're not familiar with Open Street Map!).
+The location is the store where the product was found. This can be a supermarket, a local store, a farmer's market, etc. The only requirement is that it is a physical location where you can buy food. The location needs to be registered in OpenStreetMap, otherwise you won't be able to select it. If your store is not in OpenStreetMap, you can add it there first (ask for help if you're not familiar with OpenStreetMap!).
 
 The date is when you found the price. It can be different from the date you actually add the price. This is important because prices change over time, and we want to be able to track these changes.
