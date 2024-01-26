@@ -232,6 +232,14 @@ def authentication(
     )
 
 
+@app.get("/api/v1/session", response_model=schemas.SessionBase, tags=["Auth"])
+def get_user_session(
+    current_session: schemas.SessionBase = Depends(get_current_session),
+):
+    """Return information about the current user session."""
+    return current_session
+
+
 # Routes: Users
 # ------------------------------------------------------------------------------
 @app.get("/api/v1/users", response_model=Page[schemas.UserBase], tags=["Users"])
