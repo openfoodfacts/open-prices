@@ -31,6 +31,7 @@ from app.config import settings
 from app.db import session
 from app.enums import ProofTypeEnum
 from app.models import Price
+from app.models import Session as SessionModel
 from app.utils import init_sentry
 
 logger = get_logger(level=settings.log_level.to_int())
@@ -93,7 +94,7 @@ def create_token(user_id: str):
 
 def get_current_session(
     token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
-) -> schemas.SessionBase:
+) -> SessionModel:
     """Get the current user session, if authenticated.
 
     This function is used as a dependency in endpoints that require
@@ -106,7 +107,9 @@ def get_current_session(
     :return: the current user session
     """
     if token and "__U" in token:
-        return crud.get_session_by_token(db, token=token)
+        session = crud.get_session_by_token(db, token=token)
+        if session:
+            return crud.update_session_last_used_field(db, session=session)
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid authentication credentials",
@@ -234,10 +237,24 @@ def authentication(
 
 @app.get("/api/v1/session", response_model=schemas.SessionBase, tags=["Auth"])
 def get_user_session(
-    current_session: schemas.SessionBase = Depends(get_current_session),
+    current_session: SessionModel = Depends(get_current_session),
 ):
     """Return information about the current user session."""
     return current_session
+
+
+@app.delete("/api/v1/session", tags=["Auth"])
+def delete_user_session(
+    current_session: SessionModel = Depends(get_current_session),
+    db: Session = Depends(get_db),
+):
+    """Delete the current user session.
+
+    If the provided session token or cookie is invalid, a HTTP 401 response
+    is returned.
+    """
+    crud.delete_session(db, current_session.id)
+    return {"status": "ok"}
 
 
 # Routes: Users
