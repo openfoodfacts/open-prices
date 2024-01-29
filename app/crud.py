@@ -145,6 +145,20 @@ def delete_user(db: Session, user_id: UserCreate):
     return False
 
 
+def delete_session(db: Session, session_id: int) -> bool:
+    """Delete the user session.
+
+    :param db: the database session
+    :param session_id: the DB session ID
+    :return: a bool indicating whether the session was deleted
+    """
+    results = db.execute(
+        SessionModel.__table__.delete().where(SessionModel.id == session_id)
+    )
+    db.commit()
+    return results.rowcount > 0
+
+
 # Products
 # ------------------------------------------------------------------------------
 def get_products_query(filters: ProductFilter | None = None):
