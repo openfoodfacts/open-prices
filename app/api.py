@@ -310,6 +310,31 @@ def get_price(
     )
 
 
+@app.get(
+    "/api/v1/prices/category/{category_tag}",
+    response_model=Page[schemas.PriceFullWithRelations],
+    tags=["Prices"],
+)
+def get_price_by_category(
+    category_tag: str,
+    filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
+    db: Session = Depends(get_db),
+    current_user: schemas.UserCreate | None = Depends(get_current_user_optional),
+):
+    """Return prices for a given product category.
+
+    This endpoint **only works for products with barcode**, a distinct call
+    must be made on GET /prices with category_tag=`{CATEGORY_TAG}` for
+    barcode-less products.
+    """
+    return paginate(
+        db,
+        crud.get_price_with_category_filter_query(category_tag, filters=filters),
+        transformer=functools.partial(price_transformer, current_user=current_user),
+        unique=False,
+    )
+
+
 @app.post(
     "/api/v1/prices",
     response_model=schemas.PriceFull,

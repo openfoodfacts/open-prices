@@ -63,6 +63,7 @@ class Product(Base):
 
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())
+    categories_tags = Column(JSONB(), nullable=True, index=True)
 
     __tablename__ = "products"
 

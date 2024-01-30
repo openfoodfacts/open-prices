@@ -40,6 +40,7 @@ OFF_FIELDS = [
     "brands",
     "image_url",
     "unique_scans_n",
+    "categories_tags",
 ]
 
 

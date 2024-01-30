@@ -261,6 +261,37 @@ def get_prices_query(
     return query
 
 
+def get_price_with_category_filter_query(
+    category_tag: str, filters: PriceFilter | None = None
+):
+    """Create a query to filter prices by category tag.
+
+    Only prices linked to a product are returned.
+
+    :param category_tag: the category tag to filter on
+    :param filters: the filters to apply to the query, defaults to None
+    :return: the query
+    """
+    # Override the category_tag filter
+    filters.category_tag = None
+    query = (
+        select(Price)
+        .join(Price.product)
+        .options(joinedload(Price.product))
+        .where(
+            Product.price_count > 0,
+            Product.categories_tags != None,  # noqa: E711
+            Product.categories_tags.has_key(category_tag),
+        )
+        .options(joinedload(Price.location))
+        .options(joinedload(Price.proof))
+    )
+    if filters:
+        query = filters.filter(query)
+        query = filters.sort(query)
+    return query
+
+
 def get_prices(db: Session, filters: PriceFilter | None = None):
     return db.execute(get_prices_query(filters=filters)).all()
 

@@ -71,6 +71,10 @@ class ProductFull(ProductCreate):
         description="brand(s) of the product.",
         examples=["Rigoni di Asiago", "Lindt"],
     )
+    categories_tags: list[str] | None = Field(
+        description="categories of the product, as a list of tags.",
+        examples=["en:tomatoes", "en:apples"],
+    )
     image_url: AnyHttpUrl | None = Field(
         description="URL of the product image.",
         examples=[
