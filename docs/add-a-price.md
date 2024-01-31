@@ -26,9 +26,12 @@ If the price is discounted, we currently expect the full price to be provided (i
 
 We need a picture of the price tag that acts as a proof so that the data can be verified independently. Ideally, the image should contain both the price tag and the product. The product should be clearly visible, and the price tag should be readable.
 
-[![Examples of good and bad proof pictures](assets/img/proof-examples.png)](assets/img/proof-examples.png)
+#### Proof examples
 
-On the first picture, the price tag and the product are visible. However, on the second picture, it's difficult to recognize the product using the photo alone.
+|Good|Bad|
+|---|---|
+|![image](assets/img/proof-example-good.png)|![image](assets/img/proof-example-bad.png)|
+|Both the price tag and the product are visible|Here it's difficult to recognize the product using the photo alone|
 
 ### Step 3: Add the location & date
 
