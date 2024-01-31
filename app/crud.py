@@ -137,7 +137,18 @@ def increment_user_price_count(db: Session, user: UserCreate):
     return user
 
 
-def delete_user(db: Session, user_id: UserCreate):
+def decrement_user_price_count(db: Session, user: UserCreate):
+    """Decrement the price count of a user.
+
+    This is used to keep track of the number of prices linked to a user.
+    """
+    user.price_count -= 1
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def delete_user(db: Session, user_id: UserCreate) -> bool:
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:
         db.delete(db_user)
@@ -240,6 +251,17 @@ def increment_product_price_count(db: Session, product: ProductFull):
     return product
 
 
+def decrement_product_price_count(db: Session, product: ProductFull):
+    """Decrement the price count of a product.
+
+    This is used to keep track of the number of prices linked to a product.
+    """
+    product.price_count -= 1
+    db.commit()
+    db.refresh(product)
+    return product
+
+
 # Prices
 # ------------------------------------------------------------------------------
 def get_prices_query(
@@ -296,7 +318,7 @@ def set_price_location(db: Session, price: PriceFull, location: LocationFull):
     return price
 
 
-def delete_price(db: Session, db_price: PriceFull):
+def delete_price(db: Session, db_price: PriceFull) -> bool:
     db.delete(db_price)
     db.commit()
     return True
@@ -496,6 +518,17 @@ def increment_location_price_count(db: Session, location: LocationFull):
     This is used to keep track of the number of prices linked to a location.
     """
     location.price_count += 1
+    db.commit()
+    db.refresh(location)
+    return location
+
+
+def decrement_location_price_count(db: Session, location: LocationFull):
+    """Decrement the price count of a location.
+
+    This is used to keep track of the number of prices linked to a location.
+    """
+    location.price_count -= 1
     db.commit()
     db.refresh(location)
     return location
