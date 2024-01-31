@@ -33,7 +33,7 @@ class OAuth2PasswordBearerOrAuthCookie(OAuth2):
 
     async def __call__(self, request: Request) -> Optional[str]:
         authorization = request.headers.get("Authorization")
-        session_cookie = request.cookies.get("session")
+        session_cookie = request.cookies.get("opsession")
         scheme, param = get_authorization_scheme_param(authorization)
 
         # If a session cookie is present, use that instead of the
