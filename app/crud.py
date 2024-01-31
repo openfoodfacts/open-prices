@@ -266,6 +266,10 @@ def get_prices(db: Session, filters: PriceFilter | None = None):
     return db.execute(get_prices_query(filters=filters)).all()
 
 
+def get_price_by_id(db: Session, price_id: int):
+    return db.query(Price).filter(Price.id == price_id).first()
+
+
 def create_price(db: Session, price: PriceCreate, user: UserCreate):
     db_price = Price(**price.model_dump(), owner=user.user_id)
     db.add(db_price)
@@ -292,6 +296,12 @@ def set_price_location(db: Session, price: PriceFull, location: LocationFull):
     return price
 
 
+def delete_price(db: Session, db_price: PriceFull):
+    db.delete(db_price)
+    db.commit()
+    return True
+
+
 # Proofs
 # ------------------------------------------------------------------------------
 def get_proofs_query(filters: ProofFilter | None = None):
@@ -307,7 +317,7 @@ def get_proofs(db: Session, filters: ProofFilter | None = None):
     return db.execute(get_proofs_query(filters=filters)).all()
 
 
-def get_proof(db: Session, proof_id: int):
+def get_proof_by_id(db: Session, proof_id: int):
     return db.query(Proof).filter(Proof.id == proof_id).first()
 
 
