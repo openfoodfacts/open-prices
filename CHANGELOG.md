@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.16.0](https://github.com/openfoodfacts/open-prices/compare/v1.15.0...v1.16.0) (2024-01-31)
+
+
+### Features
+
+* add an endpoint to delete a session ([#174](https://github.com/openfoodfacts/open-prices/issues/174)) ([a2955dc](https://github.com/openfoodfacts/open-prices/commit/a2955dc130c4edaa05177682a16c61a075615110))
+
+
+### Bug Fixes
+
+* use opsession instead of session as cookie name ([#177](https://github.com/openfoodfacts/open-prices/issues/177)) ([dfd3e6a](https://github.com/openfoodfacts/open-prices/commit/dfd3e6ad18960b4560fdceb74171651256219fd4))
+
+
+### Technical
+
+* add tutorial for multiple products (shop shelf) ([#176](https://github.com/openfoodfacts/open-prices/issues/176)) ([ab33fc2](https://github.com/openfoodfacts/open-prices/commit/ab33fc21b13fa1403d8720640749918fa2fec2ff))
+* Welcome users ([#173](https://github.com/openfoodfacts/open-prices/issues/173)) ([d59d1da](https://github.com/openfoodfacts/open-prices/commit/d59d1da77c5eda449a997c863195e900433a41ee))
+
 ## [1.15.0](https://github.com/openfoodfacts/open-prices/compare/v1.14.0...v1.15.0) (2024-01-26)
 
 
