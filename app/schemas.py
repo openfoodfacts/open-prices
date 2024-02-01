@@ -35,6 +35,7 @@ class UserBase(BaseModel):
 
     user_id: str
     price_count: int = 0
+    is_moderator: bool = False
 
 
 class UserCreate(UserBase):

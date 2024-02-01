@@ -53,8 +53,12 @@ client = TestClient(app)
 PAGINATION_KEYS = ["items", "total", "page", "size", "pages"]
 
 USER = UserCreate(user_id="user", token="user__Utoken")
-USER_1 = UserCreate(user_id="user1", token="user1__Utoken1", price_count=0)
-USER_2 = UserCreate(user_id="user2", token="user2__Utoken2", price_count=1)
+USER_1 = UserCreate(
+    user_id="user1", token="user1__Utoken1", price_count=0, is_moderator=True
+)
+USER_2 = UserCreate(
+    user_id="user2", token="user2__Utoken2", price_count=1, is_moderator=False
+)
 PRODUCT = ProductCreate(code="8001505005592")
 PRODUCT_1 = ProductCreate(
     code="0022314010025",
@@ -180,7 +184,7 @@ def test_get_users(db_session, clean_users):
     assert len(response.json()["items"]) == 2
     for user_field in ["id", "token"]:
         assert user_field not in response.json()["items"][0]
-    for user_field in ["user_id", "price_count"]:
+    for user_field in ["user_id", "price_count", "is_moderator"]:
         assert user_field in response.json()["items"][0]
 
 
@@ -189,6 +193,13 @@ def test_get_users_pagination(clean_users):
     assert response.status_code == 200
     for key in PAGINATION_KEYS:
         assert key in response.json()
+
+
+def test_default_user_moderator(db_session, clean_users):
+    crud.create_user(db_session, USER_1.user_id)
+    assert not crud.get_user_by_user_id(db_session, USER_1.user_id).is_moderator
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    assert crud.get_user_by_user_id(db_session, USER_1.user_id).is_moderator
 
 
 # def test_get_users_filters(db_session, clean_users):
