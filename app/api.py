@@ -288,6 +288,7 @@ def price_transformer(
             price.proof
             and price.proof.is_public is False
             and price.proof.owner != user_id
+            and not current_user.is_moderator
         ):
             price.proof.file_path = None
     return prices
@@ -339,7 +340,7 @@ def create_price(
         else:
             # Check if the proof belongs to the current user
             # Only proof uploaded by the user can be used
-            if proof.owner != current_user.user_id:
+            if proof.owner != current_user.user_id and not current_user.is_moderator:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Proof does not belong to current user",

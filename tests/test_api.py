@@ -122,6 +122,17 @@ PRICE_2 = PriceCreate(
     location_osm_type="NODE",
     date="2023-10-31",
 )
+PRICE_3 = PriceCreate(
+    product_code="8001505005707",
+    product_name="PATE NOCCIOLATA BIO 700G",
+    price=2.5,
+    price_is_discounted=True,
+    price_without_discount=3.5,
+    currency="EUR",
+    location_osm_id=123,
+    location_osm_type="NODE",
+    date="2023-10-31",
+)
 
 
 @pytest.fixture(scope="module")
@@ -133,6 +144,12 @@ def user(db_session):
 @pytest.fixture(scope="module")
 def user_session(db_session) -> SessionModel:
     session, *_ = crud.create_session(db_session, USER.user_id, USER.token)
+    return session
+
+
+@pytest.fixture()
+def user_session_1(db_session) -> SessionModel:
+    session, *_ = crud.create_session(db_session, USER_1.user_id, USER_1.token)
     return session
 
 
@@ -169,6 +186,12 @@ def clean_products(db_session):
 @pytest.fixture(scope="function")
 def clean_locations(db_session):
     db_session.query(crud.Location).delete()
+    db_session.commit()
+
+
+@pytest.fixture(scope="function")
+def clean_proofs(db_session):
+    db_session.query(crud.Proof).delete()
     db_session.commit()
 
 
@@ -251,6 +274,34 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     assert "id" not in response.json()
     assert len(crud.get_prices(db_session)) == 1 + 1
     # assert db_prices[0]["owner"] == user.user_id
+
+
+def test_update_price_moderator(db_session, user_session, user_session_1, clean_prices):
+    crud.update_user_moderator(db_session, USER_1.user_id, False)
+    proof = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, True
+    )
+
+    # moderator = False upload a proof not owned
+    PRICE_3.proof_id = proof.id
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_3),
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert not user_session_1.user.is_moderator
+    assert response.status_code == 403
+
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    # moderator = True upload a proof not owned
+    PRICE_3.proof_id = proof.id
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_3),
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert user_session_1.user.is_moderator
+    assert response.status_code == 201
 
 
 def test_create_price_with_category_tag(
@@ -547,7 +598,7 @@ def test_get_prices_orders(db_session, user_session: SessionModel, clean_prices)
 
 # Test proofs
 # ------------------------------------------------------------------------------
-def test_create_proof(user_session: SessionModel):
+def test_create_proof(user_session: SessionModel, clean_proofs):
     # This test depends on the previous test_create_price
     # without authentication
     response = client.post(

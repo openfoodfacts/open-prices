@@ -170,6 +170,7 @@ def update_user_moderator(db: Session, user_id: str, is_moderator: bool) -> bool
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:
         db_user.is_moderator = is_moderator
+        db.commit()
         return True
     return False
 
