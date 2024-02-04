@@ -23,6 +23,7 @@ from app.schemas import (
     ProductFilter,
     ProductFull,
     ProofFilter,
+    ProofFull,
     UserCreate,
 )
 
@@ -317,6 +318,7 @@ def create_proof(
     type: ProofTypeEnum,
     user: UserCreate,
     is_public: bool = True,
+    price_count: int = 0,
 ):
     """Create a proof in the database.
 
@@ -333,6 +335,7 @@ def create_proof(
         type=type,
         owner=user.user_id,
         is_public=is_public,
+        price_count=price_count,
     )
     db.add(db_proof)
     db.commit()
@@ -384,6 +387,17 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
     # Build file_path
     file_path = f"{current_dir_id_str}/{file_stem}{extension}"
     return (file_path, mimetype)
+
+
+def increment_proof_price_count(db: Session, proof: ProofFull):
+    """Increment the price count of a proof.
+
+    This is used to keep track of the number of prices linked to a proof.
+    """
+    proof.price_count += 1
+    db.commit()
+    db.refresh(proof)
+    return proof
 
 
 # Locations
