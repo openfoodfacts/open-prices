@@ -619,6 +619,7 @@ def test_get_proofs(user_session: SessionModel):
             "owner",
             "created",
             "is_public",
+            "price_count",
         }
 
     for i, item in enumerate(data):
@@ -628,6 +629,7 @@ def test_get_proofs(user_session: SessionModel):
         assert item["type"] == ("PRICE_TAG" if i == 0 else "RECEIPT")
         assert item["owner"] == "user"
         assert item["is_public"] == (True if i == 0 else False)
+        assert item["price_count"] == 0
 
 
 def test_get_proofs_filters(db_session, user_session: SessionModel):

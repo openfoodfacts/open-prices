@@ -99,6 +99,7 @@ class Proof(Base):
     is_public = Column(Boolean, nullable=False, server_default="true", index=True)
 
     prices: Mapped[list["Price"]] = relationship(back_populates="proof")
+    price_count = Column(Integer, nullable=False, server_default="0", index=True)
 
     owner = Column(String, index=True)
 

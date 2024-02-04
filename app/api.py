@@ -349,6 +349,8 @@ def create_price(
     background_tasks.add_task(tasks.create_price_product, db, price=db_price)
     background_tasks.add_task(tasks.create_price_location, db, price=db_price)
     background_tasks.add_task(tasks.increment_user_price_count, db, user=current_user)
+    if price.proof_id and proof:
+        background_tasks.add_task(tasks.increment_proof_price_count, db, proof=proof)
     return db_price
 
 
