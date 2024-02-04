@@ -403,6 +403,9 @@ class PriceFilter(Filter):
 class ProofFilter(Filter):
     owner: Optional[str] | None = None
     type: Optional[ProofTypeEnum] | None = None
+    price_count: Optional[int] | None = None
+    price_count__gte: Optional[int] | None = None
+    price_count__lte: Optional[int] | None = None
 
     order_by: Optional[list[str]] | None = None
 
