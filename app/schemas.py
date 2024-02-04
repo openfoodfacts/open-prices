@@ -141,6 +141,9 @@ class ProofFull(BaseModel):
             "Set false only if the proof contains personal information.",
         ),
     ]
+    price_count: int = Field(
+        description="number of prices for this proof.", examples=[15], default=0
+    )
     created: datetime.datetime
 
 
