@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.17.0](https://github.com/openfoodfacts/open-prices/compare/v1.16.0...v1.17.0) (2024-02-04)
+
+
+### Features
+
+* add filter on Proof.price_count field ([#187](https://github.com/openfoodfacts/open-prices/issues/187)) ([0068cd5](https://github.com/openfoodfacts/open-prices/commit/0068cd56c4b585e95d02f885911de5bd88556c31))
+* add proof.price_count to keep track of number of prices ([#185](https://github.com/openfoodfacts/open-prices/issues/185)) ([1637f36](https://github.com/openfoodfacts/open-prices/commit/1637f362a0353801c3813da29709f3c202fea31c))
+
 ## [1.16.0](https://github.com/openfoodfacts/open-prices/compare/v1.15.0...v1.16.0) (2024-01-31)
 
 
