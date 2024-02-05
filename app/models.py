@@ -28,7 +28,7 @@ class User(Base):
     user_id = Column(String, primary_key=True, index=True)
     price_count = Column(Integer, nullable=False, server_default="0", index=True)
     created = Column(DateTime(timezone=True), server_default=func.now())
-    is_moderator = Column(Boolean, nullable=False, default=False)
+    is_moderator = Column(Boolean, nullable=False, server_default="false")
     sessions: Mapped[list["Session"]] = relationship(back_populates="user")
 
     __tablename__ = "users"

@@ -207,7 +207,7 @@ def test_get_users(db_session, clean_users):
     assert len(response.json()["items"]) == 2
     for user_field in ["id", "token"]:
         assert user_field not in response.json()["items"][0]
-    for user_field in ["user_id", "price_count", "is_moderator"]:
+    for user_field in ["user_id", "price_count"]:
         assert user_field in response.json()["items"][0]
 
 

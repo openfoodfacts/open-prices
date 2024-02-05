@@ -62,7 +62,7 @@ def get_session_by_token(db: Session, token: str) -> SessionModel:
     return db.query(SessionModel).join(User).filter(SessionModel.token == token).first()
 
 
-def create_user(db: Session, user_id: str) -> User:
+def create_user(db: Session, user_id: str, is_moderator: bool = False) -> User:
     """Create a user in the database.
 
     :param db: the database session
@@ -70,7 +70,7 @@ def create_user(db: Session, user_id: str) -> User:
     :param token: the session token
     :return: the created user
     """
-    user = User(user_id=user_id)
+    user = User(user_id=user_id, is_moderator=is_moderator)
     db.add(user)
     db.commit()
     db.refresh(user)
