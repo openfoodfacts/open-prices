@@ -137,17 +137,6 @@ def increment_user_price_count(db: Session, user: UserCreate):
     return user
 
 
-def decrement_user_price_count(db: Session, user: UserCreate):
-    """Decrement the price count of a user.
-
-    This is used to keep track of the number of prices linked to a user.
-    """
-    user.price_count -= 1
-    db.commit()
-    db.refresh(user)
-    return user
-
-
 def delete_user(db: Session, user_id: UserCreate) -> bool:
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:
@@ -251,17 +240,6 @@ def increment_product_price_count(db: Session, product: ProductFull):
     return product
 
 
-def decrement_product_price_count(db: Session, product: ProductFull):
-    """Decrement the price count of a product.
-
-    This is used to keep track of the number of prices linked to a product.
-    """
-    product.price_count -= 1
-    db.commit()
-    db.refresh(product)
-    return product
-
-
 # Prices
 # ------------------------------------------------------------------------------
 def get_prices_query(
@@ -288,8 +266,8 @@ def get_prices(db: Session, filters: PriceFilter | None = None):
     return db.execute(get_prices_query(filters=filters)).all()
 
 
-def get_price_by_id(db: Session, price_id: int):
-    return db.query(Price).filter(Price.id == price_id).first()
+def get_price_by_id(db: Session, id: int):
+    return db.query(Price).filter(Price.id == id).first()
 
 
 def create_price(db: Session, price: PriceCreate, user: UserCreate):
@@ -320,6 +298,18 @@ def set_price_location(db: Session, price: PriceFull, location: LocationFull):
 
 def delete_price(db: Session, db_price: PriceFull) -> bool:
     db.delete(db_price)
+    db_user = get_user_by_user_id(db, user_id=db_price.owner)
+    if db_user:
+        db_user.price_count -= 1
+    db_product = get_product_by_id(db, id=db_price.product_id)
+    if db_product:
+        db_product.price_count -= 1
+    db_location = get_location_by_id(db, id=db_price.location_id)
+    if db_location:
+        db_location.price_count -= 1
+    db_proof = get_proof_by_id(db, id=db_price.proof_id)
+    if db_proof:
+        db_proof.price_count -= 1
     db.commit()
     return True
 
@@ -339,8 +329,8 @@ def get_proofs(db: Session, filters: ProofFilter | None = None):
     return db.execute(get_proofs_query(filters=filters)).all()
 
 
-def get_proof_by_id(db: Session, proof_id: int):
-    return db.query(Proof).filter(Proof.id == proof_id).first()
+def get_proof_by_id(db: Session, id: int):
+    return db.query(Proof).filter(Proof.id == id).first()
 
 
 def create_proof(
@@ -518,17 +508,6 @@ def increment_location_price_count(db: Session, location: LocationFull):
     This is used to keep track of the number of prices linked to a location.
     """
     location.price_count += 1
-    db.commit()
-    db.refresh(location)
-    return location
-
-
-def decrement_location_price_count(db: Session, location: LocationFull):
-    """Decrement the price count of a location.
-
-    This is used to keep track of the number of prices linked to a location.
-    """
-    location.price_count -= 1
     db.commit()
     db.refresh(location)
     return location

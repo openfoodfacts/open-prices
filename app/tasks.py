@@ -27,10 +27,6 @@ def increment_user_price_count(db: Session, user: UserCreate):
     crud.increment_user_price_count(db, user=user)
 
 
-def decrement_user_price_count(db: Session, user: UserCreate):
-    crud.decrement_user_price_count(db, user=user)
-
-
 # Proofs
 # ------------------------------------------------------------------------------
 def increment_proof_price_count(db: Session, proof: ProofFull):
@@ -161,12 +157,6 @@ def import_product_db(db: Session, batch_size: int = 1000):
             buffer_len = 0
 
 
-def decrement_product_price_count(db: Session, product_id: int):
-    db_product = crud.get_product_by_id(db, id=product_id)
-    if db_product:
-        crud.decrement_product_price_count(db, product=db_product)
-
-
 # Locations
 # ------------------------------------------------------------------------------
 def create_price_location(db: Session, price: PriceFull):
@@ -192,9 +182,3 @@ def create_price_location(db: Session, price: PriceFull):
         else:
             # Increment the price count of the location
             crud.increment_location_price_count(db, location=db_location)
-
-
-def decrement_location_price_count(db: Session, location_id: int):
-    db_location = crud.get_location_by_id(db, id=location_id)
-    if db_location:
-        crud.decrement_location_price_count(db, location=db_location)

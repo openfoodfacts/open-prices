@@ -353,6 +353,7 @@ class PriceCreateWithValidation(PriceCreate):
 
 
 class PriceFull(PriceCreate):
+    id: int
     product_id: int | None
     location_id: int | None
     owner: str

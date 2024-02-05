@@ -329,7 +329,7 @@ def create_price(
     """
     # check if we have a proof_id provided
     if price.proof_id is not None:
-        db_proof = crud.get_proof_by_id(db, proof_id=price.proof_id)
+        db_proof = crud.get_proof_by_id(db, id=price.proof_id)
         if db_proof is None:
             # No proof exists with this id
             raise HTTPException(
@@ -350,8 +350,8 @@ def create_price(
     background_tasks.add_task(tasks.create_price_product, db, price=db_price)
     background_tasks.add_task(tasks.create_price_location, db, price=db_price)
     background_tasks.add_task(tasks.increment_user_price_count, db, user=current_user)
-    if price.proof_id and proof:
-        background_tasks.add_task(tasks.increment_proof_price_count, db, proof=proof)
+    if price.proof_id and db_proof:
+        background_tasks.add_task(tasks.increment_proof_price_count, db, proof=db_proof)
     return db_price
 
 
@@ -362,7 +362,6 @@ def create_price(
 )
 def delete_price(
     price_id: int,
-    background_tasks: BackgroundTasks,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -372,7 +371,7 @@ def delete_price(
     This endpoint requires authentication.
     A user can delete only owned prices.
     """
-    db_price = crud.get_price_by_id(db, price_id=price_id)
+    db_price = crud.get_price_by_id(db, id=price_id)
     # get price
     if not db_price:
         raise HTTPException(
@@ -385,14 +384,6 @@ def delete_price(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Price does not belong to current user",
         )
-    # update counts
-    background_tasks.add_task(tasks.decrement_user_price_count, db, user=current_user)
-    background_tasks.add_task(
-        tasks.decrement_product_price_count, db, product_id=db_price.product_id
-    )
-    background_tasks.add_task(
-        tasks.decrement_location_price_count, db, location_id=db_price.location_id
-    )
     # delete price
     crud.delete_price(db, db_price=db_price)
     return
