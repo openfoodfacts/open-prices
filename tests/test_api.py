@@ -7,9 +7,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+from sqlalchemy_utils.functions import create_database, database_exists
 
 from app import crud
 from app.api import app, get_db
+from app.config import settings
 from app.db import Base
 from app.models import Session as SessionModel
 from app.schemas import (
@@ -22,20 +24,24 @@ from app.schemas import (
 
 # database setup
 # ------------------------------------------------------------------------------
-SQLALCHEMY_DATABASE_URL = "sqlite://"
+SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}-test"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base.metadata.create_all(bind=engine)
-
 
 def override_get_db():
     try:
+        if not database_exists(SQLALCHEMY_DATABASE_URL):
+            create_database(SQLALCHEMY_DATABASE_URL)
+
+        # Re-contruct the database for each run
+        Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+
         db = TestingSessionLocal()
         yield db
     finally:
