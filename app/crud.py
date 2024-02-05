@@ -175,19 +175,6 @@ def update_user_moderator(db: Session, user_id: str, is_moderator: bool) -> bool
     return False
 
 
-def is_user_moderator(db: Session, user_id: str) -> bool:
-    """Check if a user is a moderator.
-
-    :param db: the database session
-    :param user_id: the user ID
-    :return: a bool indicating whether the user is a moderator
-    """
-    db_user = get_user_by_user_id(db, user_id=user_id)
-    if db_user:
-        return db_user.is_moderator
-    return False
-
-
 # Products
 # ------------------------------------------------------------------------------
 def get_products_query(filters: ProductFilter | None = None):
