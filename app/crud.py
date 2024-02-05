@@ -137,7 +137,7 @@ def increment_user_price_count(db: Session, user: UserCreate):
     return user
 
 
-def delete_user(db: Session, user_id: UserCreate):
+def delete_user(db: Session, user_id: UserCreate) -> bool:
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:
         db.delete(db_user)
@@ -266,6 +266,10 @@ def get_prices(db: Session, filters: PriceFilter | None = None):
     return db.execute(get_prices_query(filters=filters)).all()
 
 
+def get_price_by_id(db: Session, id: int):
+    return db.query(Price).filter(Price.id == id).first()
+
+
 def create_price(db: Session, price: PriceCreate, user: UserCreate):
     db_price = Price(**price.model_dump(), owner=user.user_id)
     db.add(db_price)
@@ -292,6 +296,24 @@ def set_price_location(db: Session, price: PriceFull, location: LocationFull):
     return price
 
 
+def delete_price(db: Session, db_price: PriceFull) -> bool:
+    db.delete(db_price)
+    db_user = get_user_by_user_id(db, user_id=db_price.owner)
+    if db_user:
+        db_user.price_count -= 1
+    db_product = get_product_by_id(db, id=db_price.product_id)
+    if db_product:
+        db_product.price_count -= 1
+    db_location = get_location_by_id(db, id=db_price.location_id)
+    if db_location:
+        db_location.price_count -= 1
+    db_proof = get_proof_by_id(db, id=db_price.proof_id)
+    if db_proof:
+        db_proof.price_count -= 1
+    db.commit()
+    return True
+
+
 # Proofs
 # ------------------------------------------------------------------------------
 def get_proofs_query(filters: ProofFilter | None = None):
@@ -307,8 +329,8 @@ def get_proofs(db: Session, filters: ProofFilter | None = None):
     return db.execute(get_proofs_query(filters=filters)).all()
 
 
-def get_proof(db: Session, proof_id: int):
-    return db.query(Proof).filter(Proof.id == proof_id).first()
+def get_proof_by_id(db: Session, id: int):
+    return db.query(Proof).filter(Proof.id == id).first()
 
 
 def create_proof(
