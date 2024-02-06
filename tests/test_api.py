@@ -53,8 +53,12 @@ client = TestClient(app)
 PAGINATION_KEYS = ["items", "total", "page", "size", "pages"]
 
 USER = UserCreate(user_id="user", token="user__Utoken")
-USER_1 = UserCreate(user_id="user1", token="user1__Utoken1", price_count=0)
-USER_2 = UserCreate(user_id="user2", token="user2__Utoken2", price_count=1)
+USER_1 = UserCreate(
+    user_id="user1", token="user1__Utoken1", price_count=0, is_moderator=True
+)
+USER_2 = UserCreate(
+    user_id="user2", token="user2__Utoken2", price_count=1, is_moderator=False
+)
 PRODUCT = ProductCreate(code="8001505005592")
 PRODUCT_1 = ProductCreate(
     code="0022314010025",
@@ -118,6 +122,17 @@ PRICE_2 = PriceCreate(
     location_osm_type="NODE",
     date="2023-10-31",
 )
+PRICE_3 = PriceCreate(
+    product_code="8001505005707",
+    product_name="PATE NOCCIOLATA BIO 700G",
+    price=2.5,
+    price_is_discounted=True,
+    price_without_discount=3.5,
+    currency="EUR",
+    location_osm_id=123,
+    location_osm_type="NODE",
+    date="2023-10-31",
+)
 
 
 @pytest.fixture(scope="module")
@@ -129,6 +144,12 @@ def user(db_session):
 @pytest.fixture(scope="module")
 def user_session(db_session) -> SessionModel:
     session, *_ = crud.create_session(db_session, USER.user_id, USER.token)
+    return session
+
+
+@pytest.fixture()
+def user_session_1(db_session) -> SessionModel:
+    session, *_ = crud.create_session(db_session, USER_1.user_id, USER_1.token)
     return session
 
 
@@ -168,6 +189,12 @@ def clean_locations(db_session):
     db_session.commit()
 
 
+@pytest.fixture(scope="function")
+def clean_proofs(db_session):
+    db_session.query(crud.Proof).delete()
+    db_session.commit()
+
+
 # Test users
 # ------------------------------------------------------------------------------
 def test_get_users(db_session, clean_users):
@@ -189,6 +216,13 @@ def test_get_users_pagination(clean_users):
     assert response.status_code == 200
     for key in PAGINATION_KEYS:
         assert key in response.json()
+
+
+def test_default_user_moderator(db_session, clean_users):
+    crud.create_user(db_session, USER_1.user_id)
+    assert not crud.get_user_by_user_id(db_session, USER_1.user_id).is_moderator
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    assert crud.get_user_by_user_id(db_session, USER_1.user_id).is_moderator
 
 
 # def test_get_users_filters(db_session, clean_users):
@@ -240,6 +274,34 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     assert "id" not in response.json()
     assert len(crud.get_prices(db_session)) == 1 + 1
     # assert db_prices[0]["owner"] == user.user_id
+
+
+def test_update_price_moderator(db_session, user_session, user_session_1, clean_prices):
+    crud.update_user_moderator(db_session, USER_1.user_id, False)
+    proof = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, True
+    )
+
+    # moderator = False upload a proof not owned
+    PRICE_3.proof_id = proof.id
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_3),
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert not user_session_1.user.is_moderator
+    assert response.status_code == 403
+
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    # moderator = True upload a proof not owned
+    PRICE_3.proof_id = proof.id
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_3),
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert user_session_1.user.is_moderator
+    assert response.status_code == 201
 
 
 def test_create_price_with_category_tag(
@@ -562,7 +624,7 @@ def test_delete_price(db_session, user_session: SessionModel, clean_prices):
 
 # Test proofs
 # ------------------------------------------------------------------------------
-def test_create_proof(user_session: SessionModel):
+def test_create_proof(user_session: SessionModel, clean_proofs):
     # This test depends on the previous test_create_price
     # without authentication
     response = client.post(
