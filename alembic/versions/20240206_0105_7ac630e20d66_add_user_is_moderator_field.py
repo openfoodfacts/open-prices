@@ -1,7 +1,7 @@
 """Add user is_moderator field
 
 Revision ID: 7ac630e20d66
-Revises: f3c157567667
+Revises: 1cf89b834379
 Create Date: 2024-02-06 01:05:59.414434
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "7ac630e20d66"
-down_revision: Union[str, None] = "f3c157567667"
+down_revision: Union[str, None] = "1cf89b834379"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
