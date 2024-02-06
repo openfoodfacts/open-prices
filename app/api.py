@@ -276,7 +276,7 @@ def price_transformer(
 
     If current_user is None, the file_path is removed for all proofs that are
     not public. Otherwise, the file_path is removed for all proofs that are not
-    public and do not belong to the current user.
+    public and do not belong to the current user and is not a moderator.
 
     :param prices: the list of prices to transform
     :param current_user: the current user, if authenticated
@@ -338,7 +338,8 @@ def create_price(
                 detail="Proof not found",
             )
         else:
-            # Check if the proof belongs to the current user (or is a moderator)
+            # Check if the proof belongs to the current user,
+            # or if the user is a moderator
             # Only proof uploaded by the user can be used
             if db_proof.owner != current_user.user_id and not current_user.is_moderator:
                 raise HTTPException(
