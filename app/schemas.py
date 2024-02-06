@@ -141,6 +141,9 @@ class ProofFull(BaseModel):
             "Set false only if the proof contains personal information.",
         ),
     ]
+    price_count: int = Field(
+        description="number of prices for this proof.", examples=[15], default=0
+    )
     created: datetime.datetime
 
 
@@ -350,6 +353,7 @@ class PriceCreateWithValidation(PriceCreate):
 
 
 class PriceFull(PriceCreate):
+    id: int
     product_id: int | None
     location_id: int | None
     owner: str
@@ -400,6 +404,9 @@ class PriceFilter(Filter):
 class ProofFilter(Filter):
     owner: Optional[str] | None = None
     type: Optional[ProofTypeEnum] | None = None
+    price_count: Optional[int] | None = None
+    price_count__gte: Optional[int] | None = None
+    price_count__lte: Optional[int] | None = None
 
     order_by: Optional[list[str]] | None = None
 
