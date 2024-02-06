@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.18.0](https://github.com/openfoodfacts/open-prices/compare/v1.17.0...v1.18.0) (2024-02-06)
+
+
+### Features
+
+* new DELETE prices endpoint ([#179](https://github.com/openfoodfacts/open-prices/issues/179)) ([35d9f6e](https://github.com/openfoodfacts/open-prices/commit/35d9f6e96e65102af34382d03670f5e6bb55a761))
+* new user.is_moderator field ([#183](https://github.com/openfoodfacts/open-prices/issues/183)) ([450305b](https://github.com/openfoodfacts/open-prices/commit/450305ba7c0868b2649a1b66e2867efa9632b1a1))
+
+
+### Bug Fixes
+
+* fix migration parent id. ref [#183](https://github.com/openfoodfacts/open-prices/issues/183) ([c62c52a](https://github.com/openfoodfacts/open-prices/commit/c62c52a33d1dde92e1e16f676afd9b79e27a365d))
+
 ## [1.17.0](https://github.com/openfoodfacts/open-prices/compare/v1.16.0...v1.17.0) (2024-02-04)
 
 
