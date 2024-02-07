@@ -430,6 +430,50 @@ def upload_proof(
     return db_proof
 
 
+@app.delete(
+    "/api/v1/proofs/{proof_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Proofs"],
+)
+def delete_proof(
+    proof_id: int,
+    current_user: schemas.UserCreate = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a proof.
+
+    This endpoint requires authentication.
+    A user can delete only owned proofs.
+    Can delete only proofs that are not associated with prices.
+    A moderator can delete not owned proofs.
+    """
+    db_proof = crud.get_proof_by_id(db, id=proof_id)
+    # get proof
+    if not db_proof:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Proof with code {proof_id} not found",
+        )
+    # Check if the proof belongs to the current user,
+    # if it doesn't, the user needs to be moderator
+    if db_proof.owner != current_user.user_id and not current_user.is_moderator:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Proof does not belong to current user",
+        )
+    # check if the proof is associated with some prices
+    if len(db_proof.prices) > 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Proof has prices associated with it",
+        )
+
+    # delete proof
+    crud.delete_proof(db, db_proof)
+    return
+
+
 @app.get("/api/v1/proofs", response_model=Page[schemas.ProofFull], tags=["Proofs"])
 def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
