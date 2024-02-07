@@ -2,7 +2,7 @@ from enum import Enum, unique
 
 from babel.numbers import list_currencies
 
-CURRENCIES = [(currency, currency) for currency in list_currencies()]
+CURRENCIES: tuple[str, ...] = tuple(currency for currency in list_currencies())
 
 CurrencyEnum = Enum("CurrencyEnum", CURRENCIES)
 

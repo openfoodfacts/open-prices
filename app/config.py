@@ -17,7 +17,7 @@ class LoggingLevel(Enum):
     ERROR: str = "ERROR"
     CRITICAL: str = "CRITICAL"
 
-    def to_int(self):
+    def to_int(self) -> int:
         if self is LoggingLevel.NOTSET:
             return 0
         elif self is LoggingLevel.DEBUG:

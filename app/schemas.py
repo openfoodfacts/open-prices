@@ -118,11 +118,6 @@ class LocationFull(LocationCreate):
 
 # Proof
 # ------------------------------------------------------------------------------
-# class ProofCreate(BaseModel):
-#     file: UploadFile
-#     type: ProofTypeEnum
-
-
 class ProofFull(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -267,7 +262,7 @@ class PriceCreateWithValidation(PriceCreate):
     """
 
     @field_validator("labels_tags")
-    def labels_tags_is_valid(cls, v: list[str] | None):
+    def labels_tags_is_valid(cls, v: list[str] | None) -> list[str] | None:
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`labels_tags` cannot be empty")
@@ -281,7 +276,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @field_validator("origins_tags")
-    def origins_tags_is_valid(cls, v: list[str] | None):
+    def origins_tags_is_valid(cls, v: list[str] | None) -> list[str] | None:
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`origins_tags` cannot be empty")
@@ -295,7 +290,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @field_validator("category_tag")
-    def category_tag_is_valid(cls, v: str | None):
+    def category_tag_is_valid(cls, v: str | None) -> str | None:
         if v is not None:
             v = v.lower()
             category_taxonomy = get_taxonomy("category")

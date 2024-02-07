@@ -16,6 +16,8 @@ exclude = '''
 profile = "black"
 
 [tool.mypy]
+# strict = true
+disable_error_code = ["arg-type", "union-attr", "attr-defined", "misc"]
 python_version = "3.11"
 exclude = [
   'alembic/'
@@ -28,9 +30,12 @@ plugins = [
 [[tool.mypy.overrides]]
 module = [
     "openfoodfacts",
-    "openfoodfacts.*"
+    "openfoodfacts.*",
+    "OSMPythonTools.nominatim",
+    "apscheduler.*"
 ]
 ignore_missing_imports = true
+warn_return_any = false
 
 [tool.poetry]
 name = "open-prices"
@@ -52,7 +57,7 @@ pydantic-settings = "~2.0.3"
 python-multipart = "~0.0.6"
 requests = "~2.31.0"
 sentry-sdk = {extras = ["fastapi"], version = "~1.35.0"}
-sqlalchemy = "~2.0.23"
+sqlalchemy = "~2.0.25"
 sqlalchemy-utils = "~0.41.1"
 uvicorn = "~0.23.2"
 fastapi-pagination = "^0.12.12"

@@ -2,7 +2,7 @@ import functools
 import time
 import uuid
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Iterator
 
 import requests
 from fastapi import (
@@ -30,7 +30,7 @@ from app.auth import OAuth2PasswordBearerOrAuthCookie
 from app.config import settings
 from app.db import session
 from app.enums import ProofTypeEnum
-from app.models import Price
+from app.models import Location, Price, Product, Proof, User
 from app.models import Session as SessionModel
 from app.utils import init_sentry
 
@@ -70,7 +70,7 @@ init_sentry(settings.sentry_dns)
 
 # App database
 # ------------------------------------------------------------------------------
-def get_db():
+def get_db() -> Iterator[Session]:
     db = session()
     try:
         yield db
@@ -88,7 +88,7 @@ oauth2_scheme_no_error = OAuth2PasswordBearerOrAuthCookie(
 )
 
 
-def create_token(user_id: str):
+def create_token(user_id: str) -> str:
     return f"{user_id}__U{str(uuid.uuid4())}"
 
 
@@ -119,7 +119,7 @@ def get_current_session(
 
 def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
-) -> schemas.UserCreate:
+) -> User:
     """Get the current user if authenticated.
 
     This function is used as a dependency in endpoints that require
@@ -145,7 +145,7 @@ def get_current_user(
 def get_current_user_optional(
     token: Annotated[str, Depends(oauth2_scheme_no_error)],
     db: Session = Depends(get_db),
-) -> schemas.UserCreate | None:
+) -> User | None:
     """Get the current user if authenticated, None otherwise.
 
     This function is used as a dependency in endpoints that require
@@ -165,7 +165,7 @@ def get_current_user_optional(
 # Routes
 # ------------------------------------------------------------------------------
 @app.get("/api/v1/status")
-def status_endpoint():
+def status_endpoint() -> dict[str, str]:
     return {"status": "running"}
 
 
@@ -184,7 +184,7 @@ def authentication(
         ),
     ] = False,
     db: Session = Depends(get_db),
-):
+) -> dict[str, str]:
     """
     Authentication: provide username/password and get a bearer token in return.
 
@@ -208,7 +208,7 @@ def authentication(
     # By specifying body=1, information about the user is returned in the
     # response, including the user_id
     data = {"user_id": form_data.username, "password": form_data.password, "body": 1}
-    r = requests.post(f"{settings.oauth2_server_url}", data=data)  # type: ignore
+    r = requests.post(f"{settings.oauth2_server_url}", data=data)
     if r.status_code == 200:
         # form_data.username can be the user_id or the email, so we need to
         # fetch the user_id from the response
@@ -238,7 +238,7 @@ def authentication(
 @app.get("/api/v1/session", response_model=schemas.SessionBase, tags=["Auth"])
 def get_user_session(
     current_session: SessionModel = Depends(get_current_session),
-):
+) -> SessionModel:
     """Return information about the current user session."""
     return current_session
 
@@ -247,7 +247,7 @@ def get_user_session(
 def delete_user_session(
     current_session: SessionModel = Depends(get_current_session),
     db: Session = Depends(get_db),
-):
+) -> dict[str, str]:
     """Delete the current user session.
 
     If the provided session token or cookie is invalid, a HTTP 401 response
@@ -263,7 +263,7 @@ def delete_user_session(
 def get_users(
     db: Session = Depends(get_db),
     filters: schemas.UserFilter = FilterDepends(schemas.UserFilter),
-):
+) -> list[User]:
     return paginate(db, crud.get_users_query(filters=filters))
 
 
@@ -303,7 +303,7 @@ def get_price(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
     current_user: schemas.UserCreate | None = Depends(get_current_user_optional),
-):
+) -> list[Price]:
     return paginate(
         db,
         crud.get_prices_query(filters=filters),
@@ -322,7 +322,7 @@ def create_price(
     background_tasks: BackgroundTasks,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Price:
     """
     Create a new price.
 
@@ -366,7 +366,7 @@ def delete_price(
     price_id: int,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> None:
     """
     Delete a price.
 
@@ -409,7 +409,7 @@ def upload_proof(
     ),
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Proof:
     """
     Upload a proof file.
 
@@ -453,7 +453,7 @@ def get_user_proofs(
 def get_products(
     filters: schemas.ProductFilter = FilterDepends(schemas.ProductFilter),
     db: Session = Depends(get_db),
-):
+) -> list[Product]:
     return paginate(db, crud.get_products_query(filters=filters))
 
 
@@ -462,7 +462,7 @@ def get_products(
     response_model=schemas.ProductFull,
     tags=["Products"],
 )
-def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
+def get_product_by_code(product_code: str, db: Session = Depends(get_db)) -> Product:
     db_product = crud.get_product_by_code(db, code=product_code)
     if not db_product:
         raise HTTPException(
@@ -477,7 +477,7 @@ def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
     response_model=schemas.ProductFull,
     tags=["Products"],
 )
-def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
+def get_product_by_id(product_id: int, db: Session = Depends(get_db)) -> Product:
     db_product = crud.get_product_by_id(db, id=product_id)
     if not db_product:
         raise HTTPException(
@@ -495,7 +495,7 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
 def get_locations(
     filters: schemas.LocationFilter = FilterDepends(schemas.LocationFilter),
     db: Session = Depends(get_db),
-):
+) -> list[Location]:
     return paginate(db, crud.get_locations_query(filters=filters))
 
 
@@ -506,7 +506,7 @@ def get_locations(
 )
 def get_location_by_osm(
     location_osm_type: str, location_osm_id: int, db: Session = Depends(get_db)
-):
+) -> Location:
     db_location = crud.get_location_by_osm_id_and_type(
         db, osm_id=location_osm_id, osm_type=location_osm_type.upper()
     )
@@ -523,7 +523,7 @@ def get_location_by_osm(
     response_model=schemas.LocationFull,
     tags=["Locations"],
 )
-def get_location_by_id(location_id: int, db: Session = Depends(get_db)):
+def get_location_by_id(location_id: int, db: Session = Depends(get_db)) -> Location:
     db_location = crud.get_location_by_id(db, id=location_id)
     if not db_location:
         raise HTTPException(

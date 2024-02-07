@@ -9,12 +9,12 @@ from app.tasks import import_product_db
 logger = get_logger(__name__)
 
 
-def import_product_db_job():
+def import_product_db_job() -> None:
     db = session()
     import_product_db(db=db)
 
 
-def run():
+def run() -> None:
     scheduler = BlockingScheduler()
     scheduler.add_executor(ThreadPoolExecutor(20))
     scheduler.add_jobstore(MemoryJobStore())
