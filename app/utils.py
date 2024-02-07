@@ -37,6 +37,7 @@ def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None =
 OFF_FIELDS = [
     "product_name",
     "product_quantity",
+    "product_quantity_unit",
     "brands",
     "image_url",
     "unique_scans_n",
