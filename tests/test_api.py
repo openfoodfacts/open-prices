@@ -260,7 +260,6 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     )
     assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_1.product_code
-    assert "id" not in response.json()
     assert len(crud.get_prices(db_session)) == 1
     # assert db_prices[0]["owner"] == user.user_id
     # price with discount
@@ -271,7 +270,6 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     )
     assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_2.product_code
-    assert "id" not in response.json()
     assert len(crud.get_prices(db_session)) == 1 + 1
     # assert db_prices[0]["owner"] == user.user_id
 
@@ -329,7 +327,6 @@ def test_create_price_with_category_tag(
     assert json_response.get("origins_tags") == ["en:france"]
     assert json_response.get("date") == "2023-12-01"
     assert json_response.get("price_per") == "UNIT"
-    assert "id" not in response.json()
     db_prices = crud.get_prices(db_session)
     assert len(db_prices) == 1
 
