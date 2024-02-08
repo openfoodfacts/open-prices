@@ -393,6 +393,21 @@ def delete_price(
 
 # Routes: Proofs
 # ------------------------------------------------------------------------------
+@app.get("/api/v1/proofs", response_model=Page[schemas.ProofFull], tags=["Proofs"])
+def get_user_proofs(
+    current_user: schemas.UserCreate = Depends(get_current_user),
+    filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
+    db: Session = Depends(get_db),
+):
+    """
+    Get all the proofs uploaded by the current user.
+
+    This endpoint requires authentication.
+    """
+    filters.owner = current_user.user_id
+    return paginate(db, crud.get_proofs_query(filters=filters))
+
+
 @app.post(
     "/api/v1/proofs/upload",
     response_model=schemas.ProofFull,
@@ -472,21 +487,6 @@ def delete_proof(
     # delete proof
     crud.delete_proof(db, db_proof)
     return
-
-
-@app.get("/api/v1/proofs", response_model=Page[schemas.ProofFull], tags=["Proofs"])
-def get_user_proofs(
-    current_user: schemas.UserCreate = Depends(get_current_user),
-    filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
-    db: Session = Depends(get_db),
-):
-    """
-    Get all the proofs uploaded by the current user.
-
-    This endpoint requires authentication.
-    """
-    filters.owner = current_user.user_id
-    return paginate(db, crud.get_proofs_query(filters=filters))
 
 
 # Routes: Products
