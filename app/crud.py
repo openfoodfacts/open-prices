@@ -1,6 +1,7 @@
 import random
 import string
 from mimetypes import guess_extension
+from pathlib import Path
 
 from fastapi import UploadFile
 from sqlalchemy import select
@@ -436,6 +437,19 @@ def increment_proof_price_count(db: Session, proof: ProofFull):
     db.commit()
     db.refresh(proof)
     return proof
+
+
+def delete_proof(db: Session, db_proof: ProofFull) -> bool:
+    # we delete the image of the proof
+    file_path_obj = Path(db_proof.file_path)
+    # Check if the file exists
+    if file_path_obj.exists():
+        # remove the file
+        file_path_obj.unlink()
+    # then we delete the proof
+    db.delete(db_proof)
+    db.commit()
+    return True
 
 
 # Locations
