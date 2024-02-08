@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.19.0](https://github.com/openfoodfacts/open-prices/compare/v1.18.0...v1.19.0) (2024-02-08)
+
+
+### Features
+
+* new DELETE proofs endpoint ([#197](https://github.com/openfoodfacts/open-prices/issues/197)) ([6066982](https://github.com/openfoodfacts/open-prices/commit/6066982a0d31458fe65ab23b8c503e86280a424c))
+* new Product.product_quantity_unit field ([#194](https://github.com/openfoodfacts/open-prices/issues/194)) ([aa353bf](https://github.com/openfoodfacts/open-prices/commit/aa353bfa4a9730fd0fef1092e92fe5f070761bf5))
+
+
+### Bug Fixes
+
+* fix tests following addition of Price.id field in schema. ref [#179](https://github.com/openfoodfacts/open-prices/issues/179) ([2818540](https://github.com/openfoodfacts/open-prices/commit/2818540040943bf56741909c8dbc7511564bcea5))
+
 ## [1.18.0](https://github.com/openfoodfacts/open-prices/compare/v1.17.0...v1.18.0) (2024-02-06)
 
 
