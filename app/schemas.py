@@ -377,8 +377,6 @@ class PriceFilter(Filter):
     product_id: Optional[int] | None = None
     product_id__isnull: Optional[bool] | None = None
     category_tag: Optional[str] | None = None
-    labels_tags__like: Optional[str] | None = None
-    origins_tags__like: Optional[str] | None = None
     location_osm_id: Optional[int] | None = None
     location_osm_type: Optional[LocationOSMEnum] | None = None
     location_id: Optional[int] | None = None
