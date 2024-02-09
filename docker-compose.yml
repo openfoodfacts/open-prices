@@ -21,12 +21,16 @@ services:
     <<: *api-common
     volumes:
       - ./static:/opt/open-prices/static
+    depends_on:
+      - postgres
   
   scheduler:
     <<: *api-common
     command: ["python", "-m", "app", "run-scheduler"]
     volumes:
       - ./static:/opt/open-prices/static
+    depends_on:
+      - postgres
 
   postgres:
     restart: $RESTART_POLICY

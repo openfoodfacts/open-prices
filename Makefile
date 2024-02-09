@@ -12,6 +12,7 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 # take it form env, or from env file
 COMPOSE_PROJECT_NAME ?= $(shell grep COMPOSE_PROJECT_NAME ${ENV_FILE} | cut -d '=' -f 2)
 DOCKER_COMPOSE=docker-compose --env-file=${ENV_FILE}
+DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}_test docker-compose --env-file=${ENV_FILE}
 
 # avoid target corresponding to file names, to depends on them
 .PHONY: *
@@ -122,6 +123,18 @@ docs:
 	${DOCKER_COMPOSE} run --rm --no-deps api ./build_mkdocs.sh
 
 checks: toml-check flake8 black-check mypy isort-check docs
+
+
+unit-tests:
+	@echo "🥫 Running tests …"
+	# change project name to run in isolation
+	${DOCKER_COMPOSE_TEST} run --rm api poetry run pytest tests/unit
+
+integration-tests:
+	@echo "🥫 Running integration tests …"
+	# change project name to run in isolation
+	${DOCKER_COMPOSE_TEST} run --rm api poetry run pytest tests/integration
+	( ${DOCKER_COMPOSE_TEST} down -v || true )
 
 
 #------------#
