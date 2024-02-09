@@ -21,7 +21,7 @@ services:
     <<: *api-common
     volumes:
       - ./static:/opt/open-prices/static
-  
+
   scheduler:
     <<: *api-common
     command: ["python", "-m", "app", "run-scheduler"]
@@ -43,7 +43,7 @@ services:
     ports:
       - "${POSTGRES_EXPOSE:-127.0.0.1:5432}:5432"
 
-  nginx: 
+  nginx:
     image: nginx:1.25-alpine
     volumes:
       # Mount the nginx configuration file

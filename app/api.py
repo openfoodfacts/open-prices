@@ -33,6 +33,7 @@ from app.enums import ProofTypeEnum
 from app.models import Location, Price, Product, Proof
 from app.models import Session as SessionModel
 from app.models import User
+from app.schemas import PriceFullWithRelations
 from app.utils import init_sentry
 
 logger = get_logger(level=settings.log_level.to_int())
@@ -271,8 +272,8 @@ def get_users(
 # Routes: Prices
 # ------------------------------------------------------------------------------
 def price_transformer(
-    prices: list[Price], current_user: schemas.UserCreate | None = None
-) -> list[Price]:
+    prices: list[PriceFullWithRelations], current_user: schemas.UserCreate | None = None
+) -> list[PriceFullWithRelations]:
     """Transformer function used to remove the file_path of private proofs.
 
     If current_user is None, the file_path is removed for all proofs that are

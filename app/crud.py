@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Optional, Sequence
 
 from fastapi import UploadFile
+from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import Row, Select, select
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
@@ -17,22 +18,19 @@ from app.models import User
 from app.schemas import (
     LocationCreate,
     LocationFilter,
-    LocationFull,
     PriceCreate,
     PriceFilter,
-    PriceFull,
     ProductCreate,
     ProductFilter,
     ProductFull,
     ProofFilter,
-    ProofFull,
     UserCreate,
 )
 
 
 # Users
 # ------------------------------------------------------------------------------
-def get_users_query(filters: ProductFilter | None = None) -> Select[tuple[User]]:
+def get_users_query(filters: Filter | None = None) -> Select[tuple[User]]:
     """Useful for pagination."""
     query = select(User)
     if filters:
@@ -41,9 +39,7 @@ def get_users_query(filters: ProductFilter | None = None) -> Select[tuple[User]]
     return query
 
 
-def get_users(
-    db: Session, filters: ProductFilter | None = None
-) -> Sequence[Row[tuple[User]]]:
+def get_users(db: Session, filters: Filter | None = None) -> Sequence[Row[tuple[User]]]:
     """Return a list of users from the database.
 
     :param db: the database session
@@ -242,8 +238,8 @@ def get_or_create_product(
 
 
 def update_product(
-    db: Session, product: ProductFull, update_dict: dict[str, Any]
-) -> ProductFull:
+    db: Session, product: Product, update_dict: dict[str, Any]
+) -> Product:
     for key, value in update_dict.items():
         setattr(product, key, value)
     db.commit()
@@ -251,7 +247,7 @@ def update_product(
     return product
 
 
-def increment_product_price_count(db: Session, product: ProductFull) -> ProductFull:
+def increment_product_price_count(db: Session, product: Product) -> Product:
     """Increment the price count of a product.
 
     This is used to keep track of the number of prices linked to a product.
@@ -301,8 +297,8 @@ def create_price(db: Session, price: PriceCreate, user: UserCreate) -> Price:
 
 
 def link_price_product(
-    db: Session, price: PriceFull, product: ProductFull | Product
-) -> PriceFull:
+    db: Session, price: Price, product: ProductFull | Product
+) -> Price:
     """Link the product DB object to the price DB object and return the updated
     price."""
     price.product_id = product.id
@@ -311,9 +307,7 @@ def link_price_product(
     return price
 
 
-def set_price_location(
-    db: Session, price: PriceFull, location: LocationFull
-) -> PriceFull:
+def set_price_location(db: Session, price: Price, location: Location) -> Price:
     price.location_id = location.id
     db.commit()
     db.refresh(price)
@@ -448,7 +442,7 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
     return (file_path, mimetype)
 
 
-def increment_proof_price_count(db: Session, proof: ProofFull) -> ProofFull:
+def increment_proof_price_count(db: Session, proof: Proof) -> Proof:
     """Increment the price count of a proof.
 
     This is used to keep track of the number of prices linked to a proof.
@@ -459,7 +453,7 @@ def increment_proof_price_count(db: Session, proof: ProofFull) -> ProofFull:
     return proof
 
 
-def delete_proof(db: Session, db_proof: ProofFull) -> bool:
+def delete_proof(db: Session, db_proof: Proof) -> bool:
     # we delete the image of the proof
     file_path_obj = Path(db_proof.file_path)
     # Check if the file exists
@@ -492,7 +486,7 @@ def get_location_by_id(db: Session, id: int) -> Location | None:
 
 
 def get_location_by_osm_id_and_type(
-    db: Session, osm_id: int, osm_type: LocationOSMEnum
+    db: Session, osm_id: int, osm_type: LocationOSMEnum | str
 ) -> Location | None:
     return (
         db.query(Location)
@@ -545,8 +539,8 @@ def get_or_create_location(
 
 
 def update_location(
-    db: Session, location: LocationFull, update_dict: dict[str, Any]
-) -> LocationFull:
+    db: Session, location: Location, update_dict: dict[str, Any]
+) -> Location:
     for key, value in update_dict.items():
         setattr(location, key, value)
     db.commit()
@@ -554,7 +548,7 @@ def update_location(
     return location
 
 
-def increment_location_price_count(db: Session, location: LocationFull) -> LocationFull:
+def increment_location_price_count(db: Session, location: Location) -> Location:
     """Increment the price count of a location.
 
     This is used to keep track of the number of prices linked to a location.

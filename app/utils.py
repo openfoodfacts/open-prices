@@ -11,7 +11,7 @@ from sentry_sdk.integrations import Integration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from app.config import settings
-from app.schemas import LocationFull, ProductFull
+from app.models import Location, Product
 
 logger = get_logger(__name__)
 
@@ -109,7 +109,7 @@ def generate_openfoodfacts_main_image_url(
     return None
 
 
-def fetch_product_openfoodfacts_details(product: ProductFull) -> JSONType | None:
+def fetch_product_openfoodfacts_details(product: Product) -> JSONType | None:
     product_dict = {}
     try:
         response = openfoodfacts_product_search(code=product.code)
@@ -140,7 +140,7 @@ def openstreetmap_nominatim_search(osm_id: int, osm_type: str) -> list[dict[str,
 
 
 def fetch_location_openstreetmap_details(
-    location: LocationFull,
+    location: Location,
 ) -> dict[str, Any] | None:
     location_openstreetmap_details = dict()
     try:

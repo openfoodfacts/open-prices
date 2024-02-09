@@ -8,8 +8,8 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.models import Product, Price
-from app.schemas import LocationCreate, PriceFull, ProductCreate, ProofFull, UserCreate
+from app.models import Price, Product, Proof
+from app.schemas import LocationCreate, ProductCreate, UserCreate
 from app.utils import (
     OFF_FIELDS,
     fetch_location_openstreetmap_details,
@@ -29,13 +29,13 @@ def increment_user_price_count(db: Session, user: UserCreate) -> None:
 
 # Proofs
 # ------------------------------------------------------------------------------
-def increment_proof_price_count(db: Session, proof: ProofFull) -> None:
+def increment_proof_price_count(db: Session, proof: Proof) -> None:
     crud.increment_proof_price_count(db, proof=proof)
 
 
 # Products
 # ------------------------------------------------------------------------------
-def create_price_product(db: Session, price: PriceFull | Price) -> None:
+def create_price_product(db: Session, price: Price) -> None:
     # The price may not have a product code, if it's the price of a
     # barcode-less product
     if price.product_code:
@@ -159,7 +159,7 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
 
 # Locations
 # ------------------------------------------------------------------------------
-def create_price_location(db: Session, price: PriceFull | Price) -> None:
+def create_price_location(db: Session, price: Price) -> None:
     if price.location_osm_id and price.location_osm_type:
         # get or create the corresponding location
         location = LocationCreate(

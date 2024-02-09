@@ -70,9 +70,9 @@ class Product(Base):
 
 
 class Location(Base):
-    id = Column(Integer, primary_key=True, index=True)
+    id: int = Column(Integer, primary_key=True, index=True)
 
-    osm_id = Column(BigInteger)
+    osm_id: int = Column(BigInteger)
     osm_type: LocationOSMEnum = Column(ChoiceType(LocationOSMEnum))
     osm_name = Column(String)
     osm_display_name = Column(String)
@@ -94,7 +94,7 @@ class Location(Base):
 class Proof(Base):
     id = Column(Integer, primary_key=True, index=True)
 
-    file_path = Column(String, nullable=False)
+    file_path: str = Column(String, nullable=False)
     mimetype = Column(String, index=True)
 
     type: ProofTypeEnum = Column(ChoiceType(ProofTypeEnum))
