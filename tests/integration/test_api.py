@@ -25,6 +25,7 @@ def override_get_db():
         db = session()
         yield db
     finally:
+        # close the DB session
         db.close()
 
 

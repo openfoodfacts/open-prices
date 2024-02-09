@@ -125,6 +125,8 @@ docs:
 checks: toml-check flake8 black-check mypy isort-check docs
 
 
+tests: unit-tests integration-tests
+
 unit-tests:
 	@echo "🥫 Running tests …"
 	# change project name to run in isolation
