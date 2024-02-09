@@ -330,6 +330,13 @@ def delete_price(db: Session, db_price: PriceFull) -> bool:
     db.commit()
     return True
 
+def update_price(db: Session, price: Price, new_values: dict):
+    for key, value in new_values.items():
+        setattr(price, key, value)
+    db.commit()
+    db.refresh(price)
+    return price
+
 
 # Proofs
 # ------------------------------------------------------------------------------

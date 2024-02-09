@@ -617,6 +617,36 @@ def test_delete_price(db_session, user_session: SessionModel, clean_prices):
     )
     assert response.status_code == 204
 
+def test_update_price(db_session, user_session: SessionModel):
+    db_price = crud.create_price(db_session, PRICE_1, user_session.user)
+    # without authentication
+    response = client.put(f"/api/v1/prices/{db_price.id}")
+    assert response.status_code == 401
+
+    # with authentication but not price owner
+    user_1_session, *_ = crud.create_session(db_session, USER_1.user_id, USER_1.token)
+    response = client.put(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_1_session.token}"},
+    )
+    assert response.status_code == 403
+    # with authentication but price unknown
+    response = client.put(
+        f"/api/v1/prices/{db_price.id+1}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 404
+
+    # with authentication and price owner
+    response = client.put(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PRICE_2),
+    )
+    assert response.status_code == 200
+    
+    assert PRICE_2.price == response.json()["price"]
+
 
 # Test proofs
 # ------------------------------------------------------------------------------
