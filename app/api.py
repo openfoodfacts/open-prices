@@ -30,8 +30,9 @@ from app.auth import OAuth2PasswordBearerOrAuthCookie
 from app.config import settings
 from app.db import session
 from app.enums import ProofTypeEnum
-from app.models import Location, Price, Product, Proof, User
+from app.models import Location, Price, Product, Proof
 from app.models import Session as SessionModel
+from app.models import User
 from app.utils import init_sentry
 
 logger = get_logger(level=settings.log_level.to_int())
@@ -393,6 +394,21 @@ def delete_price(
 
 # Routes: Proofs
 # ------------------------------------------------------------------------------
+@app.get("/api/v1/proofs", response_model=Page[schemas.ProofFull], tags=["Proofs"])
+def get_user_proofs(
+    current_user: schemas.UserCreate = Depends(get_current_user),
+    filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
+    db: Session = Depends(get_db),
+):
+    """
+    Get all the proofs uploaded by the current user.
+
+    This endpoint requires authentication.
+    """
+    filters.owner = current_user.user_id
+    return paginate(db, crud.get_proofs_query(filters=filters))
+
+
 @app.post(
     "/api/v1/proofs/upload",
     response_model=schemas.ProofFull,
@@ -430,19 +446,48 @@ def upload_proof(
     return db_proof
 
 
-@app.get("/api/v1/proofs", response_model=Page[schemas.ProofFull], tags=["Proofs"])
-def get_user_proofs(
+@app.delete(
+    "/api/v1/proofs/{proof_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Proofs"],
+)
+def delete_proof(
+    proof_id: int,
     current_user: schemas.UserCreate = Depends(get_current_user),
-    filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
     db: Session = Depends(get_db),
 ):
     """
-    Get all the proofs uploaded by the current user.
+    Delete a proof.
 
     This endpoint requires authentication.
+    A user can delete only owned proofs.
+    Can delete only proofs that are not associated with prices.
+    A moderator can delete not owned proofs.
     """
-    filters.owner = current_user.user_id
-    return paginate(db, crud.get_proofs_query(filters=filters))
+    db_proof = crud.get_proof_by_id(db, id=proof_id)
+    # get proof
+    if not db_proof:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Proof with code {proof_id} not found",
+        )
+    # Check if the proof belongs to the current user,
+    # if it doesn't, the user needs to be moderator
+    if db_proof.owner != current_user.user_id and not current_user.is_moderator:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Proof does not belong to current user",
+        )
+    # check if the proof is associated with some prices
+    if len(db_proof.prices) > 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Proof has prices associated with it",
+        )
+
+    # delete proof
+    crud.delete_proof(db, db_proof)
+    return
 
 
 # Routes: Products

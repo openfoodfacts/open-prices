@@ -1,10 +1,11 @@
 import random
 import string
 from mimetypes import guess_extension
-from typing import Optional, Any, Sequence
+from pathlib import Path
+from typing import Any, Optional, Sequence
 
 from fastapi import UploadFile
-from sqlalchemy import select, Select, Row
+from sqlalchemy import Row, Select, select
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 
@@ -40,7 +41,9 @@ def get_users_query(filters: ProductFilter | None = None) -> Select[tuple[User]]
     return query
 
 
-def get_users(db: Session, filters: ProductFilter | None = None) -> Sequence[Row[tuple[User]]]:
+def get_users(
+    db: Session, filters: ProductFilter | None = None
+) -> Sequence[Row[tuple[User]]]:
     """Return a list of users from the database.
 
     :param db: the database session
@@ -113,7 +116,9 @@ def create_session(
         session: SessionModel = _create_session(db, user=user, token=token)
         created = True
     else:
-        session = get_session_by_token(db, token=token) or _create_session(db, user=user, token=token)
+        session = get_session_by_token(db, token=token) or _create_session(
+            db, user=user, token=token
+        )
     return session, user, created
 
 
@@ -236,7 +241,9 @@ def get_or_create_product(
     return db_product, created
 
 
-def update_product(db: Session, product: ProductFull, update_dict: dict[str, Any]) -> ProductFull:
+def update_product(
+    db: Session, product: ProductFull, update_dict: dict[str, Any]
+) -> ProductFull:
     for key, value in update_dict.items():
         setattr(product, key, value)
     db.commit()
@@ -389,7 +396,7 @@ def _get_extension_and_mimetype(file: UploadFile) -> tuple[str, str]:
     """
 
     # Most generic according to https://stackoverflow.com/a/12560996
-    DEFAULT = ".bin", 'application/octet-stream'
+    DEFAULT = ".bin", "application/octet-stream"
 
     mimetype = file.content_type
     if mimetype is None:
@@ -401,6 +408,7 @@ def _get_extension_and_mimetype(file: UploadFile) -> tuple[str, str]:
         else:
             return DEFAULT
     return extension, mimetype
+
 
 def create_proof_file(file: UploadFile) -> tuple[str, str]:
     """Create a file in the images directory with a random name and the
@@ -449,6 +457,19 @@ def increment_proof_price_count(db: Session, proof: ProofFull) -> ProofFull:
     db.commit()
     db.refresh(proof)
     return proof
+
+
+def delete_proof(db: Session, db_proof: ProofFull) -> bool:
+    # we delete the image of the proof
+    file_path_obj = Path(db_proof.file_path)
+    # Check if the file exists
+    if file_path_obj.exists():
+        # remove the file
+        file_path_obj.unlink()
+    # then we delete the proof
+    db.delete(db_proof)
+    db.commit()
+    return True
 
 
 # Locations

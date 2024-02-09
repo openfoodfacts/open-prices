@@ -55,6 +55,7 @@ class Product(Base):
     source: Flavor = Column(ChoiceType(Flavor))
     product_name: str = Column(String)
     product_quantity: int = Column(Integer)
+    product_quantity_unit: str = Column(String)
     brands: str = Column(String)
     image_url: str = Column(String)
     unique_scans_n = Column(Integer, nullable=False, server_default="0")

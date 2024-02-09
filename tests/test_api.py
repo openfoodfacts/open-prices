@@ -53,17 +53,14 @@ client = TestClient(app)
 PAGINATION_KEYS = ["items", "total", "page", "size", "pages"]
 
 USER = UserCreate(user_id="user", token="user__Utoken")
-USER_1 = UserCreate(
-    user_id="user1", token="user1__Utoken1", price_count=0, is_moderator=True
-)
-USER_2 = UserCreate(
-    user_id="user2", token="user2__Utoken2", price_count=1, is_moderator=False
-)
+USER_1 = UserCreate(user_id="user1", token="user1__Utoken1", price_count=0)
+USER_2 = UserCreate(user_id="user2", token="user2__Utoken2", price_count=1)
 PRODUCT = ProductCreate(code="8001505005592")
 PRODUCT_1 = ProductCreate(
     code="0022314010025",
     product_name="Chestnut spread 500 g",
     product_quantity=500,
+    product_quantity_unit="g",
     brands="Clément Faugier",
     source="off",
     unique_scans_n=20,
@@ -72,6 +69,7 @@ PRODUCT_2 = ProductCreate(
     code="0022314010100",
     product_name="Chestnut spread 100 g",
     product_quantity=100,
+    product_quantity_unit="g",
     brands="Clément Faugier",
     source="off",
     unique_scans_n=10,
@@ -80,6 +78,7 @@ PRODUCT_3 = ProductCreate(
     code="3760091721969",
     product_name="Crème bio de châtaignes 320 g",
     product_quantity=320,
+    product_quantity_unit="g",
     brands="Ethiquable",
     source="off",
     unique_scans_n=0,
@@ -260,7 +259,6 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     )
     assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_1.product_code
-    assert "id" not in response.json()
     assert len(crud.get_prices(db_session)) == 1
     # assert db_prices[0]["owner"] == user.user_id
     # price with discount
@@ -271,7 +269,6 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     )
     assert response.status_code == 201
     assert response.json()["product_code"] == PRICE_2.product_code
-    assert "id" not in response.json()
     assert len(crud.get_prices(db_session)) == 1 + 1
     # assert db_prices[0]["owner"] == user.user_id
 
@@ -329,7 +326,6 @@ def test_create_price_with_category_tag(
     assert json_response.get("origins_tags") == ["en:france"]
     assert json_response.get("date") == "2023-12-01"
     assert json_response.get("price_per") == "UNIT"
-    assert "id" not in response.json()
     db_prices = crud.get_prices(db_session)
     assert len(db_prices) == 1
 
@@ -750,6 +746,113 @@ def test_get_proofs_filters(db_session, user_session: SessionModel):
     # assert response.status_code == 200
     # assert len(response.json()["items"]) == 2
     # assert response.json()["items"][0]["id"] > response.json()["items"][1]["id"]  # noqa
+
+
+def test_delete_proof(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+):
+    # create proof
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "PRICE_TAG"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    proof = crud.get_proof_by_id(db_session, response.json().get("id"))
+    # assert Path(images_dir/proof.file_path).exists()
+
+    # create price associated with proof
+    PRICE_3.proof_id = proof.id
+    price_response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_3),
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert price_response.status_code == 201
+
+    # delete without auth
+    response = client.delete(f"/api/v1/proofs/{proof.id}")
+    assert response.status_code == 401
+
+    crud.update_user_moderator(db_session, USER_1.user_id, False)
+    # delete but not proof owner and not moderator
+    response = client.delete(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 403
+
+    # with authentication but proof unknown
+    response = client.delete(
+        f"/api/v1/proofs/{proof.id + 1}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 404
+
+    # with auth but proof associated with prices
+    response = client.delete(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 403
+    assert len(proof.prices) > 0
+
+    # proof without prices
+    db_price = crud.get_price_by_id(db_session, price_response.json().get("id"))
+    crud.delete_price(db_session, db_price)
+    response = client.delete(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 204
+    assert len(proof.prices) == 0
+    assert crud.get_proof_by_id(db_session, proof.id) is None
+    # assert not Path(images_dir/proof.file_path).exists()
+
+
+def test_delete_proof_moderator(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+):
+    # create proof user
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "PRICE_TAG"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    proof = crud.get_proof_by_id(db_session, response.json().get("id"))
+
+    # create price associated with proof
+    PRICE_3.proof_id = proof.id
+    price_response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_3),
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert price_response.status_code == 201
+
+    # user_1.is_moderator = True, not owner, but proof associated with prices
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    response = client.delete(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 403
+    assert user_session_1.user.is_moderator
+
+    # user.is_moderator = True, not owener and proof with no prices
+    db_price = crud.get_price_by_id(db_session, price_response.json().get("id"))
+    crud.delete_price(db_session, db_price)
+    assert len(proof.prices) == 0
+    response = client.delete(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 204
+    assert crud.get_proof_by_id(db_session, proof.id) is None
+    assert user_session_1.user.is_moderator
 
 
 # Test products

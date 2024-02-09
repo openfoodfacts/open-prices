@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import sentry_sdk
 from openfoodfacts import API, APIVersion, Country, Flavor
@@ -12,14 +13,14 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from app.config import settings
 from app.schemas import LocationFull, ProductFull
 
-from typing import Any
-
 logger = get_logger(__name__)
 
 
 # Sentry
 # ------------------------------------------------------------------------------
-def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None = None) -> None:
+def init_sentry(
+    sentry_dsn: str | None, integrations: list[Integration] | None = None
+) -> None:
     if sentry_dsn:
         integrations = integrations or []
         integrations.append(
@@ -39,6 +40,7 @@ def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None =
 OFF_FIELDS = [
     "product_name",
     "product_quantity",
+    "product_quantity_unit",
     "brands",
     "image_url",
     "unique_scans_n",
@@ -137,7 +139,9 @@ def openstreetmap_nominatim_search(osm_id: int, osm_type: str) -> list[dict[str,
     return client.query(search_query, lookup=True).toJSON()
 
 
-def fetch_location_openstreetmap_details(location: LocationFull) -> dict[str, Any] | None:
+def fetch_location_openstreetmap_details(
+    location: LocationFull,
+) -> dict[str, Any] | None:
     location_openstreetmap_details = dict()
     try:
         response = openstreetmap_nominatim_search(

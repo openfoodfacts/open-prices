@@ -64,8 +64,12 @@ class ProductFull(ProductCreate):
         description="name of the product.", examples=["Nocciolata"]
     )
     product_quantity: int | None = Field(
-        description="quantity of the product, normalized in g or mL (depending on the product).",
+        description="quantity of the product, normalized in g or ml (depending on the product).",
         examples=[700],
+    )
+    product_quantity_unit: str | None = Field(
+        description="quantity unit of the product: g or ml (depending on the product).",
+        examples=["g", "ml"],
     )
     brands: str | None = Field(
         description="brand(s) of the product.",
