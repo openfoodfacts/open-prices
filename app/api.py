@@ -287,9 +287,16 @@ def price_transformer(
     user_id = current_user.user_id if current_user else None
     for price in prices:
         if (
+            current_user is None
+            and price.proof is not None
+            and price.proof.is_public is False
+        ):
+            price.proof.file_path = None
+        elif (
             price.proof
             and price.proof.is_public is False
             and price.proof.owner != user_id
+            and current_user is not None
             and not current_user.is_moderator
         ):
             price.proof.file_path = None

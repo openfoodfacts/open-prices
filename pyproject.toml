@@ -17,7 +17,7 @@ profile = "black"
 
 [tool.mypy]
 # strict = true
-disable_error_code = ["union-attr", "attr-defined", "misc"]
+disable_error_code = ["attr-defined", "misc"]
 python_version = "3.10"
 exclude = [
   'alembic/',
