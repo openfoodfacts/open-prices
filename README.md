@@ -6,7 +6,7 @@ If you are looking for the frontend of Open Prices, [look here](https://github.c
 
 ## Dependencies
 
-* Python 3.10
+* Python 3.12
 * [FastAPI](https://fastapi.tiangolo.com/) framework
 * PostgreSQL database
 
