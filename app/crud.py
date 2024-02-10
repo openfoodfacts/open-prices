@@ -178,7 +178,7 @@ def update_user_moderator(db: Session, user_id: str, is_moderator: bool) -> bool
 
 # Products
 # ------------------------------------------------------------------------------
-def get_products_query(filters: ProductFilter | None = None):
+def get_products_query(filters: ProductFilter | None = None) -> Select[tuple[Product]]:
     """Useful for pagination."""
     query = select(Product)
     if filters:
@@ -187,7 +187,9 @@ def get_products_query(filters: ProductFilter | None = None):
     return query
 
 
-def get_products(db: Session, filters: ProductFilter | None = None) -> list[Product]:
+def get_products(
+    db: Session, filters: ProductFilter | None = None
+) -> Sequence[Row[tuple[Product]]]:
     return db.execute(get_products_query(filters=filters)).all()
 
 
@@ -265,7 +267,7 @@ def get_prices_query(
     with_join_location: bool = True,
     with_join_proof: bool = True,
     filters: PriceFilter | None = None,
-):
+) -> Select[tuple[Price]]:
     """Useful for pagination."""
     query = select(Price)
     if with_join_product:
@@ -280,7 +282,9 @@ def get_prices_query(
     return query
 
 
-def get_prices(db: Session, filters: PriceFilter | None = None) -> list[Price]:
+def get_prices(
+    db: Session, filters: PriceFilter | None = None
+) -> Sequence[Row[tuple[Price]]]:
     return db.execute(get_prices_query(filters=filters)).all()
 
 
@@ -334,7 +338,7 @@ def delete_price(db: Session, db_price: Price) -> bool:
 
 # Proofs
 # ------------------------------------------------------------------------------
-def get_proofs_query(filters: ProofFilter | None = None):
+def get_proofs_query(filters: ProofFilter | None = None) -> Select[tuple[Proof]]:
     """Useful for pagination."""
     query = select(Proof)
     if filters:
@@ -343,7 +347,9 @@ def get_proofs_query(filters: ProofFilter | None = None):
     return query
 
 
-def get_proofs(db: Session, filters: ProofFilter | None = None) -> list[Proof]:
+def get_proofs(
+    db: Session, filters: ProofFilter | None = None
+) -> Sequence[Row[tuple[Proof]]]:
     return db.execute(get_proofs_query(filters=filters)).all()
 
 
@@ -468,7 +474,9 @@ def delete_proof(db: Session, db_proof: Proof) -> bool:
 
 # Locations
 # ------------------------------------------------------------------------------
-def get_locations_query(filters: LocationFilter | None = None):
+def get_locations_query(
+    filters: LocationFilter | None = None,
+) -> Select[tuple[Location]]:
     """Useful for pagination."""
     query = select(Location)
     if filters:
@@ -477,7 +485,9 @@ def get_locations_query(filters: LocationFilter | None = None):
     return query
 
 
-def get_locations(db: Session, filters: LocationFilter | None = None) -> list[Location]:
+def get_locations(
+    db: Session, filters: LocationFilter | None = None
+) -> Sequence[Row[tuple[Location]]]:
     return db.execute(get_locations_query(filters=filters)).all()
 
 

@@ -23,6 +23,7 @@ from fastapi_filter import FilterDepends
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
 from openfoodfacts.utils import get_logger
+from sqlalchemy import Select
 from sqlalchemy.orm import Session
 
 from app import crud, schemas, tasks
@@ -265,7 +266,7 @@ def delete_user_session(
 def get_users(
     db: Session = Depends(get_db),
     filters: schemas.UserFilter = FilterDepends(schemas.UserFilter),
-) -> list[User]:
+) -> Select[tuple[User]]:
     return paginate(db, crud.get_users_query(filters=filters))
 
 
@@ -397,7 +398,7 @@ def delete_price(
         )
     # delete price
     crud.delete_price(db, db_price=db_price)
-    return
+    return None
 
 
 # Routes: Proofs
@@ -407,7 +408,7 @@ def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
     filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
     db: Session = Depends(get_db),
-):
+) -> Select[tuple[Proof]]:
     """
     Get all the proofs uploaded by the current user.
 
@@ -463,7 +464,7 @@ def delete_proof(
     proof_id: int,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> None:
     """
     Delete a proof.
 
@@ -495,7 +496,7 @@ def delete_proof(
 
     # delete proof
     crud.delete_proof(db, db_proof)
-    return
+    return None
 
 
 # Routes: Products

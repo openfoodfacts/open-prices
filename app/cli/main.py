@@ -1,9 +1,9 @@
 import typer
 
-app = typer.Typer()
+typer_app = typer.Typer()
 
 
-@app.command()
+@typer_app.command()
 def import_product_db(batch_size: int = 1000) -> None:
     """Import from DB JSONL dump to insert/update product table."""
     from app.db import session
@@ -15,7 +15,7 @@ def import_product_db(batch_size: int = 1000) -> None:
     import_product_db(db, batch_size=batch_size)
 
 
-@app.command()
+@typer_app.command()
 def run_scheduler() -> None:
     """Launch the scheduler."""
     from app import scheduler
@@ -26,4 +26,4 @@ def run_scheduler() -> None:
 
 
 def main() -> None:
-    app()
+    typer_app()
