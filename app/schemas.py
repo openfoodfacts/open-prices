@@ -355,6 +355,14 @@ class PriceCreateWithValidation(PriceCreate):
                 )
         return self
 
+class PriceBasicUpdatableFields(BaseModel):
+    price: float | None
+    price_is_discounted: bool | None
+    price_without_discount: float | None
+    price_per: PricePerEnum | None
+    currency: CurrencyEnum | None
+    date: datetime.date | None
+
 
 class PriceFull(PriceCreate):
     id: int

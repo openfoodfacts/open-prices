@@ -398,7 +398,7 @@ def delete_price(
 )
 def update_price(
     price_id: int,
-    new_price: schemas.PriceCreateWithValidation,
+    new_price: schemas.PriceBasicUpdatableFields,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
