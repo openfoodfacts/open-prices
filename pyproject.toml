@@ -17,7 +17,7 @@ profile = "black"
 
 [tool.mypy]
 strict = true
-disable_error_code = ["misc"]
+disable_error_code = ["no-untyped-call", "no-any-return", "misc"]
 python_version = "3.10"
 exclude = [
   'alembic/',

@@ -306,7 +306,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @model_validator(mode="after")
-    def product_code_and_category_tag_are_exclusive(self):
+    def product_code_and_category_tag_are_exclusive(self):  # type: ignore
         """Validator that checks that `product_code` and `category_tag` are
         exclusive, and that at least one of them is set."""
         if self.product_code is not None:
@@ -327,14 +327,14 @@ class PriceCreateWithValidation(PriceCreate):
         return self
 
     @model_validator(mode="after")
-    def set_price_per_to_null_if_barcode(self):
+    def set_price_per_to_null_if_barcode(self):  # type: ignore
         """Validator that sets `price_per` to null if `product_code` is set."""
         if self.product_code is not None:
             self.price_per = None
         return self
 
     @model_validator(mode="after")
-    def check_price_discount(self):
+    def check_price_discount(self):  # type: ignore
         """
         Check that:
         - `price_is_discounted` is true if `price_without_discount` is passed
