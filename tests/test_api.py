@@ -18,6 +18,7 @@ from app.schemas import (
     ProductCreate,
     ProofFilter,
     UserCreate,
+    PriceBasicUpdatableFields,
 )
 
 # database setup
@@ -638,14 +639,21 @@ def test_update_price(db_session, user_session: SessionModel):
     assert response.status_code == 404
 
     # with authentication and price owner
+    
+    new_price = 5.5
+    price_updatable_fields = PriceBasicUpdatableFields(
+        price=new_price
+    )
+
     response = client.put(
         f"/api/v1/prices/{db_price.id}",
         headers={"Authorization": f"Bearer {user_session.token}"},
-        json=jsonable_encoder(PRICE_2),
+        json=jsonable_encoder(price_updatable_fields),
     )
+
     assert response.status_code == 200
     
-    assert PRICE_2.price == response.json()["price"]
+    assert response.json()["price"] == new_price
 
 
 # Test proofs
