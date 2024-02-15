@@ -79,6 +79,10 @@ class ProductFull(ProductCreate):
         description="brand(s) of the product.",
         examples=["Rigoni di Asiago", "Lindt"],
     )
+    brands_tags: list[str] = Field(
+        description="brands of the product.",
+        examples=[["douceur-du-verger", "marque-repere"]],
+    )
     image_url: AnyHttpUrl | None = Field(
         description="URL of the product image.",
         examples=[
