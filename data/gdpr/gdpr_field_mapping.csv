@@ -1,0 +1,6 @@
+OPEN_PRICES_FIELD,CARREFOUR_FIELD,CARREFOUR_COMMENT,AUCHAN_FIELD,AUCHAN_COMMENT
+product_code,Code Barre du produit,prefixed and suffixed with |,CODE_PRODUIT,"raw products have a length of 4 or 12 or 13 but ending with lots of 0 (fruits, vegetables, meat, cheese) (ex: 4400, 200512000000, 2630329000000)"
+product_name,Description du produit,,NOM_PRODUIT,
+price,Prix unitaire TTC avec remise (€),,PRIX_UNITAIRE,
+date,Date de transaction,format DD/MM/YYYY,JOUR,format YYYY-MM-DD
+location,NOM DU MAGASIN,,VILLE,
