@@ -71,6 +71,10 @@ class ProductFull(ProductCreate):
         description="quantity unit of the product: g or ml (depending on the product).",
         examples=["g", "ml"],
     )
+    categories_tags: list[str] = Field(
+        description="categories of the product.",
+        examples=[["en:breakfasts", "en:spreads"]],
+    )
     brands: str | None = Field(
         description="brand(s) of the product.",
         examples=["Rigoni di Asiago", "Lindt"],

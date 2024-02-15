@@ -11,7 +11,7 @@ from sqlalchemy import (
     Numeric,
     String,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy_utils import force_auto_coercion
@@ -56,6 +56,7 @@ class Product(Base):
     product_name = Column(String)
     product_quantity = Column(Integer)
     product_quantity_unit = Column(String)
+    categories_tags = Column(ARRAY(String), server_default="{}", index=True)
     brands = Column(String)
     image_url = Column(String)
     unique_scans_n = Column(Integer, nullable=False, server_default="0")
