@@ -58,6 +58,7 @@ class Product(Base):
     product_quantity_unit = Column(String)
     categories_tags = Column(ARRAY(String), server_default="{}", index=True)
     brands = Column(String)
+    brands_tags = Column(ARRAY(String), server_default="{}", index=True)
     image_url = Column(String)
     unique_scans_n = Column(Integer, nullable=False, server_default="0")
 
