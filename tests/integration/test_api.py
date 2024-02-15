@@ -51,6 +51,7 @@ PRODUCT_1 = ProductCreate(
     categories_tags=["en:spreads", "en:nuts-and-their-products"],
     brands="Clément Faugier",
     brands_tags=["clement-faugier"],
+    labels_tags=[],
     source="off",
     unique_scans_n=20,
 )
@@ -62,6 +63,7 @@ PRODUCT_2 = ProductCreate(
     categories_tags=["en:spreads", "en:nuts-and-their-products"],
     brands="Clément Faugier",
     brands_tags=["clement-faugier"],
+    labels_tags=[],
     source="off",
     unique_scans_n=10,
 )
@@ -73,6 +75,7 @@ PRODUCT_3 = ProductCreate(
     categories_tags=["en:spreads", "en:nuts-and-their-products"],
     brands="Ethiquable",
     brands_tags=["paysans-d-ici", "ethiquable"],
+    labels_tags=["en:fair-trade", "en:organic", "en:made-in-france"],
     source="off",
     unique_scans_n=0,
 )

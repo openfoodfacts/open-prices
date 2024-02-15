@@ -39,8 +39,9 @@ OFF_FIELDS = [
     "product_quantity",
     "product_quantity_unit",
     "categories_tags",
-    "brands_tags",
     "brands",
+    "brands_tags",
+    "labels_tags",
     "image_url",
     "unique_scans_n",
 ]
