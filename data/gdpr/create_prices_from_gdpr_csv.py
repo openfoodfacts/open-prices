@@ -110,12 +110,9 @@ def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_da
 
 def create_price(price):
     headers = {"Authorization": f"Bearer {OPEN_PRICES_TOKEN}"}
-    response = requests.post(
-        OPEN_PRICES_CREATE_PRICE_ENDPOINT, json=price, headers=headers
-    )
-    print(response.content)
-    if response.status_code == 201:
-        print("Price created !")
+    requests.post(OPEN_PRICES_CREATE_PRICE_ENDPOINT, json=price, headers=headers)
+    # if response.status_code == 201:
+    #     print("Price created !")
 
 
 if __name__ == "__main__":
@@ -158,10 +155,10 @@ if __name__ == "__main__":
     print(len(open_prices_price_list_filtered))
     print(open_prices_price_list_filtered[0])
 
-    if os.environ.get("DRY_MODE") == "True":
+    if os.environ.get("DRY_RUN") == "False":
         print(f"Uploading data to {OPEN_PRICES_CREATE_PRICE_ENDPOINT}")
         progress = 0
-        for index, price in enumerate(open_prices_price_list_filtered[:100]):
+        for index, price in enumerate(open_prices_price_list_filtered):
             create_price(price)
             # some pauses to be safe
             progress += 1
@@ -170,4 +167,4 @@ if __name__ == "__main__":
             if (progress % 50) == 0:
                 print(f"{progress}/{len(open_prices_price_list_filtered)}...")
     else:
-        sys.exit("No prices uploaded (DRY_MODE env missing or set to 'False')")
+        sys.exit("No prices uploaded (DRY_MODE env missing or set to 'True')")
