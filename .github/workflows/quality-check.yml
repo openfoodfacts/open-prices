@@ -1,0 +1,42 @@
+name: Open Prices unit and integration tests
+
+on:
+  push:
+    paths:
+      - "**/app/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "tests/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.11"
+
+    steps:
+      #----------------------------------------------
+      #       check-out repo
+      #----------------------------------------------
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      #----------------------------------------------
+      # Launch checks and tests
+      #----------------------------------------------
+      - name: Configure docker
+        run: |
+          # ensure a new line for .env file might not have it!
+          echo "" >> .env
+          # align user id
+          echo "USER_UID=$UID" >> .env
+          echo "PYTHON_VERSION=${{ matrix.python-version }}" >> .env
+
+      - name: Launch tests
+        run: make tests

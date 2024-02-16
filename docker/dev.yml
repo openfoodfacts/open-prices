@@ -17,8 +17,10 @@ x-api-base: &api-base
     - ./README.md:/opt/open-prices/README.md
     - ./docs:/opt/open-prices/docs
     - ./gh_pages:/opt/open-prices/gh_pages
-    # Make migrations available so that we can run them easily
+    # make migrations available so that we can run them easily
     - ./alembic:/opt/open-prices/alembic
+    # mount tests
+    - ./tests:/opt/open-prices/tests
 
 services:
   api:
