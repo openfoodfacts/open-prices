@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.20.0](https://github.com/openfoodfacts/open-prices/compare/v1.19.0...v1.20.0) (2024-02-16)
+
+
+### Features
+
+* new Product.brands_tags array field ([#207](https://github.com/openfoodfacts/open-prices/issues/207)) ([ba5b917](https://github.com/openfoodfacts/open-prices/commit/ba5b91711fe5585a46588219d68c763cf49ef57e))
+* new Product.categories_tags array field ([#192](https://github.com/openfoodfacts/open-prices/issues/192)) ([e9d73ae](https://github.com/openfoodfacts/open-prices/commit/e9d73ae194629f52509a3098e88858536530e1d2))
+* new Product.labels_tags array field ([#208](https://github.com/openfoodfacts/open-prices/issues/208)) ([95aa5fb](https://github.com/openfoodfacts/open-prices/commit/95aa5fb467011c2f566b7315b715c212de665056))
+
 ## [1.19.0](https://github.com/openfoodfacts/open-prices/compare/v1.18.0...v1.19.0) (2024-02-08)
 
 
