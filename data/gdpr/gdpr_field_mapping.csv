@@ -1,6 +1,7 @@
-OPEN_PRICES_FIELD,CARREFOUR_FIELD,CARREFOUR_COMMENT,AUCHAN_FIELD,AUCHAN_COMMENT
-product_code,Code Barre du produit,prefixed and suffixed with |,CODE_PRODUIT,"raw products have a length of 4 or 12 or 13 but ending with lots of 0 (fruits, vegetables, meat, cheese) (ex: 4400, 200512000000, 2630329000000)"
-product_name,Description du produit,,NOM_PRODUIT,
-price,Prix unitaire TTC avec remise (€),,PRIX_UNITAIRE,
-date,Date de transaction,format DD/MM/YYYY,JOUR,format YYYY-MM-DD
-location,NOM DU MAGASIN,,VILLE,
+OPEN_PRICES_FIELD,AUCHAN_FIELD,AUCHAN_COMMENT,CARREFOUR_FIELD,CARREFOUR_COMMENT,INTERMARCHE_FIELD,INTERMARCHE_COMMENT
+product_code,CODE_PRODUIT,"raw products have a length of 4 or 12 or 13 but ending with lots of 0 (fruits, vegetables, meat, cheese) (ex: 4400, 200512000000, 2630329000000)",Code Barre du produit,prefixed and suffixed with |,COD_ARTC_EAN,duplicate column with EAN_GD
+product_name,NOM_PRODUIT,,Description du produit,,LB_ARTC,duplicate column with LB_COMM0
+price,PRIX_UNITAIRE,,Prix unitaire TTC avec remise (€),,CA TTC Produit,has commas instead of points
+quantity,,,,,Qte Vendues,
+date,JOUR,format YYYY-MM-DD,Date de transaction,format DD/MM/YYYY,DT_TICK,format DD/MM/YYYY
+location,VILLE,,NOM DU MAGASIN,,LB_COMM,
