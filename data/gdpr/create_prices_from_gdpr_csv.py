@@ -39,6 +39,10 @@ def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
     """
     Rules to help build the price fields
     """
+    # remove any whitespace
+    gdpr_field_value = gdpr_field_value.strip()
+
+    # shop specific rules
     if gdpr_source == "AUCHAN":
         if op_field == "price":
             gdpr_field_value = float(gdpr_field_value.replace(",", "."))
@@ -96,11 +100,15 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
             elif op_price["product_code"].endswith("000000"):
                 passes_test = False
         elif gdpr_source == "CARREFOUR":
-            pass
-        elif gdpr_source == "INTERMARCHE":
-            # filter location
-            if op_price["location"] != "TO SET":
+            if "CAR" in op_price["product_code"]:
                 passes_test = False
+            elif op_price["product_name"] in ["BOUCHERIE", "Coupon Rem Caisse"]:
+                passes_test = False
+        elif gdpr_source == "INTERMARCHE":
+            pass
+        # filter location
+        if op_price["location"] != "TO SET":
+            passes_test = False
         if passes_test:
             op_price_list_filtered.append(op_price)
 
@@ -136,11 +144,12 @@ def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_da
             op_field = field_mapping["OPEN_PRICES_FIELD"]
             if op_field in PRICE_FIELDS:
                 gdpr_field_name = field_mapping[f"{gdpr_source}_FIELD"]
-                gdpr_field_value = gdpr_price[gdpr_field_name]
-                gdpr_price_field_cleaned = gdpr_source_field_cleanup_rules(
-                    gdpr_source, op_field, gdpr_field_value
-                )
-                open_prices_price[op_field] = gdpr_price_field_cleaned
+                if gdpr_field_name in gdpr_price:
+                    gdpr_field_value = gdpr_price[gdpr_field_name]
+                    gdpr_price_field_cleaned = gdpr_source_field_cleanup_rules(
+                        gdpr_source, op_field, gdpr_field_value
+                    )
+                    open_prices_price[op_field] = gdpr_price_field_cleaned
         # print(open_prices_price)
         open_prices_price_list_1.append({**open_prices_price, **extra_data})
 
