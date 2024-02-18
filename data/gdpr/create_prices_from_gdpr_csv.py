@@ -57,6 +57,8 @@ def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
             gdpr_field_value = datetime.datetime.strptime(
                 gdpr_field_value, "%d/%m/%Y"
             ).strftime("%Y-%m-%d")
+    elif gdpr_source == "ELECLERC":
+        pass
     elif gdpr_source == "INTERMARCHE":
         if op_field in ["price", "quantity"]:
             # divide price by quantity
@@ -79,8 +81,10 @@ def gdpr_source_price_cleanup_rules(gdpr_source, gdpr_op_price):
         pass
     elif gdpr_source == "CARREFOUR":
         pass
+    elif gdpr_source == "ELECLERC":
+        pass
     elif gdpr_source == "INTERMARCHE":
-        # price must be deviced by quantity
+        # price must be divided by quantity
         gdpr_op_price["price"] = gdpr_op_price["price"] / gdpr_op_price["quantity"]
 
     return gdpr_op_price
@@ -95,14 +99,32 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
     for op_price in op_price_list:
         passes_test = True
         if gdpr_source == "AUCHAN":
-            if len(op_price["product_code"]) < 13:
+            if (len(op_price["product_code"]) == 12) and (
+                "00000" in op_price["product_code"]
+            ):  # vrac
                 passes_test = False
-            elif op_price["product_code"].endswith("000000"):
+            elif (len(op_price["product_code"]) == 8) and op_price[
+                "product_code"
+            ].startswith(
+                "900000"
+            ):  # boucherie
+                passes_test = False
+            elif len(op_price["product_code"]) < 6:
                 passes_test = False
         elif gdpr_source == "CARREFOUR":
             if "CAR" in op_price["product_code"]:
                 passes_test = False
             elif op_price["product_name"] in ["BOUCHERIE", "Coupon Rem Caisse"]:
+                passes_test = False
+        elif gdpr_source == "ELECLERC":
+            if len(op_price["product_code"]) < 6:
+                passes_test = False
+            elif op_price["product_name"] in [
+                "SAC KRAFT AMBIANT",
+                "SAC SURGELE DRIVE + MAG",
+                "REMBOURSEMENT SAC E.LECLERC",
+                "SAC CAISSE GM MER",
+            ]:
                 passes_test = False
         elif gdpr_source == "INTERMARCHE":
             pass
@@ -214,6 +236,8 @@ if __name__ == "__main__":
     )
     print(len(open_prices_price_list_filtered))
     print(open_prices_price_list_filtered[0])
+    # for p in open_prices_price_list_filtered:
+    #     print(p)
 
     # Step 5: send prices to backend via API
     if os.environ.get("DRY_RUN") == "False":
