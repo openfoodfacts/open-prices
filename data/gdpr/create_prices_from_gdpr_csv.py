@@ -28,6 +28,7 @@ REQUIRED_ENV_PARAMS = [
     "API_TOKEN",
     "API_ENDPOINT",
     "SOURCE",
+    "LOCATION",
     "LOCATION_OSM_ID",
     "LOCATION_OSM_TYPE",
     "PROOF_ID",
@@ -92,12 +93,13 @@ def gdpr_source_price_cleanup_rules(gdpr_source, gdpr_op_price):
 
 def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
     """
-    Rules to skip some prices (on code, location...)
+    Rules to skip some prices (on code, name...)
     """
     op_price_list_filtered = list()
 
     for op_price in op_price_list:
         passes_test = True
+
         if gdpr_source == "AUCHAN":
             if (len(op_price["product_code"]) == 12) and (
                 "00000" in op_price["product_code"]
@@ -128,9 +130,26 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
                 passes_test = False
         elif gdpr_source == "INTERMARCHE":
             pass
-        # filter location
-        if op_price["location"] != "TO SET":
+
+        if passes_test:
+            op_price_list_filtered.append(op_price)
+
+    return op_price_list_filtered
+
+
+def gdpr_source_location_rules(op_price_list):
+    """
+    Usually a file contains multiple locations
+    To avoid errors, we ask for a location filter
+    """
+    op_price_list_filtered = list()
+
+    for op_price in op_price_list:
+        passes_test = True
+
+        if op_price["location"] != os.environ.get("LOCATION"):
             passes_test = False
+
         if passes_test:
             op_price_list_filtered.append(op_price)
 
@@ -227,15 +246,22 @@ if __name__ == "__main__":
         gdpr_price_list, gdpr_source=source, extra_data=extra_data
     )
     print(len(open_prices_price_list))
-    print(open_prices_price_list[0])
 
-    # Step 4: filter prices depending on specific rules
-    print("===== Applying filtering rules")
-    open_prices_price_list_filtered = gdpr_source_filter_rules(
+    # Step 4a: filter prices depending on specific source rules
+    print("===== Applying source filtering rules")
+    open_prices_price_list_filtered_1 = gdpr_source_filter_rules(
         open_prices_price_list, gdpr_source=source
     )
-    print(len(open_prices_price_list_filtered))
-    print(open_prices_price_list_filtered[0])
+    print(len(open_prices_price_list_filtered_1))
+
+    # Step 4b: filter prices depending on location
+    print("===== Applying location filtering rules")
+    open_prices_price_list_filtered_2 = gdpr_source_location_rules(
+        open_prices_price_list_filtered_1
+    )
+    print(len(open_prices_price_list_filtered_2))
+
+    print(open_prices_price_list_filtered_2[0])
     # for p in open_prices_price_list_filtered:
     #     print(p)
 
@@ -243,13 +269,13 @@ if __name__ == "__main__":
     if os.environ.get("DRY_RUN") == "False":
         print(f"===== Uploading data to {OPEN_PRICES_CREATE_PRICE_ENDPOINT}")
         progress = 0
-        for index, price in enumerate(open_prices_price_list_filtered):
+        for index, price in enumerate(open_prices_price_list_filtered_2):
             create_price(price)
             # some pauses to be safe
             progress += 1
             if (progress % 10) == 0:
                 time.sleep(1)
             if (progress % 50) == 0:
-                print(f"{progress}/{len(open_prices_price_list_filtered)}...")
+                print(f"{progress}/{len(open_prices_price_list_filtered_2)}...")
     else:
         sys.exit("No prices uploaded (DRY_RUN env missing or set to 'True')")

@@ -4,4 +4,4 @@ product_name,NOM_PRODUIT,,Description du produit,,article_libelle,,LB_ARTC,dupli
 price,PRIX_UNITAIRE,,Prix unitaire TTC avec remise (€),,article_prix_unitaire,,CA TTC Produit,has commas instead of points
 quantity,,,,,,,Qte Vendues,
 date,JOUR,format YYYY-MM-DD,Date de transaction,format DD/MM/YYYY,date_ticket,format YYYY-MM-DD,DT_TICK,format DD/MM/YYYY
-location,VILLE,,NOM DU MAGASIN,,code_postal,,LB_COMM,
+location,CODE_POSTAL,,NOM DU MAGASIN,,code_postal,,LB_COMM,
