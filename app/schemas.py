@@ -404,6 +404,7 @@ class PriceFilter(Filter):
     date__gte: Optional[str] | None = None
     date__lt: Optional[str] | None = None
     date__lte: Optional[str] | None = None
+    proof_id: Optional[int] | None = None
     owner: Optional[str] | None = None
     # created__date  # how to filter on full day ?
     created__gte: Optional[str] | None = None
