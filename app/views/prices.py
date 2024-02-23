@@ -134,3 +134,40 @@ def delete_price(
     # delete price
     crud.delete_price(db, db_price=db_price)
     return
+
+
+@router.put(
+    path="/{price_id}",
+    response_model=schemas.PriceFull,
+    status_code=status.HTTP_200_OK,
+    tags=["Prices"],
+)
+def update_price(
+    price_id: int,
+    new_price: schemas.PriceBasicUpdatableFields,
+    current_user: schemas.UserCreate = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Update a price.
+
+    This endpoint requires authentication.
+    A user can update only owned prices.
+    """
+    # fetch price with id = price_id
+    db_price = crud.get_price_by_id(db, id=price_id)
+
+    if not db_price:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Price with code {price_id} not found",
+        )
+    # Check if the price belongs to the current user
+    if db_price.owner != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Price does not belong to current user",
+        )
+
+    # updated price
+    return crud.update_price(db, db_price, new_price)

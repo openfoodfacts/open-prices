@@ -11,6 +11,7 @@ from app.db import Base, engine, session
 from app.models import Session as SessionModel
 from app.schemas import (
     LocationCreate,
+    PriceBasicUpdatableFields,
     PriceCreate,
     ProductCreate,
     ProofFilter,
@@ -596,7 +597,7 @@ def test_delete_price(db_session, user_session: SessionModel, clean_prices):
     assert response.status_code == 403
     # with authentication but price unknown
     response = client.delete(
-        f"/api/v1/prices/{db_price.id+1}",
+        f"/api/v1/prices/{db_price.id + 1}",
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 404
@@ -606,6 +607,59 @@ def test_delete_price(db_session, user_session: SessionModel, clean_prices):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 204
+
+
+def test_update_price(db_session, user_session: SessionModel):
+    db_price = crud.create_price(db_session, PRICE_1, user_session.user)
+
+    # without authentication
+    response = client.put(f"/api/v1/prices/{db_price.id}")
+    assert response.status_code == 401
+
+    # with authentication but not price owner
+    user_1_session, *_ = crud.create_session(db_session, USER_1.user_id, USER_1.token)
+    response = client.put(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_1_session.token}"},
+    )
+    assert response.status_code == 403
+
+    # with authentication but price unknown
+    response = client.put(
+        f"/api/v1/prices/{db_price.id+1}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 404
+
+    # with authentication and price owner
+
+    # if any field which is not is basic updatable field provided
+    # it should throw an error
+    price_fields = {
+        "proof_id": 1,
+        "new_price": 5.5,
+    }
+
+    response = client.put(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(price_fields),
+    )
+
+    assert response.status_code == 422  # Unprocessable Entity
+
+    new_price = 5.5
+    price_updatable_fields = PriceBasicUpdatableFields(price=new_price)
+
+    response = client.put(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(price_updatable_fields),
+    )
+
+    assert response.status_code == 200
+
+    assert response.json()["price"] == new_price
 
 
 # Test proofs
@@ -899,13 +953,13 @@ def test_get_product(db_session, clean_products):
     response = client.get(f"/api/v1/products/{last_product.id}")
     assert response.status_code == 200
     # by id: product does not exist
-    response = client.get(f"/api/v1/products/{last_product.id+1}")
+    response = client.get(f"/api/v1/products/{last_product.id + 1}")
     assert response.status_code == 404
     # by code: product exists
     response = client.get(f"/api/v1/products/code/{last_product.code}")
     assert response.status_code == 200
     # by code: product does not exist
-    response = client.get(f"/api/v1/products/code/{last_product.code+'X'}")
+    response = client.get(f"/api/v1/products/code/{last_product.code + 'X'}")
     assert response.status_code == 404
 
 
@@ -949,7 +1003,7 @@ def test_get_location(location):
     response = client.get(f"/api/v1/locations/{location.id}")
     assert response.status_code == 200
     # by id: location does not exist
-    response = client.get(f"/api/v1/locations/{location.id+1}")
+    response = client.get(f"/api/v1/locations/{location.id + 1}")
     assert response.status_code == 404
     # by osm id & type: location exists
     response = client.get(
@@ -962,6 +1016,6 @@ def test_get_location(location):
     assert response.status_code == 200
     # by osm id & type: location does not exist
     response = client.get(
-        f"/api/v1/locations/osm/{location.osm_type.value}/{location.osm_id+1}"
+        f"/api/v1/locations/osm/{location.osm_type.value}/{location.osm_id + 1}"
     )
     assert response.status_code == 404

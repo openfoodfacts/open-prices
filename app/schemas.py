@@ -134,11 +134,6 @@ class LocationFull(LocationCreate):
 
 # Proof
 # ------------------------------------------------------------------------------
-# class ProofCreate(BaseModel):
-#     file: UploadFile
-#     type: ProofTypeEnum
-
-
 class ProofFull(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -368,6 +363,15 @@ class PriceCreateWithValidation(PriceCreate):
         return self
 
 
+class PriceBasicUpdatableFields(BaseModel):
+    price: float | None
+    price_is_discounted: bool | None
+    price_without_discount: float | None
+    price_per: PricePerEnum | None
+    currency: CurrencyEnum | None
+    date: datetime.date | None
+
+
 class PriceFull(PriceCreate):
     id: int
     product_id: int | None
@@ -404,6 +408,7 @@ class PriceFilter(Filter):
     date__gte: Optional[str] | None = None
     date__lt: Optional[str] | None = None
     date__lte: Optional[str] | None = None
+    proof_id: Optional[int] | None = None
     owner: Optional[str] | None = None
     # created__date  # how to filter on full day ?
     created__gte: Optional[str] | None = None
