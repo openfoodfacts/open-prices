@@ -71,9 +71,21 @@ class ProductFull(ProductCreate):
         description="quantity unit of the product: g or ml (depending on the product).",
         examples=["g", "ml"],
     )
+    categories_tags: list[str] = Field(
+        description="categories of the product.",
+        examples=[["en:breakfasts", "en:spreads"]],
+    )
     brands: str | None = Field(
         description="brand(s) of the product.",
         examples=["Rigoni di Asiago", "Lindt"],
+    )
+    brands_tags: list[str] = Field(
+        description="brands of the product.",
+        examples=[["douceur-du-verger", "marque-repere"]],
+    )
+    labels_tags: list[str] = Field(
+        description="labels of the product.",
+        examples=[["en:fair-trade", "en:organic", "en:made-in-france"]],
     )
     image_url: AnyHttpUrl | None = Field(
         description="URL of the product image.",
