@@ -407,6 +407,43 @@ def get_user_proofs(
     filters.owner = current_user.user_id
     return paginate(db, crud.get_proofs_query(filters=filters))
 
+@app.get(
+    "api/v1/proofs/{proof_id}/prices",
+    response_model=Page[schemas.PriceFull],
+    tags=["Proofs"]
+)
+def get_prices_for_given_proofid(
+    proof_id: int,
+    current_user: schemas.UserCreate = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get all the prices for given proof_id.
+
+    This endpoint requires authentication.
+    """
+
+    db_proof = crud.get_proof_by_id(db, id=proof_id)
+     # get proof
+    if not db_proof:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Proof with code {proof_id} not found",
+        )
+
+    # Check if the proof belongs to the current user,
+    if db_proof.owner != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Proof does not belong to current user",
+        )
+    
+    prices = db_proof.prices
+    for price in prices:
+        del price.proof
+
+    return paginate(db, prices)
+
 
 @app.post(
     "/api/v1/proofs/upload",
