@@ -612,6 +612,11 @@ def test_delete_price(db_session, user_session: SessionModel, clean_prices):
 def test_update_price(db_session, user_session: SessionModel):
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
 
+    new_price = 5.5
+    price_updatable_fields = PriceBasicUpdatableFields(
+        price=new_price, price_is_discounted=False
+    )
+
     # without authentication
     response = client.put(f"/api/v1/prices/{db_price.id}")
     assert response.status_code == 401
@@ -621,6 +626,7 @@ def test_update_price(db_session, user_session: SessionModel):
     response = client.put(
         f"/api/v1/prices/{db_price.id}",
         headers={"Authorization": f"Bearer {user_1_session.token}"},
+        json=jsonable_encoder(price_updatable_fields),
     )
     assert response.status_code == 403
 
@@ -628,6 +634,7 @@ def test_update_price(db_session, user_session: SessionModel):
     response = client.put(
         f"/api/v1/prices/{db_price.id+1}",
         headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(price_updatable_fields),
     )
     assert response.status_code == 404
 
@@ -647,9 +654,6 @@ def test_update_price(db_session, user_session: SessionModel):
     )
 
     assert response.status_code == 422  # Unprocessable Entity
-
-    new_price = 5.5
-    price_updatable_fields = PriceBasicUpdatableFields(price=new_price)
 
     response = client.put(
         f"/api/v1/prices/{db_price.id}",
