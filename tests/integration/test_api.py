@@ -101,6 +101,8 @@ PRICE_1 = PriceCreate(
     product_name="PATE NOCCIOLATA BIO 700G",
     # category="en:tomatoes",
     price=3.5,
+    price_is_discounted=True,
+    price_without_discount=5,
     currency="EUR",
     location_osm_id=123,
     location_osm_type="NODE",
@@ -585,7 +587,7 @@ def test_get_prices_orders(db_session, user_session: SessionModel, clean_prices)
 def test_update_price(db_session, user_session: SessionModel):
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
     new_price = 5.5
-    PRICE_UPDATE_PARTIAL = {"price": new_price, "price_is_discounted": False}
+    PRICE_UPDATE_PARTIAL = {"price": new_price}
     # without authentication
     response = client.patch(f"/api/v1/prices/{db_price.id}")
     assert response.status_code == 401
@@ -612,6 +614,25 @@ def test_update_price(db_session, user_session: SessionModel):
     )
     assert response.status_code == 200
     assert response.json()["price"] == new_price
+    assert response.json()["price_is_discounted"] == PRICE_1.price_is_discounted
+    assert response.json()["price_without_discount"] == PRICE_1.price_without_discount
+    # with authentication and price owner
+    PRICE_UPDATE_PARTIAL_MORE = {
+        **PRICE_UPDATE_PARTIAL,
+        "price_is_discounted": False,
+        "price_without_discount": None,
+    }
+    response = client.patch(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PRICE_UPDATE_PARTIAL_MORE),
+    )
+    assert response.status_code == 200
+    assert response.json()["price"] == new_price
+    assert (
+        response.json()["price_is_discounted"] != PRICE_1.price_is_discounted
+    )  # False
+    assert response.json()["price_without_discount"] is None
     # with authentication and price owner but extra fields
     PRICE_UPDATE_PARTIAL_WRONG = {**PRICE_UPDATE_PARTIAL, "proof_id": 1}
     response = client.patch(
