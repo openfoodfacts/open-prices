@@ -134,11 +134,6 @@ class LocationFull(LocationCreate):
 
 # Proof
 # ------------------------------------------------------------------------------
-# class ProofCreate(BaseModel):
-#     file: UploadFile
-#     type: ProofTypeEnum
-
-
 class ProofFull(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 

@@ -596,7 +596,7 @@ def test_delete_price(db_session, user_session: SessionModel, clean_prices):
     assert response.status_code == 403
     # with authentication but price unknown
     response = client.delete(
-        f"/api/v1/prices/{db_price.id+1}",
+        f"/api/v1/prices/{db_price.id + 1}",
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 404
@@ -899,13 +899,13 @@ def test_get_product(db_session, clean_products):
     response = client.get(f"/api/v1/products/{last_product.id}")
     assert response.status_code == 200
     # by id: product does not exist
-    response = client.get(f"/api/v1/products/{last_product.id+1}")
+    response = client.get(f"/api/v1/products/{last_product.id + 1}")
     assert response.status_code == 404
     # by code: product exists
     response = client.get(f"/api/v1/products/code/{last_product.code}")
     assert response.status_code == 200
     # by code: product does not exist
-    response = client.get(f"/api/v1/products/code/{last_product.code+'X'}")
+    response = client.get(f"/api/v1/products/code/{last_product.code + 'X'}")
     assert response.status_code == 404
 
 
@@ -949,7 +949,7 @@ def test_get_location(location):
     response = client.get(f"/api/v1/locations/{location.id}")
     assert response.status_code == 200
     # by id: location does not exist
-    response = client.get(f"/api/v1/locations/{location.id+1}")
+    response = client.get(f"/api/v1/locations/{location.id + 1}")
     assert response.status_code == 404
     # by osm id & type: location exists
     response = client.get(
@@ -962,6 +962,6 @@ def test_get_location(location):
     assert response.status_code == 200
     # by osm id & type: location does not exist
     response = client.get(
-        f"/api/v1/locations/osm/{location.osm_type.value}/{location.osm_id+1}"
+        f"/api/v1/locations/osm/{location.osm_type.value}/{location.osm_id + 1}"
     )
     assert response.status_code == 404

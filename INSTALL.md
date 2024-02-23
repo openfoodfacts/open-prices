@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python 3.10 (lower version may be OK, but untested)
+- Python 3.11 (lower version may be OK, but untested)
 - PostgreSQL 13 (lower version may be OK, but untested)
 
 ## Setup
