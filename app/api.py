@@ -358,41 +358,7 @@ def create_price(
     return db_price
 
 
-@app.delete(
-    "/api/v1/prices/{price_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    tags=["Prices"],
-)
-def delete_price(
-    price_id: int,
-    current_user: schemas.UserCreate = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """
-    Delete a price.
-
-    This endpoint requires authentication.
-    A user can delete only owned prices.
-    """
-    db_price = crud.get_price_by_id(db, id=price_id)
-    # get price
-    if not db_price:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Price with code {price_id} not found",
-        )
-    # Check if the price belongs to the current user
-    if db_price.owner != current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Price does not belong to current user",
-        )
-    # delete price
-    crud.delete_price(db, db_price=db_price)
-    return
-
-
-@app.put(
+@app.patch(
     path="/api/v1/prices/{price_id}",
     response_model=schemas.PriceFull,
     status_code=status.HTTP_200_OK,
@@ -427,6 +393,40 @@ def update_price(
 
     # updated price
     return crud.update_price(db, db_price, new_price)
+
+
+@app.delete(
+    "/api/v1/prices/{price_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Prices"],
+)
+def delete_price(
+    price_id: int,
+    current_user: schemas.UserCreate = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a price.
+
+    This endpoint requires authentication.
+    A user can delete only owned prices.
+    """
+    db_price = crud.get_price_by_id(db, id=price_id)
+    # get price
+    if not db_price:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Price with code {price_id} not found",
+        )
+    # Check if the price belongs to the current user
+    if db_price.owner != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Price does not belong to current user",
+        )
+    # delete price
+    crud.delete_price(db, db_price=db_price)
+    return
 
 
 # Routes: Proofs
