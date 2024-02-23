@@ -639,7 +639,21 @@ def test_update_price(db_session, user_session: SessionModel):
     assert response.status_code == 404
 
     # with authentication and price owner
-    
+
+    # if any field which is not is basic updatable field provided it should throw an error
+    price_fields = {
+        "proof_id": 1,
+        "new_price": 5.5,
+    }
+
+    response = client.put(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(price_fields),
+    )
+
+    assert response.status_code == 422 # Unprocessable Entity
+
     new_price = 5.5
     price_updatable_fields = PriceBasicUpdatableFields(
         price=new_price
