@@ -367,6 +367,7 @@ class PriceCreateWithValidation(PriceCreate):
                 )
         return self
 
+
 class PriceBasicUpdatableFields(BaseModel):
     price: float | None
     price_is_discounted: bool | None

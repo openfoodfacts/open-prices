@@ -11,11 +11,11 @@ from app.db import Base, engine, session
 from app.models import Session as SessionModel
 from app.schemas import (
     LocationCreate,
+    PriceBasicUpdatableFields,
     PriceCreate,
     ProductCreate,
     ProofFilter,
     UserCreate,
-    PriceBasicUpdatableFields,
 )
 
 Base.metadata.create_all(bind=engine)
@@ -608,6 +608,7 @@ def test_delete_price(db_session, user_session: SessionModel, clean_prices):
     )
     assert response.status_code == 204
 
+
 def test_update_price(db_session, user_session: SessionModel):
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
     # without authentication
@@ -630,7 +631,8 @@ def test_update_price(db_session, user_session: SessionModel):
 
     # with authentication and price owner
 
-    # if any field which is not is basic updatable field provided it should throw an error
+    # if any field which is not is basic updatable field provided
+    # it should throw an error
     price_fields = {
         "proof_id": 1,
         "new_price": 5.5,
@@ -642,12 +644,10 @@ def test_update_price(db_session, user_session: SessionModel):
         json=jsonable_encoder(price_fields),
     )
 
-    assert response.status_code == 422 # Unprocessable Entity
+    assert response.status_code == 422  # Unprocessable Entity
 
     new_price = 5.5
-    price_updatable_fields = PriceBasicUpdatableFields(
-        price=new_price
-    )
+    price_updatable_fields = PriceBasicUpdatableFields(price=new_price)
 
     response = client.put(
         f"/api/v1/prices/{db_price.id}",
@@ -656,7 +656,7 @@ def test_update_price(db_session, user_session: SessionModel):
     )
 
     assert response.status_code == 200
-    
+
     assert response.json()["price"] == new_price
 
 

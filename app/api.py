@@ -391,6 +391,7 @@ def delete_price(
     crud.delete_price(db, db_price=db_price)
     return
 
+
 @app.put(
     path="/api/v1/prices/{price_id}",
     response_model=schemas.PriceFull,
@@ -417,7 +418,6 @@ def update_price(
             status_code=404,
             detail=f"Price with code {price_id} not found",
         )
-    
     # Check if the price belongs to the current user
     if db_price.owner != current_user.user_id:
         raise HTTPException(
@@ -427,6 +427,7 @@ def update_price(
 
     # updated price
     return crud.update_price(db, db_price, new_price)
+
 
 # Routes: Proofs
 # ------------------------------------------------------------------------------

@@ -17,10 +17,10 @@ from app.schemas import (
     LocationCreate,
     LocationFilter,
     LocationFull,
+    PriceBasicUpdatableFields,
     PriceCreate,
     PriceFilter,
     PriceFull,
-    PriceBasicUpdatableFields,
     ProductCreate,
     ProductFilter,
     ProductFull,
@@ -330,6 +330,7 @@ def delete_price(db: Session, db_price: PriceFull) -> bool:
         db_proof.price_count -= 1
     db.commit()
     return True
+
 
 def update_price(db: Session, price: Price, new_values: PriceBasicUpdatableFields):
     for [key, value] in new_values:
