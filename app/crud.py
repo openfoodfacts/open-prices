@@ -426,7 +426,7 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
         # if the current directory contains 1000 images, we create a new one
         current_dir_id += 1
         current_dir = images_dir / str(current_dir_id)
-    current_dir.mkdir(exist_ok=True)
+    current_dir.mkdir(exist_ok=True, parents=True)
     full_file_path = current_dir / f"{file_stem}{extension}"
     # write the content of the file to the new file
     with full_file_path.open("wb") as f:

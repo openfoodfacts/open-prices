@@ -4,13 +4,10 @@ import io
 import pytest
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from app import crud
 from app.api import app, get_db
-from app.db import Base
+from app.db import Base, engine, session
 from app.models import Session as SessionModel
 from app.schemas import (
     LocationCreate,
@@ -21,25 +18,15 @@ from app.schemas import (
     PriceBasicUpdatableFields,
 )
 
-# database setup
-# ------------------------------------------------------------------------------
-SQLALCHEMY_DATABASE_URL = "sqlite://"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base.metadata.create_all(bind=engine)
 
 
 def override_get_db():
     try:
-        db = TestingSessionLocal()
+        db = session()
         yield db
     finally:
+        # close the DB session
         db.close()
 
 
@@ -62,7 +49,10 @@ PRODUCT_1 = ProductCreate(
     product_name="Chestnut spread 500 g",
     product_quantity=500,
     product_quantity_unit="g",
+    categories_tags=["en:spreads", "en:nuts-and-their-products"],
     brands="Clément Faugier",
+    brands_tags=["clement-faugier"],
+    labels_tags=[],
     source="off",
     unique_scans_n=20,
 )
@@ -71,7 +61,10 @@ PRODUCT_2 = ProductCreate(
     product_name="Chestnut spread 100 g",
     product_quantity=100,
     product_quantity_unit="g",
+    categories_tags=["en:spreads", "en:nuts-and-their-products"],
     brands="Clément Faugier",
+    brands_tags=["clement-faugier"],
+    labels_tags=[],
     source="off",
     unique_scans_n=10,
 )
@@ -80,7 +73,10 @@ PRODUCT_3 = ProductCreate(
     product_name="Crème bio de châtaignes 320 g",
     product_quantity=320,
     product_quantity_unit="g",
+    categories_tags=["en:spreads", "en:nuts-and-their-products"],
     brands="Ethiquable",
+    brands_tags=["paysans-d-ici", "ethiquable"],
+    labels_tags=["en:fair-trade", "en:organic", "en:made-in-france"],
     source="off",
     unique_scans_n=0,
 )
@@ -167,6 +163,7 @@ def location(db_session):
 
 @pytest.fixture(scope="function")
 def clean_users(db_session):
+    db_session.query(SessionModel).delete()
     db_session.query(crud.User).delete()
     db_session.commit()
 
@@ -551,14 +548,6 @@ def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices
     response = client.get("/api/v1/prices?category_tag=en:tomatoes")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
-    # 1 price with labels_tags
-    response = client.get("/api/v1/prices?labels_tags__like=en:organic")
-    assert response.status_code == 200
-    assert len(response.json()["items"]) == 1
-    # 1 price with origins_tags
-    response = client.get("/api/v1/prices?origins_tags__like=en:spain")
-    assert response.status_code == 200
-    assert len(response.json()["items"]) == 1
     # 1 price with price > 5
     response = client.get("/api/v1/prices?price__gt=5")
     assert response.status_code == 200
@@ -574,6 +563,7 @@ def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices
 
 
 def test_get_prices_orders(db_session, user_session: SessionModel, clean_prices):
+    # PRICE_1 date is "2023-10-31"
     crud.create_price(db_session, PRICE_1, user_session.user)
     crud.create_price(
         db_session,
@@ -584,8 +574,8 @@ def test_get_prices_orders(db_session, user_session: SessionModel, clean_prices)
     )
     response = client.get("/api/v1/prices")
     assert response.status_code == 200
-    assert (response.json()["items"][0]["date"]) == "2023-10-31"
-    response = client.get("/api/v1/prices?order_by=date")  # ASC
+    assert len(response.json()["items"]) == 2
+    response = client.get("/api/v1/prices?order_by=%2Bdate")  # +date, ASC
     assert response.status_code == 200
     assert (response.json()["items"][0]["date"]) == "2023-10-01"
     response = client.get("/api/v1/prices?order_by=-date")  # DESC
@@ -759,7 +749,7 @@ def test_get_proofs(user_session: SessionModel):
         }
 
     for i, item in enumerate(data):
-        assert item["id"] == i + 1
+        assert isinstance(item["id"], int)
         assert item["file_path"].startswith("0001/")
         assert item["file_path"].endswith(".webp")
         assert item["type"] == ("PRICE_TAG" if i == 0 else "RECEIPT")

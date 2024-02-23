@@ -71,9 +71,21 @@ class ProductFull(ProductCreate):
         description="quantity unit of the product: g or ml (depending on the product).",
         examples=["g", "ml"],
     )
+    categories_tags: list[str] = Field(
+        description="categories of the product.",
+        examples=[["en:breakfasts", "en:spreads"]],
+    )
     brands: str | None = Field(
         description="brand(s) of the product.",
         examples=["Rigoni di Asiago", "Lindt"],
+    )
+    brands_tags: list[str] = Field(
+        description="brands of the product.",
+        examples=[["douceur-du-verger", "marque-repere"]],
+    )
+    labels_tags: list[str] = Field(
+        description="labels of the product.",
+        examples=[["en:fair-trade", "en:organic", "en:made-in-france"]],
     )
     image_url: AnyHttpUrl | None = Field(
         description="URL of the product image.",
@@ -385,8 +397,6 @@ class PriceFilter(Filter):
     product_id: Optional[int] | None = None
     product_id__isnull: Optional[bool] | None = None
     category_tag: Optional[str] | None = None
-    labels_tags__like: Optional[str] | None = None
-    origins_tags__like: Optional[str] | None = None
     location_osm_id: Optional[int] | None = None
     location_osm_type: Optional[LocationOSMEnum] | None = None
     location_id: Optional[int] | None = None

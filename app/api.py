@@ -212,7 +212,8 @@ def authentication(
     if r.status_code == 200:
         # form_data.username can be the user_id or the email, so we need to
         # fetch the user_id from the response
-        user_id = r.json()["user_id"]
+        # We also need to lowercase the user_id as it's case-insensitive
+        user_id = r.json()["user_id"].lower().strip()
         token = create_token(user_id)
         session, *_ = crud.create_session(db, user_id=user_id, token=token)
         session = crud.update_session_last_used_field(db, session=session)
