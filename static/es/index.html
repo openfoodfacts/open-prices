@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Open Prices</title>
+    <link rel="stylesheet"
+          href="https://static.openfoodfacts.org/css/dist/app-ltr.css?v=1699366348"
+          data-base-layout="true">
+    <link rel="stylesheet"
+          href="https://static.openfoodfacts.org/css/dist/jqueryui/themes/base/jquery-ui.css"
+          data-base-layout="true">
+    <link rel="stylesheet"
+          href="https://static.openfoodfacts.org/css/dist/select2.min.css">
+</head>
+<body style="background-color: #f9f9f7;">
+<style>
+    .faq-row {
+        margin-bottom: 2rem !important;
+    }
+
+    a {
+        text-decoration: underline;
+    }
+
+    #top-header {
+        padding-top: 1rem;
+        padding-right: 1rem;
+        display: flex;
+        justify-content: right;
+    }
+
+    #web-app-button {
+        background-color: #1868af;
+        color: white;
+        font-size: 1rem;
+        padding: 0.9rem 1.2em;
+    }
+</style>
+<div class="row">
+    <div class="medium-centered small-12 medium-8 columns">
+        <div class="row">
+            <div class="small-12 columns">
+                <header id="top-header">
+                    <a id="web-app-button" href="/app/" class="button radius">
+                        <span class="bt-text">Web app</span>
+                    </a>
+                </header>
+            </div>
+        </div>
+        <div class="row">
+            <div class="small-12 columns">
+                <h1 class="emphasized-title" id="open-prices-title">Open Prices</h1>
+                <p><em>La base de datos abierta y colaborativa de precios de alimentos</em></p>
+                <h2 class="emphasized-title" id="why-open-prices">¿Por qué precios abiertos?</h2>
+                <p>Open Prices es un proyecto para recopilar y compartir precios de productos alimenticios en todo el mundo. Es un conjunto de datos disponible públicamente que se puede utilizar para investigación, análisis y más. Open Prices es desarrollado y mantenido por <a href="https://world.openfoodfacts.org">Open Food Facts</a>.</p>
+                <p>Actualmente son pocas las empresas que poseen grandes bases de datos de precios de productos a nivel de código de barras. Estos precios no están disponibles gratuitamente, sino que se venden a precios elevados a actores privados, investigadores y otras organizaciones que pueden pagarlos.</p>
+                <h2 class="emphasized-title" id="how-does-open-prices-work">¿Cómo funciona Open Prices?</h2>
+                <p>Estamos colaborando con un conjunto de datos de código abierto sobre los precios de los alimentos. Los usuarios pueden agregar precios a través de nuestra <a href="/app/">aplicación web</a>. Los minoristas (tiendas) o las aplicaciones de terceros también pueden contribuir utilizando <a href="/api/docs">nuestra API</a>. Estamos trabajando en una aplicación móvil que estará disponible pronto.</p>
+                <p>Open Prices no sólo pretende almacenar precios individuales, sino también canastas de consumo, es decir, la lista de productos que la gente compra en un solo viaje de compras. Estos datos son de alto interés para que los investigadores analizan los hábitos de consumo de alimentos.</p>
+                <p>Cuando sea posible, solicitamos a los contribuyentes que proporcionen un comprobante del precio, en una foto de la etiqueta o un recibo. Esto es para facilitar la garantía de la calidad de los datos.</p>
+                <p>Si proporcionas un comprobante, significa que aceptas enviar tu canasta de consumos a Open Prices. El recibo será anónimo y lo pondremos a disposición del público para que pueda utilizarse con fines de investigación. Si no deseas compartir públicamente tu recibo, de todas formas puedes contribuir únicamente con la etiqueta del precio.</p>
+                <p>La base de datos de precios tiene la licencia <a href="https://opendatacommons.org/licenses/odbl/1.0/">Open Database License</a>, lo que significa que se puede utilizar para cualquier propósito, siempre y cuando des crédito a Open Prices y compartas cualquier modificación que realices en la base de datos.</p>
+                <p>Las imágenes de comprobante enviadas tienen la licencia internacional <a href="https://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.</p>
+                <h2 class="emphasized-title" id="faq">Preguntas más frecuentes (FAQ)</h2>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 .large-offset-1 columns">
+                <h4 class="emphasized-title" id="what-is-open-food-facts">¿Qué es Open Food Facts?</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p><a href="https://world.openfoodfacts.org">Open Food Facts</a> es una organización sin fines de lucro que recopila y comparte información sobre productos alimenticios de todo el mundo. Es un proyecto colaborativo que depende de voluntarios para recopilar datos. Open Food Facts es la base de datos abierta de productos alimenticios más grande del mundo, con más de 3 millones de productos en 200 países.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 .large-offset-1 columns">
+                <h4 class="emphasized-title"
+                    id="why-is-open-food-facts-doing-this">¿Por qué Open Food Facts hace esto?</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p>La información sobre precios es de suma importancia para comprender los sistemas alimentarios. Es un factor clave para comprender el costo de los alimentos y promover dietas más saludables. Abrir datos de precios es una forma de facilitar que investigadores, periodistas y ciudadanos comprendan mejor cómo los precios de los alimentos varían geográficamente y con el tiempo.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 columns">
+                <h4 class="emphasized-title" id="how-can-i-contribute">¿Cómo puedo contribuir?</h4>
+            </div>
+            <div class="small-12 medium-8 columns end">
+                <p>Puede contribuir agregando precios al conjunto de datos. Puede hacerlo utilizando
+                    <a href="/app/">nuestra aplicación web</a> o nuestra aplicación móvil (próximamente). También hay
+                    <a href="/api/docs">una API</a> disponible si desea integrar Open Prices en su aplicación. Necesita una cuenta de Open Food Facts para contribuir. Si aún no la tienes, puedes
+                    <a href="https://world.openfoodfacts.org/">crear una aquí</a>.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 .large-offset-1 columns">
+                <h4 class="emphasized-title" id="how-can-i-use-the-data">¿Cómo puedo utilizar los datos?</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p>Los datos están disponibles bajo la
+                    <a href="https://opendatacommons.org/licenses/odbl/1.0/">Licence Open Database</a>, lo que significa que se pueden utilizar para cualquier propósito, siempre y cuando acredites Open Prices y compartas cualquier modificación que realices en el conjunto de datos.
+                    <br/><br/>
+                    La API REST proporciona una forma de acceder fácilmente a los datos. Próximamente también estará disponible una Data dump.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 .large-offset-1 columns">
+                <h4 class="emphasized-title" id="how-can-i-get-in-touch">¿Cómo puedo ponerme en contacto?</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p>Puede ponerse en contacto con nosotros enviando un correo electrónico a
+                    <a href="mailto:contact@openfoodfacts.org">contact@openfoodfacts.org</a>.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 .large-offset-1 columns">
+                <h4 class="emphasized-title"
+                    id="how-can-i-support-open-prices">¿Cómo puedo apoyar a Open Prices?</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p>Puedes apoyar a Open Prices contribuyendo al proyecto, compartiéndolo con tus amigos y familiares y
+                    <a href="https://world.openfoodfacts.org/donate-to-open-food-facts">donando a Open Food Facts</a>.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 .large-offset-1 columns">
+                <h4 class="emphasized-title"
+                    id="why-cant-i-have-access-to-image-proofs-contributed-by-other-users">¿Por qué no puedo tener acceso a algunas imágenes de comprobantes aportadas por otros usuarios?</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p>Solicitamos a los contribuyentes que proporcionen una prueba de los precios, en forma de una foto de la etiqueta o un recibo para garantizar la calidad de los datos. Todavía no tenemos un sistema para anonimizar las imágenes de los recibos automáticamente, por lo que no queremos que estén disponibles públicamente, ya que pueden contener información personal.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 .large-offset-1 columns">
+                <h4 class="emphasized-title"
+                    id="why-do-you-ask-for-an-open-street-map-id-when-i-add-a-price">¿Por qué me piden un ID de OpenStreetMap cuando agrego un precio?</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p>Solicitamos un ID de OpenStreetMap para poder vincular el precio a una tienda específica. Esto es útil para poder mostrar el precio en un mapa y poder analizar las diferencias de precios regionales o entre locales.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 .large-offset-1 columns">
+                <h4 class="emphasized-title" id="im-a-retailer-and-i-want-to-contribute-prices.-how-can-i-do-that">Soy minorista o tienda y quiero aportar precios. ¿Cómo puedo hacerlo?</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p>Puede contribuir con precios utilizando
+                    <a href="/api/docs">nuestra API</a>. Si desea contribuir con precios a escala, póngase en contacto con nosotros en
+                    <a href="mailto:contact@openfoodfacts.org">contact@openfoodfacts.org</a>.</p>
+            </div>
+        </div>
+        <div class="row faq-row">
+            <div class="small-12 medium-4 columns">
+                <h4 class="emphasized-title" id="do-you-consider-scraping-prices-from-retailers-websites">¿Consideran extraer precios de los sitios web de las minoristas? (Web scraping)</h4>
+            </div>
+            <div class="small-12 medium-8 columns">
+                <p>Por razones legales y técnicas, no consideramos que extraer precios de los sitios web de los minoristas sea una forma válida de contribuir a Open Prices. Queremos asegurarnos de que los precios que recopilamos sean precisos y estén actualizados, y recibir precios copiados (Scraping) de los contribuyentes no nos permite hacerlo.</p>
+                <p>El "Web scraping" de precios es una opción considerada para una versión futura de Open Prices, pero sería realizada por el propio Open Prices para que podamos tener comprobantes de precios basados en la página HTML.</p>
+            </div>
+        </div>
+        <div class="row">
+            <p><a href="/">English version</a>
+                <a href="/fr">Version française</a> </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
