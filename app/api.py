@@ -300,7 +300,7 @@ def price_transformer(
     response_model=Page[schemas.PriceFullWithRelations],
     tags=["Prices"],
 )
-def get_price(
+def get_prices(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
     current_user: schemas.UserCreate | None = Depends(get_current_user_optional),
@@ -483,6 +483,33 @@ def upload_proof(
     return db_proof
 
 
+@app.get(
+    "/api/v1/proofs/{proof_id}",
+    response_model=schemas.ProofFull,
+    tags=["Proofs"],
+)
+def get_user_proof_by_id(
+    proof_id: int,
+    current_user: schemas.UserCreate = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # get proof
+    db_proof = crud.get_proof_by_id(db, id=proof_id)
+    if not db_proof:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Proof with id {proof_id} not found",
+        )
+    # Check if the proof belongs to the current user,
+    # if it doesn't, the user needs to be moderator
+    if db_proof.owner != current_user.user_id and not current_user.is_moderator:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Proof does not belong to current user",
+        )
+    return db_proof
+
+
 @app.delete(
     "/api/v1/proofs/{proof_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -501,8 +528,8 @@ def delete_proof(
     Can delete only proofs that are not associated with prices.
     A moderator can delete not owned proofs.
     """
-    db_proof = crud.get_proof_by_id(db, id=proof_id)
     # get proof
+    db_proof = crud.get_proof_by_id(db, id=proof_id)
     if not db_proof:
         raise HTTPException(
             status_code=404,

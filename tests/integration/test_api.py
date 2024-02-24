@@ -799,6 +799,51 @@ def test_get_proofs_filters(db_session, user_session: SessionModel):
     # assert response.json()["items"][0]["id"] > response.json()["items"][1]["id"]  # noqa
 
 
+def test_get_proof(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+):
+    proof_user = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, True
+    )
+    proof_user_1 = crud.create_proof(
+        db_session, "/", " ", "RECEIPT", user_session_1.user, True
+    )
+
+    # get without auth
+    response = client.get(f"/api/v1/proofs/{proof_user.id}")
+    assert response.status_code == 401
+
+    # with authentication but proof unknown
+    response = client.get(
+        f"/api/v1/proofs/{proof_user_1.id + 1}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 404
+
+    # get but not proof owner and not moderator
+    crud.update_user_moderator(db_session, user_session_1.user_id, False)
+    response = client.get(
+        f"/api/v1/proofs/{proof_user.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 403
+
+    # get but not proof owner but moderator
+    crud.update_user_moderator(db_session, user_session_1.user_id, True)
+    response = client.get(
+        f"/api/v1/proofs/{proof_user.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 200
+
+    # get and proof owner
+    response = client.get(
+        f"/api/v1/proofs/{proof_user.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 200
+
+
 def test_delete_proof(
     db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
 ):
