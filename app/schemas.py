@@ -8,7 +8,6 @@ from pydantic import (
     AnyHttpUrl,
     BaseModel,
     ConfigDict,
-    Extra,
     Field,
     field_validator,
     model_validator,
@@ -373,7 +372,7 @@ class PriceBasicUpdatableFields(BaseModel):
     date: datetime.date | None = None
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
 
 class PriceFull(PriceCreate):
