@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.22.0](https://github.com/openfoodfacts/open-prices/compare/v1.21.0...v1.22.0) (2024-02-24)
+
+
+### Features
+
+* add endpoint to update price ([#202](https://github.com/openfoodfacts/open-prices/issues/202)) ([a4b66a6](https://github.com/openfoodfacts/open-prices/commit/a4b66a673771835533bd615e0495e495552c97da))
+* allow filtering Prices by proof_id([#219](https://github.com/openfoodfacts/open-prices/issues/219)) ([a26d1b2](https://github.com/openfoodfacts/open-prices/commit/a26d1b22b445d7baadc7020baf560f966c394d91))
+* new GET proof by id endpoint ([#228](https://github.com/openfoodfacts/open-prices/issues/228)) ([177a8d2](https://github.com/openfoodfacts/open-prices/commit/177a8d2ebf11450739dfb94c8abd7d73df93d573))
+* translate landing page in spanish ([#230](https://github.com/openfoodfacts/open-prices/issues/230)) ([ef019fc](https://github.com/openfoodfacts/open-prices/commit/ef019fc45de7cc39b3c31d4c92c0d2fbca51f80a))
+
+
+### Bug Fixes
+
+* fix price update endpoint ([#227](https://github.com/openfoodfacts/open-prices/issues/227)) ([5ec2e2e](https://github.com/openfoodfacts/open-prices/commit/5ec2e2e6bfe3ef8fc87f561942b1f2150c8c3e4e))
+
 ## [1.21.0](https://github.com/openfoodfacts/open-prices/compare/v1.20.0...v1.21.0) (2024-02-21)
 
 
