@@ -6,8 +6,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 
 from app import crud
-from app.api import app, get_db
-from app.db import Base, engine, session
+from app.api import app
+from app.db import Base, engine, get_db, session
 from app.models import Session as SessionModel
 from app.schemas import (
     LocationCreate,
