@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app import crud, schemas
 from app.db import get_db
 
-router = APIRouter(prefix="/locations", tags=["Locations"])
+router = APIRouter(prefix="/locations")
 
 
 @router.get("", response_model=Page[schemas.LocationFull])

@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 from app import crud, schemas
 from app.db import get_db
 
-router = APIRouter(prefix="/products", tags=["Products"])
+router = APIRouter(prefix="/products")
 
 
-@router.get("", response_model=Page[schemas.ProductFull], tags=["Products"])
+@router.get("", response_model=Page[schemas.ProductFull])
 def get_products(
     filters: schemas.ProductFilter = FilterDepends(schemas.ProductFilter),
     db: Session = Depends(get_db),
@@ -21,7 +21,6 @@ def get_products(
 @router.get(
     "/code/{product_code}",
     response_model=schemas.ProductFull,
-    tags=["Products"],
 )
 def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
     db_product = crud.get_product_by_code(db, code=product_code)
@@ -36,7 +35,6 @@ def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
 @router.get(
     "/{product_id}",
     response_model=schemas.ProductFull,
-    tags=["Products"],
 )
 def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
     db_product = crud.get_product_by_id(db, id=product_id)

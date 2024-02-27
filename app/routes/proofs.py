@@ -11,10 +11,10 @@ from app.auth import get_current_user
 from app.db import get_db
 from app.enums import ProofTypeEnum
 
-router = APIRouter(prefix="/proofs", tags=["Proofs"])
+router = APIRouter(prefix="/proofs")
 
 
-@router.get("", response_model=Page[schemas.ProofFull], tags=["Proofs"])
+@router.get("", response_model=Page[schemas.ProofFull])
 def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
     filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
@@ -33,7 +33,6 @@ def get_user_proofs(
     "/upload",
     response_model=schemas.ProofFull,
     status_code=status.HTTP_201_CREATED,
-    tags=["Proofs"],
 )
 def upload_proof(
     file: UploadFile,
@@ -69,7 +68,6 @@ def upload_proof(
 @router.get(
     "/{proof_id}",
     response_model=schemas.ProofFull,
-    tags=["Proofs"],
 )
 def get_user_proof_by_id(
     proof_id: int,
@@ -96,7 +94,6 @@ def get_user_proof_by_id(
 @router.delete(
     "/{proof_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    tags=["Proofs"],
 )
 def delete_proof(
     proof_id: int,

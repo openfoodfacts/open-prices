@@ -11,7 +11,7 @@ from app.auth import get_current_user, get_current_user_optional
 from app.db import get_db
 from app.models import Price
 
-router = APIRouter(prefix="/prices", tags=["Prices"])
+router = APIRouter(prefix="/prices")
 
 
 def price_transformer(
@@ -42,7 +42,6 @@ def price_transformer(
 @router.get(
     "",
     response_model=Page[schemas.PriceFullWithRelations],
-    tags=["Prices"],
 )
 def get_prices(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
@@ -60,7 +59,6 @@ def get_prices(
     "",
     response_model=schemas.PriceFull,
     status_code=status.HTTP_201_CREATED,
-    tags=["Prices"],
 )
 def create_price(
     price: schemas.PriceCreateWithValidation,
@@ -106,7 +104,6 @@ def create_price(
     path="/{price_id}",
     response_model=schemas.PriceFull,
     status_code=status.HTTP_200_OK,
-    tags=["Prices"],
 )
 def update_price(
     price_id: int,
@@ -142,7 +139,6 @@ def update_price(
 @router.delete(
     "/{price_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    tags=["Prices"],
 )
 def delete_price(
     price_id: int,
