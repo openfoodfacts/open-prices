@@ -7,12 +7,12 @@ from fastapi_pagination import add_pagination
 from openfoodfacts.utils import get_logger
 
 from app.config import settings
-from app.routes.auth import auth_router, session_router
-from app.routes.locations import router as locations_router
-from app.routes.prices import router as prices_router
-from app.routes.products import router as products_router
-from app.routes.proofs import router as proofs_router
-from app.routes.users import router as users_router
+from app.routers.auth import auth_router, session_router
+from app.routers.locations import router as locations_router
+from app.routers.prices import router as prices_router
+from app.routers.products import router as products_router
+from app.routers.proofs import router as proofs_router
+from app.routers.users import router as users_router
 from app.utils import init_sentry
 
 logger = get_logger(level=settings.log_level.to_int())
