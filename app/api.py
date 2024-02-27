@@ -13,11 +13,11 @@ from app import crud, schemas
 from app.config import settings
 from app.db import get_db
 from app.utils import init_sentry
-from app.views.auth import auth_router, session_router
-from app.views.locations import router as locations_router
-from app.views.prices import router as prices_router
-from app.views.products import router as products_router
-from app.views.proofs import router as proofs_router
+from app.routes.auth import auth_router, session_router
+from app.routes.locations import router as locations_router
+from app.routes.prices import router as prices_router
+from app.routes.products import router as products_router
+from app.routes.proofs import router as proofs_router
 
 logger = get_logger(level=settings.log_level.to_int())
 
