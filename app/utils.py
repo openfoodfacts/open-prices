@@ -80,6 +80,11 @@ def normalize_product_fields(product: JSONType) -> JSONType:
     if product["unique_scans_n"] is None:
         product["unique_scans_n"] = 0
 
+    for key in ("categories_tags", "labels_tags", "brands_tags"):
+        if key in product and product[key] is None:
+            # Set the field to an empty list if it's None
+            product[key] = []
+
     return product
 
 

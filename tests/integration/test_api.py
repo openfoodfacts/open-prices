@@ -6,8 +6,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 
 from app import crud
-from app.api import app, get_db
-from app.db import Base, engine, session
+from app.api import app
+from app.db import Base, engine, get_db, session
 from app.models import Session as SessionModel
 from app.schemas import (
     LocationCreate,
@@ -101,6 +101,8 @@ PRICE_1 = PriceCreate(
     product_name="PATE NOCCIOLATA BIO 700G",
     # category="en:tomatoes",
     price=3.5,
+    price_is_discounted=True,
+    price_without_discount=5,
     currency="EUR",
     location_osm_id=123,
     location_osm_type="NODE",
@@ -582,6 +584,65 @@ def test_get_prices_orders(db_session, user_session: SessionModel, clean_prices)
     assert (response.json()["items"][0]["date"]) == "2023-10-31"
 
 
+def test_update_price(db_session, user_session: SessionModel):
+    db_price = crud.create_price(db_session, PRICE_1, user_session.user)
+    new_price = 5.5
+    PRICE_UPDATE_PARTIAL = {"price": new_price}
+    # without authentication
+    response = client.patch(f"/api/v1/prices/{db_price.id}")
+    assert response.status_code == 401
+    # with authentication but not price owner
+    user_1_session, *_ = crud.create_session(db_session, USER_1.user_id, USER_1.token)
+    response = client.patch(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_1_session.token}"},
+        json=jsonable_encoder(PRICE_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 403
+    # with authentication but price unknown
+    response = client.patch(
+        f"/api/v1/prices/{db_price.id+1}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PRICE_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 404
+    # with authentication and price owner
+    response = client.patch(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PRICE_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 200
+    assert response.json()["price"] == new_price
+    assert response.json()["price_is_discounted"] == PRICE_1.price_is_discounted
+    assert response.json()["price_without_discount"] == PRICE_1.price_without_discount
+    # with authentication and price owner
+    PRICE_UPDATE_PARTIAL_MORE = {
+        **PRICE_UPDATE_PARTIAL,
+        "price_is_discounted": False,
+        "price_without_discount": None,
+    }
+    response = client.patch(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PRICE_UPDATE_PARTIAL_MORE),
+    )
+    assert response.status_code == 200
+    assert response.json()["price"] == new_price
+    assert (
+        response.json()["price_is_discounted"] != PRICE_1.price_is_discounted
+    )  # False
+    assert response.json()["price_without_discount"] is None
+    # with authentication and price owner but extra fields
+    PRICE_UPDATE_PARTIAL_WRONG = {**PRICE_UPDATE_PARTIAL, "proof_id": 1}
+    response = client.patch(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PRICE_UPDATE_PARTIAL_WRONG),
+    )
+    assert response.status_code == 422
+
+
 def test_delete_price(db_session, user_session: SessionModel, clean_prices):
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
     # without authentication
@@ -596,7 +657,7 @@ def test_delete_price(db_session, user_session: SessionModel, clean_prices):
     assert response.status_code == 403
     # with authentication but price unknown
     response = client.delete(
-        f"/api/v1/prices/{db_price.id+1}",
+        f"/api/v1/prices/{db_price.id + 1}",
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 404
@@ -736,6 +797,51 @@ def test_get_proofs_filters(db_session, user_session: SessionModel):
     # assert response.status_code == 200
     # assert len(response.json()["items"]) == 2
     # assert response.json()["items"][0]["id"] > response.json()["items"][1]["id"]  # noqa
+
+
+def test_get_proof(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+):
+    proof_user = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, True
+    )
+    proof_user_1 = crud.create_proof(
+        db_session, "/", " ", "RECEIPT", user_session_1.user, True
+    )
+
+    # get without auth
+    response = client.get(f"/api/v1/proofs/{proof_user.id}")
+    assert response.status_code == 401
+
+    # with authentication but proof unknown
+    response = client.get(
+        f"/api/v1/proofs/{proof_user_1.id + 1}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 404
+
+    # get but not proof owner and not moderator
+    crud.update_user_moderator(db_session, user_session_1.user_id, False)
+    response = client.get(
+        f"/api/v1/proofs/{proof_user.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 403
+
+    # get but not proof owner but moderator
+    crud.update_user_moderator(db_session, user_session_1.user_id, True)
+    response = client.get(
+        f"/api/v1/proofs/{proof_user.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+    )
+    assert response.status_code == 200
+
+    # get and proof owner
+    response = client.get(
+        f"/api/v1/proofs/{proof_user.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 200
 
 
 def test_delete_proof(
@@ -907,13 +1013,13 @@ def test_get_product(db_session, clean_products):
     response = client.get(f"/api/v1/products/{last_product.id}")
     assert response.status_code == 200
     # by id: product does not exist
-    response = client.get(f"/api/v1/products/{last_product.id+1}")
+    response = client.get(f"/api/v1/products/{last_product.id + 1}")
     assert response.status_code == 404
     # by code: product exists
     response = client.get(f"/api/v1/products/code/{last_product.code}")
     assert response.status_code == 200
     # by code: product does not exist
-    response = client.get(f"/api/v1/products/code/{last_product.code+'X'}")
+    response = client.get(f"/api/v1/products/code/{last_product.code + 'X'}")
     assert response.status_code == 404
 
 
@@ -957,7 +1063,7 @@ def test_get_location(location):
     response = client.get(f"/api/v1/locations/{location.id}")
     assert response.status_code == 200
     # by id: location does not exist
-    response = client.get(f"/api/v1/locations/{location.id+1}")
+    response = client.get(f"/api/v1/locations/{location.id + 1}")
     assert response.status_code == 404
     # by osm id & type: location exists
     response = client.get(
@@ -970,6 +1076,6 @@ def test_get_location(location):
     assert response.status_code == 200
     # by osm id & type: location does not exist
     response = client.get(
-        f"/api/v1/locations/osm/{location.osm_type.value}/{location.osm_id+1}"
+        f"/api/v1/locations/osm/{location.osm_type.value}/{location.osm_id + 1}"
     )
     assert response.status_code == 404

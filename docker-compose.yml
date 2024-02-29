@@ -2,7 +2,7 @@ version: "3.9"
 
 x-api-common: &api-common
   image: ghcr.io/openfoodfacts/open-prices/api:${TAG:-dev}
-  restart: ${RESTART_POLICY}
+  restart: $RESTART_POLICY
   environment:
     - POSTGRES_DB
     - POSTGRES_USER
@@ -48,6 +48,7 @@ services:
       - "${POSTGRES_EXPOSE:-127.0.0.1:5432}:5432"
 
   nginx:
+    restart: $RESTART_POLICY
     image: nginx:1.25-alpine
     volumes:
       # Mount the nginx configuration file

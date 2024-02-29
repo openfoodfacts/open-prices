@@ -18,6 +18,7 @@ from app.models import User
 from app.schemas import (
     LocationCreate,
     LocationFilter,
+    PriceBasicUpdatableFields,
     PriceCreate,
     PriceFilter,
     ProductCreate,
@@ -334,6 +335,15 @@ def delete_price(db: Session, db_price: Price) -> bool:
         db_proof.price_count -= 1
     db.commit()
     return True
+
+
+def update_price(db: Session, price: Price, new_values: PriceBasicUpdatableFields):
+    new_values_cleaned = new_values.model_dump(exclude_unset=True)
+    for key in new_values_cleaned:
+        setattr(price, key, new_values_cleaned[key])
+    db.commit()
+    db.refresh(price)
+    return price
 
 
 # Proofs

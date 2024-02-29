@@ -46,7 +46,7 @@ license = "AGPL-3.0 licence"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "~3.11"
 alembic = "~1.12.1"
 Babel = "~2.13.1"
 fastapi = "~0.103.1"
