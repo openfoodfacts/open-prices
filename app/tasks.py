@@ -4,7 +4,7 @@ import tqdm
 from openfoodfacts import DatasetType, Flavor, ProductDataset
 from openfoodfacts.types import JSONType
 from openfoodfacts.utils import get_logger
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
 from app import crud
@@ -135,7 +135,7 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
             )
             item = normalize_product_fields(item)
             execute_result = db.execute(
-                Product.__table__.update()
+                update(Product)
                 .where(Product.code == product_code)
                 .where(Product.source == Flavor.off)
                 # Update the product if only if it has not been updated since

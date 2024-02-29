@@ -6,7 +6,7 @@ from typing import Any, Optional, Sequence
 
 from fastapi import UploadFile
 from fastapi_filter.contrib.sqlalchemy import Filter
-from sqlalchemy import Row, Select, select
+from sqlalchemy import Row, Select, delete, select
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 
@@ -154,9 +154,7 @@ def delete_session(db: Session, session_id: int) -> bool:
     :param session_id: the DB session ID
     :return: a bool indicating whether the session was deleted
     """
-    results = db.execute(
-        SessionModel.__table__.delete().where(SessionModel.id == session_id)
-    )
+    results = db.execute(delete(SessionModel).where(SessionModel.id == session_id))
     db.commit()
     return results.rowcount > 0
 
