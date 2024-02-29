@@ -46,7 +46,7 @@ def get_current_session(
     )
 
 
-@auth_router.post("/")
+@auth_router.post("")
 def authentication(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     response: Response,
@@ -111,7 +111,7 @@ def authentication(
     )
 
 
-@session_router.get("/", response_model=schemas.SessionBase)
+@session_router.get("", response_model=schemas.SessionBase)
 def get_user_session(
     current_session: SessionModel = Depends(get_current_session),
 ):
@@ -119,7 +119,7 @@ def get_user_session(
     return current_session
 
 
-@session_router.delete("/")
+@session_router.delete("")
 def delete_user_session(
     current_session: SessionModel = Depends(get_current_session),
     db: Session = Depends(get_db),

@@ -10,7 +10,7 @@ from app.db import get_db
 router = APIRouter(prefix="/locations")
 
 
-@router.get("/", response_model=Page[schemas.LocationFull])
+@router.get("", response_model=Page[schemas.LocationFull])
 def get_locations(
     filters: schemas.LocationFilter = FilterDepends(schemas.LocationFilter),
     db: Session = Depends(get_db),

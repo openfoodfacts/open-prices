@@ -14,7 +14,7 @@ from app.enums import ProofTypeEnum
 router = APIRouter(prefix="/proofs")
 
 
-@router.get("/", response_model=Page[schemas.ProofFull])
+@router.get("", response_model=Page[schemas.ProofFull])
 def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
     filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),

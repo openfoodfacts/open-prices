@@ -40,7 +40,7 @@ def price_transformer(
 
 
 @router.get(
-    "/",
+    "",
     response_model=Page[schemas.PriceFullWithRelations],
 )
 def get_prices(
@@ -56,7 +56,7 @@ def get_prices(
 
 
 @router.post(
-    "/",
+    "",
     response_model=schemas.PriceFull,
     status_code=status.HTTP_201_CREATED,
 )
