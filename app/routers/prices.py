@@ -118,7 +118,7 @@ def update_price(
     new_price: schemas.PriceBasicUpdatableFields,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Price:
     """
     Update a price.
 

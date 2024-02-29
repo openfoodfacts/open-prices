@@ -75,7 +75,7 @@ def get_user_proof_by_id(
     proof_id: int,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Proof:
     # get proof
     db_proof = crud.get_proof_by_id(db, id=proof_id)
     if not db_proof:

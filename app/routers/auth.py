@@ -3,7 +3,7 @@ import uuid
 from typing import Annotated
 
 import requests
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -49,7 +49,6 @@ def get_current_session(
 @auth_router.post("/")
 def authentication(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    response: Response,
     set_cookie: Annotated[
         bool,
         Query(
@@ -83,12 +82,12 @@ def authentication(
     # By specifying body=1, information about the user is returned in the
     # response, including the user_id
     data = {"user_id": form_data.username, "password": form_data.password, "body": 1}
-    r = requests.post(f"{settings.oauth2_server_url}", data=data)  # type: ignore
-    if r.status_code == 200:
+    response = requests.post(f"{settings.oauth2_server_url}", data=data)
+    if response.status_code == 200:
         # form_data.username can be the user_id or the email, so we need to
         # fetch the user_id from the response
         # We also need to lowercase the user_id as it's case-insensitive
-        user_id = r.json()["user_id"].lower().strip()
+        user_id = response.json()["user_id"].lower().strip()
         token = create_token(user_id)
         session, *_ = crud.create_session(db, user_id=user_id, token=token)
         session = crud.update_session_last_used_field(db, session=session)
@@ -99,7 +98,7 @@ def authentication(
             # is ready
             response.set_cookie(key="opsession", value=token)
         return {"access_token": token, "token_type": "bearer"}
-    elif r.status_code == 403:
+    elif response.status_code == 403:
         time.sleep(2)  # prevents brute-force
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

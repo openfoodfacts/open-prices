@@ -337,7 +337,9 @@ def delete_price(db: Session, db_price: Price) -> bool:
     return True
 
 
-def update_price(db: Session, price: Price, new_values: PriceBasicUpdatableFields):
+def update_price(
+    db: Session, price: Price, new_values: PriceBasicUpdatableFields
+) -> Price:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(price, key, new_values_cleaned[key])
