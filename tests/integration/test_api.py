@@ -844,6 +844,67 @@ def test_get_proof(
     assert response.status_code == 200
 
 
+def test_update_proof(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+):
+    # create proof
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "PRICE_TAG"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    proof = crud.get_proof_by_id(db_session, response.json().get("id"))
+
+    PROOF_UPDATE_PARTIAL = {"is_public": False}
+    # without authentication
+    response = client.patch(f"/api/v1/proofs/{proof.id}")
+    assert response.status_code == 401
+    # with authentication but not proof owner and not moderator
+    crud.update_user_moderator(db_session, USER_1.user_id, False)
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 403
+    # with authentication but proof unknown
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id + 1}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 404
+    # with authentication and proof owner
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 200
+    assert response.json()["is_public"] == False
+    assert response.json()["type"] == proof.type.value
+    # with authentication and proof owner more fields
+    PROOF_UPDATE_PARTIAL_MORE = {**PROOF_UPDATE_PARTIAL, "type": "RECEIPT"}
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL_MORE),
+    )
+    assert response.status_code == 200
+    assert response.json()["is_public"] == False
+    assert response.json()["type"] != proof.type.value
+    # with authentication and proof owner but extra fields
+    PROOF_UPDATE_PARTIAL_WRONG = {**PROOF_UPDATE_PARTIAL, "owner": 1}
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL_WRONG),
+    )
+    assert response.status_code == 422
+
+
 def test_delete_proof(
     db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
 ):

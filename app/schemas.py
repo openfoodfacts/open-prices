@@ -157,6 +157,13 @@ class ProofFull(BaseModel):
     )
     created: datetime.datetime
 
+class ProofBasicUpdatableFields(BaseModel):
+    type: ProofTypeEnum | None = None
+    is_public: bool | None = None
+
+    class Config:
+        extra = "forbid"
+
 
 # Price
 # ------------------------------------------------------------------------------
