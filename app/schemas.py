@@ -452,6 +452,7 @@ class ProductFilter(Filter):
     source: Optional[Flavor] | None = None
     product_name__like: Optional[str] | None = None
     brands__like: Optional[str] | None = None
+    nutriscore_grade: Optional[str] | None = None
     unique_scans_n__gte: Optional[int] | None = None
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None
