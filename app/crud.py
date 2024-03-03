@@ -24,6 +24,7 @@ from app.schemas import (
     ProductCreate,
     ProductFilter,
     ProductFull,
+    ProofBasicUpdatableFields,
     ProofFilter,
     ProofFull,
     UserCreate,
@@ -444,6 +445,15 @@ def increment_proof_price_count(db: Session, proof: ProofFull):
     This is used to keep track of the number of prices linked to a proof.
     """
     proof.price_count += 1
+    db.commit()
+    db.refresh(proof)
+    return proof
+
+
+def update_proof(db: Session, proof: Proof, new_values: ProofBasicUpdatableFields):
+    new_values_cleaned = new_values.model_dump(exclude_unset=True)
+    for key in new_values_cleaned:
+        setattr(proof, key, new_values_cleaned[key])
     db.commit()
     db.refresh(proof)
     return proof
