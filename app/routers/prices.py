@@ -107,7 +107,7 @@ def create_price(
 )
 def update_price(
     price_id: int,
-    new_price: schemas.PriceBasicUpdatableFields,
+    price_new_values: schemas.PriceBasicUpdatableFields,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -133,7 +133,7 @@ def update_price(
         )
 
     # updated price
-    return crud.update_price(db, db_price, new_price)
+    return crud.update_price(db, db_price, price_new_values)
 
 
 @router.delete(

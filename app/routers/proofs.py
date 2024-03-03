@@ -98,7 +98,7 @@ def get_user_proof_by_id(
 )
 def update_proof(
     proof_id: int,
-    new_proof: schemas.ProofBasicUpdatableFields,
+    proof_new_values: schemas.ProofBasicUpdatableFields,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -125,7 +125,7 @@ def update_proof(
         )
 
     # updated proof
-    return crud.update_proof(db, db_proof, new_proof)
+    return crud.update_proof(db, db_proof, proof_new_values)
 
 
 @router.delete(
