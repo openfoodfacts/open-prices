@@ -24,9 +24,9 @@ from app.schemas import (
     ProductCreate,
     ProductFilter,
     ProductFull,
+    ProofBasicUpdatableFields,
     ProofFilter,
     ProofFull,
-    ProofBasicUpdatableFields,
     UserCreate,
 )
 
@@ -449,6 +449,7 @@ def increment_proof_price_count(db: Session, proof: ProofFull):
     db.refresh(proof)
     return proof
 
+
 def update_proof(db: Session, proof: Proof, new_values: ProofBasicUpdatableFields):
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
@@ -456,6 +457,7 @@ def update_proof(db: Session, proof: Proof, new_values: ProofBasicUpdatableField
     db.commit()
     db.refresh(proof)
     return proof
+
 
 def delete_proof(db: Session, db_proof: ProofFull) -> bool:
     # we delete the image of the proof

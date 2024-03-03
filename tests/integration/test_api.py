@@ -883,7 +883,7 @@ def test_update_proof(
         json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
     )
     assert response.status_code == 200
-    assert response.json()["is_public"] == False
+    assert response.json()["is_public"] is False
     assert response.json()["type"] == proof.type.value
     # with authentication and proof owner more fields
     PROOF_UPDATE_PARTIAL_MORE = {**PROOF_UPDATE_PARTIAL, "type": "RECEIPT"}
@@ -893,7 +893,7 @@ def test_update_proof(
         json=jsonable_encoder(PROOF_UPDATE_PARTIAL_MORE),
     )
     assert response.status_code == 200
-    assert response.json()["is_public"] == False
+    assert response.json()["is_public"] is False
     assert response.json()["type"] != proof.type.value
     # with authentication and proof owner but extra fields
     PROOF_UPDATE_PARTIAL_WRONG = {**PROOF_UPDATE_PARTIAL, "owner": 1}

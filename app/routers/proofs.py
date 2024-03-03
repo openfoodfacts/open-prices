@@ -90,6 +90,7 @@ def get_user_proof_by_id(
         )
     return db_proof
 
+
 @router.patch(
     path="/{proof_id}",
     response_model=schemas.ProofFull,
@@ -125,6 +126,7 @@ def update_proof(
 
     # updated proof
     return crud.update_proof(db, db_proof, new_proof)
+
 
 @router.delete(
     "/{proof_id}",
