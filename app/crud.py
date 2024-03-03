@@ -191,6 +191,11 @@ def get_products_query(filters: ProductFilter | None = None):
                 Product.categories_tags.contains([filters.categories_tags__contains])
             )
             filters.categories_tags__contains = None
+        if filters.labels_tags__contains:
+            query = query.filter(
+                Product.categories_tags.contains([filters.labels_tags__contains])
+            )
+            filters.labels_tags__contains = None
         query = filters.filter(query)
         query = filters.sort(query)
     return query
