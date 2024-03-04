@@ -514,7 +514,7 @@ def test_get_prices(db_session, user_session: SessionModel, clean_prices):
     assert len(response.json()["items"]) == 3
     for price_field in ["owner", "product_id", "location_id", "proof_id"]:
         assert price_field in response.json()["items"][0]
-    for price_relationship in ["product", "location"]:
+    for price_relationship in ["product", "location", "proof"]:
         assert price_relationship in response.json()["items"][0]
 
 
@@ -523,6 +523,42 @@ def test_get_prices_pagination():
     assert response.status_code == 200
     for key in PAGINATION_KEYS:
         assert key in response.json()
+
+
+def test_get_prices_with_proofs(db_session, user_session: SessionModel, clean_prices):
+    price_tag_proof = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, is_public=True
+    )
+    receipt_proof = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, is_public=False
+    )
+    crud.create_price(db_session, PRICE_1, user_session.user)
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(update={"proof_id": price_tag_proof.id}),
+        user_session.user,
+    )
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(update={"proof_id": receipt_proof.id}),
+        user_session.user,
+    )
+
+    # anonymous
+    response = client.get("/api/v1/prices")
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert response.json()["items"][1]["proof"]["file_path"] is None  # not public
+    assert response.json()["items"][2]["proof"] is None
+
+    # authenticated (and owner)
+    response = client.get(
+        "/api/v1/prices", headers={"Authorization": f"Bearer {user_session.token}"}
+    )
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert (
+        response.json()["items"][1]["proof"]["file_path"] is not None
+    )  # not public, but owner
+    assert response.json()["items"][2]["proof"] is None
 
 
 def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices):
