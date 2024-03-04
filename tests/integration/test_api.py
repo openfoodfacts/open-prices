@@ -1111,8 +1111,6 @@ def test_get_locations_pagination(clean_locations):
 
 
 def test_get_locations_filters(db_session):
-    print("************* STart test")
-    print(db_session)
     crud.create_location(db_session, LOCATION_1)
     crud.create_location(db_session, LOCATION_2)
 
