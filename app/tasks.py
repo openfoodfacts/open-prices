@@ -163,11 +163,11 @@ def create_price_location(db: Session, price: PriceFull):
     if price.location_osm_id and price.location_osm_type:
         # get or create the corresponding location
         location = LocationCreate(
-            osm_id=price.location_osm_id, osm_type=price.location_osm_type
+            osm_id=price.location_osm_id,
+            osm_type=price.location_osm_type,
+            price_count=1,
         )
-        db_location, created = crud.get_or_create_location(
-            db, location=location, init_price_count=1
-        )
+        db_location, created = crud.get_or_create_location(db, location=location)
         # link the location to the price
         crud.set_price_location(db, price=price, location=db_location)
         # fetch data from OpenStreetMap if created

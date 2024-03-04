@@ -10,13 +10,14 @@ from app.api import app
 from app.db import Base, engine, get_db, session
 from app.models import Session as SessionModel
 from app.schemas import (
-    LocationCreate,
+    LocationFull,
     PriceCreate,
     ProductCreate,
     ProofFilter,
     UserCreate,
 )
 
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 
@@ -79,22 +80,36 @@ PRODUCT_3 = ProductCreate(
     source="off",
     unique_scans_n=0,
 )
-LOCATION = LocationCreate(osm_id=3344841823, osm_type="NODE")
-LOCATION_1 = LocationCreate(
+LOCATION = LocationFull(
+    id=1, osm_id=3344841823, osm_type="NODE", created=datetime.datetime.now()
+)
+LOCATION_1 = LocationFull(
+    id=2,
     osm_id=652825274,
     osm_type="NODE",
     osm_name="Monoprix",
     osm_address_postcode="38000",
     osm_address_city="Grenoble",
     osm_address_country="France",
+    osm_display_name="MMonoprix, Boulevard Joseph Vallier, Secteur 1, Grenoble, Isère, Auvergne-Rhône-Alpes, France métropolitaine, 38000, France",
+    osm_lat=45.1805534,
+    osm_lon=5.7153387,
+    created=datetime.datetime.now(),
+    updated=datetime.datetime.now(),
 )
-LOCATION_2 = LocationCreate(
+LOCATION_2 = LocationFull(
+    id=3,
     osm_id=6509705997,
     osm_type="NODE",
     osm_name="Carrefour",
     osm_address_postcode="1000",
     osm_address_city="Bruxelles - Brussel",
     osm_address_country="België / Belgique / Belgien",
+    osm_display_name="Carrefour à Bruxelles",
+    osm_lat=1,
+    osm_lon=2,
+    created=datetime.datetime.now(),
+    updated=datetime.datetime.now(),
 )
 PRICE_1 = PriceCreate(
     product_code="8001505005707",
@@ -1095,20 +1110,20 @@ def test_get_locations_pagination(clean_locations):
         assert key in response.json()
 
 
-# def test_get_locations_filters(db_session, clean_locations):
-#     crud.create_location(db_session, LOCATION_1)
-#     crud.create_location(db_session, LOCATION_2)
+def test_get_locations_filters(db_session):
+    crud.create_location(db_session, LOCATION_1)
+    crud.create_location(db_session, LOCATION_2)
 
-#     assert len(crud.get_locations(db_session)) == 2
+    assert len(crud.get_locations(db_session)) == 2
 
-#     # 1 location Monoprix
-#     response = client.get("/api/v1/locations?osm_name__like=Monoprix")
-#     assert response.status_code == 200
-#     assert len(response.json()["items"]) == 1
-#     # 1 location in France
-#     response = client.get("/api/v1/locations?osm_address_country__like=France")  # noqa
-#     assert response.status_code == 200
-#     assert len(response.json()["items"]) == 1
+    # 1 location Monoprix
+    response = client.get("/api/v1/locations?osm_name__like=Monoprix")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 location in France
+    response = client.get("/api/v1/locations?osm_address_country__like=France")  # noqa
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
 
 
 def test_get_location(location):
@@ -1116,7 +1131,7 @@ def test_get_location(location):
     response = client.get(f"/api/v1/locations/{location.id}")
     assert response.status_code == 200
     # by id: location does not exist
-    response = client.get(f"/api/v1/locations/{location.id + 1}")
+    response = client.get("/api/v1/locations/99999")
     assert response.status_code == 404
     # by osm id & type: location exists
     response = client.get(

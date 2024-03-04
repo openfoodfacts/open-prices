@@ -502,9 +502,7 @@ def get_location_by_osm_id_and_type(
     )
 
 
-def create_location(
-    db: Session, location: LocationCreate, price_count: int = 0
-) -> Location:
+def create_location(db: Session, location: LocationCreate) -> Location:
     """Create a location in the database.
 
     :param db: the database session
@@ -513,16 +511,14 @@ def create_location(
         to 0
     :return: the created location
     """
-    db_location = Location(price_count=price_count, **location.model_dump())
+    db_location = Location(**location.model_dump())
     db.add(db_location)
     db.commit()
     db.refresh(db_location)
     return db_location
 
 
-def get_or_create_location(
-    db: Session, location: LocationCreate, init_price_count: int = 0
-):
+def get_or_create_location(db: Session, location: LocationCreate):
     """Get or create a location in the database.
 
     :param db: the database session
@@ -537,9 +533,7 @@ def get_or_create_location(
         db, osm_id=location.osm_id, osm_type=location.osm_type
     )
     if not db_location:
-        db_location = create_location(
-            db, location=location, price_count=init_price_count
-        )
+        db_location = create_location(db, location=location)
         created = True
     return db_location, created
 

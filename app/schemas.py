@@ -114,22 +114,22 @@ class LocationCreate(BaseModel):
 
     osm_id: int = Field(gt=0)
     osm_type: LocationOSMEnum
+    price_count: int = Field(
+        description="number of prices for this location.", examples=[15], default=0
+    )
 
 
 class LocationFull(LocationCreate):
     id: int
-    osm_name: str | None
-    osm_display_name: str | None
-    osm_address_postcode: str | None
-    osm_address_city: str | None
-    osm_address_country: str | None
-    osm_lat: float | None
-    osm_lon: float | None
-    price_count: int = Field(
-        description="number of prices for this location.", examples=[15], default=0
-    )
+    osm_name: str | None = None
+    osm_display_name: str | None = None
+    osm_address_postcode: str | None = None
+    osm_address_city: str | None = None
+    osm_address_country: str | None = None
+    osm_lat: float | None = None
+    osm_lon: float | None = None
     created: datetime.datetime
-    updated: datetime.datetime | None
+    updated: datetime.datetime | None = None
 
 
 # Proof
