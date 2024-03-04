@@ -33,7 +33,7 @@ def price_transformer(
             price.proof
             and price.proof.is_public is False
             and price.proof.owner != user_id
-            and not current_user.is_moderator
+            and not (current_user and current_user.is_moderator)
         ):
             price.proof.file_path = None
     return prices
