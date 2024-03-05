@@ -185,6 +185,12 @@ def get_products_query(filters: ProductFilter | None = None):
     """Useful for pagination."""
     query = select(Product)
     if filters:
+        # TEMP: manage array filtering manually (not available in fastapi-filter)  # noqa
+        if filters.categories_tags__contains:
+            query = query.filter(
+                Product.categories_tags.contains([filters.categories_tags__contains])
+            )
+            filters.categories_tags__contains = None
         query = filters.filter(query)
         query = filters.sort(query)
     return query
