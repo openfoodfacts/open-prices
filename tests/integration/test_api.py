@@ -287,31 +287,30 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     # assert db_prices[0]["owner"] == user.user_id
 
 
-def test_update_price_moderator(db_session, user_session, user_session_1, clean_prices):
+def test_create_price_moderator(db_session, user_session, user_session_1, clean_prices):
     crud.update_user_moderator(db_session, USER_1.user_id, False)
     proof = crud.create_proof(
         db_session, "/", " ", "PRICE_TAG", user_session.user, True
     )
 
-    # moderator = False upload a proof not owned
+    # user_1 is not moderator, fails to create a price with proof not owned
+    assert not user_session_1.user.is_moderator
     PRICE_3.proof_id = proof.id
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_3),
         headers={"Authorization": f"Bearer {user_session_1.token}"},
     )
-    assert not user_session_1.user.is_moderator
     assert response.status_code == 403
 
+    # user_1 is moderator, create a price with proof not owned
     crud.update_user_moderator(db_session, USER_1.user_id, True)
-    # moderator = True upload a proof not owned
     PRICE_3.proof_id = proof.id
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_3),
         headers={"Authorization": f"Bearer {user_session_1.token}"},
     )
-    assert user_session_1.user.is_moderator
     assert response.status_code == 201
 
 
@@ -514,7 +513,7 @@ def test_get_prices(db_session, user_session: SessionModel, clean_prices):
     assert len(response.json()["items"]) == 3
     for price_field in ["owner", "product_id", "location_id", "proof_id"]:
         assert price_field in response.json()["items"][0]
-    for price_relationship in ["product", "location"]:
+    for price_relationship in ["product", "location", "proof"]:
         assert price_relationship in response.json()["items"][0]
 
 
@@ -523,6 +522,66 @@ def test_get_prices_pagination():
     assert response.status_code == 200
     for key in PAGINATION_KEYS:
         assert key in response.json()
+
+
+def test_get_prices_with_proofs(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_prices
+):
+    price_tag_proof = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, is_public=True
+    )
+    receipt_proof = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, is_public=False
+    )
+    crud.create_price(db_session, PRICE_1, user_session.user)
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(update={"proof_id": price_tag_proof.id}),
+        user_session.user,
+    )
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(update={"proof_id": receipt_proof.id}),
+        user_session.user,
+    )
+
+    # anonymous
+    response = client.get("/api/v1/prices")
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert response.json()["items"][1]["proof"]["file_path"] is None  # not public
+    assert response.json()["items"][2]["proof"] is None
+
+    # authenticated but not owner nor moderator
+    crud.update_user_moderator(db_session, USER_1.user_id, False)
+    response = client.get(
+        "/api/v1/prices", headers={"Authorization": f"Bearer {user_session_1.token}"}
+    )
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert (
+        response.json()["items"][1]["proof"]["file_path"] is None
+    )  # not public, not owner
+    assert response.json()["items"][2]["proof"] is None
+
+    # authenticated and owner
+    response = client.get(
+        "/api/v1/prices", headers={"Authorization": f"Bearer {user_session.token}"}
+    )
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert (
+        response.json()["items"][1]["proof"]["file_path"] is not None
+    )  # not public, but owner
+    assert response.json()["items"][2]["proof"] is None
+
+    # authenticated and moderator
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    response = client.get(
+        "/api/v1/prices", headers={"Authorization": f"Bearer {user_session_1.token}"}
+    )
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert (
+        response.json()["items"][1]["proof"]["file_path"] is not None
+    )  # not public, not owner, but moderator
+    assert response.json()["items"][2]["proof"] is None
 
 
 def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices):
@@ -1005,16 +1064,15 @@ def test_delete_proof_moderator(
     )
     assert price_response.status_code == 201
 
-    # user_1.is_moderator = True, not owner, but proof associated with prices
+    # user_1 is moderator, not owner, but proof associated with prices
     crud.update_user_moderator(db_session, USER_1.user_id, True)
     response = client.delete(
         f"/api/v1/proofs/{proof.id}",
         headers={"Authorization": f"Bearer {user_session_1.token}"},
     )
     assert response.status_code == 403
-    assert user_session_1.user.is_moderator
 
-    # user.is_moderator = True, not owener and proof with no prices
+    # user_1 is moderator, not owner and proof with no prices
     db_price = crud.get_price_by_id(db_session, price_response.json().get("id"))
     crud.delete_price(db_session, db_price)
     assert len(proof.prices) == 0
@@ -1024,7 +1082,6 @@ def test_delete_proof_moderator(
     )
     assert response.status_code == 204
     assert crud.get_proof_by_id(db_session, proof.id) is None
-    assert user_session_1.user.is_moderator
 
 
 # Test products

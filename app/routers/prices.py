@@ -21,19 +21,24 @@ def price_transformer(
 
     If current_user is None, the file_path is removed for all proofs that are
     not public. Otherwise, the file_path is removed for all proofs that are not
-    public and do not belong to the current user and is not a moderator.
+    public and do not belong to the current user or is not a moderator.
 
     :param prices: the list of prices to transform
     :param current_user: the current user, if authenticated
     :return: the transformed list of prices
     """
-    user_id = current_user.user_id if current_user else None
     for price in prices:
         if (
             price.proof
             and price.proof.is_public is False
-            and price.proof.owner != user_id
-            and not current_user.is_moderator
+            and (
+                not current_user
+                or (
+                    current_user
+                    and (price.proof.owner != current_user.user_id)
+                    and not current_user.is_moderator
+                )
+            )
         ):
             price.proof.file_path = None
     return prices
