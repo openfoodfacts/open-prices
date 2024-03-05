@@ -287,13 +287,13 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     # assert db_prices[0]["owner"] == user.user_id
 
 
-def test_update_price_moderator(db_session, user_session, user_session_1, clean_prices):
+def test_create_price_moderator(db_session, user_session, user_session_1, clean_prices):
     crud.update_user_moderator(db_session, USER_1.user_id, False)
     proof = crud.create_proof(
         db_session, "/", " ", "PRICE_TAG", user_session.user, True
     )
 
-    # moderator = False upload a proof not owned
+    # user_1 is not moderator, fails to create a price with proof not owned
     assert not user_session_1.user.is_moderator
     PRICE_3.proof_id = proof.id
     response = client.post(
@@ -303,7 +303,7 @@ def test_update_price_moderator(db_session, user_session, user_session_1, clean_
     )
     assert response.status_code == 403
 
-    # moderator = True upload a proof not owned
+    # user_1 is moderator, create a price with proof not owned
     crud.update_user_moderator(db_session, USER_1.user_id, True)
     PRICE_3.proof_id = proof.id
     response = client.post(
@@ -1064,7 +1064,7 @@ def test_delete_proof_moderator(
     )
     assert price_response.status_code == 201
 
-    # user_1.is_moderator = True, not owner, but proof associated with prices
+    # user_1 is moderator, not owner, but proof associated with prices
     crud.update_user_moderator(db_session, USER_1.user_id, True)
     response = client.delete(
         f"/api/v1/proofs/{proof.id}",
@@ -1072,7 +1072,7 @@ def test_delete_proof_moderator(
     )
     assert response.status_code == 403
 
-    # user.is_moderator = True, not owner and proof with no prices
+    # user_1 is moderator, not owner and proof with no prices
     db_price = crud.get_price_by_id(db_session, price_response.json().get("id"))
     crud.delete_price(db_session, db_price)
     assert len(proof.prices) == 0
