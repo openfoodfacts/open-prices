@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.23.0](https://github.com/openfoodfacts/open-prices/compare/v1.22.0...v1.23.0) (2024-03-05)
+
+
+### Features
+
+* add PATCH endpoint to update proof ([#235](https://github.com/openfoodfacts/open-prices/issues/235)) ([6d05821](https://github.com/openfoodfacts/open-prices/commit/6d0582124c8d885416144e367e7d5495921c902e))
+* new Product.nutriscore_grade field ([#239](https://github.com/openfoodfacts/open-prices/issues/239)) ([2724893](https://github.com/openfoodfacts/open-prices/commit/272489399bd5f5a565a732a8e03145a9a69116c1))
+* **products:** new filter by categories_tags ([#234](https://github.com/openfoodfacts/open-prices/issues/234)) ([3676381](https://github.com/openfoodfacts/open-prices/commit/3676381be957e990d1328a1b373a5b4f58fc4bbb))
+* **products:** new filter by labels_tags ([#238](https://github.com/openfoodfacts/open-prices/issues/238)) ([09fb20d](https://github.com/openfoodfacts/open-prices/commit/09fb20dd17e5779a4d14ea88965da93b4e37c710))
+
+
+### Bug Fixes
+
+* **prices:** improve private proof filtering depending on user ([#241](https://github.com/openfoodfacts/open-prices/issues/241)) ([a3503b0](https://github.com/openfoodfacts/open-prices/commit/a3503b0a3c912be1f88ecdf0c81b2da797754c46))
+* remove trailing slash in API endpoints ([#233](https://github.com/openfoodfacts/open-prices/issues/233)) ([31a840d](https://github.com/openfoodfacts/open-prices/commit/31a840d08e27d581d91f7eb18d9599a6a5c69741))
+* **tests:** use LocationFull for fixtures ([#240](https://github.com/openfoodfacts/open-prices/issues/240)) ([f04a53f](https://github.com/openfoodfacts/open-prices/commit/f04a53f6132905ff2f5c16b7bd9854992092885e))
+
+
+### Technical
+
+* fix restart policy for nginx ([#232](https://github.com/openfoodfacts/open-prices/issues/232)) ([e924d00](https://github.com/openfoodfacts/open-prices/commit/e924d0021fb97b5126b80fab859a486c5d273e49))
+* Simplify api.py (move endpoints to their own routers) ([#226](https://github.com/openfoodfacts/open-prices/issues/226)) ([683600b](https://github.com/openfoodfacts/open-prices/commit/683600b320b0f2dc5908c1cdc2293d5a8009e94a))
+
 ## [1.22.0](https://github.com/openfoodfacts/open-prices/compare/v1.21.0...v1.22.0) (2024-02-24)
 
 
