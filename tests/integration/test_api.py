@@ -46,6 +46,7 @@ USER_2 = UserCreate(user_id="user2", token="user2__Utoken2", price_count=1)
 PRODUCT = ProductCreate(code="8001505005592")
 PRODUCT_1 = ProductCreate(
     code="0022314010025",
+    source="off",
     product_name="Chestnut spread 500 g",
     product_quantity=500,
     product_quantity_unit="g",
@@ -53,11 +54,12 @@ PRODUCT_1 = ProductCreate(
     brands="Clément Faugier",
     brands_tags=["clement-faugier"],
     labels_tags=[],
-    source="off",
+    nutriscore_grade="d",
     unique_scans_n=20,
 )
 PRODUCT_2 = ProductCreate(
     code="0022314010100",
+    source="off",
     product_name="Chestnut spread 100 g",
     product_quantity=100,
     product_quantity_unit="g",
@@ -65,11 +67,12 @@ PRODUCT_2 = ProductCreate(
     brands="Clément Faugier",
     brands_tags=["clement-faugier"],
     labels_tags=[],
-    source="off",
+    nutriscore_grade="d",
     unique_scans_n=10,
 )
 PRODUCT_3 = ProductCreate(
     code="3760091721969",
+    source="off",
     product_name="Crème bio de châtaignes 320 g",
     product_quantity=320,
     product_quantity_unit="g",
@@ -77,7 +80,7 @@ PRODUCT_3 = ProductCreate(
     brands="Ethiquable",
     brands_tags=["paysans-d-ici", "ethiquable"],
     labels_tags=["en:fair-trade", "en:organic", "en:made-in-france"],
-    source="off",
+    nutriscore_grade="c",
     unique_scans_n=0,
 )
 LOCATION = LocationFull(

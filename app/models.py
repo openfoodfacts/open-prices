@@ -61,6 +61,8 @@ class Product(Base):
     brands_tags = Column(ARRAY(String), server_default="{}", index=True)
     labels_tags = Column(ARRAY(String), server_default="{}", index=True)
     image_url = Column(String)
+
+    nutriscore_grade = Column(String)
     unique_scans_n = Column(Integer, nullable=False, server_default="0")
 
     prices: Mapped[list["Price"]] = relationship(back_populates="product")

@@ -93,6 +93,9 @@ class ProductFull(ProductCreate):
             "https://images.openfoodfacts.org/images/products/800/150/500/5707/front_fr.161.400.jpg"
         ],
     )
+    nutriscore_grade: str | None = Field(
+        description="Nutriscore grade.", examples=["a", "unknown"]
+    )
     unique_scans_n: int = Field(
         description="number of unique scans of the product on Open Food Facts.",
         examples=[15],
@@ -449,6 +452,7 @@ class ProductFilter(Filter):
     source: Optional[Flavor] | None = None
     product_name__like: Optional[str] | None = None
     brands__like: Optional[str] | None = None
+    nutriscore_grade: Optional[str] | None = None
     unique_scans_n__gte: Optional[int] | None = None
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None
