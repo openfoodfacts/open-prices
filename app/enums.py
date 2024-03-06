@@ -2,11 +2,12 @@ from enum import StrEnum, unique
 
 from babel.numbers import list_currencies
 
-CURRENCIES: tuple[str, ...] = tuple(
+CURRENCIES: tuple[tuple[str, str], ...] = tuple(
     (currency.upper(), currency.upper()) for currency in list_currencies()
 )
 
-CurrencyEnum = StrEnum("CurrencyEnum", CURRENCIES)
+# Not supported by mypy, see https://github.com/python/mypy/issues/5317
+CurrencyEnum = StrEnum("CurrencyEnum", CURRENCIES)  # type: ignore
 
 
 class LocationOSMEnum(StrEnum):

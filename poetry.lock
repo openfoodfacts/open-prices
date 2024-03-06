@@ -1471,13 +1471,13 @@ files = [
 
 [[package]]
 name = "openfoodfacts"
-version = "0.1.12"
+version = "0.2.0"
 description = "Official Python SDK of Open Food Facts"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "openfoodfacts-0.1.12-py3-none-any.whl", hash = "sha256:df5fad3f108fce232ea444afe5c668a141de3fd62c15fc131fc36d738138cf8a"},
-    {file = "openfoodfacts-0.1.12.tar.gz", hash = "sha256:8b7aed312c66d470e7a9083b2f6afe7afbe26bd1aaaaa4bbfb4878c61bf28022"},
+    {file = "openfoodfacts-0.2.0-py3-none-any.whl", hash = "sha256:3414e31c09450a53f8a8afa110bb0915fcf683a2ecef965ad26816631be5e886"},
+    {file = "openfoodfacts-0.2.0.tar.gz", hash = "sha256:0991fa152f301d7ab989f83bab85166b41ba9f73e956f7db50748f570d99c638"},
 ]
 
 [package.dependencies]
@@ -2886,4 +2886,4 @@ viz = ["matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "632c7802ffb33744d83fa2bfb7d3425b6ac641a1ad432a8a7a6c2cf6a774115c"
+content-hash = "0b09344ff1b7628528b96ed2ab219a0b2a04fc6a4b8977484f0698f9399449aa"

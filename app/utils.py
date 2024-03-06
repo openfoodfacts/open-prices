@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 import sentry_sdk
 from openfoodfacts import API, APIVersion, Country, Flavor
@@ -14,6 +13,10 @@ from app.config import settings
 from app.models import Location, Product
 
 logger = get_logger(__name__)
+
+
+def get_user_agent() -> str:
+    return f"OpenPrices ({settings.environment})"
 
 
 # Sentry
@@ -51,8 +54,9 @@ OFF_FIELDS = [
 ]
 
 
-def openfoodfacts_product_search(code: str) -> dict[str, Any]:
+def openfoodfacts_product_search(code: str) -> JSONType | None:
     client = API(
+        user_agent=get_user_agent(),
         username=None,
         password=None,
         country=Country.world,
@@ -122,7 +126,7 @@ def fetch_product_openfoodfacts_details(product: Product) -> JSONType | None:
     product_dict = {}
     try:
         response = openfoodfacts_product_search(code=product.code)
-        if response["status"]:
+        if response and response["status"]:
             product_dict["source"] = Flavor.off
             for off_field in OFF_FIELDS:
                 if off_field in response["product"]:
@@ -142,7 +146,7 @@ OSM_ADDRESS_FIELDS = ["postcode", "country"]  # 'city" is managed seperately
 OSM_ADDRESS_PLACE_FIELDS = ["village", "town", "city", "municipality"]
 
 
-def openstreetmap_nominatim_search(osm_id: int, osm_type: str) -> list[dict[str, Any]]:
+def openstreetmap_nominatim_search(osm_id: int, osm_type: str) -> list[JSONType]:
     client = Nominatim()
     search_query = f"{osm_type}/{osm_id}"
     return client.query(search_query, lookup=True).toJSON()
@@ -150,7 +154,7 @@ def openstreetmap_nominatim_search(osm_id: int, osm_type: str) -> list[dict[str,
 
 def fetch_location_openstreetmap_details(
     location: Location,
-) -> dict[str, Any] | None:
+) -> JSONType | None:
     location_openstreetmap_details = dict()
     try:
         response = openstreetmap_nominatim_search(
