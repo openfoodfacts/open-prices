@@ -94,6 +94,9 @@ class ProductFull(ProductCreate):
             "https://images.openfoodfacts.org/images/products/800/150/500/5707/front_fr.161.400.jpg"
         ],
     )
+    nutriscore_grade: str | None = Field(
+        description="Nutriscore grade.", examples=["a", "unknown"]
+    )
     unique_scans_n: int = Field(
         description="number of unique scans of the product on Open Food Facts.",
         examples=[15],
@@ -115,22 +118,22 @@ class LocationCreate(BaseModel):
 
     osm_id: int = Field(gt=0)
     osm_type: LocationOSMEnum
+    price_count: int = Field(
+        description="number of prices for this location.", examples=[15], default=0
+    )
 
 
 class LocationFull(LocationCreate):
     id: int
-    osm_name: str | None
-    osm_display_name: str | None
-    osm_address_postcode: str | None
-    osm_address_city: str | None
-    osm_address_country: str | None
-    osm_lat: float | None
-    osm_lon: float | None
-    price_count: int = Field(
-        description="number of prices for this location.", examples=[15], default=0
-    )
+    osm_name: str | None = None
+    osm_display_name: str | None = None
+    osm_address_postcode: str | None = None
+    osm_address_city: str | None = None
+    osm_address_country: str | None = None
+    osm_lat: float | None = None
+    osm_lon: float | None = None
     created: datetime.datetime
-    updated: datetime.datetime | None
+    updated: datetime.datetime | None = None
 
 
 # Proof
@@ -157,6 +160,14 @@ class ProofFull(BaseModel):
         description="number of prices for this proof.", examples=[15], default=0
     )
     created: datetime.datetime
+
+
+class ProofBasicUpdatableFields(BaseModel):
+    type: ProofTypeEnum | None = None
+    is_public: bool | None = None
+
+    class Config:
+        extra = "forbid"
 
 
 # Price
@@ -441,7 +452,10 @@ class ProductFilter(Filter):
     code: Optional[str] | None = None
     source: Optional[Flavor] | None = None
     product_name__like: Optional[str] | None = None
+    categories_tags__contains: Optional[str] | None = None
+    labels_tags__contains: Optional[str] | None = None
     brands__like: Optional[str] | None = None
+    nutriscore_grade: Optional[str] | None = None
     unique_scans_n__gte: Optional[int] | None = None
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None

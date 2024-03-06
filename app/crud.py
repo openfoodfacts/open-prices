@@ -24,6 +24,7 @@ from app.schemas import (
     ProductCreate,
     ProductFilter,
     ProductFull,
+    ProofBasicUpdatableFields,
     ProofFilter,
     UserCreate,
 )
@@ -181,6 +182,17 @@ def get_products_query(filters: ProductFilter | None = None) -> Select[tuple[Pro
     """Useful for pagination."""
     query = select(Product)
     if filters:
+        # TEMP: manage array filtering manually (not available in fastapi-filter)  # noqa
+        if filters.categories_tags__contains:
+            query = query.filter(
+                Product.categories_tags.contains([filters.categories_tags__contains])
+            )
+            filters.categories_tags__contains = None
+        if filters.labels_tags__contains:
+            query = query.filter(
+                Product.categories_tags.contains([filters.labels_tags__contains])
+            )
+            filters.labels_tags__contains = None
         query = filters.filter(query)
         query = filters.sort(query)
     return query
@@ -469,6 +481,15 @@ def increment_proof_price_count(db: Session, proof: Proof) -> Proof:
     return proof
 
 
+def update_proof(db: Session, proof: Proof, new_values: ProofBasicUpdatableFields):
+    new_values_cleaned = new_values.model_dump(exclude_unset=True)
+    for key in new_values_cleaned:
+        setattr(proof, key, new_values_cleaned[key])
+    db.commit()
+    db.refresh(proof)
+    return proof
+
+
 def delete_proof(db: Session, db_proof: Proof) -> bool:
     # we delete the image of the proof
     file_path_obj = Path(db_proof.file_path)
@@ -516,9 +537,7 @@ def get_location_by_osm_id_and_type(
     )
 
 
-def create_location(
-    db: Session, location: LocationCreate, price_count: int = 0
-) -> Location:
+def create_location(db: Session, location: LocationCreate) -> Location:
     """Create a location in the database.
 
     :param db: the database session
@@ -527,7 +546,7 @@ def create_location(
         to 0
     :return: the created location
     """
-    db_location = Location(price_count=price_count, **location.model_dump())
+    db_location = Location(**location.model_dump())
     db.add(db_location)
     db.commit()
     db.refresh(db_location)
@@ -535,7 +554,7 @@ def create_location(
 
 
 def get_or_create_location(
-    db: Session, location: LocationCreate, init_price_count: int = 0
+    db: Session, location: LocationCreate
 ) -> tuple[Location, bool]:
     """Get or create a location in the database.
 
@@ -551,9 +570,7 @@ def get_or_create_location(
         db, osm_id=location.osm_id, osm_type=location.osm_type
     )
     if not db_location:
-        db_location = create_location(
-            db, location=location, price_count=init_price_count
-        )
+        db_location = create_location(db, location=location)
         created = True
     return db_location, created
 

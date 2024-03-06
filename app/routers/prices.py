@@ -22,13 +22,12 @@ def price_transformer(
 
     If current_user is None, the file_path is removed for all proofs that are
     not public. Otherwise, the file_path is removed for all proofs that are not
-    public and do not belong to the current user and is not a moderator.
+    public and do not belong to the current user or is not a moderator.
 
     :param prices: the list of prices to transform
     :param current_user: the current user, if authenticated
     :return: the transformed list of prices
     """
-    user_id = current_user.user_id if current_user else None
     for price in prices:
         if (
             current_user is None
@@ -39,16 +38,21 @@ def price_transformer(
         elif (
             price.proof
             and price.proof.is_public is False
-            and price.proof.owner != user_id
-            and current_user is not None
-            and not current_user.is_moderator
+            and (
+                not current_user
+                or (
+                    current_user
+                    and (price.proof.owner != current_user.user_id)
+                    and not current_user.is_moderator
+                )
+            )
         ):
             price.proof.file_path = None
     return prices
 
 
 @router.get(
-    "/",
+    "",
     response_model=Page[schemas.PriceFullWithRelations],
 )
 def get_prices(
@@ -64,7 +68,7 @@ def get_prices(
 
 
 @router.post(
-    "/",
+    "",
     response_model=schemas.PriceFull,
     status_code=status.HTTP_201_CREATED,
 )
@@ -115,7 +119,7 @@ def create_price(
 )
 def update_price(
     price_id: int,
-    new_price: schemas.PriceBasicUpdatableFields,
+    price_new_values: schemas.PriceBasicUpdatableFields,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Price:
@@ -141,7 +145,7 @@ def update_price(
         )
 
     # updated price
-    return crud.update_price(db, db_price, new_price)
+    return crud.update_price(db, db_price, price_new_values)
 
 
 @router.delete(

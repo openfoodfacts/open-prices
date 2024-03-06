@@ -46,6 +46,7 @@ OFF_FIELDS = [
     "brands_tags",
     "labels_tags",
     "image_url",
+    "nutriscore_grade",
     "unique_scans_n",
 ]
 

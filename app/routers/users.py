@@ -12,7 +12,7 @@ from app.models import User
 router = APIRouter(prefix="/users")
 
 
-@router.get("/", response_model=Page[schemas.UserBase])
+@router.get("", response_model=Page[schemas.UserBase])
 def get_users(
     db: Session = Depends(get_db),
     filters: schemas.UserFilter = FilterDepends(schemas.UserFilter),

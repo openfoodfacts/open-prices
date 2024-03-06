@@ -11,7 +11,7 @@ from app.models import Product
 router = APIRouter(prefix="/products")
 
 
-@router.get("/", response_model=Page[schemas.ProductFull])
+@router.get("", response_model=Page[schemas.ProductFull])
 def get_products(
     filters: schemas.ProductFilter = FilterDepends(schemas.ProductFilter),
     db: Session = Depends(get_db),

@@ -10,13 +10,14 @@ from app.api import app
 from app.db import Base, engine, get_db, session
 from app.models import Session as SessionModel
 from app.schemas import (
-    LocationCreate,
+    LocationFull,
     PriceCreate,
     ProductCreate,
     ProofFilter,
     UserCreate,
 )
 
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 
@@ -45,6 +46,7 @@ USER_2 = UserCreate(user_id="user2", token="user2__Utoken2", price_count=1)
 PRODUCT = ProductCreate(code="8001505005592")
 PRODUCT_1 = ProductCreate(
     code="0022314010025",
+    source="off",
     product_name="Chestnut spread 500 g",
     product_quantity=500,
     product_quantity_unit="g",
@@ -52,11 +54,12 @@ PRODUCT_1 = ProductCreate(
     brands="Clément Faugier",
     brands_tags=["clement-faugier"],
     labels_tags=[],
-    source="off",
+    nutriscore_grade="d",
     unique_scans_n=20,
 )
 PRODUCT_2 = ProductCreate(
     code="0022314010100",
+    source="off",
     product_name="Chestnut spread 100 g",
     product_quantity=100,
     product_quantity_unit="g",
@@ -64,11 +67,12 @@ PRODUCT_2 = ProductCreate(
     brands="Clément Faugier",
     brands_tags=["clement-faugier"],
     labels_tags=[],
-    source="off",
+    nutriscore_grade="d",
     unique_scans_n=10,
 )
 PRODUCT_3 = ProductCreate(
     code="3760091721969",
+    source="off",
     product_name="Crème bio de châtaignes 320 g",
     product_quantity=320,
     product_quantity_unit="g",
@@ -76,25 +80,39 @@ PRODUCT_3 = ProductCreate(
     brands="Ethiquable",
     brands_tags=["paysans-d-ici", "ethiquable"],
     labels_tags=["en:fair-trade", "en:organic", "en:made-in-france"],
-    source="off",
+    nutriscore_grade="c",
     unique_scans_n=0,
 )
-LOCATION = LocationCreate(osm_id=3344841823, osm_type="NODE")
-LOCATION_1 = LocationCreate(
+LOCATION = LocationFull(
+    id=1, osm_id=3344841823, osm_type="NODE", created=datetime.datetime.now()
+)
+LOCATION_1 = LocationFull(
+    id=2,
     osm_id=652825274,
     osm_type="NODE",
     osm_name="Monoprix",
     osm_address_postcode="38000",
     osm_address_city="Grenoble",
     osm_address_country="France",
+    osm_display_name="MMonoprix, Boulevard Joseph Vallier, Secteur 1, Grenoble, Isère, Auvergne-Rhône-Alpes, France métropolitaine, 38000, France",
+    osm_lat=45.1805534,
+    osm_lon=5.7153387,
+    created=datetime.datetime.now(),
+    updated=datetime.datetime.now(),
 )
-LOCATION_2 = LocationCreate(
+LOCATION_2 = LocationFull(
+    id=3,
     osm_id=6509705997,
     osm_type="NODE",
     osm_name="Carrefour",
     osm_address_postcode="1000",
     osm_address_city="Bruxelles - Brussel",
     osm_address_country="België / Belgique / Belgien",
+    osm_display_name="Carrefour à Bruxelles",
+    osm_lat=1,
+    osm_lon=2,
+    created=datetime.datetime.now(),
+    updated=datetime.datetime.now(),
 )
 PRICE_1 = PriceCreate(
     product_code="8001505005707",
@@ -272,31 +290,30 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     # assert db_prices[0]["owner"] == user.user_id
 
 
-def test_update_price_moderator(db_session, user_session, user_session_1, clean_prices):
+def test_create_price_moderator(db_session, user_session, user_session_1, clean_prices):
     crud.update_user_moderator(db_session, USER_1.user_id, False)
     proof = crud.create_proof(
         db_session, "/", " ", "PRICE_TAG", user_session.user, True
     )
 
-    # moderator = False upload a proof not owned
+    # user_1 is not moderator, fails to create a price with proof not owned
+    assert not user_session_1.user.is_moderator
     PRICE_3.proof_id = proof.id
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_3),
         headers={"Authorization": f"Bearer {user_session_1.token}"},
     )
-    assert not user_session_1.user.is_moderator
     assert response.status_code == 403
 
+    # user_1 is moderator, create a price with proof not owned
     crud.update_user_moderator(db_session, USER_1.user_id, True)
-    # moderator = True upload a proof not owned
     PRICE_3.proof_id = proof.id
     response = client.post(
         "/api/v1/prices",
         json=jsonable_encoder(PRICE_3),
         headers={"Authorization": f"Bearer {user_session_1.token}"},
     )
-    assert user_session_1.user.is_moderator
     assert response.status_code == 201
 
 
@@ -499,7 +516,7 @@ def test_get_prices(db_session, user_session: SessionModel, clean_prices):
     assert len(response.json()["items"]) == 3
     for price_field in ["owner", "product_id", "location_id", "proof_id"]:
         assert price_field in response.json()["items"][0]
-    for price_relationship in ["product", "location"]:
+    for price_relationship in ["product", "location", "proof"]:
         assert price_relationship in response.json()["items"][0]
 
 
@@ -508,6 +525,66 @@ def test_get_prices_pagination():
     assert response.status_code == 200
     for key in PAGINATION_KEYS:
         assert key in response.json()
+
+
+def test_get_prices_with_proofs(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_prices
+):
+    price_tag_proof = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, is_public=True
+    )
+    receipt_proof = crud.create_proof(
+        db_session, "/", " ", "PRICE_TAG", user_session.user, is_public=False
+    )
+    crud.create_price(db_session, PRICE_1, user_session.user)
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(update={"proof_id": price_tag_proof.id}),
+        user_session.user,
+    )
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(update={"proof_id": receipt_proof.id}),
+        user_session.user,
+    )
+
+    # anonymous
+    response = client.get("/api/v1/prices")
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert response.json()["items"][1]["proof"]["file_path"] is None  # not public
+    assert response.json()["items"][2]["proof"] is None
+
+    # authenticated but not owner nor moderator
+    crud.update_user_moderator(db_session, USER_1.user_id, False)
+    response = client.get(
+        "/api/v1/prices", headers={"Authorization": f"Bearer {user_session_1.token}"}
+    )
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert (
+        response.json()["items"][1]["proof"]["file_path"] is None
+    )  # not public, not owner
+    assert response.json()["items"][2]["proof"] is None
+
+    # authenticated and owner
+    response = client.get(
+        "/api/v1/prices", headers={"Authorization": f"Bearer {user_session.token}"}
+    )
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert (
+        response.json()["items"][1]["proof"]["file_path"] is not None
+    )  # not public, but owner
+    assert response.json()["items"][2]["proof"] is None
+
+    # authenticated and moderator
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    response = client.get(
+        "/api/v1/prices", headers={"Authorization": f"Bearer {user_session_1.token}"}
+    )
+    assert response.json()["items"][0]["proof"]["file_path"] is not None
+    assert (
+        response.json()["items"][1]["proof"]["file_path"] is not None
+    )  # not public, not owner, but moderator
+    assert response.json()["items"][2]["proof"] is None
 
 
 def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices):
@@ -844,6 +921,67 @@ def test_get_proof(
     assert response.status_code == 200
 
 
+def test_update_proof(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+):
+    # create proof
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "PRICE_TAG"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    proof = crud.get_proof_by_id(db_session, response.json().get("id"))
+
+    PROOF_UPDATE_PARTIAL = {"is_public": False}
+    # without authentication
+    response = client.patch(f"/api/v1/proofs/{proof.id}")
+    assert response.status_code == 401
+    # with authentication but not proof owner and not moderator
+    crud.update_user_moderator(db_session, USER_1.user_id, False)
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 403
+    # with authentication but proof unknown
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id + 1}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 404
+    # with authentication and proof owner
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 200
+    assert response.json()["is_public"] is False
+    assert response.json()["type"] == proof.type.value
+    # with authentication and proof owner more fields
+    PROOF_UPDATE_PARTIAL_MORE = {**PROOF_UPDATE_PARTIAL, "type": "RECEIPT"}
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL_MORE),
+    )
+    assert response.status_code == 200
+    assert response.json()["is_public"] is False
+    assert response.json()["type"] != proof.type.value
+    # with authentication and proof owner but extra fields
+    PROOF_UPDATE_PARTIAL_WRONG = {**PROOF_UPDATE_PARTIAL, "owner": 1}
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL_WRONG),
+    )
+    assert response.status_code == 422
+
+
 def test_delete_proof(
     db_session,
     user_session: SessionModel,
@@ -937,16 +1075,15 @@ def test_delete_proof_moderator(
     )
     assert price_response.status_code == 201
 
-    # user_1.is_moderator = True, not owner, but proof associated with prices
+    # user_1 is moderator, not owner, but proof associated with prices
     crud.update_user_moderator(db_session, USER_1.user_id, True)
     response = client.delete(
         f"/api/v1/proofs/{proof.id}",
         headers={"Authorization": f"Bearer {user_session_1.token}"},
     )
     assert response.status_code == 403
-    assert user_session_1.user.is_moderator
 
-    # user.is_moderator = True, not owener and proof with no prices
+    # user_1 is moderator, not owner and proof with no prices
     db_price = crud.get_price_by_id(db_session, price_response.json().get("id"))
     crud.delete_price(db_session, db_price)
     assert len(proof.prices) == 0
@@ -956,7 +1093,6 @@ def test_delete_proof_moderator(
     )
     assert response.status_code == 204
     assert crud.get_proof_by_id(db_session, proof.id) is None
-    assert user_session_1.user.is_moderator
 
 
 # Test products
@@ -1042,20 +1178,20 @@ def test_get_locations_pagination(clean_locations):
         assert key in response.json()
 
 
-# def test_get_locations_filters(db_session, clean_locations):
-#     crud.create_location(db_session, LOCATION_1)
-#     crud.create_location(db_session, LOCATION_2)
+def test_get_locations_filters(db_session):
+    crud.create_location(db_session, LOCATION_1)
+    crud.create_location(db_session, LOCATION_2)
 
-#     assert len(crud.get_locations(db_session)) == 2
+    assert len(crud.get_locations(db_session)) == 2
 
-#     # 1 location Monoprix
-#     response = client.get("/api/v1/locations?osm_name__like=Monoprix")
-#     assert response.status_code == 200
-#     assert len(response.json()["items"]) == 1
-#     # 1 location in France
-#     response = client.get("/api/v1/locations?osm_address_country__like=France")  # noqa
-#     assert response.status_code == 200
-#     assert len(response.json()["items"]) == 1
+    # 1 location Monoprix
+    response = client.get("/api/v1/locations?osm_name__like=Monoprix")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 location in France
+    response = client.get("/api/v1/locations?osm_address_country__like=France")  # noqa
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
 
 
 def test_get_location(location):
@@ -1063,7 +1199,7 @@ def test_get_location(location):
     response = client.get(f"/api/v1/locations/{location.id}")
     assert response.status_code == 200
     # by id: location does not exist
-    response = client.get(f"/api/v1/locations/{location.id + 1}")
+    response = client.get("/api/v1/locations/99999")
     assert response.status_code == 404
     # by osm id & type: location exists
     response = client.get(
