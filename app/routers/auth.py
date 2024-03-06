@@ -6,6 +6,7 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from starlette.responses import JSONResponse
 
 from app import crud, schemas
 from app.auth import oauth2_scheme
@@ -93,12 +94,13 @@ def authentication(
         session, *_ = crud.create_session(db, user_id=user_id, token=token)
         session = crud.update_session_last_used_field(db, session=session)
         # set the cookie if requested
+        final_response = JSONResponse({"access_token": token, "token_type": "bearer"})
         if set_cookie:
             # Don't add httponly=True or secure=True as it's still in
             # development phase, but it should be added once the front-end
             # is ready
-            response.set_cookie(key="opsession", value=token)
-        return {"access_token": token, "token_type": "bearer"}
+            final_response.set_cookie(key="opsession", value=token)
+        return final_response
     elif r.status_code == 403:
         time.sleep(2)  # prevents brute-force
         raise HTTPException(
