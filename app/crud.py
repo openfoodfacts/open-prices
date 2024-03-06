@@ -481,7 +481,9 @@ def increment_proof_price_count(db: Session, proof: Proof) -> Proof:
     return proof
 
 
-def update_proof(db: Session, proof: Proof, new_values: ProofBasicUpdatableFields):
+def update_proof(
+    db: Session, proof: Proof, new_values: ProofBasicUpdatableFields
+) -> Proof:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(proof, key, new_values_cleaned[key])

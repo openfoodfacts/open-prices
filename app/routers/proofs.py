@@ -103,7 +103,7 @@ def update_proof(
     proof_new_values: schemas.ProofBasicUpdatableFields,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Proof:
     """
     Update a proof.
 
