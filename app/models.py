@@ -57,17 +57,17 @@ class Product(Base):
 
     code: Mapped[str] = mapped_column(String, unique=True, index=True)
 
-    source: Mapped[Flavor] = mapped_column(ChoiceType(Flavor))
-    product_name: Mapped[str] = mapped_column(String)
-    product_quantity: Mapped[int] = mapped_column(Integer)
-    product_quantity_unit: Mapped[str] = mapped_column(String)
+    source: Mapped[Flavor | None] = mapped_column(ChoiceType(Flavor))
+    product_name: Mapped[str | None]
+    product_quantity: Mapped[int | None]
+    product_quantity_unit: Mapped[str | None]
     categories_tags = mapped_column(ARRAY(String), server_default="{}", index=True)
-    brands: Mapped[str] = mapped_column(String)
+    brands: Mapped[str | None]
     brands_tags = mapped_column(ARRAY(String), server_default="{}", index=True)
     labels_tags = mapped_column(ARRAY(String), server_default="{}", index=True)
-    image_url: Mapped[str] = mapped_column(String)
+    image_url: Mapped[str | None]
 
-    nutriscore_grade: Mapped[str] = mapped_column(String)
+    nutriscore_grade: Mapped[str | None]
     unique_scans_n = mapped_column(Integer, nullable=False, server_default="0")
 
     prices: Mapped[list["Price"]] = relationship(back_populates="product")
@@ -147,7 +147,7 @@ class Price(Base):
         Numeric(precision=10, scale=2), nullable=True
     )
     currency: Mapped[CurrencyEnum] = mapped_column(ChoiceType(CurrencyEnum))
-    price_per: Mapped[PricePerEnum] = mapped_column(ChoiceType(PricePerEnum))
+    price_per: Mapped[PricePerEnum | None] = mapped_column(ChoiceType(PricePerEnum))
 
     location_osm_id = mapped_column(BigInteger, index=True)
     location_osm_type: Mapped[LocationOSMEnum] = mapped_column(
