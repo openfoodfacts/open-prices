@@ -3,7 +3,7 @@ import uuid
 from typing import Annotated
 
 import requests
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -17,7 +17,7 @@ auth_router = APIRouter(prefix="/auth")
 session_router = APIRouter(prefix="/session")
 
 
-def create_token(user_id: str):
+def create_token(user_id: str) -> str:
     return f"{user_id}__U{str(uuid.uuid4())}"
 
 
@@ -49,7 +49,6 @@ def get_current_session(
 @auth_router.post("")
 def authentication(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    response: Response,
     set_cookie: Annotated[
         bool,
         Query(
@@ -59,7 +58,7 @@ def authentication(
         ),
     ] = False,
     db: Session = Depends(get_db),
-):
+) -> dict[str, str]:
     """
     Authentication: provide username/password and get a bearer token in return.
 
@@ -83,12 +82,12 @@ def authentication(
     # By specifying body=1, information about the user is returned in the
     # response, including the user_id
     data = {"user_id": form_data.username, "password": form_data.password, "body": 1}
-    r = requests.post(f"{settings.oauth2_server_url}", data=data)  # type: ignore
-    if r.status_code == 200:
+    response = requests.post(f"{settings.oauth2_server_url}", data=data)
+    if response.status_code == 200:
         # form_data.username can be the user_id or the email, so we need to
         # fetch the user_id from the response
         # We also need to lowercase the user_id as it's case-insensitive
-        user_id = r.json()["user_id"].lower().strip()
+        user_id = response.json()["user_id"].lower().strip()
         token = create_token(user_id)
         session, *_ = crud.create_session(db, user_id=user_id, token=token)
         session = crud.update_session_last_used_field(db, session=session)
@@ -97,9 +96,9 @@ def authentication(
             # Don't add httponly=True or secure=True as it's still in
             # development phase, but it should be added once the front-end
             # is ready
-            response.set_cookie(key="opsession", value=token)
+            response.cookies.update({"opsession": token})
         return {"access_token": token, "token_type": "bearer"}
-    elif r.status_code == 403:
+    elif response.status_code == 403:
         time.sleep(2)  # prevents brute-force
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -114,7 +113,7 @@ def authentication(
 @session_router.get("", response_model=schemas.SessionBase)
 def get_user_session(
     current_session: SessionModel = Depends(get_current_session),
-):
+) -> SessionModel:
     """Return information about the current user session."""
     return current_session
 
@@ -123,7 +122,7 @@ def get_user_session(
 def delete_user_session(
     current_session: SessionModel = Depends(get_current_session),
     db: Session = Depends(get_db),
-):
+) -> dict[str, str]:
     """Delete the current user session.
 
     If the provided session token or cookie is invalid, a HTTP 401 response

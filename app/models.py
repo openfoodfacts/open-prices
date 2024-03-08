@@ -3,7 +3,6 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     Boolean,
-    Column,
     Date,
     DateTime,
     ForeignKey,
@@ -25,125 +24,145 @@ JSONVariant = JSON().with_variant(JSONB(), "postgresql")
 
 
 class User(Base):
-    user_id = Column(String, primary_key=True, index=True)
-    price_count = Column(Integer, nullable=False, server_default="0", index=True)
-    created = Column(DateTime(timezone=True), server_default=func.now())
-    is_moderator = Column(Boolean, nullable=False, server_default="false")
+    user_id: Mapped[str] = mapped_column(String, primary_key=True, index=True)
+    price_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0", index=True
+    )
+    created = mapped_column(DateTime(timezone=True), server_default=func.now())
+    is_moderator: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false"
+    )
     sessions: Mapped[list["Session"]] = relationship(back_populates="user")
 
     __tablename__ = "users"
 
 
 class Session(Base):
-    id = Column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
 
-    user_id = Column(String, ForeignKey("users.user_id"), index=True, nullable=False)
+    user_id = mapped_column(
+        String, ForeignKey("users.user_id"), index=True, nullable=False
+    )
     user: Mapped[User] = relationship("User")
 
-    token = Column(String, unique=True, index=True, nullable=False)
-    created = Column(DateTime(timezone=True), server_default=func.now())
-    last_used = Column(DateTime(timezone=True), nullable=True)
+    token = mapped_column(String, unique=True, index=True, nullable=False)
+    created = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_used = mapped_column(DateTime(timezone=True), nullable=True)
 
     __tablename__ = "sessions"
 
 
 class Product(Base):
-    id = Column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
 
-    code = Column(String, unique=True, index=True)
+    code: Mapped[str] = mapped_column(String, unique=True, index=True)
 
-    source = Column(ChoiceType(Flavor))
-    product_name = Column(String)
-    product_quantity = Column(Integer)
-    product_quantity_unit = Column(String)
-    categories_tags = Column(ARRAY(String), server_default="{}", index=True)
-    brands = Column(String)
-    brands_tags = Column(ARRAY(String), server_default="{}", index=True)
-    labels_tags = Column(ARRAY(String), server_default="{}", index=True)
-    image_url = Column(String)
+    source: Mapped[Flavor | None] = mapped_column(ChoiceType(Flavor))
+    product_name: Mapped[str | None]
+    product_quantity: Mapped[int | None]
+    product_quantity_unit: Mapped[str | None]
+    categories_tags = mapped_column(ARRAY(String), server_default="{}", index=True)
+    brands: Mapped[str | None]
+    brands_tags = mapped_column(ARRAY(String), server_default="{}", index=True)
+    labels_tags = mapped_column(ARRAY(String), server_default="{}", index=True)
+    image_url: Mapped[str | None]
 
-    nutriscore_grade = Column(String)
-    unique_scans_n = Column(Integer, nullable=False, server_default="0")
+    nutriscore_grade: Mapped[str | None]
+    unique_scans_n = mapped_column(Integer, nullable=False, server_default="0")
 
     prices: Mapped[list["Price"]] = relationship(back_populates="product")
-    price_count = Column(Integer, nullable=False, server_default="0", index=True)
+    price_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0", index=True
+    )
 
-    created = Column(DateTime(timezone=True), server_default=func.now())
-    updated = Column(DateTime(timezone=True), onupdate=func.now())
+    created = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated = mapped_column(DateTime(timezone=True), onupdate=func.now())
 
     __tablename__ = "products"
 
 
 class Location(Base):
-    id = Column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
 
-    osm_id = Column(BigInteger)
-    osm_type = Column(ChoiceType(LocationOSMEnum))
-    osm_name = Column(String)
-    osm_display_name = Column(String)
-    osm_address_postcode = Column(String)
-    osm_address_city = Column(String)
-    osm_address_country = Column(String)
-    osm_lat = Column(Numeric(precision=11, scale=7))
-    osm_lon = Column(Numeric(precision=11, scale=7))
+    osm_id: Mapped[int] = mapped_column(BigInteger)
+    osm_type: Mapped[LocationOSMEnum] = mapped_column(ChoiceType(LocationOSMEnum))
+    osm_name = mapped_column(String)
+    osm_display_name = mapped_column(String)
+    osm_address_postcode = mapped_column(String)
+    osm_address_city = mapped_column(String)
+    osm_address_country = mapped_column(String)
+    osm_lat = mapped_column(Numeric(precision=11, scale=7))
+    osm_lon = mapped_column(Numeric(precision=11, scale=7))
 
     prices: Mapped[list["Price"]] = relationship(back_populates="location")
-    price_count = Column(Integer, nullable=False, server_default="0", index=True)
+    price_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0", index=True
+    )
 
-    created = Column(DateTime(timezone=True), server_default=func.now())
-    updated = Column(DateTime(timezone=True), onupdate=func.now())
+    created = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated = mapped_column(DateTime(timezone=True), onupdate=func.now())
 
     __tablename__ = "locations"
 
 
 class Proof(Base):
-    id = Column(Integer, primary_key=True, index=True)
+    id = mapped_column(Integer, primary_key=True, index=True)
 
-    file_path = Column(String, nullable=False)
-    mimetype = Column(String, index=True)
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
+    mimetype = mapped_column(String, index=True)
 
-    type = Column(ChoiceType(ProofTypeEnum))
-    is_public = Column(Boolean, nullable=False, server_default="true", index=True)
+    type: Mapped[ProofTypeEnum] = mapped_column(ChoiceType(ProofTypeEnum))
+    is_public = mapped_column(
+        Boolean, nullable=False, server_default="true", index=True
+    )
 
     prices: Mapped[list["Price"]] = relationship(back_populates="proof")
-    price_count = Column(Integer, nullable=False, server_default="0", index=True)
+    price_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0", index=True
+    )
 
-    owner = Column(String, index=True)
+    owner = mapped_column(String, index=True)
 
-    created = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    created = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
 
     __tablename__ = "proofs"
 
 
 class Price(Base):
-    id = Column(Integer, primary_key=True, index=True)
+    id = mapped_column(Integer, primary_key=True, index=True)
 
-    product_code = Column(String, nullable=True, index=True)
-    product_name = Column(String, nullable=True)
-    category_tag = Column(String, nullable=True, index=True)
-    labels_tags = Column(JSONVariant, nullable=True, index=True)
-    origins_tags = Column(JSONVariant, nullable=True, index=True)
+    product_code = mapped_column(String, nullable=True, index=True)
+    product_name = mapped_column(String, nullable=True)
+    category_tag = mapped_column(String, nullable=True, index=True)
+    labels_tags = mapped_column(JSONVariant, nullable=True, index=True)
+    origins_tags = mapped_column(JSONVariant, nullable=True, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=True)
     product: Mapped[Product] = relationship(back_populates="prices")
 
-    price = Column(Numeric(precision=10, scale=2))
-    price_is_discounted = Column(Boolean, nullable=False, server_default="false")
-    price_without_discount = Column(Numeric(precision=10, scale=2), nullable=True)
-    currency = Column(ChoiceType(CurrencyEnum))
-    price_per = Column(ChoiceType(PricePerEnum))
+    price = mapped_column(Numeric(precision=10, scale=2))
+    price_is_discounted = mapped_column(Boolean, nullable=False, server_default="false")
+    price_without_discount = mapped_column(
+        Numeric(precision=10, scale=2), nullable=True
+    )
+    currency: Mapped[CurrencyEnum] = mapped_column(ChoiceType(CurrencyEnum))
+    price_per: Mapped[PricePerEnum | None] = mapped_column(ChoiceType(PricePerEnum))
 
-    location_osm_id = Column(BigInteger, index=True)
-    location_osm_type = Column(ChoiceType(LocationOSMEnum))
+    location_osm_id = mapped_column(BigInteger, index=True)
+    location_osm_type: Mapped[LocationOSMEnum] = mapped_column(
+        ChoiceType(LocationOSMEnum)
+    )
     location_id: Mapped[int] = mapped_column(ForeignKey("locations.id"), nullable=True)
     location: Mapped[Location] = relationship(back_populates="prices")
 
-    date = Column(Date)
+    date = mapped_column(Date)
 
     proof_id: Mapped[int] = mapped_column(ForeignKey("proofs.id"), nullable=True)
     proof: Mapped[Proof] = relationship(back_populates="prices")
 
-    owner = Column(String)
+    owner: Mapped[str] = mapped_column(String)
 
-    created = Column(DateTime(timezone=True), server_default=func.now())
+    created = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __tablename__ = "prices"

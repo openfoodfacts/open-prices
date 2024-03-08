@@ -4,12 +4,14 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy import Select
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
 from app.auth import get_current_user
 from app.db import get_db
 from app.enums import ProofTypeEnum
+from app.models import Proof
 
 router = APIRouter(prefix="/proofs")
 
@@ -19,7 +21,7 @@ def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
     filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
     db: Session = Depends(get_db),
-):
+) -> Select[tuple[Proof]]:
     """
     Get all the proofs uploaded by the current user.
 
@@ -44,7 +46,7 @@ def upload_proof(
     ),
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Proof:
     """
     Upload a proof file.
 
@@ -73,7 +75,7 @@ def get_user_proof_by_id(
     proof_id: int,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Proof:
     # get proof
     db_proof = crud.get_proof_by_id(db, id=proof_id)
     if not db_proof:
@@ -101,7 +103,7 @@ def update_proof(
     proof_new_values: schemas.ProofBasicUpdatableFields,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Proof:
     """
     Update a proof.
 
@@ -136,7 +138,7 @@ def delete_proof(
     proof_id: int,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> None:
     """
     Delete a proof.
 
@@ -168,4 +170,4 @@ def delete_proof(
 
     # delete proof
     crud.delete_proof(db, db_proof)
-    return
+    return None

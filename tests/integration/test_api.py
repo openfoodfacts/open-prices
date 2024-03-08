@@ -983,7 +983,11 @@ def test_update_proof(
 
 
 def test_delete_proof(
-    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+    db_session,
+    user_session: SessionModel,
+    user_session_1: SessionModel,
+    clean_proofs,
+    clean_prices,
 ):
     # create proof
     response = client.post(
@@ -1046,7 +1050,11 @@ def test_delete_proof(
 
 
 def test_delete_proof_moderator(
-    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+    db_session,
+    user_session: SessionModel,
+    user_session_1: SessionModel,
+    clean_proofs,
+    clean_prices,
 ):
     # create proof user
     response = client.post(

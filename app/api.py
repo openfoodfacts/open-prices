@@ -62,7 +62,7 @@ init_sentry(settings.sentry_dns)
 # Extra routes
 # ------------------------------------------------------------------------------
 @app.get("/api/v1/status", tags=["Status"])
-def status_endpoint():
+def status_endpoint() -> dict[str, str]:
     return {"status": "running"}
 
 

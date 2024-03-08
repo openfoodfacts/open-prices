@@ -10,14 +10,20 @@ from sentry_sdk.integrations import Integration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from app.config import settings
-from app.schemas import LocationFull, ProductFull
+from app.models import Location, Product
 
 logger = get_logger(__name__)
 
 
+def get_user_agent() -> str:
+    return f"OpenPrices ({settings.environment})"
+
+
 # Sentry
 # ------------------------------------------------------------------------------
-def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None = None):
+def init_sentry(
+    sentry_dsn: str | None, integrations: list[Integration] | None = None
+) -> None:
     if sentry_dsn:
         integrations = integrations or []
         integrations.append(
@@ -26,7 +32,7 @@ def init_sentry(sentry_dsn: str | None, integrations: list[Integration] | None =
                 event_level=logging.WARNING,  # Send warning and errors as events
             ),
         )
-        sentry_sdk.init(  # type:ignore  # mypy say it's abstract
+        sentry_sdk.init(
             sentry_dsn,
             integrations=integrations,
         )
@@ -48,8 +54,9 @@ OFF_FIELDS = [
 ]
 
 
-def openfoodfacts_product_search(code: str):
+def openfoodfacts_product_search(code: str) -> JSONType | None:
     client = API(
+        user_agent=get_user_agent(),
         username=None,
         password=None,
         country=Country.world,
@@ -115,11 +122,11 @@ def generate_openfoodfacts_main_image_url(
     return None
 
 
-def fetch_product_openfoodfacts_details(product: ProductFull) -> JSONType | None:
+def fetch_product_openfoodfacts_details(product: Product) -> JSONType | None:
     product_dict = {}
     try:
         response = openfoodfacts_product_search(code=product.code)
-        if response["status"]:
+        if response and response["status"]:
             product_dict["source"] = Flavor.off
             for off_field in OFF_FIELDS:
                 if off_field in response["product"]:
@@ -128,7 +135,7 @@ def fetch_product_openfoodfacts_details(product: ProductFull) -> JSONType | None
         return product_dict
     except Exception:
         logger.exception("Error returned from Open Food Facts")
-        return
+        return None
 
 
 # OpenStreetMap
@@ -139,13 +146,15 @@ OSM_ADDRESS_FIELDS = ["postcode", "country"]  # 'city" is managed seperately
 OSM_ADDRESS_PLACE_FIELDS = ["village", "town", "city", "municipality"]
 
 
-def openstreetmap_nominatim_search(osm_id: int, osm_type: str):
+def openstreetmap_nominatim_search(osm_id: int, osm_type: str) -> list[JSONType]:
     client = Nominatim()
     search_query = f"{osm_type}/{osm_id}"
     return client.query(search_query, lookup=True).toJSON()
 
 
-def fetch_location_openstreetmap_details(location: LocationFull):
+def fetch_location_openstreetmap_details(
+    location: Location,
+) -> JSONType | None:
     location_openstreetmap_details = dict()
     try:
         response = openstreetmap_nominatim_search(
@@ -175,4 +184,4 @@ def fetch_location_openstreetmap_details(location: LocationFull):
         return location_openstreetmap_details
     except Exception:
         logger.exception("Error returned from OpenStreetMap")
-        return
+        return None

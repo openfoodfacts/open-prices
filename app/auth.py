@@ -9,8 +9,9 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from app import crud, schemas
+from app import crud
 from app.db import get_db
+from app.models import User
 
 
 # This class is derived from FastAPI's OAuth2PasswordBearer class,
@@ -70,7 +71,7 @@ oauth2_scheme_no_error = OAuth2PasswordBearerOrAuthCookie(
 
 def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
-) -> schemas.UserCreate:
+) -> User:
     """Get the current user if authenticated.
 
     This function is used as a dependency in endpoints that require
@@ -96,7 +97,7 @@ def get_current_user(
 def get_current_user_optional(
     token: Annotated[str, Depends(oauth2_scheme_no_error)],
     db: Session = Depends(get_db),
-) -> schemas.UserCreate | None:
+) -> User | None:
     """Get the current user if authenticated, None otherwise.
 
     This function is used as a dependency in endpoints that require

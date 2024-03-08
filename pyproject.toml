@@ -16,7 +16,24 @@ exclude = '''
 profile = "black"
 
 [tool.mypy]
+strict = true
+disable_error_code = ["no-untyped-call", "no-any-return"]
+python_version = "3.11"
+exclude = [
+  'alembic/',
+]
+plugins = [
+  "sqlalchemy.ext.mypy.plugin",
+  "pydantic.mypy"
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "OSMPythonTools.nominatim",
+    "apscheduler.*"
+]
 ignore_missing_imports = true
+warn_return_any = false
 
 [tool.poetry]
 name = "open-prices"
@@ -32,13 +49,13 @@ alembic = "~1.12.1"
 Babel = "~2.13.1"
 fastapi = "~0.103.1"
 jinja2 = "~3.1.3"
-openfoodfacts = "~0.1.10"
+openfoodfacts = "~0.2.0"
 psycopg2-binary = "~2.9.9"
 pydantic-settings = "~2.0.3"
 python-multipart = "~0.0.7"
 requests = "~2.31.0"
 sentry-sdk = {extras = ["fastapi"], version = "~1.35.0"}
-sqlalchemy = "~2.0.23"
+sqlalchemy = "~2.0.25"
 sqlalchemy-utils = "~0.41.1"
 uvicorn = "~0.23.2"
 fastapi-pagination = "^0.12.12"
@@ -46,18 +63,22 @@ fastapi-filter = "^1.0.0"
 osmpythontools = "^0.3.5"
 apscheduler = "~3.10.4"
 typer = "~0.9.0"
+pydantic = "^2.6.1"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
 black = "^23.11.0"
-flake8 = "^6.1.0"
-isort = "^5.12.0"
-pytest-cov = "^4.1.0"
+flake8 = "^7.0.0"
 httpx = "^0.25.1"
-pre-commit = "^3.5.0"
-mkdocs = "~1.5.3"
-mkdocs-material = "~9.4.10"
-mkdocs-awesome-pages-plugin = "~2.9.2"
+isort = "^5.12.0"
 mdx-truly-sane-lists = "^1.3"
+mkdocs = "~1.5.3"
+mkdocs-awesome-pages-plugin = "~2.9.2"
+mkdocs-material = "~9.4.10"
+mypy = "^1.8.0"
+pre-commit = "^3.5.0"
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
 toml-sort = "^0.23.1"
-mypy = "^1.7.0"
+types-requests = "^2.31.0.20240125"
+types-tqdm = "^4.66.0.20240106"
+types-sqlalchemy-utils = "^1.0.1"

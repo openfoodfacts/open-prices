@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import crud, schemas
 from app.db import get_db
+from app.models import Location
 
 router = APIRouter(prefix="/locations")
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/locations")
 def get_locations(
     filters: schemas.LocationFilter = FilterDepends(schemas.LocationFilter),
     db: Session = Depends(get_db),
-):
+) -> list[Location]:
     return paginate(db, crud.get_locations_query(filters=filters))
 
 
@@ -24,7 +25,7 @@ def get_locations(
 )
 def get_location_by_osm(
     location_osm_type: str, location_osm_id: int, db: Session = Depends(get_db)
-):
+) -> Location:
     db_location = crud.get_location_by_osm_id_and_type(
         db, osm_id=location_osm_id, osm_type=location_osm_type.upper()
     )
@@ -40,7 +41,7 @@ def get_location_by_osm(
     "/{location_id}",
     response_model=schemas.LocationFull,
 )
-def get_location_by_id(location_id: int, db: Session = Depends(get_db)):
+def get_location_by_id(location_id: int, db: Session = Depends(get_db)) -> Location:
     db_location = crud.get_location_by_id(db, id=location_id)
     if not db_location:
         raise HTTPException(

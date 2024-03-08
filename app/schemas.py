@@ -35,6 +35,7 @@ class UserBase(BaseModel):
 
     user_id: str
     price_count: int = 0
+    is_moderator: bool = False
 
 
 class UserCreate(UserBase):
@@ -289,7 +290,7 @@ class PriceCreateWithValidation(PriceCreate):
     """
 
     @field_validator("labels_tags")
-    def labels_tags_is_valid(cls, v: list[str] | None):
+    def labels_tags_is_valid(cls, v: list[str] | None) -> list[str] | None:
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`labels_tags` cannot be empty")
@@ -303,7 +304,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @field_validator("origins_tags")
-    def origins_tags_is_valid(cls, v: list[str] | None):
+    def origins_tags_is_valid(cls, v: list[str] | None) -> list[str] | None:
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`origins_tags` cannot be empty")
@@ -317,7 +318,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @field_validator("category_tag")
-    def category_tag_is_valid(cls, v: str | None):
+    def category_tag_is_valid(cls, v: str | None) -> str | None:
         if v is not None:
             v = v.lower()
             category_taxonomy = get_taxonomy("category")
@@ -328,7 +329,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @model_validator(mode="after")
-    def product_code_and_category_tag_are_exclusive(self):
+    def product_code_and_category_tag_are_exclusive(self):  # type: ignore
         """Validator that checks that `product_code` and `category_tag` are
         exclusive, and that at least one of them is set."""
         if self.product_code is not None:
@@ -349,14 +350,14 @@ class PriceCreateWithValidation(PriceCreate):
         return self
 
     @model_validator(mode="after")
-    def set_price_per_to_null_if_barcode(self):
+    def set_price_per_to_null_if_barcode(self):  # type: ignore
         """Validator that sets `price_per` to null if `product_code` is set."""
         if self.product_code is not None:
             self.price_per = None
         return self
 
     @model_validator(mode="after")
-    def check_price_discount(self):
+    def check_price_discount(self):  # type: ignore
         """
         Check that:
         - `price_is_discounted` is true if `price_without_discount` is passed

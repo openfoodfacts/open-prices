@@ -10,13 +10,14 @@ from app import crud, schemas, tasks
 from app.auth import get_current_user, get_current_user_optional
 from app.db import get_db
 from app.models import Price
+from app.schemas import PriceFullWithRelations
 
 router = APIRouter(prefix="/prices")
 
 
 def price_transformer(
-    prices: list[Price], current_user: schemas.UserCreate | None = None
-) -> list[Price]:
+    prices: list[PriceFullWithRelations], current_user: schemas.UserCreate | None = None
+) -> list[PriceFullWithRelations]:
     """Transformer function used to remove the file_path of private proofs.
 
     If current_user is None, the file_path is removed for all proofs that are
@@ -29,6 +30,12 @@ def price_transformer(
     """
     for price in prices:
         if (
+            current_user is None
+            and price.proof is not None
+            and price.proof.is_public is False
+        ):
+            price.proof.file_path = None
+        elif (
             price.proof
             and price.proof.is_public is False
             and (
@@ -52,7 +59,7 @@ def get_prices(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
     current_user: schemas.UserCreate | None = Depends(get_current_user_optional),
-):
+) -> list[Price]:
     return paginate(
         db,
         crud.get_prices_query(filters=filters),
@@ -70,7 +77,7 @@ def create_price(
     background_tasks: BackgroundTasks,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Price:
     """
     Create a new price.
 
@@ -115,7 +122,7 @@ def update_price(
     price_new_values: schemas.PriceBasicUpdatableFields,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Price:
     """
     Update a price.
 
@@ -149,7 +156,7 @@ def delete_price(
     price_id: int,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> None:
     """
     Delete a price.
 
@@ -171,4 +178,4 @@ def delete_price(
         )
     # delete price
     crud.delete_price(db, db_price=db_price)
-    return
+    return None

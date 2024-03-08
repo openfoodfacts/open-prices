@@ -4,12 +4,12 @@ import tqdm
 from openfoodfacts import DatasetType, Flavor, ProductDataset
 from openfoodfacts.types import JSONType
 from openfoodfacts.utils import get_logger
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.models import Product
-from app.schemas import LocationCreate, PriceFull, ProductCreate, ProofFull, UserCreate
+from app.models import Price, Product, Proof
+from app.schemas import LocationCreate, ProductCreate, UserCreate
 from app.utils import (
     OFF_FIELDS,
     fetch_location_openstreetmap_details,
@@ -23,19 +23,19 @@ logger = get_logger(__name__)
 
 # Users
 # ------------------------------------------------------------------------------
-def increment_user_price_count(db: Session, user: UserCreate):
+def increment_user_price_count(db: Session, user: UserCreate) -> None:
     crud.increment_user_price_count(db, user=user)
 
 
 # Proofs
 # ------------------------------------------------------------------------------
-def increment_proof_price_count(db: Session, proof: ProofFull):
+def increment_proof_price_count(db: Session, proof: Proof) -> None:
     crud.increment_proof_price_count(db, proof=proof)
 
 
 # Products
 # ------------------------------------------------------------------------------
-def create_price_product(db: Session, price: PriceFull):
+def create_price_product(db: Session, price: Price) -> None:
     # The price may not have a product code, if it's the price of a
     # barcode-less product
     if price.product_code:
@@ -60,7 +60,7 @@ def create_price_product(db: Session, price: PriceFull):
             crud.increment_product_price_count(db, product=db_product)
 
 
-def import_product_db(db: Session, batch_size: int = 1000):
+def import_product_db(db: Session, batch_size: int = 1000) -> None:
     """Import from DB JSONL dump to insert/update product table.
 
     :param db: the session to use
@@ -135,7 +135,7 @@ def import_product_db(db: Session, batch_size: int = 1000):
             )
             item = normalize_product_fields(item)
             execute_result = db.execute(
-                Product.__table__.update()
+                update(Product)
                 .where(Product.code == product_code)
                 .where(Product.source == Flavor.off)
                 # Update the product if only if it has not been updated since
@@ -159,7 +159,7 @@ def import_product_db(db: Session, batch_size: int = 1000):
 
 # Locations
 # ------------------------------------------------------------------------------
-def create_price_location(db: Session, price: PriceFull):
+def create_price_location(db: Session, price: Price) -> None:
     if price.location_osm_id and price.location_osm_type:
         # get or create the corresponding location
         location = LocationCreate(
