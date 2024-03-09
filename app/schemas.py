@@ -217,7 +217,7 @@ class PriceCreate(BaseModel):
 
         Other labels can be provided if relevant.
         """,
-        examples=["en:organic", "fr:ab-agriculture-biologique", "en:fair-trade"],
+        examples=[["en:organic"], ["fr:ab-agriculture-biologique", "en:fair-trade"]],
     )
     origins_tags: list[str] | None = Field(
         default=None,
@@ -228,12 +228,12 @@ class PriceCreate(BaseModel):
 
         The origins must be valid origins in the Open Food Facts taxonomy.
         If one of the origins is not valid, the price will be rejected.""",
-        examples=["en:california", "en:france", "en:italy", "en:spain"],
+        examples=[["en:france"], ["en:california"]],
     )
     price: float = Field(
         gt=0,
         description="price of the product, without its currency, taxes included.",
-        examples=["1.99"],
+        examples=[1.99],
     )
     price_is_discounted: bool = Field(
         default=False,
@@ -244,7 +244,7 @@ class PriceCreate(BaseModel):
         default=None,
         description="price of the product without discount, without its currency, taxes included. "
         "If the product is not discounted, this field must be null. ",
-        examples=["2.99"],
+        examples=[2.99],
     )
     price_per: PricePerEnum | None = Field(
         default=PricePerEnum.KILOGRAM,
@@ -253,6 +253,7 @@ class PriceCreate(BaseModel):
         or `UNIT` (KILOGRAM by default).
         This field is set to null and ignored if `product_code` is provided.
         """,
+        examples=["KILOGRAM", "UNIT"],
     )
     currency: CurrencyEnum = Field(
         description="currency of the price, as a string. "
@@ -269,8 +270,11 @@ class PriceCreate(BaseModel):
         description="type of the OpenStreetMap location object. Stores can be represented as nodes, "
         "ways or relations in OpenStreetMap. It is necessary to be able to fetch the correct "
         "information about the store using the ID.",
+        examples=["NODE", "WAY", "RELATION"],
     )
-    date: datetime.date = Field(description="date when the product was bought.")
+    date: datetime.date = Field(
+        description="date when the product was bought.", examples=["2024-01-01"]
+    )
     proof_id: int | None = Field(
         default=None,
         description="ID of the proof, if any. The proof is a file (receipt or price tag image) "
