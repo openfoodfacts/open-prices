@@ -151,7 +151,12 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
                         Product.updated == None,  # noqa: E711, E501
                     )
                 )
-                .values(source=Flavor.off if item.get("source") is None else item.get("source"), **item)
+                .values(
+                    source=Flavor.off
+                    if item.get("source") is None
+                    else item.get("source"),
+                    **item,
+                )
             )
             updated_count += execute_result.rowcount
             buffer_len += 1
