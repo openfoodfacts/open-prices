@@ -137,7 +137,12 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
             execute_result = db.execute(
                 update(Product)
                 .where(Product.code == product_code)
-                .where(Product.source == Flavor.off)
+                .where(
+                    or_(
+                        Product.source == Flavor.off,
+                        Product.source == None,  # noqa: E711, E501
+                    )
+                )
                 # Update the product if only if it has not been updated since
                 # the creation of the current dataset
                 .where(
