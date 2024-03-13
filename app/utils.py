@@ -50,6 +50,7 @@ OFF_FIELDS = [
     "labels_tags",
     "image_url",
     "nutriscore_grade",
+    "ecoscore_grade",
     "unique_scans_n",
 ]
 

@@ -55,6 +55,7 @@ PRODUCT_1 = ProductCreate(
     brands_tags=["clement-faugier"],
     labels_tags=[],
     nutriscore_grade="d",
+    ecoscore_grade="b",
     unique_scans_n=20,
 )
 PRODUCT_2 = ProductCreate(
@@ -68,6 +69,7 @@ PRODUCT_2 = ProductCreate(
     brands_tags=["clement-faugier"],
     labels_tags=[],
     nutriscore_grade="d",
+    ecoscore_grade="c",
     unique_scans_n=10,
 )
 PRODUCT_3 = ProductCreate(
@@ -81,6 +83,7 @@ PRODUCT_3 = ProductCreate(
     brands_tags=["paysans-d-ici", "ethiquable"],
     labels_tags=["en:fair-trade", "en:organic", "en:made-in-france"],
     nutriscore_grade="c",
+    ecoscore_grade="b",
     unique_scans_n=0,
 )
 LOCATION = LocationFull(
