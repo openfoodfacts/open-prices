@@ -53,13 +53,17 @@ class ProductCreate(BaseModel):
         description="barcode (EAN) of the product, as a string.",
         examples=["8001505005707"],
     )
+    price_count: int = Field(
+        description="number of prices for this product.", examples=[15], default=0
+    )
 
 
 class ProductFull(ProductCreate):
     id: int
     source: Flavor | None = Field(
         description="source of data, either `off` (Open Food Facts), "
-        "`obf` (Open Beauty Facts), `opff` (Open Pet Food Facts) or `obf` (Open Beauty Facts)"
+        "`obf` (Open Beauty Facts), `opf` (Open Products Facts) or `opff` (Open Pet Food Facts",
+        examples=["off", "obf", "opf", "opff", None],
     )
     product_name: str | None = Field(
         description="name of the product.", examples=["Nocciolata"]
@@ -107,9 +111,6 @@ class ProductFull(ProductCreate):
         description="number of unique scans of the product on Open Food Facts.",
         examples=[15],
         default=0,
-    )
-    price_count: int = Field(
-        description="number of prices for this product.", examples=[15], default=0
     )
     created: datetime.datetime = Field(description="datetime of the creation.")
     updated: datetime.datetime | None = Field(
