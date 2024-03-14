@@ -56,6 +56,7 @@ PRODUCT_1 = ProductCreate(
     labels_tags=[],
     nutriscore_grade="d",
     ecoscore_grade="b",
+    nova_group=4,
     unique_scans_n=20,
 )
 PRODUCT_2 = ProductCreate(
@@ -70,6 +71,7 @@ PRODUCT_2 = ProductCreate(
     labels_tags=[],
     nutriscore_grade="d",
     ecoscore_grade="c",
+    nova_group=4,
     unique_scans_n=10,
 )
 PRODUCT_3 = ProductCreate(
@@ -84,6 +86,7 @@ PRODUCT_3 = ProductCreate(
     labels_tags=["en:fair-trade", "en:organic", "en:made-in-france"],
     nutriscore_grade="c",
     ecoscore_grade="b",
+    nova_group=None,
     unique_scans_n=0,
 )
 LOCATION = LocationFull(
