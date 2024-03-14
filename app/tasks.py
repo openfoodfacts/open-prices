@@ -133,10 +133,13 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
             item["image_url"] = generate_openfoodfacts_main_image_url(
                 product_code, images, product["lang"]
             )
+            item["source"] = Flavor.off
             item = normalize_product_fields(item)
             execute_result = db.execute(
                 update(Product)
                 .where(Product.code == product_code)
+                # Update the product if it is part of OFF
+                # or if it has no source (created in Open Prices before OFF)
                 .where(
                     or_(
                         Product.source == Flavor.off,
@@ -151,12 +154,7 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
                         Product.updated == None,  # noqa: E711, E501
                     )
                 )
-                .values(
-                    source=Flavor.off
-                    if item.get("source") is None
-                    else item.get("source"),
-                    **item,
-                )
+                .values(**item)
             )
             updated_count += execute_result.rowcount
             buffer_len += 1
