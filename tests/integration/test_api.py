@@ -9,13 +9,7 @@ from app import crud
 from app.api import app
 from app.db import Base, engine, get_db, session
 from app.models import Session as SessionModel
-from app.schemas import (
-    LocationFull,
-    PriceCreate,
-    ProductCreate,
-    ProofFilter,
-    UserCreate,
-)
+from app.schemas import LocationFull, PriceCreate, ProductFull, ProofFilter, UserCreate
 
 Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
@@ -43,23 +37,26 @@ PAGINATION_KEYS = ["items", "total", "page", "size", "pages"]
 USER = UserCreate(user_id="user", token="user__Utoken")
 USER_1 = UserCreate(user_id="user1", token="user1__Utoken1", price_count=0)
 USER_2 = UserCreate(user_id="user2", token="user2__Utoken2", price_count=1)
-PRODUCT = ProductCreate(code="8001505005592")
-PRODUCT_1 = ProductCreate(
-    code="0022314010025",
+PRODUCT_1 = ProductFull(
+    id=1,
+    code="8001505005707",
     source="off",
-    product_name="Chestnut spread 500 g",
-    product_quantity=500,
-    product_quantity_unit="g",
-    categories_tags=["en:spreads", "en:nuts-and-their-products"],
-    brands="Clément Faugier",
-    brands_tags=["clement-faugier"],
-    labels_tags=[],
+    product_name="Nocciolata",
+    product_quantity=700,
+    product_quantity_unit=None,
+    categories_tags=["en:breakfasts", "en:spreads", "en:cocoa-and-hazelnuts-spreads"],
+    brands="Rigoni di Asiago",
+    brands_tags=["rigoni-di-asiago"],
+    labels_tags=["en:no-gluten", "en:organic"],
     nutriscore_grade="d",
-    ecoscore_grade="b",
+    ecoscore_grade="c",
     nova_group=4,
-    unique_scans_n=20,
+    unique_scans_n=131,
+    created=datetime.datetime.now(),
+    updated=datetime.datetime.now(),
 )
-PRODUCT_2 = ProductCreate(
+PRODUCT_2 = ProductFull(
+    id=2,
     code="0022314010100",
     source="off",
     product_name="Chestnut spread 100 g",
@@ -73,27 +70,29 @@ PRODUCT_2 = ProductCreate(
     ecoscore_grade="c",
     nova_group=4,
     unique_scans_n=10,
+    created=datetime.datetime.now(),
+    updated=datetime.datetime.now(),
 )
-PRODUCT_3 = ProductCreate(
-    code="3760091721969",
+PRODUCT_3 = ProductFull(
+    id=3,
+    code="8000215204219",
     source="off",
-    product_name="Crème bio de châtaignes 320 g",
-    product_quantity=320,
-    product_quantity_unit="g",
-    categories_tags=["en:spreads", "en:nuts-and-their-products"],
-    brands="Ethiquable",
-    brands_tags=["paysans-d-ici", "ethiquable"],
-    labels_tags=["en:fair-trade", "en:organic", "en:made-in-france"],
-    nutriscore_grade="c",
-    ecoscore_grade="b",
+    product_name="Vitariz Rice Drink",
+    product_quantity=1000,
+    product_quantity_unit=None,
+    categories_tags=["en:beverages", "en:plant-based-foods"],
+    brands="Vitariz, Alinor",
+    brands_tags=["vitariz", "alinor"],
+    labels_tags=["en:no-gluten", "en:organic", "en:no-lactose"],
+    nutriscore_grade="b",
+    ecoscore_grade="c",
     nova_group=None,
-    unique_scans_n=0,
-)
-LOCATION = LocationFull(
-    id=1, osm_id=3344841823, osm_type="NODE", created=datetime.datetime.now()
+    unique_scans_n=2,
+    created=datetime.datetime.now(),
+    updated=datetime.datetime.now(),
 )
 LOCATION_1 = LocationFull(
-    id=2,
+    id=1,
     osm_id=652825274,
     osm_type="NODE",
     osm_name="Monoprix",
@@ -107,7 +106,7 @@ LOCATION_1 = LocationFull(
     updated=datetime.datetime.now(),
 )
 LOCATION_2 = LocationFull(
-    id=3,
+    id=2,
     osm_id=6509705997,
     osm_type="NODE",
     osm_name="Carrefour",
@@ -172,18 +171,6 @@ def user_session(db_session) -> SessionModel:
 def user_session_1(db_session) -> SessionModel:
     session, *_ = crud.create_session(db_session, USER_1.user_id, USER_1.token)
     return session
-
-
-@pytest.fixture(scope="module")
-def product(db_session):
-    db_product = crud.create_product(db_session, PRODUCT)
-    return db_product
-
-
-@pytest.fixture(scope="module")
-def location(db_session):
-    db_location = crud.create_location(db_session, LOCATION)
-    return db_location
 
 
 @pytest.fixture(scope="function")
@@ -1121,29 +1108,49 @@ def test_get_products_pagination(clean_products):
         assert key in response.json()
 
 
-# def test_get_products_filters(db_session, clean_products):
-#     crud.create_product(db_session, PRODUCT_1)
-#     crud.create_product(db_session, PRODUCT_2)
-#     crud.create_product(db_session, PRODUCT_3)
+def test_get_products_filters(db_session, clean_products):
+    crud.create_product(db_session, PRODUCT_1)
+    crud.create_product(db_session, PRODUCT_2)
+    crud.create_product(db_session, PRODUCT_3)
 
-#     assert len(crud.get_products(db_session)) == 3
+    assert len(crud.get_products(db_session)) == 3
 
-#     # 3 products with the same source
-#     response = client.get("/api/v1/products?source=off")
-#     assert response.status_code == 200
-#     assert len(response.json()["items"]) == 3
-#     # 1 product with a specific product_name
-#     response = client.get("/api/v1/products?product_name__like=châtaignes")
-#     assert response.status_code == 200
-#     assert len(response.json()["items"]) == 1
-#     # 2 products with the same brand
-#     response = client.get("/api/v1/products?brands__like=Clément Faugier")
-#     assert response.status_code == 200
-#     assert len(response.json()["items"]) == 2
-#     # 2 products with a positive unique_scans_n
-#     response = client.get("/api/v1/products?unique_scans_n__gte=1")
-#     assert response.status_code == 200
-#     assert len(response.json()["items"]) == 2
+    # filter by source
+    response = client.get("/api/v1/products?source=off")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 3
+    # filter by product_name
+    response = client.get("/api/v1/products?product_name__like=Chestnut")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # filter by brand
+    response = client.get("/api/v1/products?brands__like=Clément Faugier")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # filter by category tag
+    response = client.get("/api/v1/products?categories_tags__contains=en:spreads")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 2
+    # filter by label tag
+    response = client.get("/api/v1/products?labels_tags__contains=en:organic")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 2
+    # filter by nutriscore
+    response = client.get("/api/v1/products?nutriscore_grade=b")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # filter by ecoscore
+    response = client.get("/api/v1/products?ecoscore_grade=a")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 0
+    # filter by nova
+    response = client.get("/api/v1/products?nova_group=4")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 2
+    # filter by unique_scans_n
+    response = client.get("/api/v1/products?unique_scans_n__gte=10")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 2
 
 
 def test_get_product(db_session, clean_products):
@@ -1151,11 +1158,13 @@ def test_get_product(db_session, clean_products):
     crud.create_product(db_session, PRODUCT_2)
     last_product = crud.create_product(db_session, PRODUCT_3)
 
+    assert len(crud.get_products(db_session)) == 3
+
     # by id: product exists
     response = client.get(f"/api/v1/products/{last_product.id}")
     assert response.status_code == 200
     # by id: product does not exist
-    response = client.get(f"/api/v1/products/{last_product.id + 1}")
+    response = client.get("/api/v1/products/99999")
     assert response.status_code == 404
     # by code: product exists
     response = client.get(f"/api/v1/products/code/{last_product.code}")
@@ -1184,23 +1193,27 @@ def test_get_locations_pagination(clean_locations):
         assert key in response.json()
 
 
-def test_get_locations_filters(db_session):
+def test_get_locations_filters(db_session, clean_locations):
     crud.create_location(db_session, LOCATION_1)
     crud.create_location(db_session, LOCATION_2)
 
     assert len(crud.get_locations(db_session)) == 2
 
-    # 1 location Monoprix
+    # filter by osm_name
     response = client.get("/api/v1/locations?osm_name__like=Monoprix")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
-    # 1 location in France
+    # filter by osm_address_country
     response = client.get("/api/v1/locations?osm_address_country__like=France")  # noqa
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
 
 
-def test_get_location(location):
+def test_get_location(db_session, clean_locations):
+    location = crud.create_location(db_session, LOCATION_1)
+
+    assert len(crud.get_locations(db_session)) == 1
+
     # by id: location exists
     response = client.get(f"/api/v1/locations/{location.id}")
     assert response.status_code == 200
