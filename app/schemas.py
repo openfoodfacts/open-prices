@@ -95,11 +95,14 @@ class ProductFull(ProductCreate):
         ],
     )
     nutriscore_grade: str | None = Field(
-        description="Nutriscore grade.", examples=["a", "unknown", "not-applicable"]
+        description="Nutri-Score grade.",
+        examples=["a", "b", "c", "d", "e", "unknown", "not-applicable"],
     )
     ecoscore_grade: str | None = Field(
-        description="Ecoscore grade.", examples=["a", "unknown", "not-applicable"]
+        description="Eco-Score grade.",
+        examples=["a", "b", "c", "d", "e", "unknown", "not-applicable"],
     )
+    nova_group: int | None = Field(description="NOVA group.", examples=[1, 2, 3, 4])
     unique_scans_n: int = Field(
         description="number of unique scans of the product on Open Food Facts.",
         examples=[15],
@@ -464,6 +467,7 @@ class ProductFilter(Filter):
     brands__like: Optional[str] | None = None
     nutriscore_grade: Optional[str] | None = None
     ecoscore_grade: Optional[str] | None = None
+    nova_group: Optional[int] | None = None
     unique_scans_n__gte: Optional[int] | None = None
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None

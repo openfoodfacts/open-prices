@@ -51,6 +51,7 @@ OFF_FIELDS = [
     "image_url",
     "nutriscore_grade",
     "ecoscore_grade",
+    "nova_group",
     "unique_scans_n",
 ]
 
