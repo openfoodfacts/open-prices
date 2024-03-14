@@ -69,6 +69,7 @@ class Product(Base):
 
     nutriscore_grade: Mapped[str | None]
     ecoscore_grade: Mapped[str | None]
+    nova_group: Mapped[int | None]
     unique_scans_n = mapped_column(Integer, nullable=False, server_default="0")
 
     prices: Mapped[list["Price"]] = relationship(back_populates="product")
