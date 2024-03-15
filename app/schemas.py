@@ -53,67 +53,80 @@ class ProductCreate(BaseModel):
         description="barcode (EAN) of the product, as a string.",
         examples=["8001505005707"],
     )
+    price_count: int = Field(
+        description="number of prices for this product.", examples=[15], default=0
+    )
 
 
 class ProductFull(ProductCreate):
     id: int
     source: Flavor | None = Field(
         description="source of data, either `off` (Open Food Facts), "
-        "`obf` (Open Beauty Facts), `opff` (Open Pet Food Facts) or `obf` (Open Beauty Facts)"
+        "`obf` (Open Beauty Facts), `opf` (Open Products Facts) or `opff` (Open Pet Food Facts",
+        examples=["off", "obf", "opf", "opff", None],
+        default=None,
     )
     product_name: str | None = Field(
-        description="name of the product.", examples=["Nocciolata"]
+        description="name of the product.", examples=["Nocciolata"], default=None
     )
     product_quantity: int | None = Field(
         description="quantity of the product, normalized in g or ml (depending on the product).",
         examples=[700],
+        default=None,
     )
     product_quantity_unit: str | None = Field(
         description="quantity unit of the product: g or ml (depending on the product).",
         examples=["g", "ml"],
+        default=None,
     )
     categories_tags: list[str] = Field(
         description="categories of the product.",
         examples=[["en:breakfasts", "en:spreads"]],
+        default=list,
     )
     brands: str | None = Field(
         description="brand(s) of the product.",
         examples=["Rigoni di Asiago", "Lindt"],
+        default=None,
     )
     brands_tags: list[str] = Field(
         description="brands of the product.",
         examples=[["douceur-du-verger", "marque-repere"]],
+        default=list,
     )
     labels_tags: list[str] = Field(
         description="labels of the product.",
         examples=[["en:fair-trade", "en:organic", "en:made-in-france"]],
+        default=list,
     )
     image_url: AnyHttpUrl | None = Field(
         description="URL of the product image.",
         examples=[
             "https://images.openfoodfacts.org/images/products/800/150/500/5707/front_fr.161.400.jpg"
         ],
+        default=None,
     )
     nutriscore_grade: str | None = Field(
         description="Nutri-Score grade.",
         examples=["a", "b", "c", "d", "e", "unknown", "not-applicable"],
+        default=None,
     )
     ecoscore_grade: str | None = Field(
         description="Eco-Score grade.",
         examples=["a", "b", "c", "d", "e", "unknown", "not-applicable"],
+        default=None,
     )
-    nova_group: int | None = Field(description="NOVA group.", examples=[1, 2, 3, 4])
+    nova_group: int | None = Field(
+        description="NOVA group.", examples=[1, 2, 3, 4], default=None
+    )
     unique_scans_n: int = Field(
         description="number of unique scans of the product on Open Food Facts.",
         examples=[15],
         default=0,
     )
-    price_count: int = Field(
-        description="number of prices for this product.", examples=[15], default=0
-    )
     created: datetime.datetime = Field(description="datetime of the creation.")
     updated: datetime.datetime | None = Field(
-        description="datetime of the last update."
+        description="datetime of the last update.", default=None
     )
 
 
@@ -138,8 +151,10 @@ class LocationFull(LocationCreate):
     osm_address_country: str | None = None
     osm_lat: float | None = None
     osm_lon: float | None = None
-    created: datetime.datetime
-    updated: datetime.datetime | None = None
+    created: datetime.datetime = Field(description="datetime of the creation.")
+    updated: datetime.datetime | None = Field(
+        description="datetime of the last update.", default=None
+    )
 
 
 # Proof

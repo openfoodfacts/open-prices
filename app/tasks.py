@@ -40,10 +40,8 @@ def create_price_product(db: Session, price: Price) -> None:
     # barcode-less product
     if price.product_code:
         # get or create the corresponding product
-        product = ProductCreate(code=price.product_code)
-        db_product, created = crud.get_or_create_product(
-            db, product=product, init_price_count=1
-        )
+        product = ProductCreate(code=price.product_code, price_count=1)
+        db_product, created = crud.get_or_create_product(db, product=product)
         # link the product to the price
         crud.link_price_product(db, price=price, product=db_product)
         # fetch data from OpenFoodFacts if created

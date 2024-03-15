@@ -212,9 +212,7 @@ def get_product_by_code(db: Session, code: str) -> Optional[Product]:
     return db.query(Product).filter(Product.code == code).first()
 
 
-def create_product(
-    db: Session, product: ProductCreate, price_count: int = 0
-) -> Product:
+def create_product(db: Session, product: ProductCreate) -> Product:
     """Create a product in the database.
 
     :param db: the database session
@@ -223,16 +221,14 @@ def create_product(
         to 0
     :return: the created product
     """
-    db_product = Product(price_count=price_count, **product.model_dump())
+    db_product = Product(**product.model_dump())
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
     return db_product
 
 
-def get_or_create_product(
-    db: Session, product: ProductCreate, init_price_count: int = 0
-) -> tuple[Product, bool]:
+def get_or_create_product(db: Session, product: ProductCreate) -> tuple[Product, bool]:
     """Get or create a product in the database.
 
     :param db: the database session
@@ -245,7 +241,7 @@ def get_or_create_product(
     created = False
     db_product = get_product_by_code(db, code=product.code)
     if not db_product:
-        db_product = create_product(db, product=product, price_count=init_price_count)
+        db_product = create_product(db, product=product)
         created = True
     return db_product, created
 
