@@ -58,6 +58,8 @@ class Product(Base):
     code: Mapped[str] = mapped_column(String, unique=True, index=True)
 
     source: Mapped[Flavor | None] = mapped_column(ChoiceType(Flavor))
+    source_last_synced = mapped_column(DateTime(timezone=True), nullable=True)
+
     product_name: Mapped[str | None]
     product_quantity: Mapped[int | None]
     product_quantity_unit: Mapped[str | None]
