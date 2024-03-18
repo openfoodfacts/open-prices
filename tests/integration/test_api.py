@@ -742,11 +742,13 @@ def test_update_price_moderator(
 def test_delete_price(
     db_session, user_session: SessionModel, user_session_1: SessionModel, clean_prices
 ):
+    # create price
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
     # without authentication
     response = client.delete(f"/api/v1/prices/{db_price.id}")
     assert response.status_code == 401
     # with authentication but not price owner
+    crud.update_user_moderator(db_session, USER_1.user_id, False)
     response = client.delete(
         f"/api/v1/prices/{db_price.id}",
         headers={"Authorization": f"Bearer {user_session_1.token}"},
@@ -762,6 +764,20 @@ def test_delete_price(
     response = client.delete(
         f"/api/v1/prices/{db_price.id}",
         headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 204
+
+
+def test_delete_price_moderator(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_prices
+):
+    # create price
+    db_price = crud.create_price(db_session, PRICE_1, user_session.user)
+    # user_1 is moderator, not owner
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    response = client.delete(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
     )
     assert response.status_code == 204
 
