@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.24.0](https://github.com/openfoodfacts/open-prices/compare/v1.23.0...v1.24.0) (2024-03-18)
+
+
+### Features
+
+* new Product.ecoscore_grade field ([#247](https://github.com/openfoodfacts/open-prices/issues/247)) ([fa89ef8](https://github.com/openfoodfacts/open-prices/commit/fa89ef8b988e1796697539d3fc72292b0021b74a))
+* new Product.nova_group field ([#251](https://github.com/openfoodfacts/open-prices/issues/251)) ([e611b11](https://github.com/openfoodfacts/open-prices/commit/e611b1116be30ddda2d029ee2770b62bedc1ab0e))
+* **prices:** allow moderators to delete prices ([#260](https://github.com/openfoodfacts/open-prices/issues/260)) ([0c3d232](https://github.com/openfoodfacts/open-prices/commit/0c3d2328a81b2e8c0bb04bf60039e56719ae8ceb))
+* **prices:** allow moderators to edit prices ([#259](https://github.com/openfoodfacts/open-prices/issues/259)) ([dcb463b](https://github.com/openfoodfacts/open-prices/commit/dcb463b95dae8916781ee7c952a3b246f848fe59))
+* **product:** new source_last_synced field ([#256](https://github.com/openfoodfacts/open-prices/issues/256)) ([e6be855](https://github.com/openfoodfacts/open-prices/commit/e6be855e822f8c0e304293e2a8b68fd6dfaa5ed4))
+
+
+### Bug Fixes
+
+* **products:** fix filter by labels_tags ([#252](https://github.com/openfoodfacts/open-prices/issues/252)) ([ac68218](https://github.com/openfoodfacts/open-prices/commit/ac682184085ea0781b1a0bf634fc9a79c105316e))
+* **products:** update products added first in Open Prices ([#250](https://github.com/openfoodfacts/open-prices/issues/250)) ([bef2932](https://github.com/openfoodfacts/open-prices/commit/bef29325ba7ac5c6d7e113174a290a988fc82d5c))
+* **sync:** tentative fix of Product sync with OFF ([#257](https://github.com/openfoodfacts/open-prices/issues/257)) ([68f0b6c](https://github.com/openfoodfacts/open-prices/commit/68f0b6c729aba9f9c76ae140aa226d5f358f63f4))
+* **tests:** use ProductFull for fixtures ([#253](https://github.com/openfoodfacts/open-prices/issues/253)) ([2d7b83c](https://github.com/openfoodfacts/open-prices/commit/2d7b83c2e3b149a58f51dd7614e8728f9db3b997))
+
+
+### Technical
+
+* improve examples of Price schema ([#248](https://github.com/openfoodfacts/open-prices/issues/248)) ([2527942](https://github.com/openfoodfacts/open-prices/commit/25279427a482f7a5b1135c939e6a4033eca00b65))
+* Improve typing, pre-commit, updates openfoodfacts package ([#198](https://github.com/openfoodfacts/open-prices/issues/198)) ([ff03b0c](https://github.com/openfoodfacts/open-prices/commit/ff03b0cbbe4e43994fb6e924b19f1dd343e19444))
+
 ## [1.23.0](https://github.com/openfoodfacts/open-prices/compare/v1.22.0...v1.23.0) (2024-03-05)
 
 
