@@ -137,8 +137,9 @@ def update_price(
             status_code=404,
             detail=f"Price with code {price_id} not found",
         )
-    # Check if the price belongs to the current user
-    if db_price.owner != current_user.user_id:
+    # Check if the price belongs to the current user,
+    # if it doesn't, the user needs to be a moderator
+    if db_price.owner != current_user.user_id and not current_user.is_moderator:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Price does not belong to current user",
@@ -163,8 +164,9 @@ def delete_price(
     This endpoint requires authentication.
     A user can delete only owned prices.
     """
+    # fetch price with id = price_id
     db_price = crud.get_price_by_id(db, id=price_id)
-    # get price
+
     if not db_price:
         raise HTTPException(
             status_code=404,
@@ -176,6 +178,7 @@ def delete_price(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Price does not belong to current user",
         )
+
     # delete price
     crud.delete_price(db, db_price=db_price)
     return None

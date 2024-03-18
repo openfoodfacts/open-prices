@@ -654,18 +654,22 @@ def test_get_prices_orders(db_session, user_session: SessionModel, clean_prices)
     assert (response.json()["items"][0]["date"]) == "2023-10-31"
 
 
-def test_update_price(db_session, user_session: SessionModel):
+def test_update_price(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_prices
+):
+    # create price
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
+
     new_price = 5.5
     PRICE_UPDATE_PARTIAL = {"price": new_price}
     # without authentication
     response = client.patch(f"/api/v1/prices/{db_price.id}")
     assert response.status_code == 401
     # with authentication but not price owner
-    user_1_session, *_ = crud.create_session(db_session, USER_1.user_id, USER_1.token)
+    crud.update_user_moderator(db_session, user_session_1.user_id, False)
     response = client.patch(
         f"/api/v1/prices/{db_price.id}",
-        headers={"Authorization": f"Bearer {user_1_session.token}"},
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
         json=jsonable_encoder(PRICE_UPDATE_PARTIAL),
     )
     assert response.status_code == 403
@@ -713,16 +717,39 @@ def test_update_price(db_session, user_session: SessionModel):
     assert response.status_code == 422
 
 
-def test_delete_price(db_session, user_session: SessionModel, clean_prices):
+def test_update_price_moderator(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_prices
+):
+    # create price
+    db_price = crud.create_price(db_session, PRICE_1, user_session.user)
+
+    new_price = 5.5
+    PRICE_UPDATE_PARTIAL = {"price": new_price}
+
+    # user_1 is moderator, not owner
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    response = client.patch(
+        f"/api/v1/prices/{db_price.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+        json=jsonable_encoder(PRICE_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 200
+    assert response.json()["price"] == new_price
+    assert response.json()["price_is_discounted"] == PRICE_1.price_is_discounted
+    assert response.json()["price_without_discount"] == PRICE_1.price_without_discount
+
+
+def test_delete_price(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_prices
+):
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
     # without authentication
     response = client.delete(f"/api/v1/prices/{db_price.id}")
     assert response.status_code == 401
     # with authentication but not price owner
-    user_1_session, *_ = crud.create_session(db_session, USER_1.user_id, USER_1.token)
     response = client.delete(
         f"/api/v1/prices/{db_price.id}",
-        headers={"Authorization": f"Bearer {user_1_session.token}"},
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
     )
     assert response.status_code == 403
     # with authentication but price unknown
@@ -973,6 +1000,31 @@ def test_update_proof(
         json=jsonable_encoder(PROOF_UPDATE_PARTIAL_WRONG),
     )
     assert response.status_code == 422
+
+
+def test_update_proof_moderator(
+    db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
+):
+    # create proof
+    response = client.post(
+        "/api/v1/proofs/upload",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "PRICE_TAG"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    proof = crud.get_proof_by_id(db_session, response.json().get("id"))
+
+    PROOF_UPDATE_PARTIAL = {"is_public": False}
+
+    # user_1 is moderator, not owner
+    crud.update_user_moderator(db_session, USER_1.user_id, True)
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session_1.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 200
 
 
 def test_delete_proof(

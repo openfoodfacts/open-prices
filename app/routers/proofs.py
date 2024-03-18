@@ -76,20 +76,22 @@ def get_user_proof_by_id(
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Proof:
-    # get proof
+    # fetch proof with id = proof_id
     db_proof = crud.get_proof_by_id(db, id=proof_id)
+
     if not db_proof:
         raise HTTPException(
             status_code=404,
             detail=f"Proof with id {proof_id} not found",
         )
     # Check if the proof belongs to the current user,
-    # if it doesn't, the user needs to be moderator
+    # if it doesn't, the user needs to be a moderator
     if db_proof.owner != current_user.user_id and not current_user.is_moderator:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Proof does not belong to current user",
         )
+
     return db_proof
 
 
@@ -119,7 +121,7 @@ def update_proof(
             detail=f"Proof with id {proof_id} not found",
         )
     # Check if the proof belongs to the current user,
-    # if it doesn't, the user needs to be moderator
+    # if it doesn't, the user needs to be a moderator
     if db_proof.owner != current_user.user_id and not current_user.is_moderator:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -147,15 +149,16 @@ def delete_proof(
     Can delete only proofs that are not associated with prices.
     A moderator can delete not owned proofs.
     """
-    # get proof
+    # fetch proof with id = proof_id
     db_proof = crud.get_proof_by_id(db, id=proof_id)
+
     if not db_proof:
         raise HTTPException(
             status_code=404,
             detail=f"Proof with code {proof_id} not found",
         )
     # Check if the proof belongs to the current user,
-    # if it doesn't, the user needs to be moderator
+    # if it doesn't, the user needs to be a moderator
     if db_proof.owner != current_user.user_id and not current_user.is_moderator:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
