@@ -172,8 +172,9 @@ def delete_price(
             status_code=404,
             detail=f"Price with code {price_id} not found",
         )
-    # Check if the price belongs to the current user
-    if db_price.owner != current_user.user_id:
+    # Check if the price belongs to the current user,
+    # if it doesn't, the user needs to be a moderator
+    if db_price.owner != current_user.user_id and not current_user.is_moderator:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Price does not belong to current user",
