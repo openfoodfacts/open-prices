@@ -83,56 +83,60 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
     )
     seen_codes = set()
     for product in tqdm.tqdm(dataset):
+        # Skip products without a code
         if "code" not in product:
             continue
-
         product_code = product["code"]
-        # Some products are duplicated in the dataset, we skip them
+
+        # Skip duplicate products
         if product_code in seen_codes:
             continue
         seen_codes.add(product_code)
-        images: JSONType = product.get("images", {})
-        last_modified_t = product.get("last_modified_t")
 
-        if isinstance(last_modified_t, str):
-            # Some products have a last_modified_t field with a string value
-            last_modified_t = int(last_modified_t)
+        product_images: JSONType = product.get("images", {})
+        product_last_modified_t = product.get("last_modified_t")
 
-        last_modified = (
-            datetime.datetime.fromtimestamp(last_modified_t, tz=datetime.timezone.utc)
-            if last_modified_t
+        # Convert last_modified_t to a datetime object
+        # (sometimes the field is a string, convert to int first)
+        if isinstance(product_last_modified_t, str):
+            product_last_modified_t = int(product_last_modified_t)
+        product_source_last_modified = (
+            datetime.datetime.fromtimestamp(
+                product_last_modified_t, tz=datetime.timezone.utc
+            )
+            if product_last_modified_t
             else None
         )
-
-        if last_modified is None:
+        # Skip products that have no last_modified date
+        if product_source_last_modified is None:
             continue
 
         # Skip products that have been modified today (more recent updates are
         # possible)
-        if last_modified >= start_datetime:
+        if product_source_last_modified >= start_datetime:
             logger.debug("Skipping %s", product_code)
             continue
 
-        if product_code not in existing_codes:
-            item = {"code": product_code, "source": Flavor.off}
-            for key in OFF_FIELDS:
-                item[key] = product[key] if key in product else None
+        # Build product dict to insert/update
+        product_dict = {
+            key: product[key] if (key in product) else None for key in OFF_FIELDS
+        }
+        product_dict["image_url"] = generate_openfoodfacts_main_image_url(
+            product_code, product_images, product["lang"]
+        )
+        product_dict["source"] = Flavor.off
+        product_dict["source_last_synced"] = datetime.datetime.now()
+        product_dict = normalize_product_fields(product_dict)
 
-            item = normalize_product_fields(item)
-            item["image_url"] = generate_openfoodfacts_main_image_url(
-                product_code, images, product["lang"]
-            )
-            db.add(Product(**item))
+        # Case 1: new OFF product (not in OP database)
+        if product_code not in existing_codes:
+            product_dict["code"] = product_code
+            db.add(Product(**product_dict))
             added_count += 1
             buffer_len += 1
 
+        # Case 2: existing product (already in OP database)
         else:
-            item = {key: product[key] if key in product else None for key in OFF_FIELDS}
-            item["image_url"] = generate_openfoodfacts_main_image_url(
-                product_code, images, product["lang"]
-            )
-            item["source"] = Flavor.off
-            item = normalize_product_fields(item)
             execute_result = db.execute(
                 update(Product)
                 .where(Product.code == product_code)
@@ -144,15 +148,15 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
                         Product.source == None,  # noqa: E711, E501
                     )
                 )
-                # Update the product if only if it has not been updated since
+                # Update the product if it has not been updated since
                 # the creation of the current dataset
                 .where(
                     or_(
-                        Product.updated < last_modified,
-                        Product.updated == None,  # noqa: E711, E501
+                        Product.source_last_synced < product_source_last_modified,
+                        Product.source_last_synced == None,  # noqa: E711, E501
                     )
                 )
-                .values(**item)
+                .values(**product_dict)
             )
             updated_count += execute_result.rowcount
             buffer_len += 1
