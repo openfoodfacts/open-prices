@@ -98,7 +98,7 @@ def authentication(
             # Don't add httponly=True or secure=True as it's still in
             # development phase, but it should be added once the front-end
             # is ready
-            final_response.set_cookie({"opsession": token})
+            final_response.set_cookie("opsession", token)
         return final_response
     elif response.status_code == 403:
         time.sleep(2)  # prevents brute-force
