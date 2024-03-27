@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import crud, schemas
 from app.db import get_db
+from app.models import Product
 
 router = APIRouter(prefix="/products")
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/products")
 def get_products(
     filters: schemas.ProductFilter = FilterDepends(schemas.ProductFilter),
     db: Session = Depends(get_db),
-):
+) -> list[Product]:
     return paginate(db, crud.get_products_query(filters=filters))
 
 
@@ -22,7 +23,7 @@ def get_products(
     "/code/{product_code}",
     response_model=schemas.ProductFull,
 )
-def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
+def get_product_by_code(product_code: str, db: Session = Depends(get_db)) -> Product:
     db_product = crud.get_product_by_code(db, code=product_code)
     if not db_product:
         raise HTTPException(
@@ -36,7 +37,7 @@ def get_product_by_code(product_code: str, db: Session = Depends(get_db)):
     "/{product_id}",
     response_model=schemas.ProductFull,
 )
-def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
+def get_product_by_id(product_id: int, db: Session = Depends(get_db)) -> Product:
     db_product = crud.get_product_by_id(db, id=product_id)
     if not db_product:
         raise HTTPException(

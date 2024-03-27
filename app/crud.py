@@ -2,9 +2,11 @@ import random
 import string
 from mimetypes import guess_extension
 from pathlib import Path
+from typing import Any, Optional, Sequence
 
 from fastapi import UploadFile
-from sqlalchemy import select
+from fastapi_filter.contrib.sqlalchemy import Filter
+from sqlalchemy import Row, Select, delete, select
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 
@@ -16,24 +18,21 @@ from app.models import User
 from app.schemas import (
     LocationCreate,
     LocationFilter,
-    LocationFull,
     PriceBasicUpdatableFields,
     PriceCreate,
     PriceFilter,
-    PriceFull,
     ProductCreate,
     ProductFilter,
     ProductFull,
     ProofBasicUpdatableFields,
     ProofFilter,
-    ProofFull,
     UserCreate,
 )
 
 
 # Users
 # ------------------------------------------------------------------------------
-def get_users_query(filters: ProductFilter | None = None):
+def get_users_query(filters: Filter | None = None) -> Select[tuple[User]]:
     """Useful for pagination."""
     query = select(User)
     if filters:
@@ -42,7 +41,7 @@ def get_users_query(filters: ProductFilter | None = None):
     return query
 
 
-def get_users(db: Session, filters: ProductFilter | None = None) -> list[User]:
+def get_users(db: Session, filters: Filter | None = None) -> Sequence[Row[tuple[User]]]:
     """Return a list of users from the database.
 
     :param db: the database session
@@ -52,11 +51,11 @@ def get_users(db: Session, filters: ProductFilter | None = None) -> list[User]:
     return db.execute(get_users_query(filters=filters)).all()
 
 
-def get_user_by_user_id(db: Session, user_id: str) -> User:
+def get_user_by_user_id(db: Session, user_id: str) -> Optional[User]:
     return db.query(User).filter(User.user_id == user_id).first()
 
 
-def get_session_by_token(db: Session, token: str) -> SessionModel:
+def get_session_by_token(db: Session, token: str) -> Optional[SessionModel]:
     """Return the session linked to the token.
 
     :param db: the database session
@@ -112,12 +111,12 @@ def create_session(
     user = get_user_by_user_id(db, user_id=user_id)
     if not user:
         user = create_user(db, user_id=user_id)
-        session = _create_session(db, user=user, token=token)
+        session: SessionModel = _create_session(db, user=user, token=token)
         created = True
     else:
-        session = get_session_by_token(db, token=token)
-        if not session:
-            session = _create_session(db, user=user, token=token)
+        session = get_session_by_token(db, token=token) or _create_session(
+            db, user=user, token=token
+        )
     return session, user, created
 
 
@@ -129,7 +128,7 @@ def update_session_last_used_field(db: Session, session: SessionModel) -> Sessio
     return session
 
 
-def increment_user_price_count(db: Session, user: UserCreate):
+def increment_user_price_count(db: Session, user: UserCreate) -> UserCreate:
     """Increment the price count of a user.
 
     This is used to keep track of the number of prices linked to a user.
@@ -140,7 +139,7 @@ def increment_user_price_count(db: Session, user: UserCreate):
     return user
 
 
-def delete_user(db: Session, user_id: UserCreate) -> bool:
+def delete_user(db: Session, user_id: str) -> bool:
     db_user = get_user_by_user_id(db, user_id=user_id)
     if db_user:
         db.delete(db_user)
@@ -156,9 +155,7 @@ def delete_session(db: Session, session_id: int) -> bool:
     :param session_id: the DB session ID
     :return: a bool indicating whether the session was deleted
     """
-    results = db.execute(
-        SessionModel.__table__.delete().where(SessionModel.id == session_id)
-    )
+    results = db.execute(delete(SessionModel).where(SessionModel.id == session_id))
     db.commit()
     return results.rowcount > 0
 
@@ -181,7 +178,7 @@ def update_user_moderator(db: Session, user_id: str, is_moderator: bool) -> bool
 
 # Products
 # ------------------------------------------------------------------------------
-def get_products_query(filters: ProductFilter | None = None):
+def get_products_query(filters: ProductFilter | None = None) -> Select[tuple[Product]]:
     """Useful for pagination."""
     query = select(Product)
     if filters:
@@ -193,7 +190,7 @@ def get_products_query(filters: ProductFilter | None = None):
             filters.categories_tags__contains = None
         if filters.labels_tags__contains:
             query = query.filter(
-                Product.categories_tags.contains([filters.labels_tags__contains])
+                Product.labels_tags.contains([filters.labels_tags__contains])
             )
             filters.labels_tags__contains = None
         query = filters.filter(query)
@@ -201,21 +198,21 @@ def get_products_query(filters: ProductFilter | None = None):
     return query
 
 
-def get_products(db: Session, filters: ProductFilter | None = None):
+def get_products(
+    db: Session, filters: ProductFilter | None = None
+) -> Sequence[Row[tuple[Product]]]:
     return db.execute(get_products_query(filters=filters)).all()
 
 
-def get_product_by_id(db: Session, id: int):
+def get_product_by_id(db: Session, id: int) -> Optional[Product]:
     return db.query(Product).filter(Product.id == id).first()
 
 
-def get_product_by_code(db: Session, code: str) -> Product:
+def get_product_by_code(db: Session, code: str) -> Optional[Product]:
     return db.query(Product).filter(Product.code == code).first()
 
 
-def create_product(
-    db: Session, product: ProductCreate, price_count: int = 0
-) -> Product:
+def create_product(db: Session, product: ProductCreate) -> Product:
     """Create a product in the database.
 
     :param db: the database session
@@ -224,16 +221,14 @@ def create_product(
         to 0
     :return: the created product
     """
-    db_product = Product(price_count=price_count, **product.model_dump())
+    db_product = Product(**product.model_dump())
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
     return db_product
 
 
-def get_or_create_product(
-    db: Session, product: ProductCreate, init_price_count: int = 0
-):
+def get_or_create_product(db: Session, product: ProductCreate) -> tuple[Product, bool]:
     """Get or create a product in the database.
 
     :param db: the database session
@@ -246,12 +241,14 @@ def get_or_create_product(
     created = False
     db_product = get_product_by_code(db, code=product.code)
     if not db_product:
-        db_product = create_product(db, product=product, price_count=init_price_count)
+        db_product = create_product(db, product=product)
         created = True
     return db_product, created
 
 
-def update_product(db: Session, product: ProductFull, update_dict: dict):
+def update_product(
+    db: Session, product: Product, update_dict: dict[str, Any]
+) -> Product:
     for key, value in update_dict.items():
         setattr(product, key, value)
     db.commit()
@@ -259,7 +256,7 @@ def update_product(db: Session, product: ProductFull, update_dict: dict):
     return product
 
 
-def increment_product_price_count(db: Session, product: ProductFull):
+def increment_product_price_count(db: Session, product: Product) -> Product:
     """Increment the price count of a product.
 
     This is used to keep track of the number of prices linked to a product.
@@ -277,7 +274,7 @@ def get_prices_query(
     with_join_location: bool = True,
     with_join_proof: bool = True,
     filters: PriceFilter | None = None,
-):
+) -> Select[tuple[Price]]:
     """Useful for pagination."""
     query = select(Price)
     if with_join_product:
@@ -292,15 +289,17 @@ def get_prices_query(
     return query
 
 
-def get_prices(db: Session, filters: PriceFilter | None = None):
+def get_prices(
+    db: Session, filters: PriceFilter | None = None
+) -> Sequence[Row[tuple[Price]]]:
     return db.execute(get_prices_query(filters=filters)).all()
 
 
-def get_price_by_id(db: Session, id: int):
+def get_price_by_id(db: Session, id: int) -> Price | None:
     return db.query(Price).filter(Price.id == id).first()
 
 
-def create_price(db: Session, price: PriceCreate, user: UserCreate):
+def create_price(db: Session, price: PriceCreate, user: UserCreate) -> Price:
     db_price = Price(**price.model_dump(), owner=user.user_id)
     db.add(db_price)
     db.commit()
@@ -309,8 +308,8 @@ def create_price(db: Session, price: PriceCreate, user: UserCreate):
 
 
 def link_price_product(
-    db: Session, price: PriceFull, product: ProductFull
-) -> PriceFull:
+    db: Session, price: Price, product: ProductFull | Product
+) -> Price:
     """Link the product DB object to the price DB object and return the updated
     price."""
     price.product_id = product.id
@@ -319,32 +318,34 @@ def link_price_product(
     return price
 
 
-def set_price_location(db: Session, price: PriceFull, location: LocationFull):
+def set_price_location(db: Session, price: Price, location: Location) -> Price:
     price.location_id = location.id
     db.commit()
     db.refresh(price)
     return price
 
 
-def delete_price(db: Session, db_price: PriceFull) -> bool:
+def delete_price(db: Session, db_price: Price) -> bool:
     db.delete(db_price)
     db_user = get_user_by_user_id(db, user_id=db_price.owner)
-    if db_user:
+    if db_user is not None:
         db_user.price_count -= 1
     db_product = get_product_by_id(db, id=db_price.product_id)
-    if db_product:
+    if db_product is not None:
         db_product.price_count -= 1
     db_location = get_location_by_id(db, id=db_price.location_id)
-    if db_location:
+    if db_location is not None:
         db_location.price_count -= 1
     db_proof = get_proof_by_id(db, id=db_price.proof_id)
-    if db_proof:
+    if db_proof is not None:
         db_proof.price_count -= 1
     db.commit()
     return True
 
 
-def update_price(db: Session, price: Price, new_values: PriceBasicUpdatableFields):
+def update_price(
+    db: Session, price: Price, new_values: PriceBasicUpdatableFields
+) -> Price:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(price, key, new_values_cleaned[key])
@@ -355,7 +356,7 @@ def update_price(db: Session, price: Price, new_values: PriceBasicUpdatableField
 
 # Proofs
 # ------------------------------------------------------------------------------
-def get_proofs_query(filters: ProofFilter | None = None):
+def get_proofs_query(filters: ProofFilter | None = None) -> Select[tuple[Proof]]:
     """Useful for pagination."""
     query = select(Proof)
     if filters:
@@ -364,11 +365,13 @@ def get_proofs_query(filters: ProofFilter | None = None):
     return query
 
 
-def get_proofs(db: Session, filters: ProofFilter | None = None):
+def get_proofs(
+    db: Session, filters: ProofFilter | None = None
+) -> Sequence[Row[tuple[Proof]]]:
     return db.execute(get_proofs_query(filters=filters)).all()
 
 
-def get_proof_by_id(db: Session, id: int):
+def get_proof_by_id(db: Session, id: int) -> Proof | None:
     return db.query(Proof).filter(Proof.id == id).first()
 
 
@@ -380,7 +383,7 @@ def create_proof(
     user: UserCreate,
     is_public: bool = True,
     price_count: int = 0,
-):
+) -> Proof:
     """Create a proof in the database.
 
     :param db: the database session
@@ -404,6 +407,27 @@ def create_proof(
     return db_proof
 
 
+def _get_extension_and_mimetype(file: UploadFile) -> tuple[str, str]:
+    """Get the extension and mimetype of the file.
+    Defaults to '.bin', 'application/octet-stream'.
+    Also manage webp case: https://stackoverflow.com/a/67938698/4293684
+    """
+
+    # Most generic according to https://stackoverflow.com/a/12560996
+    DEFAULT = ".bin", "application/octet-stream"
+
+    mimetype = file.content_type
+    if mimetype is None:
+        return DEFAULT
+    extension = guess_extension(mimetype)
+    if extension is None:
+        if mimetype == "image/webp":
+            return ".webp", mimetype
+        else:
+            return DEFAULT
+    return extension, mimetype
+
+
 def create_proof_file(file: UploadFile) -> tuple[str, str]:
     """Create a file in the images directory with a random name and the
     correct extension.
@@ -415,15 +439,7 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
     # This name will be used to display the image to the client, so it
     # shouldn't be discoverable
     file_stem = "".join(random.choices(string.ascii_letters + string.digits, k=10))
-    # get the extension of the file, or default to .bin
-    # also manage webp case: https://stackoverflow.com/a/67938698/4293684
-    mimetype = file.content_type
-    extension = guess_extension(mimetype)
-    if not extension:
-        if mimetype == "image/webp":
-            extension = ".webp"
-        else:
-            extension = ".bin"
+    extension, mimetype = _get_extension_and_mimetype(file)
     # We store the images in directories containing up to 1000 images
     # Once we reach 1000 images, we create a new directory by increasing
     # the directory ID
@@ -450,7 +466,7 @@ def create_proof_file(file: UploadFile) -> tuple[str, str]:
     return (file_path, mimetype)
 
 
-def increment_proof_price_count(db: Session, proof: ProofFull):
+def increment_proof_price_count(db: Session, proof: Proof) -> Proof:
     """Increment the price count of a proof.
 
     This is used to keep track of the number of prices linked to a proof.
@@ -461,7 +477,9 @@ def increment_proof_price_count(db: Session, proof: ProofFull):
     return proof
 
 
-def update_proof(db: Session, proof: Proof, new_values: ProofBasicUpdatableFields):
+def update_proof(
+    db: Session, proof: Proof, new_values: ProofBasicUpdatableFields
+) -> Proof:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(proof, key, new_values_cleaned[key])
@@ -470,7 +488,7 @@ def update_proof(db: Session, proof: Proof, new_values: ProofBasicUpdatableField
     return proof
 
 
-def delete_proof(db: Session, db_proof: ProofFull) -> bool:
+def delete_proof(db: Session, db_proof: Proof) -> bool:
     # we delete the image of the proof
     file_path_obj = Path(db_proof.file_path)
     # Check if the file exists
@@ -485,7 +503,9 @@ def delete_proof(db: Session, db_proof: ProofFull) -> bool:
 
 # Locations
 # ------------------------------------------------------------------------------
-def get_locations_query(filters: LocationFilter | None = None):
+def get_locations_query(
+    filters: LocationFilter | None = None,
+) -> Select[tuple[Location]]:
     """Useful for pagination."""
     query = select(Location)
     if filters:
@@ -494,17 +514,19 @@ def get_locations_query(filters: LocationFilter | None = None):
     return query
 
 
-def get_locations(db: Session, filters: LocationFilter | None = None):
+def get_locations(
+    db: Session, filters: LocationFilter | None = None
+) -> Sequence[Row[tuple[Location]]]:
     return db.execute(get_locations_query(filters=filters)).all()
 
 
-def get_location_by_id(db: Session, id: int):
+def get_location_by_id(db: Session, id: int) -> Location | None:
     return db.query(Location).filter(Location.id == id).first()
 
 
 def get_location_by_osm_id_and_type(
-    db: Session, osm_id: int, osm_type: LocationOSMEnum
-):
+    db: Session, osm_id: int, osm_type: LocationOSMEnum | str
+) -> Location | None:
     return (
         db.query(Location)
         .filter(Location.osm_id == osm_id)
@@ -529,7 +551,9 @@ def create_location(db: Session, location: LocationCreate) -> Location:
     return db_location
 
 
-def get_or_create_location(db: Session, location: LocationCreate):
+def get_or_create_location(
+    db: Session, location: LocationCreate
+) -> tuple[Location, bool]:
     """Get or create a location in the database.
 
     :param db: the database session
@@ -549,7 +573,9 @@ def get_or_create_location(db: Session, location: LocationCreate):
     return db_location, created
 
 
-def update_location(db: Session, location: LocationFull, update_dict: dict):
+def update_location(
+    db: Session, location: Location, update_dict: dict[str, Any]
+) -> Location:
     for key, value in update_dict.items():
         setattr(location, key, value)
     db.commit()
@@ -557,7 +583,7 @@ def update_location(db: Session, location: LocationFull, update_dict: dict):
     return location
 
 
-def increment_location_price_count(db: Session, location: LocationFull):
+def increment_location_price_count(db: Session, location: Location) -> Location:
     """Increment the price count of a location.
 
     This is used to keep track of the number of prices linked to a location.

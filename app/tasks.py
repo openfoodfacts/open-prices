@@ -4,12 +4,12 @@ import tqdm
 from openfoodfacts import DatasetType, Flavor, ProductDataset
 from openfoodfacts.types import JSONType
 from openfoodfacts.utils import get_logger
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.models import Product
-from app.schemas import LocationCreate, PriceFull, ProductCreate, ProofFull, UserCreate
+from app.models import Price, Product, Proof
+from app.schemas import LocationCreate, ProductCreate, UserCreate
 from app.utils import (
     OFF_FIELDS,
     fetch_location_openstreetmap_details,
@@ -23,27 +23,25 @@ logger = get_logger(__name__)
 
 # Users
 # ------------------------------------------------------------------------------
-def increment_user_price_count(db: Session, user: UserCreate):
+def increment_user_price_count(db: Session, user: UserCreate) -> None:
     crud.increment_user_price_count(db, user=user)
 
 
 # Proofs
 # ------------------------------------------------------------------------------
-def increment_proof_price_count(db: Session, proof: ProofFull):
+def increment_proof_price_count(db: Session, proof: Proof) -> None:
     crud.increment_proof_price_count(db, proof=proof)
 
 
 # Products
 # ------------------------------------------------------------------------------
-def create_price_product(db: Session, price: PriceFull):
+def create_price_product(db: Session, price: Price) -> None:
     # The price may not have a product code, if it's the price of a
     # barcode-less product
     if price.product_code:
         # get or create the corresponding product
-        product = ProductCreate(code=price.product_code)
-        db_product, created = crud.get_or_create_product(
-            db, product=product, init_price_count=1
-        )
+        product = ProductCreate(code=price.product_code, price_count=1)
+        db_product, created = crud.get_or_create_product(db, product=product)
         # link the product to the price
         crud.link_price_product(db, price=price, product=db_product)
         # fetch data from OpenFoodFacts if created
@@ -60,7 +58,7 @@ def create_price_product(db: Session, price: PriceFull):
             crud.increment_product_price_count(db, product=db_product)
 
 
-def import_product_db(db: Session, batch_size: int = 1000):
+def import_product_db(db: Session, batch_size: int = 1000) -> None:
     """Import from DB JSONL dump to insert/update product table.
 
     :param db: the session to use
@@ -85,68 +83,80 @@ def import_product_db(db: Session, batch_size: int = 1000):
     )
     seen_codes = set()
     for product in tqdm.tqdm(dataset):
+        # Skip products without a code
         if "code" not in product:
             continue
-
         product_code = product["code"]
-        # Some products are duplicated in the dataset, we skip them
+
+        # Skip duplicate products
         if product_code in seen_codes:
             continue
         seen_codes.add(product_code)
-        images: JSONType = product.get("images", {})
-        last_modified_t = product.get("last_modified_t")
 
-        if isinstance(last_modified_t, str):
-            # Some products have a last_modified_t field with a string value
-            last_modified_t = int(last_modified_t)
+        product_images: JSONType = product.get("images", {})
+        product_last_modified_t = product.get("last_modified_t")
 
-        last_modified = (
-            datetime.datetime.fromtimestamp(last_modified_t, tz=datetime.timezone.utc)
-            if last_modified_t
+        # Convert last_modified_t to a datetime object
+        # (sometimes the field is a string, convert to int first)
+        if isinstance(product_last_modified_t, str):
+            product_last_modified_t = int(product_last_modified_t)
+        product_source_last_modified = (
+            datetime.datetime.fromtimestamp(
+                product_last_modified_t, tz=datetime.timezone.utc
+            )
+            if product_last_modified_t
             else None
         )
-
-        if last_modified is None:
+        # Skip products that have no last_modified date
+        if product_source_last_modified is None:
             continue
 
         # Skip products that have been modified today (more recent updates are
         # possible)
-        if last_modified >= start_datetime:
+        if product_source_last_modified >= start_datetime:
             logger.debug("Skipping %s", product_code)
             continue
 
-        if product_code not in existing_codes:
-            item = {"code": product_code, "source": Flavor.off}
-            for key in OFF_FIELDS:
-                item[key] = product[key] if key in product else None
+        # Build product dict to insert/update
+        product_dict = {
+            key: product[key] if (key in product) else None for key in OFF_FIELDS
+        }
+        product_dict["image_url"] = generate_openfoodfacts_main_image_url(
+            product_code, product_images, product["lang"]
+        )
+        product_dict["source"] = Flavor.off
+        product_dict["source_last_synced"] = datetime.datetime.now()
+        product_dict = normalize_product_fields(product_dict)
 
-            item = normalize_product_fields(item)
-            item["image_url"] = generate_openfoodfacts_main_image_url(
-                product_code, images, product["lang"]
-            )
-            db.add(Product(**item))
+        # Case 1: new OFF product (not in OP database)
+        if product_code not in existing_codes:
+            product_dict["code"] = product_code
+            db.add(Product(**product_dict))
             added_count += 1
             buffer_len += 1
 
+        # Case 2: existing product (already in OP database)
         else:
-            item = {key: product[key] if key in product else None for key in OFF_FIELDS}
-            item["image_url"] = generate_openfoodfacts_main_image_url(
-                product_code, images, product["lang"]
-            )
-            item = normalize_product_fields(item)
             execute_result = db.execute(
-                Product.__table__.update()
+                update(Product)
                 .where(Product.code == product_code)
-                .where(Product.source == Flavor.off)
-                # Update the product if only if it has not been updated since
+                # Update the product if it is part of OFF
+                # or if it has no source (created in Open Prices before OFF)
+                .where(
+                    or_(
+                        Product.source == Flavor.off,
+                        Product.source == None,  # noqa: E711, E501
+                    )
+                )
+                # Update the product if it has not been updated since
                 # the creation of the current dataset
                 .where(
                     or_(
-                        Product.updated < last_modified,
-                        Product.updated == None,  # noqa: E711, E501
+                        Product.source_last_synced < product_source_last_modified,
+                        Product.source_last_synced == None,  # noqa: E711, E501
                     )
                 )
-                .values(**item)
+                .values(**product_dict)
             )
             updated_count += execute_result.rowcount
             buffer_len += 1
@@ -159,7 +169,7 @@ def import_product_db(db: Session, batch_size: int = 1000):
 
 # Locations
 # ------------------------------------------------------------------------------
-def create_price_location(db: Session, price: PriceFull):
+def create_price_location(db: Session, price: Price) -> None:
     if price.location_osm_id and price.location_osm_type:
         # get or create the corresponding location
         location = LocationCreate(

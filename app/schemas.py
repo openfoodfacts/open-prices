@@ -35,6 +35,7 @@ class UserBase(BaseModel):
 
     user_id: str
     price_count: int = 0
+    is_moderator: bool = False
 
 
 class UserCreate(UserBase):
@@ -52,61 +53,80 @@ class ProductCreate(BaseModel):
         description="barcode (EAN) of the product, as a string.",
         examples=["8001505005707"],
     )
+    price_count: int = Field(
+        description="number of prices for this product.", examples=[15], default=0
+    )
 
 
 class ProductFull(ProductCreate):
     id: int
     source: Flavor | None = Field(
         description="source of data, either `off` (Open Food Facts), "
-        "`obf` (Open Beauty Facts), `opff` (Open Pet Food Facts) or `obf` (Open Beauty Facts)"
+        "`obf` (Open Beauty Facts), `opf` (Open Products Facts) or `opff` (Open Pet Food Facts",
+        examples=["off", "obf", "opf", "opff", None],
+        default=None,
     )
     product_name: str | None = Field(
-        description="name of the product.", examples=["Nocciolata"]
+        description="name of the product.", examples=["Nocciolata"], default=None
     )
     product_quantity: int | None = Field(
         description="quantity of the product, normalized in g or ml (depending on the product).",
         examples=[700],
+        default=None,
     )
     product_quantity_unit: str | None = Field(
         description="quantity unit of the product: g or ml (depending on the product).",
         examples=["g", "ml"],
+        default=None,
     )
     categories_tags: list[str] = Field(
         description="categories of the product.",
         examples=[["en:breakfasts", "en:spreads"]],
+        default=list,
     )
     brands: str | None = Field(
         description="brand(s) of the product.",
         examples=["Rigoni di Asiago", "Lindt"],
+        default=None,
     )
     brands_tags: list[str] = Field(
         description="brands of the product.",
         examples=[["douceur-du-verger", "marque-repere"]],
+        default=list,
     )
     labels_tags: list[str] = Field(
         description="labels of the product.",
         examples=[["en:fair-trade", "en:organic", "en:made-in-france"]],
+        default=list,
     )
     image_url: AnyHttpUrl | None = Field(
         description="URL of the product image.",
         examples=[
             "https://images.openfoodfacts.org/images/products/800/150/500/5707/front_fr.161.400.jpg"
         ],
+        default=None,
     )
     nutriscore_grade: str | None = Field(
-        description="Nutriscore grade.", examples=["a", "unknown"]
+        description="Nutri-Score grade.",
+        examples=["a", "b", "c", "d", "e", "unknown", "not-applicable"],
+        default=None,
+    )
+    ecoscore_grade: str | None = Field(
+        description="Eco-Score grade.",
+        examples=["a", "b", "c", "d", "e", "unknown", "not-applicable"],
+        default=None,
+    )
+    nova_group: int | None = Field(
+        description="NOVA group.", examples=[1, 2, 3, 4], default=None
     )
     unique_scans_n: int = Field(
         description="number of unique scans of the product on Open Food Facts.",
         examples=[15],
         default=0,
     )
-    price_count: int = Field(
-        description="number of prices for this product.", examples=[15], default=0
-    )
     created: datetime.datetime = Field(description="datetime of the creation.")
     updated: datetime.datetime | None = Field(
-        description="datetime of the last update."
+        description="datetime of the last update.", default=None
     )
 
 
@@ -131,8 +151,10 @@ class LocationFull(LocationCreate):
     osm_address_country: str | None = None
     osm_lat: float | None = None
     osm_lon: float | None = None
-    created: datetime.datetime
-    updated: datetime.datetime | None = None
+    created: datetime.datetime = Field(description="datetime of the creation.")
+    updated: datetime.datetime | None = Field(
+        description="datetime of the last update.", default=None
+    )
 
 
 # Proof
@@ -216,7 +238,7 @@ class PriceCreate(BaseModel):
 
         Other labels can be provided if relevant.
         """,
-        examples=["en:organic", "fr:ab-agriculture-biologique", "en:fair-trade"],
+        examples=[["en:organic"], ["fr:ab-agriculture-biologique", "en:fair-trade"]],
     )
     origins_tags: list[str] | None = Field(
         default=None,
@@ -227,12 +249,12 @@ class PriceCreate(BaseModel):
 
         The origins must be valid origins in the Open Food Facts taxonomy.
         If one of the origins is not valid, the price will be rejected.""",
-        examples=["en:california", "en:france", "en:italy", "en:spain"],
+        examples=[["en:france"], ["en:california"]],
     )
     price: float = Field(
         gt=0,
         description="price of the product, without its currency, taxes included.",
-        examples=["1.99"],
+        examples=[1.99],
     )
     price_is_discounted: bool = Field(
         default=False,
@@ -243,7 +265,7 @@ class PriceCreate(BaseModel):
         default=None,
         description="price of the product without discount, without its currency, taxes included. "
         "If the product is not discounted, this field must be null. ",
-        examples=["2.99"],
+        examples=[2.99],
     )
     price_per: PricePerEnum | None = Field(
         default=PricePerEnum.KILOGRAM,
@@ -252,6 +274,7 @@ class PriceCreate(BaseModel):
         or `UNIT` (KILOGRAM by default).
         This field is set to null and ignored if `product_code` is provided.
         """,
+        examples=["KILOGRAM", "UNIT"],
     )
     currency: CurrencyEnum = Field(
         description="currency of the price, as a string. "
@@ -268,8 +291,11 @@ class PriceCreate(BaseModel):
         description="type of the OpenStreetMap location object. Stores can be represented as nodes, "
         "ways or relations in OpenStreetMap. It is necessary to be able to fetch the correct "
         "information about the store using the ID.",
+        examples=["NODE", "WAY", "RELATION"],
     )
-    date: datetime.date = Field(description="date when the product was bought.")
+    date: datetime.date = Field(
+        description="date when the product was bought.", examples=["2024-01-01"]
+    )
     proof_id: int | None = Field(
         default=None,
         description="ID of the proof, if any. The proof is a file (receipt or price tag image) "
@@ -289,7 +315,7 @@ class PriceCreateWithValidation(PriceCreate):
     """
 
     @field_validator("labels_tags")
-    def labels_tags_is_valid(cls, v: list[str] | None):
+    def labels_tags_is_valid(cls, v: list[str] | None) -> list[str] | None:
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`labels_tags` cannot be empty")
@@ -303,7 +329,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @field_validator("origins_tags")
-    def origins_tags_is_valid(cls, v: list[str] | None):
+    def origins_tags_is_valid(cls, v: list[str] | None) -> list[str] | None:
         if v is not None:
             if len(v) == 0:
                 raise ValueError("`origins_tags` cannot be empty")
@@ -317,7 +343,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @field_validator("category_tag")
-    def category_tag_is_valid(cls, v: str | None):
+    def category_tag_is_valid(cls, v: str | None) -> str | None:
         if v is not None:
             v = v.lower()
             category_taxonomy = get_taxonomy("category")
@@ -328,7 +354,7 @@ class PriceCreateWithValidation(PriceCreate):
         return v
 
     @model_validator(mode="after")
-    def product_code_and_category_tag_are_exclusive(self):
+    def product_code_and_category_tag_are_exclusive(self):  # type: ignore
         """Validator that checks that `product_code` and `category_tag` are
         exclusive, and that at least one of them is set."""
         if self.product_code is not None:
@@ -349,14 +375,14 @@ class PriceCreateWithValidation(PriceCreate):
         return self
 
     @model_validator(mode="after")
-    def set_price_per_to_null_if_barcode(self):
+    def set_price_per_to_null_if_barcode(self):  # type: ignore
         """Validator that sets `price_per` to null if `product_code` is set."""
         if self.product_code is not None:
             self.price_per = None
         return self
 
     @model_validator(mode="after")
-    def check_price_discount(self):
+    def check_price_discount(self):  # type: ignore
         """
         Check that:
         - `price_is_discounted` is true if `price_without_discount` is passed
@@ -455,6 +481,8 @@ class ProductFilter(Filter):
     labels_tags__contains: Optional[str] | None = None
     brands__like: Optional[str] | None = None
     nutriscore_grade: Optional[str] | None = None
+    ecoscore_grade: Optional[str] | None = None
+    nova_group: Optional[int] | None = None
     unique_scans_n__gte: Optional[int] | None = None
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None

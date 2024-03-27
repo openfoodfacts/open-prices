@@ -23,7 +23,7 @@ services:
       - ./static:/opt/open-prices/static
     depends_on:
       - postgres
-  
+
   scheduler:
     <<: *api-common
     command: ["python", "-m", "app", "run-scheduler"]
