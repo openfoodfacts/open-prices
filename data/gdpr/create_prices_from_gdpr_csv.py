@@ -47,6 +47,11 @@ def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
     if gdpr_source == "AUCHAN":
         if op_field == "price":
             gdpr_field_value = float(gdpr_field_value.replace(",", "."))
+        if op_field == "date":
+            if "/" in gdpr_field_value:
+                gdpr_field_value = datetime.datetime.strptime(
+                    gdpr_field_value, "%d/%m/%Y"
+                ).strftime("%Y-%m-%d")
     elif gdpr_source == "CARREFOUR":
         # input: |3178050000749|
         # output: 3178050000749
@@ -206,9 +211,11 @@ def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_da
 
 def create_price(price):
     headers = {"Authorization": f"Bearer {OPEN_PRICES_TOKEN}"}
-    requests.post(OPEN_PRICES_CREATE_PRICE_ENDPOINT, json=price, headers=headers)
-    # if response.status_code == 201:
-    #     print("Price created !")
+    response = requests.post(
+        OPEN_PRICES_CREATE_PRICE_ENDPOINT, json=price, headers=headers
+    )
+    if response.status_code != 201:
+        print(response.json())
 
 
 if __name__ == "__main__":
