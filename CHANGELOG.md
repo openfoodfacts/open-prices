@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.24.1](https://github.com/openfoodfacts/open-prices/compare/v1.24.0...v1.24.1) (2024-03-27)
+
+
+### Bug Fixes
+
+* fix set_cookie call ([00d311f](https://github.com/openfoodfacts/open-prices/commit/00d311fa4a59a6e3810b51a0c45fc403ce4d285c))
+* setting cookie on the response ([#242](https://github.com/openfoodfacts/open-prices/issues/242)) ([2969abe](https://github.com/openfoodfacts/open-prices/commit/2969abe25b765bc1c38e78d64d6d879089b2a290))
+
 ## [1.24.0](https://github.com/openfoodfacts/open-prices/compare/v1.23.0...v1.24.0) (2024-03-18)
 
 
