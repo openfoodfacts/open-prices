@@ -58,18 +58,23 @@ def create_price_product(db: Session, price: Price) -> None:
             crud.increment_product_price_count(db, product=db_product)
 
 
-def import_product_db(db: Session, batch_size: int = 1000) -> None:
+def import_product_db(
+    db: Session, flavor: Flavor = Flavor.off, batch_size: int = 1000
+) -> None:
     """Import from DB JSONL dump to insert/update product table.
 
     :param db: the session to use
     :param batch_size: the number of products to insert/update in a single
       transaction, defaults to 1000
     """
-    logger.info("Launching import_product_db")
+    logger.info(f"Launching import_product_db ({flavor})")
     existing_codes = set(db.execute(select(Product.code)).scalars())
     logger.info("Number of existing codes: %d", len(existing_codes))
     dataset = ProductDataset(
-        dataset_type=DatasetType.jsonl, force_download=True, download_newer=True
+        flavor=flavor,
+        dataset_type=DatasetType.jsonl,
+        force_download=True,
+        download_newer=True,
     )
 
     added_count = 0
@@ -83,8 +88,8 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
     )
     seen_codes = set()
     for product in tqdm.tqdm(dataset):
-        # Skip products without a code
-        if "code" not in product:
+        # Skip products without a code, or with wrong code
+        if ("code" not in product) or (not product["code"].isdigit()):
             continue
         product_code = product["code"]
 
@@ -93,6 +98,7 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
             continue
         seen_codes.add(product_code)
 
+        product_lang = product.get("lang", product.get("lc", "en"))
         product_images: JSONType = product.get("images", {})
         product_last_modified_t = product.get("last_modified_t")
 
@@ -122,9 +128,9 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
             key: product[key] if (key in product) else None for key in OFF_FIELDS
         }
         product_dict["image_url"] = generate_openfoodfacts_main_image_url(
-            product_code, product_images, product["lang"]
+            product_code, product_images, product_lang, flavor=flavor
         )
-        product_dict["source"] = Flavor.off
+        product_dict["source"] = flavor
         product_dict["source_last_synced"] = datetime.datetime.now()
         product_dict = normalize_product_fields(product_dict)
 
@@ -144,7 +150,7 @@ def import_product_db(db: Session, batch_size: int = 1000) -> None:
                 # or if it has no source (created in Open Prices before OFF)
                 .where(
                     or_(
-                        Product.source == Flavor.off,
+                        Product.source == flavor,
                         Product.source == None,  # noqa: E711, E501
                     )
                 )
