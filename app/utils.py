@@ -56,13 +56,15 @@ OFF_FIELDS = [
 ]
 
 
-def openfoodfacts_product_search(code: str) -> JSONType | None:
+def openfoodfacts_product_search(
+    code: str, flavor: Flavor = Flavor.off
+) -> JSONType | None:
     client = API(
         user_agent=get_user_agent(),
         username=None,
         password=None,
         country=Country.world,
-        flavor=Flavor.off,
+        flavor=flavor,
         version=APIVersion.v2,
         environment=settings.environment,
     )
@@ -96,7 +98,7 @@ def normalize_product_fields(product: JSONType) -> JSONType:
 
 
 def generate_openfoodfacts_main_image_url(
-    code: str, images: JSONType, lang: str
+    code: str, images: JSONType, lang: str, flavor: Flavor = Flavor.off
 ) -> str | None:
     """Generate the URL of the main image of a product.
 
@@ -118,18 +120,20 @@ def generate_openfoodfacts_main_image_url(
         image_rev = images[image_key]["rev"]
         image_id = f"{image_key}.{image_rev}.400"
         return generate_image_url(
-            code, image_id=image_id, flavor=Flavor.off, environment=settings.environment
+            code, image_id=image_id, flavor=flavor, environment=settings.environment
         )
 
     return None
 
 
-def fetch_product_openfoodfacts_details(product: Product) -> JSONType | None:
+def fetch_product_openfoodfacts_details(
+    product: Product, flavor: Flavor = Flavor.off
+) -> JSONType | None:
     product_dict = {}
     try:
-        response = openfoodfacts_product_search(code=product.code)
+        response = openfoodfacts_product_search(code=product.code, flavor=flavor)
         if response and response["status"]:
-            product_dict["source"] = Flavor.off
+            product_dict["source"] = flavor
             for off_field in OFF_FIELDS:
                 if off_field in response["product"]:
                     product_dict[off_field] = response["product"][off_field]
