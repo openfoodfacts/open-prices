@@ -12,10 +12,10 @@ logger = get_logger(__name__)
 
 def import_product_db_job() -> None:
     db = session()
-    import_product_db(db=db, flavor=Flavor.off)
-    import_product_db(db=db, flavor=Flavor.obf)
-    import_product_db(db=db, flavor=Flavor.opff)
-    import_product_db(db=db, flavor=Flavor.opf)
+    import_product_db(db=db, flavor=Flavor.off)  # Open Food Facts
+    import_product_db(db=db, flavor=Flavor.obf)  # Open Beauty Facts
+    import_product_db(db=db, flavor=Flavor.opff)  # Open Pet Food Facts
+    import_product_db(db=db, flavor=Flavor.opf)  # Open Products Facts
 
 
 def run() -> None:
