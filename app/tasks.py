@@ -98,7 +98,9 @@ def import_product_db(
             continue
         seen_codes.add(product_code)
 
+        # Some products have no "lang" field (especially non-OFF products)
         product_lang = product.get("lang", product.get("lc", "en"))
+        # Store images & last_modified_t
         product_images: JSONType = product.get("images", {})
         product_last_modified_t = product.get("last_modified_t")
 
