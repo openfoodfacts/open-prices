@@ -1,6 +1,7 @@
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.schedulers.blocking import BlockingScheduler
+from openfoodfacts import Flavor
 from openfoodfacts.utils import get_logger
 
 from app.db import session
@@ -11,7 +12,8 @@ logger = get_logger(__name__)
 
 def import_product_db_job() -> None:
     db = session()
-    import_product_db(db=db)
+    for flavor in [Flavor.off, Flavor.obf, Flavor.opff, Flavor.opf]:
+        import_product_db(db=db, flavor=flavor)
 
 
 def run() -> None:
