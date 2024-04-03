@@ -11,8 +11,11 @@ logger = get_logger(__name__)
 
 
 def import_product_db_job() -> None:
-    db = session()
     for flavor in [Flavor.off, Flavor.obf, Flavor.opff, Flavor.opf]:
+        # launch a new db session for each flavor
+        # to avoid duplicate code errors
+        db = session()
+        # import the products
         import_product_db(db=db, flavor=flavor)
 
 
