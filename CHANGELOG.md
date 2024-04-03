@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.25.0](https://github.com/openfoodfacts/open-prices/compare/v1.24.1...v1.25.0) (2024-04-03)
+
+
+### Features
+
+* sync ALL products (obf, opff, opf) ([#264](https://github.com/openfoodfacts/open-prices/issues/264)) ([9f876c4](https://github.com/openfoodfacts/open-prices/commit/9f876c4e6c5ee7e8221273065d3f2c18163b8c34))
+
+
+### Bug Fixes
+
+* start a new db session before each flavor import. ref [#264](https://github.com/openfoodfacts/open-prices/issues/264) ([814078b](https://github.com/openfoodfacts/open-prices/commit/814078b662e629ae9861e3f10bd8375024d93f94))
+
 ## [1.24.1](https://github.com/openfoodfacts/open-prices/compare/v1.24.0...v1.24.1) (2024-03-27)
 
 
