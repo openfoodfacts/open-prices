@@ -1471,23 +1471,19 @@ files = [
 
 [[package]]
 name = "openfoodfacts"
-version = "0.2.0"
+version = "0.2.1"
 description = "Official Python SDK of Open Food Facts"
 optional = false
-python-versions = ">=3.8.1,<4.0"
-files = []
-develop = false
+python-versions = "<4.0,>=3.8.1"
+files = [
+    {file = "openfoodfacts-0.2.1-py3-none-any.whl", hash = "sha256:4bc0581f7e0a949078a6e5aba996f925f3f996e207927cf1c156fe36e3b16de8"},
+    {file = "openfoodfacts-0.2.1.tar.gz", hash = "sha256:dfe65884e00dad09a9d1168d227697d501b2c54ece24279446595dabaa9fc91e"},
+]
 
 [package.dependencies]
 pydantic = ">=2.0.0,<3.0.0"
 requests = ">=2.20.0"
 tqdm = ">=4.0.0,<5.0.0"
-
-[package.source]
-type = "git"
-url = "git@github.com:openfoodfacts/openfoodfacts-python.git"
-reference = "product-dataset-flavor"
-resolved_reference = "786295902ba27b3587451edd321bd764ca09c5d6"
 
 [[package]]
 name = "osmpythontools"
@@ -2880,4 +2876,4 @@ viz = ["matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "301bceae63a14bbd7830fad287be10962866d2d4236c792584dc2dcf6e0196c9"
+content-hash = "709d5e24876b52740893d8695a4ee05c1226416a7e3d45e3c80e1565a82de7aa"
