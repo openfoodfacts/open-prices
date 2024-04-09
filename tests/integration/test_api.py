@@ -91,6 +91,24 @@ PRODUCT_3 = ProductFull(
     created=datetime.datetime.now(),
     updated=datetime.datetime.now(),
 )
+PRODUCT_4 = ProductFull(
+    id=4,
+    code="8710447381472",
+    source="obf",
+    product_name="Lessive au savon de Marseille",
+    product_quantity=4200,
+    product_quantity_unit="ml",
+    categories_tags=[],
+    brands="",
+    brands_tags=[],
+    labels_tags=[],
+    nutriscore_grade=None,
+    ecoscore_grade=None,
+    nova_group=None,
+    unique_scans_n=0,
+    created=datetime.datetime.now(),
+    updated=datetime.datetime.now(),
+)
 LOCATION_1 = LocationFull(
     id=1,
     osm_id=652825274,
@@ -580,7 +598,11 @@ def test_get_prices_with_proofs(
     assert response.json()["items"][2]["proof"] is None
 
 
-def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices):
+def test_get_prices_filters(
+    db_session, user_session: SessionModel, clean_products, clean_prices
+):
+    crud.create_product(db_session, PRODUCT_1)
+    crud.create_product(db_session, PRODUCT_4)
     crud.create_price(db_session, PRICE_1, user_session.user)
     crud.create_price(
         db_session,
@@ -608,8 +630,13 @@ def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices
         ),
         user_session.user,
     )
+    crud.create_price(
+        db_session,
+        PRICE_1.model_copy(update={"product_code": PRODUCT_4.code}),
+        user_session.user,
+    )
 
-    assert len(crud.get_prices(db_session)) == 4
+    assert len(crud.get_prices(db_session)) == 5
 
     # 3 prices with the same product_code
     response = client.get(f"/api/v1/prices?product_code={PRICE_1.product_code}")
@@ -630,7 +657,11 @@ def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices
     # 2 prices with date = 2023-10-31
     response = client.get(f"/api/v1/prices?date={PRICE_1.date}")
     assert response.status_code == 200
-    assert len(response.json()["items"]) == 3
+    assert len(response.json()["items"]) == 4
+    # filter by product relationship
+    response = client.get("/api/v1/prices?product__source=obf")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
 
 
 def test_get_prices_orders(db_session, user_session: SessionModel, clean_prices):

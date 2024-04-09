@@ -1,6 +1,7 @@
 import datetime
 from typing import Annotated, Optional
 
+from fastapi_filter import FilterDepends, with_prefix
 from fastapi_filter.contrib.sqlalchemy import Filter
 from openfoodfacts import Flavor
 from openfoodfacts.taxonomy import get_taxonomy
@@ -428,6 +429,16 @@ class PriceFullWithRelations(PriceFull):
 
 # Filters
 # ------------------------------------------------------------------------------
+class PriceProductFilter(Filter):
+    source: Optional[Flavor] | None = None
+    # categories_tags__contains: Optional[str] | None = None
+    # labels_tags__contains: Optional[str] | None = None
+    # brands__like: Optional[str] | None = None
+
+    class Constants(Filter.Constants):
+        model = Product
+
+
 class PriceFilter(Filter):
     product_code: Optional[str] | None = None
     product_id: Optional[int] | None = None
@@ -453,6 +464,11 @@ class PriceFilter(Filter):
     # created__date  # how to filter on full day ?
     created__gte: Optional[str] | None = None
     created__lte: Optional[str] | None = None
+
+    product: Optional[PriceProductFilter] = FilterDepends(
+        with_prefix("product", PriceProductFilter)
+    )
+    product__categories_tags__contains: Optional[str] | None = None
 
     order_by: Optional[list[str]] | None = None
 
