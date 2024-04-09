@@ -1,5 +1,3 @@
-import functools
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page
@@ -7,48 +5,11 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
 
 from app import crud, schemas, tasks
-from app.auth import get_current_user, get_current_user_optional
+from app.auth import get_current_user
 from app.db import get_db
 from app.models import Price
-from app.schemas import PriceFullWithRelations
 
 router = APIRouter(prefix="/prices")
-
-
-def price_transformer(
-    prices: list[PriceFullWithRelations], current_user: schemas.UserCreate | None = None
-) -> list[PriceFullWithRelations]:
-    """Transformer function used to remove the file_path of private proofs.
-
-    If current_user is None, the file_path is removed for all proofs that are
-    not public. Otherwise, the file_path is removed for all proofs that are not
-    public and do not belong to the current user or is not a moderator.
-
-    :param prices: the list of prices to transform
-    :param current_user: the current user, if authenticated
-    :return: the transformed list of prices
-    """
-    for price in prices:
-        if (
-            current_user is None
-            and price.proof is not None
-            and price.proof.is_public is False
-        ):
-            price.proof.file_path = None
-        elif (
-            price.proof
-            and price.proof.is_public is False
-            and (
-                not current_user
-                or (
-                    current_user
-                    and (price.proof.owner != current_user.user_id)
-                    and not current_user.is_moderator
-                )
-            )
-        ):
-            price.proof.file_path = None
-    return prices
 
 
 @router.get(
@@ -58,13 +19,8 @@ def price_transformer(
 def get_prices(
     filters: schemas.PriceFilter = FilterDepends(schemas.PriceFilter),
     db: Session = Depends(get_db),
-    current_user: schemas.UserCreate | None = Depends(get_current_user_optional),
 ) -> list[Price]:
-    return paginate(
-        db,
-        crud.get_prices_query(filters=filters),
-        transformer=functools.partial(price_transformer, current_user=current_user),
-    )
+    return paginate(db, crud.get_prices_query(filters=filters))
 
 
 @router.post(

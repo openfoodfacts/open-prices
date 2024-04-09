@@ -92,23 +92,3 @@ def get_current_user(
         detail="Invalid authentication credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
-
-def get_current_user_optional(
-    token: Annotated[str, Depends(oauth2_scheme_no_error)],
-    db: Session = Depends(get_db),
-) -> User | None:
-    """Get the current user if authenticated, None otherwise.
-
-    This function is used as a dependency in endpoints that require
-    authentication, but where the user is optional.
-
-    :param token: the authentication token
-    :param db: the database session
-    :return: the current user if authenticated, None otherwise
-    """
-    if token and "__U" in token:
-        session = crud.get_session_by_token(db, token=token)
-        if session:
-            return crud.update_session_last_used_field(db, session=session).user
-    return None

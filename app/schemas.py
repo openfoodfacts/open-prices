@@ -1,5 +1,5 @@
 import datetime
-from typing import Annotated, Optional
+from typing import Optional
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from openfoodfacts import Flavor
@@ -169,14 +169,6 @@ class ProofFull(BaseModel):
     mimetype: str
     type: ProofTypeEnum | None = None
     owner: str
-    is_public: Annotated[
-        bool,
-        Field(
-            default=True,
-            description="if true, the proof is public and is included in the API response. "
-            "Set false only if the proof contains personal information.",
-        ),
-    ]
     price_count: int = Field(
         description="number of prices for this proof.", examples=[15], default=0
     )
@@ -185,7 +177,6 @@ class ProofFull(BaseModel):
 
 class ProofBasicUpdatableFields(BaseModel):
     type: ProofTypeEnum | None = None
-    is_public: bool | None = None
 
     class Config:
         extra = "forbid"

@@ -381,7 +381,6 @@ def create_proof(
     mimetype: str,
     type: ProofTypeEnum,
     user: UserCreate,
-    is_public: bool = True,
     price_count: int = 0,
 ) -> Proof:
     """Create a proof in the database.
@@ -390,7 +389,6 @@ def create_proof(
     :param file_path: the path to the file
     :param mimetype: the mimetype of the file
     :param user: the user who uploaded the file
-    :param is_public: whether the proof is public or not
     :return: the created proof
     """
     db_proof = Proof(
@@ -398,7 +396,6 @@ def create_proof(
         mimetype=mimetype,
         type=type,
         owner=user.user_id,
-        is_public=is_public,
         price_count=price_count,
     )
     db.add(db_proof)
