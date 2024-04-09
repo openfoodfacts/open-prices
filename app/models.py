@@ -116,10 +116,6 @@ class Proof(Base):
     mimetype = mapped_column(String, index=True)
 
     type: Mapped[ProofTypeEnum] = mapped_column(ChoiceType(ProofTypeEnum))
-    is_public = mapped_column(
-        Boolean, nullable=False, server_default="true", index=True
-    )
-
     prices: Mapped[list["Price"]] = relationship(back_populates="proof")
     price_count: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default="0", index=True

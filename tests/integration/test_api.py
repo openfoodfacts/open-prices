@@ -285,9 +285,7 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
 
 def test_create_price_moderator(db_session, user_session, user_session_1, clean_prices):
     crud.update_user_moderator(db_session, USER_1.user_id, False)
-    proof = crud.create_proof(
-        db_session, "/", " ", "PRICE_TAG", user_session.user, True
-    )
+    proof = crud.create_proof(db_session, "/", " ", "PRICE_TAG", user_session.user)
 
     # user_1 is not moderator, fails to create a price with proof not owned
     assert not user_session_1.user.is_moderator
@@ -524,10 +522,10 @@ def test_get_prices_with_proofs(
     db_session, user_session: SessionModel, user_session_1: SessionModel, clean_prices
 ):
     price_tag_proof = crud.create_proof(
-        db_session, "/", " ", "PRICE_TAG", user_session.user, is_public=True
+        db_session, "/", " ", "PRICE_TAG", user_session.user
     )
     receipt_proof = crud.create_proof(
-        db_session, "/", " ", "PRICE_TAG", user_session.user, is_public=False
+        db_session, "/", " ", "PRICE_TAG", user_session.user
     )
     crud.create_price(db_session, PRICE_1, user_session.user)
     crud.create_price(
@@ -544,7 +542,7 @@ def test_get_prices_with_proofs(
     # anonymous
     response = client.get("/api/v1/prices")
     assert response.json()["items"][0]["proof"]["file_path"] is not None
-    assert response.json()["items"][1]["proof"]["file_path"] is None  # not public
+    assert response.json()["items"][1]["proof"]["file_path"] is not None
     assert response.json()["items"][2]["proof"] is None
 
     # authenticated but not owner nor moderator
@@ -553,9 +551,7 @@ def test_get_prices_with_proofs(
         "/api/v1/prices", headers={"Authorization": f"Bearer {user_session_1.token}"}
     )
     assert response.json()["items"][0]["proof"]["file_path"] is not None
-    assert (
-        response.json()["items"][1]["proof"]["file_path"] is None
-    )  # not public, not owner
+    assert response.json()["items"][1]["proof"]["file_path"] is not None
     assert response.json()["items"][2]["proof"] is None
 
     # authenticated and owner
@@ -574,9 +570,7 @@ def test_get_prices_with_proofs(
         "/api/v1/prices", headers={"Authorization": f"Bearer {user_session_1.token}"}
     )
     assert response.json()["items"][0]["proof"]["file_path"] is not None
-    assert (
-        response.json()["items"][1]["proof"]["file_path"] is not None
-    )  # not public, not owner, but moderator
+    assert response.json()["items"][1]["proof"]["file_path"] is not None
     assert response.json()["items"][2]["proof"] is None
 
 
@@ -812,15 +806,6 @@ def test_create_proof(user_session: SessionModel, clean_proofs):
     )
     assert response.status_code == 422
 
-    # Check that is_public = False is not allowed for types other than RECEIPT
-    response = client.post(
-        "/api/v1/proofs/upload",
-        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "PRICE_TAG", "is_public": "false"},
-        headers={"Authorization": f"Bearer {user_session.token}"},
-    )
-    assert response.status_code == 422
-
     # with authentication and no validation error
     response = client.post(
         "/api/v1/proofs/upload",
@@ -830,11 +815,10 @@ def test_create_proof(user_session: SessionModel, clean_proofs):
     )
     assert response.status_code == 201
 
-    # with authentication and is_public = False
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "RECEIPT", "is_public": "false"},
+        data={"type": "RECEIPT"},
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
@@ -866,7 +850,6 @@ def test_get_proofs(user_session: SessionModel):
             "type",
             "owner",
             "created",
-            "is_public",
             "price_count",
         }
 
@@ -876,7 +859,6 @@ def test_get_proofs(user_session: SessionModel):
         assert item["file_path"].endswith(".webp")
         assert item["type"] == ("PRICE_TAG" if i == 0 else "RECEIPT")
         assert item["owner"] == "user"
-        assert item["is_public"] == (True if i == 0 else False)
         assert item["price_count"] == 0
 
 
@@ -915,11 +897,9 @@ def test_get_proofs_filters(db_session, user_session: SessionModel):
 def test_get_proof(
     db_session, user_session: SessionModel, user_session_1: SessionModel, clean_proofs
 ):
-    proof_user = crud.create_proof(
-        db_session, "/", " ", "PRICE_TAG", user_session.user, True
-    )
+    proof_user = crud.create_proof(db_session, "/", " ", "PRICE_TAG", user_session.user)
     proof_user_1 = crud.create_proof(
-        db_session, "/", " ", "RECEIPT", user_session_1.user, True
+        db_session, "/", " ", "RECEIPT", user_session_1.user
     )
 
     # get without auth
@@ -970,7 +950,7 @@ def test_update_proof(
     assert response.status_code == 201
     proof = crud.get_proof_by_id(db_session, response.json().get("id"))
 
-    PROOF_UPDATE_PARTIAL = {"is_public": False}
+    PROOF_UPDATE_PARTIAL = {"type": "RECEIPT"}
     # without authentication
     response = client.patch(f"/api/v1/proofs/{proof.id}")
     assert response.status_code == 401
@@ -996,18 +976,8 @@ def test_update_proof(
         json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
     )
     assert response.status_code == 200
-    assert response.json()["is_public"] is False
-    assert response.json()["type"] == proof.type.value
-    # with authentication and proof owner more fields
-    PROOF_UPDATE_PARTIAL_MORE = {**PROOF_UPDATE_PARTIAL, "type": "RECEIPT"}
-    response = client.patch(
-        f"/api/v1/proofs/{proof.id}",
-        headers={"Authorization": f"Bearer {user_session.token}"},
-        json=jsonable_encoder(PROOF_UPDATE_PARTIAL_MORE),
-    )
-    assert response.status_code == 200
-    assert response.json()["is_public"] is False
-    assert response.json()["type"] != proof.type.value
+    assert response.json()["type"] == "RECEIPT"
+
     # with authentication and proof owner but extra fields
     PROOF_UPDATE_PARTIAL_WRONG = {**PROOF_UPDATE_PARTIAL, "owner": 1}
     response = client.patch(
@@ -1031,7 +1001,7 @@ def test_update_proof_moderator(
     assert response.status_code == 201
     proof = crud.get_proof_by_id(db_session, response.json().get("id"))
 
-    PROOF_UPDATE_PARTIAL = {"is_public": False}
+    PROOF_UPDATE_PARTIAL = {"type": "RECEIPT"}
 
     # user_1 is moderator, not owner
     crud.update_user_moderator(db_session, USER_1.user_id, True)
