@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.25.1](https://github.com/openfoodfacts/open-prices/compare/v1.25.0...v1.25.1) (2024-04-17)
+
+
+### Bug Fixes
+
+* **proof:** remove is_public flag ([#267](https://github.com/openfoodfacts/open-prices/issues/267)) ([0e300c8](https://github.com/openfoodfacts/open-prices/commit/0e300c8b02799fde7e2e56eb2c7c50a6a5184d89))
+* remove proof.is_public field in DB ([#270](https://github.com/openfoodfacts/open-prices/issues/270)) ([8049502](https://github.com/openfoodfacts/open-prices/commit/804950282770098555381674a4503d0e17f46009))
+
 ## [1.25.0](https://github.com/openfoodfacts/open-prices/compare/v1.24.1...v1.25.0) (2024-04-03)
 
 
