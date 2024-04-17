@@ -86,7 +86,7 @@ def normalize_product_fields(product: JSONType) -> JSONType:
         product["product_quantity"] = None
 
     # Some products have null unique_scans_n
-    if product["unique_scans_n"] is None:
+    if product.get("unique_scans_n") is None:
         product["unique_scans_n"] = 0
 
     for key in ("categories_tags", "labels_tags", "brands_tags"):
