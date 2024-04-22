@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 
 
 def get_user_agent() -> str:
-    return f"OpenPrices ({settings.environment})"
+    return f"OpenPrices ({settings.environment.value})"
 
 
 # Sentry
