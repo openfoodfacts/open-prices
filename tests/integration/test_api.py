@@ -393,6 +393,30 @@ def test_create_price_category_tag_pattern_validation(
         assert len(crud.get_prices(db_session)) == 0
 
 
+def test_create_price_price_validation(
+    db_session, user_session: SessionModel, clean_prices
+):
+    # long decimal
+    PRICE_LONG_DECIMAL = PRICE_1.model_copy(update={"price": 3.123456789})
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_LONG_DECIMAL),
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    assert len(crud.get_prices(db_session)) == 1
+    assert response.json()["price"] == 3.12
+    # comma raises error
+    PRICE_WITH_COMMA = PRICE_1.model_copy(update={"price": "3,5"})
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_WITH_COMMA),
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 422
+    assert len(crud.get_prices(db_session)) == 1 + 0
+
+
 def test_create_price_currency_validation(
     db_session, user_session: SessionModel, clean_prices
 ):
