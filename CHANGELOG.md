@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.26.0](https://github.com/openfoodfacts/open-prices/compare/v1.25.1...v1.26.0) (2024-05-02)
+
+
+### Features
+
+* add daily dumps of DB main tables as JSONL files ([#282](https://github.com/openfoodfacts/open-prices/issues/282)) ([9d3f1a7](https://github.com/openfoodfacts/open-prices/commit/9d3f1a7d4dc1d2a995d93910526e69dfdf218f04))
+
+
+### Bug Fixes
+
+* fix KeyError: 'unique_scans_n' error ([#273](https://github.com/openfoodfacts/open-prices/issues/273)) ([bee3b0b](https://github.com/openfoodfacts/open-prices/commit/bee3b0b7ef2af79932a4e64ec5ba9caa36a41d1d))
+* fix the user agent ([#276](https://github.com/openfoodfacts/open-prices/issues/276)) ([f7b0945](https://github.com/openfoodfacts/open-prices/commit/f7b094563d9e522475d2c8a5f5588e089d7a5f18))
+
 ## [1.25.1](https://github.com/openfoodfacts/open-prices/compare/v1.25.0...v1.25.1) (2024-04-17)
 
 
