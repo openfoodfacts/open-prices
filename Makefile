@@ -11,8 +11,8 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 # we need COMPOSE_PROJECT_NAME for some commands
 # take it form env, or from env file
 COMPOSE_PROJECT_NAME ?= $(shell grep COMPOSE_PROJECT_NAME ${ENV_FILE} | cut -d '=' -f 2)
-DOCKER_COMPOSE=docker-compose --env-file=${ENV_FILE}
-DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}_test docker-compose --env-file=${ENV_FILE}
+DOCKER_COMPOSE=docker compose --env-file=${ENV_FILE}
+DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}_test docker compose --env-file=${ENV_FILE}
 
 # avoid target corresponding to file names, to depends on them
 .PHONY: *
@@ -40,7 +40,7 @@ livecheck:
 	exit_code=0; \
 	services=`${DOCKER_COMPOSE} config  --service | tr '\n' ' '`; \
 	for service in $$services; do \
-	if [ -z `docker-compose ps -q $$service` ] || [ -z `docker ps -q --no-trunc | grep $$(${DOCKER_COMPOSE} ps -q $$service)` ]; then \
+	if [ -z `docker compose ps -q $$service` ] || [ -z `docker ps -q --no-trunc | grep $$(${DOCKER_COMPOSE} ps -q $$service)` ]; then \
 		echo "$$service: DOWN"; \
 		exit_code=1; \
 	else \
@@ -53,7 +53,7 @@ livecheck:
 
 build:
 	@echo "🥫 building docker (for dev)"
-	docker-compose build
+	${DOCKER_COMPOSE} build
 
 
 up:
@@ -87,7 +87,7 @@ status:
 	${DOCKER_COMPOSE} ps
 
 log:
-	@echo "🥫 Reading logs (docker-compose) …"
+	@echo "🥫 Reading logs (docker compose) …"
 	${DOCKER_COMPOSE} logs -f api
 
 

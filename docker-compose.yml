@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-api-common: &api-common
   image: ghcr.io/openfoodfacts/open-prices/api:${TAG:-dev}
   restart: $RESTART_POLICY

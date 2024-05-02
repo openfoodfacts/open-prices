@@ -29,14 +29,13 @@ alembic upgrade head
 ### With Docker
 
 :::info
-Depending on your docker version you could either use `docker-compose` or `docker compose`.
-Please adapt the script accordingly.
+Open Prices now only supports docker compose v2 (`docker compose`)
 :::
 
 create the dockers with
 
 ```sh
-docker-compose up
+docker compose up
 ```
 
 The sever should be running on <http://localhost:8000/>.
@@ -46,15 +45,6 @@ The run the migration of the database with
 ```sh
 make migrate-db
 ```
-
-If you're using `docker compose`, this script might fail with the following error message:
-
-```
-make: docker-compose: No such file or directory
-make: *** [Makefile:139: migrate-db] Error 127
-```
-
-To fix it, go in `Makefile` and replace `docker-compose` by `docker compose`.
 
 Congrats, you can now contribute to the codebase :tada:
 
