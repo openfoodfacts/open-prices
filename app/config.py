@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
     images_dir: Path = STATIC_DIR / "img"
+    data_dir: Path = STATIC_DIR / "data"
     environment: Environment = Environment.org
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -50,3 +51,4 @@ class Settings(BaseSettings):
 
 settings = Settings()
 settings.images_dir.mkdir(parents=True, exist_ok=True)
+settings.data_dir.mkdir(parents=True, exist_ok=True)

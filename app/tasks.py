@@ -1,4 +1,6 @@
 import datetime
+import gzip
+from pathlib import Path
 
 import tqdm
 from openfoodfacts import DatasetType, Flavor, ProductDataset
@@ -7,8 +9,8 @@ from openfoodfacts.utils import get_logger
 from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
-from app import crud
-from app.models import Price, Product, Proof
+from app import crud, schemas
+from app.models import Location, Price, Product, Proof
 from app.schemas import LocationCreate, ProductCreate, UserCreate
 from app.utils import (
     OFF_FIELDS,
@@ -200,3 +202,21 @@ def create_price_location(db: Session, price: Price) -> None:
         else:
             # Increment the price count of the location
             crud.increment_location_price_count(db, location=db_location)
+
+
+def dump_db(db: Session, output_dir: Path) -> None:
+    """Dump the database to gzipped JSONL files."""
+    logger.info("Creating dumps of the database")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for table_name, model_cls, schema_cls in (
+        ("prices", Price, schemas.PriceFull),
+        ("proofs", Proof, schemas.ProofFull),
+        ("locations", Location, schemas.LocationFull),
+    ):
+        logger.info(f"Dumping {table_name}")
+        output_path = output_dir / f"{table_name}.jsonl.gz"
+        with gzip.open(output_path, "wt") as f:
+            for (item,) in tqdm.tqdm(db.execute(select(model_cls)), desc=table_name):
+                f.write(schema_cls(**item.__dict__).model_dump_json())
+                f.write("\n")
