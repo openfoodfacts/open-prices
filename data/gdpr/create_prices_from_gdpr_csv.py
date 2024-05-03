@@ -15,6 +15,7 @@ PRICE_FIELDS = [
     "product_code",
     "product_name",
     "price",
+    "discount",  # extra
     "quantity",  # extra
     "currency",
     "location",  # extra
@@ -25,13 +26,13 @@ PRICE_FIELDS = [
 
 REQUIRED_ENV_PARAMS = [
     # "FILEPATH"
-    "API_TOKEN",
-    "API_ENDPOINT",
     "SOURCE",
     "LOCATION",
     "LOCATION_OSM_ID",
     "LOCATION_OSM_TYPE",
     "PROOF_ID",
+    "API_ENDPOINT",
+    "API_TOKEN",
     # DRY_MODE
 ]
 
@@ -117,6 +118,10 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
             if "CAR" in op_price["product_code"]:
                 passes_test = False
             elif op_price["product_name"] in ["BOUCHERIE", "Coupon Rem Caisse"]:
+                passes_test = False
+            elif op_price["discount"]:
+                passes_test = False
+            elif op_price["quantity"].startswith("-"):
                 passes_test = False
         elif gdpr_source == "ELECLERC":
             if len(op_price["product_code"]) < 6:
@@ -218,10 +223,14 @@ if __name__ == "__main__":
     Required params: see REQUIRED_ENV_PARAMS
     """
     # Step 1: read input file
+    if not os.environ.get("FILEPATH"):
+        sys.exit("Error: missing FILEPATH env")
     filepath = os.environ.get("FILEPATH")
     print(f"===== Reading {filepath}")
     gdpr_price_list = read_gdpr_csv(filepath)
     print(len(gdpr_price_list))
+
+    print("===== Input example:")
     print(gdpr_price_list[0])
 
     # Step 2: check env params are all present
@@ -261,9 +270,8 @@ if __name__ == "__main__":
     )
     print(len(open_prices_price_list_filtered_2))
 
+    print("===== Output example (extra fields will be ignored):")
     print(open_prices_price_list_filtered_2[0])
-    # for p in open_prices_price_list_filtered:
-    #     print(p)
 
     # Step 5: send prices to backend via API
     if os.environ.get("DRY_RUN") == "False":
