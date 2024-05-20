@@ -155,6 +155,14 @@ class LocationFull(LocationCreate):
     osm_address_postcode: str | None = None
     osm_address_city: str | None = None
     osm_address_country: str | None = None
+    osm_address_country_code: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=2,
+        pattern=r"^[A-Z]{2}$",
+        description="OSM country code (ISO 3166-1 alpha-2)",
+        examples=["FR", "US"],
+    )
     osm_lat: float | None = None
     osm_lon: float | None = None
     created: datetime.datetime = Field(description="datetime of the creation.")
