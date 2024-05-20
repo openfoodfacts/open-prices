@@ -97,6 +97,7 @@ class Location(Base):
     osm_address_postcode = mapped_column(String)
     osm_address_city = mapped_column(String)
     osm_address_country = mapped_column(String)
+    osm_address_country_code = mapped_column(String)
     osm_lat = mapped_column(Numeric(precision=11, scale=7))
     osm_lon = mapped_column(Numeric(precision=11, scale=7))
 
