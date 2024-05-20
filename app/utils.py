@@ -147,6 +147,7 @@ def fetch_product_openfoodfacts_details(
 # OpenStreetMap
 # ------------------------------------------------------------------------------
 OSM_FIELDS = ["name", "display_name", "lat", "lon"]
+OSM_TAG_FIELDS_MAPPING = {"class": "tag_key", "type": "tag_value"}
 OSM_ADDRESS_FIELDS = ["postcode", "country"]  # 'city" is managed seperately
 # https://wiki.openstreetmap.org/wiki/Key:place
 OSM_ADDRESS_PLACE_FIELDS = ["village", "town", "city", "municipality"]
@@ -172,6 +173,11 @@ def fetch_location_openstreetmap_details(
                     location_openstreetmap_details[f"osm_{osm_field}"] = response[0][
                         osm_field
                     ]
+            for osm_field in list(OSM_TAG_FIELDS_MAPPING.keys()):
+                if osm_field in response[0]:
+                    location_openstreetmap_details[
+                        f"osm_{OSM_TAG_FIELDS_MAPPING[osm_field]}"
+                    ] = response[0][osm_field]
             if "address" in response[0]:
                 for osm_address_field in OSM_ADDRESS_FIELDS:
                     if osm_address_field in response[0]["address"]:

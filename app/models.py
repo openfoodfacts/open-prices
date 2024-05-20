@@ -92,6 +92,8 @@ class Location(Base):
     osm_type: Mapped[LocationOSMEnum] = mapped_column(ChoiceType(LocationOSMEnum))
     osm_name = mapped_column(String)
     osm_display_name = mapped_column(String)
+    osm_tag_key = mapped_column(String)
+    osm_tag_value = mapped_column(String)
     osm_address_postcode = mapped_column(String)
     osm_address_city = mapped_column(String)
     osm_address_country = mapped_column(String)

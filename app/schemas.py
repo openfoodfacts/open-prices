@@ -146,6 +146,12 @@ class LocationFull(LocationCreate):
     id: int
     osm_name: str | None = None
     osm_display_name: str | None = None
+    osm_tag_key: str | None = Field(
+        description="OSM tag key", examples=["shop", "amenity"], default=None
+    )
+    osm_tag_value: str | None = Field(
+        description="OSM tag value", examples=["supermarket", "cafe"], default=None
+    )
     osm_address_postcode: str | None = None
     osm_address_city: str | None = None
     osm_address_country: str | None = None
