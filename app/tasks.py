@@ -71,13 +71,21 @@ def import_product_db(
     """
     logger.info(f"Launching import_product_db ({flavor})")
     existing_codes = set(db.execute(select(Product.code)).scalars())
-    logger.info("Number of existing codes: %d", len(existing_codes))
+    logger.info(f"OP: number of existing codes: {len(existing_codes)}")
+    existing_codes_flavor = set(
+        db.execute(select(Product.code).where(Product.source == flavor)).scalars()
+    )
+    logger.info(
+        f"OP: number of existing codes from {flavor}: {len(existing_codes_flavor)}"
+    )
+
     dataset = ProductDataset(
         flavor=flavor,
         dataset_type=DatasetType.jsonl,
         force_download=True,
         download_newer=True,
     )
+    logger.info(f"Dataset size: {dataset.count()}")
 
     added_count = 0
     updated_count = 0
