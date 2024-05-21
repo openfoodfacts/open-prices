@@ -171,10 +171,15 @@ def import_product_db(
             updated_count += execute_result.rowcount
             buffer_len += 1
 
+        # update the database regularly
         if buffer_len % batch_size == 0:
             db.commit()
             logger.info(f"Products: {added_count} added, {updated_count} updated")
             buffer_len = 0
+
+    # final database update
+    db.commit()
+    logger.info(f"Products: {added_count} added, {updated_count} updated. Done!")
 
 
 # Locations
