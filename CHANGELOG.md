@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.27.0](https://github.com/openfoodfacts/open-prices/compare/v1.26.0...v1.27.0) (2024-05-21)
+
+
+### Features
+
+* **location:** store OSM address country_code ([#296](https://github.com/openfoodfacts/open-prices/issues/296)) ([43485ed](https://github.com/openfoodfacts/open-prices/commit/43485ed211e0b9c022ab8f0c1adde30fc0bc6552))
+* **location:** store OSM tag key & value ([#294](https://github.com/openfoodfacts/open-prices/issues/294)) ([3eeccbd](https://github.com/openfoodfacts/open-prices/commit/3eeccbde8c2676bc490721d36726d14baa903374))
+
+
+### Bug Fixes
+
+* **data:** fix daily data import script ([#299](https://github.com/openfoodfacts/open-prices/issues/299)) ([588ad52](https://github.com/openfoodfacts/open-prices/commit/588ad52e4c42735ada82121124a1782e44735a95))
+
 ## [1.26.0](https://github.com/openfoodfacts/open-prices/compare/v1.25.1...v1.26.0) (2024-05-02)
 
 
