@@ -10,6 +10,8 @@ x-api-base: &api-base
     # mount code dynamically
     - "./app:/opt/open-prices/app"
     - ./pyproject.toml:/opt/open-prices/pyproject.toml
+    # mount fixtures
+    - "./fixtures:/opt/open-prices/fixtures"
     # make doc generation available
     - ./mkdocs.yml:/opt/open-prices/mkdocs.yml
     - ./build_mkdocs.sh:/opt/open-prices/build_mkdocs.sh

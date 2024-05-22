@@ -11,6 +11,7 @@ x-api-common: &api-common
     - OAUTH2_SERVER_URL
     - SENTRY_DNS
     - LOG_LEVEL
+    - PYTHONPATH
   networks:
     - default
 

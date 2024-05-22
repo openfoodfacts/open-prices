@@ -46,6 +46,12 @@ The run the migration of the database with
 make migrate-db
 ```
 
+The load the fixtures with
+
+```sh
+make load-fixtures
+```
+
 Congrats, you can now contribute to the codebase :tada:
 
 ## Run locally

@@ -15,6 +15,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DEFAULT_TIMEOUT=100 \
     PYSETUP_PATH="/opt/pysetup" \
     VENV_PATH="/opt/pysetup/.venv" \
+    PYTHONPATH="/opt/open-prices" \
     POETRY_HOME="/opt/poetry" \
     POETRY_VERSION=1.6.1 \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
@@ -46,6 +47,7 @@ RUN groupadd -g $USER_GID off && \
     mkdir -p /opt/open-prices && \
     chown off:off -R /opt/open-prices /home/off
 COPY --chown=off:off app /opt/open-prices/app
+COPY --chown=off:off fixtures /opt/open-prices/fixtures
 COPY --chown=off:off alembic /opt/open-prices/alembic
 
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
