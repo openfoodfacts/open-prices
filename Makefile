@@ -156,11 +156,13 @@ migrate-db:
 add-db-revision: guard-message
 	${DOCKER_COMPOSE} run --rm --no-deps api alembic revision --autogenerate -m "${message}"
 
+
 # load fixtures
 load-fixtures:
 	@echo "🥫 Loading fixtures …"
 	${DOCKER_COMPOSE} run --rm --no-deps api poetry run python fixtures/import_data.py
-	
+
+
 #---------#
 # Cleanup #
 #---------#

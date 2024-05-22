@@ -1,12 +1,12 @@
 import yaml
 from openfoodfacts import Flavor
 from sqlalchemy.orm import Session
+
 from app.db import Base, engine
 from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
 from app.models import Location, Price, Product, Proof
 from app.models import Session as UserSession
 from app.models import User
-
 
 # Database creation
 Base.metadata.create_all(bind=engine)
