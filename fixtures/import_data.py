@@ -48,9 +48,7 @@ def load_fixtures(session, file_path):
 
     # Import prices
     for price_data in data["prices"]:
-        price_data["currency"] = CurrencyEnum[
-            price_data.get("currency", "")
-        ]
+        price_data["currency"] = CurrencyEnum[price_data.get("currency", "")]
         price_data["price_per"] = PricePerEnum.get(
             price_data.get("price_per"), PricePerEnum.DEFAULT
         )
