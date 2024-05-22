@@ -1,16 +1,16 @@
-import os
 import yaml
+from openfoodfacts import Flavor
 from sqlalchemy.orm import Session
 from app.db import Base, engine
-from app.models import User, Session as UserSession, Product, Location, Proof, Price
 from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
-from openfoodfacts import Flavor
+from app.models import Location, Price, Product, Proof
+from app.models import Session as UserSession
+from app.models import User
 
-# Environment setup
-os.environ["PYTHONPATH"] = os.getcwd()
 
 # Database creation
 Base.metadata.create_all(bind=engine)
+
 
 def load_fixtures(session, file_path):
     with open(file_path, "r") as file:
@@ -48,20 +48,26 @@ def load_fixtures(session, file_path):
 
     # Import prices
     for price_data in data["prices"]:
-        # Utilisation de la méthode get avec une valeur par défaut pour éviter les KeyError
-        price_data["currency"] = CurrencyEnum[price_data.get("currency", "DEFAULT_CURRENCY")]
-        price_data["price_per"] = PricePerEnum.get(price_data.get("price_per"), PricePerEnum.DEFAULT)
-        price_data["location_osm_type"] = LocationOSMEnum[price_data.get("location_osm_type", "DEFAULT_OSM_TYPE")]
-
+        price_data["currency"] = CurrencyEnum[
+            price_data.get("currency", "")
+        ]
+        price_data["price_per"] = PricePerEnum.get(
+            price_data.get("price_per"), PricePerEnum.DEFAULT
+        )
+        price_data["location_osm_type"] = LocationOSMEnum[
+            price_data.get("location_osm_type", "DEFAULT_OSM_TYPE")
+        ]
         # Create and add the Price object in a single step
         session.add(Price(**price_data))
 
     session.commit()
 
+
 # Main function to run the script
 def main():
     with Session(engine) as session:
         load_fixtures(session, "fixtures/data.yaml")
+
 
 # Entry point of the script
 if __name__ == "__main__":
