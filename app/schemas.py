@@ -422,6 +422,11 @@ class PriceFull(PriceCreate):
     product_id: int | None
     location_id: int | None
     owner: str
+    source: str | None = Field(
+        description="Source (User agent)",
+        examples=["web app", "mobile app"],
+        default=None,
+    )
     created: datetime.datetime
 
 
