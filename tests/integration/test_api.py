@@ -287,6 +287,16 @@ def test_create_price(db_session, user_session: SessionModel, clean_prices):
     assert response.json()["product_code"] == PRICE_2.product_code
     assert len(crud.get_prices(db_session)) == 1 + 1
     # assert db_prices[0]["owner"] == user.user_id
+    # with user_agent
+    response = client.post(
+        "/api/v1/prices",
+        json=jsonable_encoder(PRICE_1),
+        headers={"Authorization": f"Bearer {user_session.token}", "User-Agent": "test"},
+    )
+    assert response.status_code == 201
+    assert response.json()["product_code"] == PRICE_1.product_code
+    assert len(crud.get_prices(db_session)) == 2 + 1
+    assert crud.get_prices(db_session)[0][0].source == "test"
 
 
 def test_create_price_moderator(db_session, user_session, user_session_1, clean_prices):
