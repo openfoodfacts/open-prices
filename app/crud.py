@@ -299,8 +299,10 @@ def get_price_by_id(db: Session, id: int) -> Price | None:
     return db.query(Price).filter(Price.id == id).first()
 
 
-def create_price(db: Session, price: PriceCreate, user: UserCreate) -> Price:
-    db_price = Price(**price.model_dump(), owner=user.user_id)
+def create_price(
+    db: Session, price: PriceCreate, user: UserCreate, source: str = None
+) -> Price:
+    db_price = Price(**price.model_dump(), owner=user.user_id, source=source)
     db.add(db_price)
     db.commit()
     db.refresh(db_price)

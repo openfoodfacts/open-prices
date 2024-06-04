@@ -32,6 +32,7 @@ def create_price(
     price: schemas.PriceCreateWithValidation,
     background_tasks: BackgroundTasks,
     current_user: schemas.UserCreate = Depends(get_current_user),
+    app_name: str | None = None,
     db: Session = Depends(get_db),
 ) -> Price:
     """
@@ -58,7 +59,7 @@ def create_price(
                     detail="Proof does not belong to current user",
                 )
     # create price
-    db_price = crud.create_price(db, price=price, user=current_user)
+    db_price = crud.create_price(db, price=price, user=current_user, source=app_name)
     # update counts
     background_tasks.add_task(tasks.create_price_product, db, price=db_price)
     background_tasks.add_task(tasks.create_price_location, db, price=db_price)
