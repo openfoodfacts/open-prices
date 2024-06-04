@@ -423,7 +423,7 @@ class PriceFull(PriceCreate):
     location_id: int | None
     owner: str
     # source: str | None = Field(
-    #     description="Source (User agent)",
+    #     description="Source (App name)",
     #     examples=["web app", "mobile app"],
     #     default=None,
     # )
