@@ -383,7 +383,7 @@ def create_proof(
     mimetype: str,
     type: ProofTypeEnum,
     user: UserCreate,
-    price_count: int = 0,
+    source: str = None,
 ) -> Proof:
     """Create a proof in the database.
 
@@ -398,7 +398,7 @@ def create_proof(
         mimetype=mimetype,
         type=type,
         owner=user.user_id,
-        price_count=price_count,
+        source=source,
     )
     db.add(db_proof)
     db.commit()

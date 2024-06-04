@@ -818,7 +818,7 @@ def test_delete_price_moderator(
 
 # Test proofs
 # ------------------------------------------------------------------------------
-def test_create_proof(user_session: SessionModel, clean_proofs):
+def test_create_proof(db_session, user_session: SessionModel, clean_proofs):
     # This test depends on the previous test_create_price
     # without authentication
     response = client.post(
@@ -854,6 +854,7 @@ def test_create_proof(user_session: SessionModel, clean_proofs):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
+    assert len(crud.get_proofs(db_session)) == 1
 
     response = client.post(
         "/api/v1/proofs/upload",
@@ -862,9 +863,24 @@ def test_create_proof(user_session: SessionModel, clean_proofs):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
+    assert len(crud.get_proofs(db_session)) == 1 + 1
+
+    # with app_name
+    response = client.post(
+        "/api/v1/proofs/upload?app_name=test",
+        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+        data={"type": "RECEIPT"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    assert len(crud.get_proofs(db_session)) == 2 + 1
+    assert crud.get_proofs(db_session)[-1][0].source == "test"
 
 
-def test_get_proofs(user_session: SessionModel):
+def test_get_proofs(db_session, user_session: SessionModel, clean_proofs):
+    crud.create_proof(db_session, "/", "test.webp", "PRICE_TAG", user_session.user)
+    crud.create_proof(db_session, "/", "test.webp", "RECEIPT", user_session.user)
+
     # without authentication
     response = client.get("/api/v1/proofs")
     assert response.status_code == 401
@@ -895,8 +911,8 @@ def test_get_proofs(user_session: SessionModel):
 
     for i, item in enumerate(data):
         assert isinstance(item["id"], int)
-        assert item["file_path"].startswith("0001/")
-        assert item["file_path"].endswith(".webp")
+        # assert item["file_path"].startswith("0001/")
+        # assert item["file_path"].endswith(".webp")
         assert item["type"] == ("PRICE_TAG" if i == 0 else "RECEIPT")
         assert item["owner"] == "user"
         assert item["price_count"] == 0

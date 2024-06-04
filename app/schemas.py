@@ -182,10 +182,15 @@ class ProofFull(BaseModel):
     file_path: str | None
     mimetype: str
     type: ProofTypeEnum | None = None
-    owner: str
     price_count: int = Field(
         description="number of prices for this proof.", examples=[15], default=0
     )
+    owner: str
+    # source: str | None = Field(
+    #     description="Source (App name)",
+    #     examples=["web app", "mobile app"],
+    #     default=None,
+    # )
     created: datetime.datetime
 
 
