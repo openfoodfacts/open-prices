@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.28.0](https://github.com/openfoodfacts/open-prices/compare/v1.27.0...v1.28.0) (2024-06-04)
+
+
+### Features
+
+* **prices:** new source field to store the app name ([#301](https://github.com/openfoodfacts/open-prices/issues/301)) ([9efd923](https://github.com/openfoodfacts/open-prices/commit/9efd92385df63af12a8b5e2a7df49e9997053a31))
+* **proofs:** new source field to store the app name ([#310](https://github.com/openfoodfacts/open-prices/issues/310)) ([30ab149](https://github.com/openfoodfacts/open-prices/commit/30ab149d9af87e347145dfb76ca80e1664cdba63))
+
 ## [1.27.0](https://github.com/openfoodfacts/open-prices/compare/v1.26.0...v1.27.0) (2024-05-21)
 
 
