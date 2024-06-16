@@ -172,5 +172,6 @@ class Price(Base):
     source = mapped_column(String, nullable=True)
 
     created = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated = mapped_column(DateTime(timezone=True), onupdate=func.now())
 
     __tablename__ = "prices"

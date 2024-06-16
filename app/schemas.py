@@ -435,7 +435,10 @@ class PriceFull(PriceCreate):
     #     examples=["web app", "mobile app"],
     #     default=None,
     # )
-    created: datetime.datetime
+    created: datetime.datetime = Field(description="datetime of the creation.")
+    updated: datetime.datetime | None = Field(
+        description="datetime of the last update.", default=None
+    )
 
 
 class PriceFullWithRelations(PriceFull):
