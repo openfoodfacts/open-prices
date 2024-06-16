@@ -131,6 +131,7 @@ class Proof(Base):
     created = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
+    updated = mapped_column(DateTime(timezone=True), onupdate=func.now())
 
     __tablename__ = "proofs"
 
