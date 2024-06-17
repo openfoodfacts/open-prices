@@ -202,6 +202,7 @@ class ProofFull(BaseModel):
 
 class ProofBasicUpdatableFields(BaseModel):
     type: ProofTypeEnum | None = None
+    date: datetime.date | None = None
 
     class Config:
         extra = "forbid"

@@ -1035,6 +1035,16 @@ def test_update_proof(
     )
     assert response.status_code == 200
     assert response.json()["type"] == "RECEIPT"
+    assert response.json()["date"] is None
+    PROOF_UPDATE_PARTIAL = {"date": "2024-01-01"}
+    response = client.patch(
+        f"/api/v1/proofs/{proof.id}",
+        headers={"Authorization": f"Bearer {user_session.token}"},
+        json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
+    )
+    assert response.status_code == 200
+    assert response.json()["type"] == "RECEIPT"
+    assert response.json()["date"] == "2024-01-01"
 
     # with authentication and proof owner but extra fields
     PROOF_UPDATE_PARTIAL_WRONG = {**PROOF_UPDATE_PARTIAL, "owner": 1}
