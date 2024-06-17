@@ -905,6 +905,7 @@ def test_get_proofs(db_session, user_session: SessionModel, clean_proofs):
             "mimetype",
             "type",
             "price_count",
+            "date",
             "owner",
             "created",
             "updated",

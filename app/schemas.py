@@ -185,6 +185,9 @@ class ProofFull(BaseModel):
     price_count: int = Field(
         description="number of prices for this proof.", examples=[15], default=0
     )
+    date: datetime.date | None = Field(
+        description="date of the proof.", examples=["2024-01-01"]
+    )
     owner: str
     # source: str | None = Field(
     #     description="Source (App name)",
