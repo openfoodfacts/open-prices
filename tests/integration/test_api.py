@@ -845,6 +845,13 @@ def test_create_proof(db_session, user_session: SessionModel, clean_proofs):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 422
+    # with authentication but validation error (date format)
+    response = client.post(
+        "/api/v1/proofs/upload",
+        data={"type": "PRICE_TAG", "date": "test"},
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 422
 
     # with authentication and no validation error
     response = client.post(
@@ -859,7 +866,7 @@ def test_create_proof(db_session, user_session: SessionModel, clean_proofs):
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "RECEIPT"},
+        data={"type": "RECEIPT", "date": "2024-01-01"},
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
