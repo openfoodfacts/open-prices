@@ -904,9 +904,10 @@ def test_get_proofs(db_session, user_session: SessionModel, clean_proofs):
             "file_path",
             "mimetype",
             "type",
+            "price_count",
             "owner",
             "created",
-            "price_count",
+            "updated",
         }
 
     for i, item in enumerate(data):
