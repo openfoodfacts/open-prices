@@ -383,6 +383,7 @@ def create_proof(
     mimetype: str,
     type: ProofTypeEnum,
     user: UserCreate,
+    date: str = None,
     source: str = None,
 ) -> Proof:
     """Create a proof in the database.
@@ -397,6 +398,7 @@ def create_proof(
         file_path=file_path,
         mimetype=mimetype,
         type=type,
+        date=date,
         owner=user.user_id,
         source=source,
     )
