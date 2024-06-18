@@ -124,6 +124,8 @@ class Proof(Base):
         Integer, nullable=False, server_default="0", index=True
     )
 
+    date = mapped_column(Date)
+
     owner = mapped_column(String, index=True)
 
     source = mapped_column(String, nullable=True)

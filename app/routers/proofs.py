@@ -40,6 +40,7 @@ def upload_proof(
     file: UploadFile,
     type: Annotated[ProofTypeEnum, Form(description="The type of the proof")],
     current_user: schemas.UserCreate = Depends(get_current_user),
+    date: str | None = None,
     app_name: str | None = None,
     db: Session = Depends(get_db),
 ) -> Proof:
@@ -53,7 +54,13 @@ def upload_proof(
     """
     file_path, mimetype = crud.create_proof_file(file)
     db_proof = crud.create_proof(
-        db, file_path, mimetype, type=type, user=current_user, source=app_name
+        db,
+        file_path,
+        mimetype,
+        type=type,
+        user=current_user,
+        date=date,
+        source=app_name,
     )
     return db_proof
 
