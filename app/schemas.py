@@ -185,6 +185,12 @@ class ProofFull(BaseModel):
     price_count: int = Field(
         description="number of prices for this proof.", examples=[15], default=0
     )
+    currency: CurrencyEnum | None = Field(
+        description="currency of the price, as a string. "
+        "The currency must be a valid currency code. "
+        "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
+        examples=["EUR", "USD"],
+    )
     date: datetime.date | None = Field(
         description="date of the proof.", examples=["2024-01-01"]
     )
@@ -202,6 +208,7 @@ class ProofFull(BaseModel):
 
 class ProofBasicUpdatableFields(BaseModel):
     type: ProofTypeEnum | None = None
+    currency: CurrencyEnum | None = None
     date: datetime.date | None = None
 
     class Config:
@@ -491,6 +498,12 @@ class ProofFilter(Filter):
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None
     price_count__lte: Optional[int] | None = None
+    currency: Optional[str] | None = None
+    date: Optional[str] | None = None
+    date__gt: Optional[str] | None = None
+    date__gte: Optional[str] | None = None
+    date__lt: Optional[str] | None = None
+    date__lte: Optional[str] | None = None
 
     order_by: Optional[list[str]] | None = None
 

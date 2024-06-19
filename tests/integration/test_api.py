@@ -912,6 +912,7 @@ def test_get_proofs(db_session, user_session: SessionModel, clean_proofs):
             "mimetype",
             "type",
             "price_count",
+            "currency",
             "date",
             "owner",
             "created",
@@ -1042,8 +1043,9 @@ def test_update_proof(
     )
     assert response.status_code == 200
     assert response.json()["type"] == "RECEIPT"
+    assert response.json()["currency"] is None
     assert response.json()["date"] is None
-    PROOF_UPDATE_PARTIAL = {"date": "2024-01-01"}
+    PROOF_UPDATE_PARTIAL = {"currency": "EUR", "date": "2024-01-01"}
     response = client.patch(
         f"/api/v1/proofs/{proof.id}",
         headers={"Authorization": f"Bearer {user_session.token}"},
@@ -1051,6 +1053,7 @@ def test_update_proof(
     )
     assert response.status_code == 200
     assert response.json()["type"] == "RECEIPT"
+    assert response.json()["currency"] == "EUR"
     assert response.json()["date"] == "2024-01-01"
 
     # with authentication and proof owner but extra fields
