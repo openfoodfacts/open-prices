@@ -44,7 +44,7 @@ def run() -> None:
     scheduler.add_executor(ThreadPoolExecutor(20))
     scheduler.add_jobstore(MemoryJobStore())
     scheduler.add_job(
-        import_product_db_job, "cron", max_instances=1, hour=10, minute=0, jitter=60
+        import_product_db_job, "cron", max_instances=1, hour=15, minute=0, jitter=60
     )
     scheduler.add_job(
         dump_db_job, "cron", max_instances=1, hour=23, minute=0, jitter=60
