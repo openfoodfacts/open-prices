@@ -1,4 +1,5 @@
 name: Run release-please
+
 on:
   push:
     branches:
@@ -8,20 +9,10 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: GoogleCloudPlatform/release-please-action@v4.1.1
+      - uses: googleapis/release-please-action@v4
         with:
           # We can't use GITHUB_TOKEN here because, github actions can't provocate actions
           # see: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow
           # So this is a personnal access token
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: simple
-          changelog-types: |
-            [
-              {"type":"feat","section":"Features","hidden":false},
-              {"type":"fix","section":"Bug Fixes","hidden":false},
-              {"type":"style","section":"Technical","hidden":false},
-              {"type":"docs","section":"Technical","hidden":false},
-              {"type":"test","section":"Technical","hidden":false},
-              {"type":"chore","section":"Technical","hidden":false},
-              {"type":"refactor","section":"Technical","hidden":false}
-            ]
