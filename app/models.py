@@ -124,7 +124,10 @@ class Proof(Base):
         Integer, nullable=False, server_default="0", index=True
     )
 
-    date = mapped_column(Date)
+    currency: Mapped[CurrencyEnum] = mapped_column(
+        ChoiceType(CurrencyEnum), nullable=True
+    )
+    date = mapped_column(Date, nullable=True)
 
     owner = mapped_column(String, index=True)
 
