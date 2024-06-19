@@ -498,6 +498,12 @@ class ProofFilter(Filter):
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None
     price_count__lte: Optional[int] | None = None
+    currency: Optional[str] | None = None
+    date: Optional[str] | None = None
+    date__gt: Optional[str] | None = None
+    date__gte: Optional[str] | None = None
+    date__lt: Optional[str] | None = None
+    date__lte: Optional[str] | None = None
 
     order_by: Optional[list[str]] | None = None
 
