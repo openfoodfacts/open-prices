@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app import crud, schemas
 from app.auth import get_current_user
 from app.db import get_db
-from app.enums import ProofTypeEnum
+from app.enums import CurrencyEnum, ProofTypeEnum
 from app.models import Proof
 
 router = APIRouter(prefix="/proofs")
@@ -41,6 +41,7 @@ def upload_proof(
     type: Annotated[ProofTypeEnum, Form(description="The type of the proof")],
     current_user: schemas.UserCreate = Depends(get_current_user),
     date: str | None = None,
+    currency: CurrencyEnum | None = None,
     app_name: str | None = None,
     db: Session = Depends(get_db),
 ) -> Proof:
@@ -60,6 +61,7 @@ def upload_proof(
         type=type,
         user=current_user,
         date=date,
+        currency=currency,
         source=app_name,
     )
     return db_proof

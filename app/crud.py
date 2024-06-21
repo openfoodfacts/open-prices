@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 
 from app import config
-from app.enums import LocationOSMEnum, ProofTypeEnum
+from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
 from app.models import Location, Price, Product, Proof
 from app.models import Session as SessionModel
 from app.models import User
@@ -384,6 +384,7 @@ def create_proof(
     type: ProofTypeEnum,
     user: UserCreate,
     date: str = None,
+    currency: CurrencyEnum = None,
     source: str = None,
 ) -> Proof:
     """Create a proof in the database.
@@ -399,6 +400,7 @@ def create_proof(
         mimetype=mimetype,
         type=type,
         date=date,
+        currency=currency,
         owner=user.user_id,
         source=source,
     )
