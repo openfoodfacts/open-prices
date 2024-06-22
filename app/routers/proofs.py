@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from fastapi_filter import FilterDepends
@@ -39,10 +39,10 @@ def get_user_proofs(
 def upload_proof(
     file: UploadFile,
     type: Annotated[ProofTypeEnum, Form(description="The type of the proof")],
-    current_user: schemas.UserCreate = Depends(get_current_user),
-    date: str | None = None,
-    currency: CurrencyEnum | None = None,
+    date: Optional[str] = Form(description="Proof date", default=None),
+    currency: Optional[CurrencyEnum] = Form(description="Proof currency", default=None),
     app_name: str | None = None,
+    current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Proof:
     """

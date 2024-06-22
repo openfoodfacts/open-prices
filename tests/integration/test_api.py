@@ -861,15 +861,19 @@ def test_create_proof(db_session, user_session: SessionModel, clean_proofs):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
+    assert response.json()["date"] is None
+    assert response.json()["currency"] is None
     assert len(crud.get_proofs(db_session)) == 1
 
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "RECEIPT", "date": "2024-01-01"},
+        data={"type": "RECEIPT", "date": "2024-01-01", "currency": ""},
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
+    assert response.json()["date"] == "2024-01-01"
+    assert response.json()["currency"] is None
     assert len(crud.get_proofs(db_session)) == 1 + 1
 
     response = client.post(
@@ -879,6 +883,8 @@ def test_create_proof(db_session, user_session: SessionModel, clean_proofs):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
+    assert response.json()["date"] == "2024-01-01"
+    assert response.json()["currency"] == "EUR"
     assert len(crud.get_proofs(db_session)) == 2 + 1
 
     # with app_name
