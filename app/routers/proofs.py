@@ -24,7 +24,7 @@ from app.models import Proof
 router = APIRouter(prefix="/proofs")
 
 
-@router.get("", response_model=Page[schemas.ProofFull])
+@router.get("", response_model=Page[schemas.ProofFullWithRelations])
 def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
     filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),

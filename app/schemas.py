@@ -218,6 +218,10 @@ class ProofFull(BaseModel):
     )
 
 
+class ProofFullWithRelations(ProofFull):
+    location: LocationFull | None
+
+
 class ProofBasicUpdatableFields(BaseModel):
     type: ProofTypeEnum | None = None
     currency: CurrencyEnum | None = None

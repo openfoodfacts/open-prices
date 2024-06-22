@@ -941,6 +941,7 @@ def test_get_proofs(db_session, user_session: SessionModel, clean_proofs):
             "location_osm_type",
             "date",
             "currency",
+            "location",
             "location_id",
             "owner",
             "created",
