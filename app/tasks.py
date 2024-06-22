@@ -209,6 +209,32 @@ def create_price_location(db: Session, price: Price) -> None:
             crud.increment_location_price_count(db, location=db_location)
 
 
+def create_proof_location(db: Session, proof: Proof) -> None:
+    if proof.location_osm_id and proof.location_osm_type:
+        # get or create the corresponding location
+        location = LocationCreate(
+            osm_id=proof.location_osm_id,
+            osm_type=proof.location_osm_type,
+        )
+        db_location, created = crud.get_or_create_location(db, location=location)
+        # link the location to the proof
+        crud.set_proof_location(db, proof=proof, location=db_location)
+        # fetch data from OpenStreetMap if created
+        if created:
+            location_openstreetmap_details = fetch_location_openstreetmap_details(
+                location=db_location
+            )
+            if location_openstreetmap_details:
+                crud.update_location(
+                    db, location=db_location, update_dict=location_openstreetmap_details
+                )
+        # else:
+        #     # Increment the proof count of the location
+        #     crud.increment_location_proof_count(db, location=db_location)
+
+
+# Other
+# ------------------------------------------------------------------------------
 def dump_db(db: Session, output_dir: Path) -> None:
     """Dump the database to gzipped JSONL files."""
     logger.info("Creating dumps of the database")

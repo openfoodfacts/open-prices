@@ -383,6 +383,8 @@ def create_proof(
     mimetype: str,
     type: ProofTypeEnum,
     user: UserCreate,
+    location_osm_id: int = None,
+    location_osm_type: LocationOSMEnum = None,
     date: str = None,
     currency: CurrencyEnum = None,
     source: str = None,
@@ -399,6 +401,8 @@ def create_proof(
         file_path=file_path,
         mimetype=mimetype,
         type=type,
+        location_osm_id=location_osm_id,
+        location_osm_type=location_osm_type,
         date=date,
         currency=currency,
         owner=user.user_id,
@@ -475,6 +479,13 @@ def increment_proof_price_count(db: Session, proof: Proof) -> Proof:
     This is used to keep track of the number of prices linked to a proof.
     """
     proof.price_count += 1
+    db.commit()
+    db.refresh(proof)
+    return proof
+
+
+def set_proof_location(db: Session, proof: Proof, location: Location) -> Proof:
+    proof.location_id = location.id
     db.commit()
     db.refresh(proof)
     return proof
