@@ -60,9 +60,10 @@ def create_price(
                 )
     # create price
     db_price = crud.create_price(db, price=price, user=current_user, source=app_name)
-    # update counts
+    # relationships
     background_tasks.add_task(tasks.create_price_product, db, price=db_price)
     background_tasks.add_task(tasks.create_price_location, db, price=db_price)
+    # update counts
     background_tasks.add_task(tasks.increment_user_price_count, db, user=current_user)
     if price.proof_id and db_proof:
         background_tasks.add_task(tasks.increment_proof_price_count, db, proof=db_proof)

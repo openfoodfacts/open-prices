@@ -1,22 +1,30 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import Select
 from sqlalchemy.orm import Session
 
-from app import crud, schemas
+from app import crud, schemas, tasks
 from app.auth import get_current_user
 from app.db import get_db
-from app.enums import CurrencyEnum, ProofTypeEnum
+from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
 from app.models import Proof
 
 router = APIRouter(prefix="/proofs")
 
 
-@router.get("", response_model=Page[schemas.ProofFull])
+@router.get("", response_model=Page[schemas.ProofFullWithRelations])
 def get_user_proofs(
     current_user: schemas.UserCreate = Depends(get_current_user),
     filters: schemas.ProofFilter = FilterDepends(schemas.ProofFilter),
@@ -39,6 +47,13 @@ def get_user_proofs(
 def upload_proof(
     file: UploadFile,
     type: Annotated[ProofTypeEnum, Form(description="The type of the proof")],
+    background_tasks: BackgroundTasks,
+    location_osm_id: Optional[str] = Form(
+        description="Proof location OSM id", default=None
+    ),
+    location_osm_type: Optional[LocationOSMEnum] = Form(
+        description="Proof location OSM type", default=None
+    ),
     date: Optional[str] = Form(description="Proof date", default=None),
     currency: Optional[CurrencyEnum] = Form(description="Proof currency", default=None),
     app_name: str | None = None,
@@ -54,16 +69,21 @@ def upload_proof(
     This endpoint requires authentication.
     """
     file_path, mimetype = crud.create_proof_file(file)
+    # create proof
     db_proof = crud.create_proof(
         db,
         file_path,
         mimetype,
         type=type,
         user=current_user,
+        location_osm_id=location_osm_id,
+        location_osm_type=location_osm_type,
         date=date,
         currency=currency,
         source=app_name,
     )
+    # relationships
+    background_tasks.add_task(tasks.create_proof_location, db, proof=db_proof)
     return db_proof
 
 

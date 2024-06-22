@@ -185,15 +185,27 @@ class ProofFull(BaseModel):
     price_count: int = Field(
         description="number of prices for this proof.", examples=[15], default=0
     )
+    location_osm_id: int | None = Field(
+        gt=0,
+        description="ID of the location in OpenStreetMap: the store where the product was bought.",
+        examples=[1234567890],
+    )
+    location_osm_type: LocationOSMEnum | None = Field(
+        description="type of the OpenStreetMap location object. Stores can be represented as nodes, "
+        "ways or relations in OpenStreetMap. It is necessary to be able to fetch the correct "
+        "information about the store using the ID.",
+        examples=["NODE", "WAY", "RELATION"],
+    )
+    date: datetime.date | None = Field(
+        description="date of the proof.", examples=["2024-01-01"]
+    )
     currency: CurrencyEnum | None = Field(
         description="currency of the price, as a string. "
         "The currency must be a valid currency code. "
         "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
         examples=["EUR", "USD"],
     )
-    date: datetime.date | None = Field(
-        description="date of the proof.", examples=["2024-01-01"]
-    )
+    location_id: int | None
     owner: str
     # source: str | None = Field(
     #     description="Source (App name)",
@@ -204,6 +216,10 @@ class ProofFull(BaseModel):
     updated: datetime.datetime | None = Field(
         description="datetime of the last update.", default=None
     )
+
+
+class ProofFullWithRelations(ProofFull):
+    location: LocationFull | None
 
 
 class ProofBasicUpdatableFields(BaseModel):
@@ -498,8 +514,11 @@ class ProofFilter(Filter):
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None
     price_count__lte: Optional[int] | None = None
-    currency: Optional[str] | None = None
+    location_osm_id: Optional[int] | None = None
+    location_osm_type: Optional[LocationOSMEnum] | None = None
+    location_id: Optional[int] | None = None
     date: Optional[str] | None = None
+    currency: Optional[str] | None = None
     date__gt: Optional[str] | None = None
     date__gte: Optional[str] | None = None
     date__lt: Optional[str] | None = None

@@ -105,6 +105,7 @@ class Location(Base):
     price_count: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default="0", index=True
     )
+    proofs: Mapped[list["Proof"]] = relationship(back_populates="location")
 
     created = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated = mapped_column(DateTime(timezone=True), onupdate=func.now())
@@ -124,10 +125,17 @@ class Proof(Base):
         Integer, nullable=False, server_default="0", index=True
     )
 
+    location_osm_id = mapped_column(BigInteger, nullable=True)
+    location_osm_type: Mapped[LocationOSMEnum] = mapped_column(
+        ChoiceType(LocationOSMEnum), nullable=True
+    )
+    location_id: Mapped[int] = mapped_column(ForeignKey("locations.id"), nullable=True)
+    location: Mapped[Location] = relationship(back_populates="proofs")
+
+    date = mapped_column(Date, nullable=True)
     currency: Mapped[CurrencyEnum] = mapped_column(
         ChoiceType(CurrencyEnum), nullable=True
     )
-    date = mapped_column(Date, nullable=True)
 
     owner = mapped_column(String, index=True)
 
