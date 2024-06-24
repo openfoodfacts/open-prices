@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.29.0](https://github.com/openfoodfacts/open-prices/compare/v1.28.0...v1.29.0) (2024-06-24)
+
+
+### Features
+
+* **proofs:** New location fields ([#338](https://github.com/openfoodfacts/open-prices/issues/338)) ([fe54229](https://github.com/openfoodfacts/open-prices/commit/fe54229433b2868d77413702ccdf50fd0db16ea2))
+* **proofs:** New proof.currency field ([#337](https://github.com/openfoodfacts/open-prices/issues/337)) ([b9d2c90](https://github.com/openfoodfacts/open-prices/commit/b9d2c905b825e127c35b3c97e4dae1b6d054f99d))
+* **proofs:** New proof.date field ([#330](https://github.com/openfoodfacts/open-prices/issues/330)) ([1b41308](https://github.com/openfoodfacts/open-prices/commit/1b41308646a5785731450a0cc86a5c208c384fc7))
+
+
+### Bug Fixes
+
+* import dumps at 3PM instead of 10AM ([#332](https://github.com/openfoodfacts/open-prices/issues/332)) ([543c54c](https://github.com/openfoodfacts/open-prices/commit/543c54c403c9ab89d559ab53dda25927998bdae3))
+* **proofs:** also return proof relationships when fetching detail. ref [#338](https://github.com/openfoodfacts/open-prices/issues/338) ([d323180](https://github.com/openfoodfacts/open-prices/commit/d323180f1f0c75640b4acc8b0d3d04cc3627bfd2))
+* **proofs:** improve new proof date & currency optional mgmt. ref [#327](https://github.com/openfoodfacts/open-prices/issues/327) & [#337](https://github.com/openfoodfacts/open-prices/issues/337) ([5a309b4](https://github.com/openfoodfacts/open-prices/commit/5a309b42ba03b27660ba0001e1763b24513025a4))
+
 ## [1.28.0](https://github.com/openfoodfacts/open-prices/compare/v1.27.0...v1.28.0) (2024-06-04)
 
 
