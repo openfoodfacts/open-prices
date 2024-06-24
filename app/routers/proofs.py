@@ -89,7 +89,7 @@ def upload_proof(
 
 @router.get(
     "/{proof_id}",
-    response_model=schemas.ProofFull,
+    response_model=schemas.ProofFullWithRelations,
 )
 def get_user_proof_by_id(
     proof_id: int,
