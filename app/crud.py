@@ -7,7 +7,7 @@ from typing import Any, Optional, Sequence
 from fastapi import UploadFile
 from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import Row, Select, delete, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, outerjoin
 from sqlalchemy.sql import func
 
 from app import config
@@ -278,7 +278,7 @@ def get_prices_query(
     """Useful for pagination."""
     query = select(Price)
     if with_join_product:
-        query = query.options(joinedload(Price.product))
+        query = query.options(outerjoin(Price.product))
     if with_join_location:
         query = query.options(joinedload(Price.location))
     if with_join_proof:
