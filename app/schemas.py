@@ -200,18 +200,28 @@ class LocationFull(LocationCreate):
 
 # Proof
 # ------------------------------------------------------------------------------
-class ProofFull(BaseModel):
-    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+class ProofBase(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True, arbitrary_types_allowed=True, extra="forbid"
+    )
 
-    id: int
+    type: ProofTypeEnum | None = None
+    currency: CurrencyEnum | None = Field(
+        description="currency of the price, as a string. "
+        "The currency must be a valid currency code. "
+        "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
+        examples=["EUR", "USD"],
+    )
+    date: datetime.date | None = Field(
+        description="date of the proof.", examples=["2024-01-01"]
+    )
+
+
+class ProofCreate(ProofBase):
     # file_path is str | null because we can mask the file path in the response
     # if the proof is not public
     file_path: str | None
     mimetype: str
-    type: ProofTypeEnum | None = None
-    price_count: int = Field(
-        description="number of prices for this proof.", examples=[15], default=0
-    )
     location_osm_id: int | None = Field(
         gt=0,
         description="ID of the location in OpenStreetMap: the store where the product was bought.",
@@ -223,17 +233,20 @@ class ProofFull(BaseModel):
         "information about the store using the ID.",
         examples=["NODE", "WAY", "RELATION"],
     )
-    date: datetime.date | None = Field(
-        description="date of the proof.", examples=["2024-01-01"]
-    )
-    currency: CurrencyEnum | None = Field(
-        description="currency of the price, as a string. "
-        "The currency must be a valid currency code. "
-        "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
-        examples=["EUR", "USD"],
+    owner: str
+
+
+@partial_model
+class ProofUpdate(ProofBase):
+    pass
+
+
+class ProofFull(ProofCreate):
+    id: int
+    price_count: int = Field(
+        description="number of prices for this proof.", examples=[15], default=0
     )
     location_id: int | None
-    owner: str
     # source: str | None = Field(
     #     description="Source (App name)",
     #     examples=["web app", "mobile app"],
@@ -247,15 +260,6 @@ class ProofFull(BaseModel):
 
 class ProofFullWithRelations(ProofFull):
     location: LocationFull | None
-
-
-class ProofBasicUpdatableFields(BaseModel):
-    type: ProofTypeEnum | None = None
-    currency: CurrencyEnum | None = None
-    date: datetime.date | None = None
-
-    class Config:
-        extra = "forbid"
 
 
 # Price
