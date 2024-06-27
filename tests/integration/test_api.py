@@ -628,7 +628,7 @@ def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices
         user_session.user,
     )
     crud.create_price(
-        db_session, PRICE_1.model_copy(update={"price": 5.10}), user_session.user
+        db_session, PRICE_1.model_copy(update={"price": 4.1}), user_session.user
     )
     crud.create_price(
         db_session,
@@ -653,8 +653,8 @@ def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices
     response = client.get("/api/v1/prices?category_tag=en:tomatoes")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
-    # 1 price with price > 5
-    response = client.get("/api/v1/prices?price__gt=5")
+    # 1 price with price > 4
+    response = client.get("/api/v1/prices?price__gt=4")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
     # 1 price with currency USD
@@ -694,7 +694,7 @@ def test_update_price(
     # create price
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
 
-    new_price = 5.5
+    new_price = 4.5
     PRICE_UPDATE_PARTIAL = {"price": new_price}
     # without authentication
     response = client.patch(f"/api/v1/prices/{db_price.id}")
@@ -741,14 +741,21 @@ def test_update_price(
         response.json()["price_is_discounted"] != PRICE_1.price_is_discounted
     )  # False
     assert response.json()["price_without_discount"] is None
-    # with authentication and price owner but extra fields
-    PRICE_UPDATE_PARTIAL_WRONG = {**PRICE_UPDATE_PARTIAL, "proof_id": 1}
-    response = client.patch(
-        f"/api/v1/prices/{db_price.id}",
-        headers={"Authorization": f"Bearer {user_session.token}"},
-        json=jsonable_encoder(PRICE_UPDATE_PARTIAL_WRONG),
-    )
-    assert response.status_code == 422
+    # with authentication and price owner but validation error
+    PRICE_UPDATE_PARTIAL_WRONG_LIST = [
+        {**PRICE_UPDATE_PARTIAL, "proof_id": 1},  # extra field
+        {**PRICE_UPDATE_PARTIAL, "price": -1},  # price negative
+        {"price_without_discount": 3, "price_is_discounted": False},  # incoherence
+        {"price_without_discount": 3}  # price_without_discount < price
+        # {**PRICE_UPDATE_PARTIAL, "price_per": "UNIT"}
+    ]
+    for PRICE_UPDATE_PARTIAL_WRONG in PRICE_UPDATE_PARTIAL_WRONG_LIST:
+        response = client.patch(
+            f"/api/v1/prices/{db_price.id}",
+            headers={"Authorization": f"Bearer {user_session.token}"},
+            json=jsonable_encoder(PRICE_UPDATE_PARTIAL_WRONG),
+        )
+        assert response.status_code == 422
 
 
 def test_update_price_moderator(
@@ -757,7 +764,7 @@ def test_update_price_moderator(
     # create price
     db_price = crud.create_price(db_session, PRICE_1, user_session.user)
 
-    new_price = 5.5
+    new_price = 4.5
     PRICE_UPDATE_PARTIAL = {"price": new_price}
 
     # user_1 is moderator, not owner

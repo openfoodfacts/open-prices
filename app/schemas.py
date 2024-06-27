@@ -1,5 +1,6 @@
 import datetime
-from typing import Optional
+from copy import deepcopy
+from typing import Any, Optional, Tuple, Type
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from openfoodfacts import Flavor
@@ -9,17 +10,43 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    create_model,
     field_validator,
     model_validator,
 )
+from pydantic.fields import FieldInfo
 
 from app.enums import CurrencyEnum, LocationOSMEnum, PricePerEnum, ProofTypeEnum
 from app.models import Location, Price, Product, Proof, User
 
+
+def partial_model(model: Type[BaseModel]):
+    """
+    Custom decorator to set all fields of a model as optional.
+    https://stackoverflow.com/a/76560886/4293684
+    """
+
+    def make_field_optional(
+        field: FieldInfo, default: Any = None
+    ) -> Tuple[Any, FieldInfo]:
+        new = deepcopy(field)
+        new.default = default
+        new.annotation = Optional[field.annotation]  # type: ignore
+        return new.annotation, new
+
+    return create_model(
+        f"Partial{model.__name__}",
+        __base__=model,
+        __module__=model.__module__,
+        **{
+            field_name: make_field_optional(field_info)
+            for field_name, field_info in model.model_fields.items()
+        },
+    )
+
+
 # Session
 # ------------------------------------------------------------------------------
-
-
 class SessionBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -233,9 +260,66 @@ class ProofBasicUpdatableFields(BaseModel):
 
 # Price
 # ------------------------------------------------------------------------------
-class PriceCreate(BaseModel):
-    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+class PriceBase(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True, arbitrary_types_allowed=True, extra="forbid"
+    )
 
+    price: float = Field(
+        gt=0,
+        description="price of the product, without its currency, taxes included.",
+        examples=[1.99],
+    )
+    price_is_discounted: bool = Field(
+        default=False,
+        description="true if the price is discounted.",
+        examples=[True],
+    )
+    price_without_discount: float | None = Field(
+        default=None,
+        description="price of the product without discount, without its currency, taxes included. "
+        "If the product is not discounted, this field must be null. ",
+        examples=[2.99],
+    )
+    price_per: PricePerEnum | None = Field(
+        default=PricePerEnum.KILOGRAM,
+        description="""if the price is about a barcode-less product
+        (if `category_tag` is provided), this field must be set to `KILOGRAM`
+        or `UNIT` (KILOGRAM by default).
+        This field is set to null and ignored if `product_code` is provided.
+        """,
+        examples=["KILOGRAM", "UNIT"],
+    )
+    currency: CurrencyEnum = Field(
+        description="currency of the price, as a string. "
+        "The currency must be a valid currency code. "
+        "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
+        examples=["EUR", "USD"],
+    )
+    date: datetime.date = Field(
+        description="date when the product was bought.", examples=["2024-01-01"]
+    )
+
+    @model_validator(mode="after")
+    def check_price_discount(self):  # type: ignore
+        """
+        Check that:
+        - `price_is_discounted` is true if `price_without_discount` is passed
+        - `price_without_discount` is greater than `price`
+        """
+        if self.price_without_discount is not None:
+            if not self.price_is_discounted:
+                raise ValueError(
+                    "`price_is_discounted` must be true if `price_without_discount` is filled"
+                )
+            if self.price_without_discount <= self.price:
+                raise ValueError(
+                    "`price_without_discount` must be greater than `price`"
+                )
+        return self
+
+
+class PriceCreate(PriceBase):
     product_code: str | None = Field(
         default=None,
         min_length=1,
@@ -291,37 +375,6 @@ class PriceCreate(BaseModel):
         If one of the origins is not valid, the price will be rejected.""",
         examples=[["en:france"], ["en:california"]],
     )
-    price: float = Field(
-        gt=0,
-        description="price of the product, without its currency, taxes included.",
-        examples=[1.99],
-    )
-    price_is_discounted: bool = Field(
-        default=False,
-        description="true if the price is discounted.",
-        examples=[True],
-    )
-    price_without_discount: float | None = Field(
-        default=None,
-        description="price of the product without discount, without its currency, taxes included. "
-        "If the product is not discounted, this field must be null. ",
-        examples=[2.99],
-    )
-    price_per: PricePerEnum | None = Field(
-        default=PricePerEnum.KILOGRAM,
-        description="""if the price is about a barcode-less product
-        (if `category_tag` is provided), this field must be set to `KILOGRAM`
-        or `UNIT` (KILOGRAM by default).
-        This field is set to null and ignored if `product_code` is provided.
-        """,
-        examples=["KILOGRAM", "UNIT"],
-    )
-    currency: CurrencyEnum = Field(
-        description="currency of the price, as a string. "
-        "The currency must be a valid currency code. "
-        "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
-        examples=["EUR", "USD"],
-    )
     location_osm_id: int = Field(
         gt=0,
         description="ID of the location in OpenStreetMap: the store where the product was bought.",
@@ -333,9 +386,6 @@ class PriceCreate(BaseModel):
         "information about the store using the ID.",
         examples=["NODE", "WAY", "RELATION"],
     )
-    date: datetime.date = Field(
-        description="date when the product was bought.", examples=["2024-01-01"]
-    )
     proof_id: int | None = Field(
         default=None,
         description="ID of the proof, if any. The proof is a file (receipt or price tag image) "
@@ -344,15 +394,6 @@ class PriceCreate(BaseModel):
         "owner of the proof.",
         examples=[15],
     )
-
-
-class PriceCreateWithValidation(PriceCreate):
-    """A version of `PriceCreate` with taxonomy validations.
-
-    These validations are not done in the `PriceCreate` model because they
-    they are time-consuming and only necessary when creating a price from
-    the API.
-    """
 
     @field_validator("labels_tags")
     def labels_tags_is_valid(cls, v: list[str] | None) -> list[str] | None:
@@ -421,35 +462,10 @@ class PriceCreateWithValidation(PriceCreate):
             self.price_per = None
         return self
 
-    @model_validator(mode="after")
-    def check_price_discount(self):  # type: ignore
-        """
-        Check that:
-        - `price_is_discounted` is true if `price_without_discount` is passed
-        - `price_without_discount` is greater than `price`
-        """
-        if self.price_without_discount is not None:
-            if not self.price_is_discounted:
-                raise ValueError(
-                    "`price_is_discounted` must be true if `price_without_discount` is filled"
-                )
-            if self.price_without_discount <= self.price:
-                raise ValueError(
-                    "`price_without_discount` must be greater than `price`"
-                )
-        return self
 
-
-class PriceBasicUpdatableFields(BaseModel):
-    price: float | None = None
-    price_is_discounted: bool | None = None
-    price_without_discount: float | None = None
-    price_per: PricePerEnum | None = None
-    currency: CurrencyEnum | None = None
-    date: datetime.date | None = None
-
-    class Config:
-        extra = "forbid"
+@partial_model
+class PriceUpdate(PriceBase):
+    pass
 
 
 class PriceFull(PriceCreate):

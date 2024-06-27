@@ -18,9 +18,9 @@ from app.models import User
 from app.schemas import (
     LocationCreate,
     LocationFilter,
-    PriceBasicUpdatableFields,
     PriceCreate,
     PriceFilter,
+    PriceUpdate,
     ProductCreate,
     ProductFilter,
     ProductFull,
@@ -345,9 +345,7 @@ def delete_price(db: Session, db_price: Price) -> bool:
     return True
 
 
-def update_price(
-    db: Session, price: Price, new_values: PriceBasicUpdatableFields
-) -> Price:
+def update_price(db: Session, price: Price, new_values: PriceUpdate) -> Price:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(price, key, new_values_cleaned[key])
