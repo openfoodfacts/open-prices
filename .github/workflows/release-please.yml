@@ -24,5 +24,7 @@ jobs:
               {"type":"docs","section":"Technical","hidden":false},
               {"type":"test","section":"Technical","hidden":false},
               {"type":"chore","section":"Technical","hidden":false},
-              {"type":"refactor","section":"Technical","hidden":false}
+              {"type":"refactor","section":"Technical","hidden":false},
+              {"type":"perf","section":"Technical","hidden":false},
+              {"type":"ci","section":"Technical","hidden":false}
             ]
