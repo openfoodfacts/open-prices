@@ -122,7 +122,7 @@ def get_user_proof_by_id(
 )
 def update_proof(
     proof_id: int,
-    proof_new_values: schemas.ProofBasicUpdatableFields,
+    proof_new_values: schemas.ProofUpdate,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Proof:

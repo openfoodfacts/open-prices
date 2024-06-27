@@ -18,14 +18,14 @@ from app.models import User
 from app.schemas import (
     LocationCreate,
     LocationFilter,
-    PriceCreate,
+    PriceCreateWithValidation,
     PriceFilter,
-    PriceUpdate,
+    PriceUpdateWithValidation,
     ProductCreate,
     ProductFilter,
     ProductFull,
-    ProofBasicUpdatableFields,
     ProofFilter,
+    ProofUpdate,
     UserCreate,
 )
 
@@ -300,7 +300,7 @@ def get_price_by_id(db: Session, id: int) -> Price | None:
 
 
 def create_price(
-    db: Session, price: PriceCreate, user: UserCreate, source: str = None
+    db: Session, price: PriceCreateWithValidation, user: UserCreate, source: str = None
 ) -> Price:
     db_price = Price(**price.model_dump(), owner=user.user_id, source=source)
     db.add(db_price)
@@ -345,7 +345,9 @@ def delete_price(db: Session, db_price: Price) -> bool:
     return True
 
 
-def update_price(db: Session, price: Price, new_values: PriceUpdate) -> Price:
+def update_price(
+    db: Session, price: Price, new_values: PriceUpdateWithValidation
+) -> Price:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(price, key, new_values_cleaned[key])
@@ -489,9 +491,7 @@ def set_proof_location(db: Session, proof: Proof, location: Location) -> Proof:
     return proof
 
 
-def update_proof(
-    db: Session, proof: Proof, new_values: ProofBasicUpdatableFields
-) -> Proof:
+def update_proof(db: Session, proof: Proof, new_values: ProofUpdate) -> Proof:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(proof, key, new_values_cleaned[key])

@@ -9,7 +9,13 @@ from app import crud
 from app.api import app
 from app.db import Base, engine, get_db, session
 from app.models import Session as SessionModel
-from app.schemas import LocationFull, PriceCreate, ProductFull, ProofFilter, UserCreate
+from app.schemas import (
+    LocationFull,
+    PriceCreateWithValidation,
+    ProductFull,
+    ProofFilter,
+    UserCreate,
+)
 
 Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
@@ -125,7 +131,7 @@ LOCATION_2 = LocationFull(
     created=datetime.datetime.now(),
     updated=datetime.datetime.now(),
 )
-PRICE_1 = PriceCreate(
+PRICE_1 = PriceCreateWithValidation(
     product_code="8001505005707",
     product_name="PATE NOCCIOLATA BIO 700G",
     # category="en:tomatoes",
@@ -137,7 +143,7 @@ PRICE_1 = PriceCreate(
     location_osm_type="NODE",
     date="2023-10-31",
 )
-PRICE_2 = PriceCreate(
+PRICE_2 = PriceCreateWithValidation(
     product_code="8001505005707",
     product_name="PATE NOCCIOLATA BIO 700G",
     price=2.5,
@@ -148,7 +154,7 @@ PRICE_2 = PriceCreate(
     location_osm_type="NODE",
     date="2023-10-31",
 )
-PRICE_3 = PriceCreate(
+PRICE_3 = PriceCreateWithValidation(
     product_code="8001505005707",
     product_name="PATE NOCCIOLATA BIO 700G",
     price=2.5,
@@ -1093,13 +1099,17 @@ def test_update_proof(
     assert response.json()["date"] == "2024-01-01"
 
     # with authentication and proof owner but extra fields
-    PROOF_UPDATE_PARTIAL_WRONG = {**PROOF_UPDATE_PARTIAL, "owner": 1}
-    response = client.patch(
-        f"/api/v1/proofs/{proof.id}",
-        headers={"Authorization": f"Bearer {user_session.token}"},
-        json=jsonable_encoder(PROOF_UPDATE_PARTIAL_WRONG),
-    )
-    assert response.status_code == 422
+    PROOF_UPDATE_PARTIAL_WRONG_LIST = [
+        {**PROOF_UPDATE_PARTIAL, "owner": 1},  # extra field
+        {**PROOF_UPDATE_PARTIAL, "type": "TEST"},  # wrong type
+    ]
+    for PROOF_UPDATE_PARTIAL_WRONG in PROOF_UPDATE_PARTIAL_WRONG_LIST:
+        response = client.patch(
+            f"/api/v1/proofs/{proof.id}",
+            headers={"Authorization": f"Bearer {user_session.token}"},
+            json=jsonable_encoder(PROOF_UPDATE_PARTIAL_WRONG),
+        )
+        assert response.status_code == 422
 
 
 def test_update_proof_moderator(
