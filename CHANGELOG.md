@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.29.1](https://github.com/openfoodfacts/open-prices/compare/v1.29.0...v1.29.1) (2024-06-27)
+
+
+### Bug Fixes
+
+* **ci:** add some missing conventional commit types in release-please config. ref [#344](https://github.com/openfoodfacts/open-prices/issues/344) ([9117657](https://github.com/openfoodfacts/open-prices/commit/91176578342371dba1d8495801701c047ae98b5c))
+* **ci:** fixed branch name for release-please. ref [#344](https://github.com/openfoodfacts/open-prices/issues/344) ([056f61e](https://github.com/openfoodfacts/open-prices/commit/056f61e786fe6e2d977b80a5edd13906f01113ca))
+
+
+### Technical
+
+* **prices:** reorganise schema inheritance to validate price updates ([#342](https://github.com/openfoodfacts/open-prices/issues/342)) ([64aac06](https://github.com/openfoodfacts/open-prices/commit/64aac0640335e4b6dfcf510a57d2ddce29aff467))
+* **proofs:** reorganise schema inheritance ([#343](https://github.com/openfoodfacts/open-prices/issues/343)) ([7e17a68](https://github.com/openfoodfacts/open-prices/commit/7e17a6806e8014a4a2dfefbc5ec9c53407f336b2))
+* revert release-please config to v3 ([#344](https://github.com/openfoodfacts/open-prices/issues/344)) ([739e128](https://github.com/openfoodfacts/open-prices/commit/739e12886a3a9339e9f83a7015855ae78d67563f))
+* update README with links ([e985ab2](https://github.com/openfoodfacts/open-prices/commit/e985ab288cad250ca69b95ae531aceb683917972))
+
 ## [1.29.0](https://github.com/openfoodfacts/open-prices/compare/v1.28.0...v1.29.0) (2024-06-24)
 
 
