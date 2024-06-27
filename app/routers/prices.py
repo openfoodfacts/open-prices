@@ -29,7 +29,7 @@ def get_prices(
     status_code=status.HTTP_201_CREATED,
 )
 def create_price(
-    price: schemas.PriceCreateWithValidation,
+    price: schemas.PriceCreate,
     background_tasks: BackgroundTasks,
     current_user: schemas.UserCreate = Depends(get_current_user),
     app_name: str | None = None,
@@ -77,7 +77,7 @@ def create_price(
 )
 def update_price(
     price_id: int,
-    price_new_values: schemas.PriceBasicUpdatableFields,
+    price_new_values: schemas.PriceUpdate,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Price:
