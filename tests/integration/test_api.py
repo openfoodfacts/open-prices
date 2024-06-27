@@ -9,7 +9,13 @@ from app import crud
 from app.api import app
 from app.db import Base, engine, get_db, session
 from app.models import Session as SessionModel
-from app.schemas import LocationFull, PriceCreate, ProductFull, ProofFilter, UserCreate
+from app.schemas import (
+    LocationFull,
+    PriceCreateWithValidation,
+    ProductFull,
+    ProofFilter,
+    UserCreate,
+)
 
 Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
@@ -125,7 +131,7 @@ LOCATION_2 = LocationFull(
     created=datetime.datetime.now(),
     updated=datetime.datetime.now(),
 )
-PRICE_1 = PriceCreate(
+PRICE_1 = PriceCreateWithValidation(
     product_code="8001505005707",
     product_name="PATE NOCCIOLATA BIO 700G",
     # category="en:tomatoes",
@@ -137,7 +143,7 @@ PRICE_1 = PriceCreate(
     location_osm_type="NODE",
     date="2023-10-31",
 )
-PRICE_2 = PriceCreate(
+PRICE_2 = PriceCreateWithValidation(
     product_code="8001505005707",
     product_name="PATE NOCCIOLATA BIO 700G",
     price=2.5,
@@ -148,7 +154,7 @@ PRICE_2 = PriceCreate(
     location_osm_type="NODE",
     date="2023-10-31",
 )
-PRICE_3 = PriceCreate(
+PRICE_3 = PriceCreateWithValidation(
     product_code="8001505005707",
     product_name="PATE NOCCIOLATA BIO 700G",
     price=2.5,

@@ -282,7 +282,7 @@ class PriceBase(BaseModel):
     price_without_discount: float | None = Field(
         default=None,
         description="price of the product without discount, without its currency, taxes included. "
-        "If the product is not discounted, this field must be null. ",
+        "If the product is not discounted, this field must be null.",
         examples=[2.99],
     )
     price_per: PricePerEnum | None = Field(
@@ -303,6 +303,14 @@ class PriceBase(BaseModel):
     date: datetime.date = Field(
         description="date when the product was bought.", examples=["2024-01-01"]
     )
+
+
+class PriceBaseWithValidation(PriceBase):
+    """A version of `PriceBase` with validations.
+    These validations are not done in the `PriceCreate` or `PriceUpdate` model
+    because they are time-consuming and only necessary when creating or
+    updating a price from the API.
+    """
 
     @model_validator(mode="after")
     def check_price_discount(self):  # type: ignore
@@ -399,6 +407,19 @@ class PriceCreate(PriceBase):
         examples=[15],
     )
 
+
+class PriceCreateWithValidation(PriceBaseWithValidation, PriceCreate):
+    @field_validator("category_tag")
+    def category_tag_is_valid(cls, v: str | None) -> str | None:
+        if v is not None:
+            v = v.lower()
+            category_taxonomy = get_taxonomy("category")
+            if v not in category_taxonomy:
+                raise ValueError(
+                    f"Invalid category tag: category '{v}' does not exist in the taxonomy"
+                )
+        return v
+
     @field_validator("labels_tags")
     def labels_tags_is_valid(cls, v: list[str] | None) -> list[str] | None:
         if v is not None:
@@ -425,17 +446,6 @@ class PriceCreate(PriceBase):
                     raise ValueError(
                         f"Invalid origin tag: origin '{origin_tag}' does not exist in the taxonomy",
                     )
-        return v
-
-    @field_validator("category_tag")
-    def category_tag_is_valid(cls, v: str | None) -> str | None:
-        if v is not None:
-            v = v.lower()
-            category_taxonomy = get_taxonomy("category")
-            if v not in category_taxonomy:
-                raise ValueError(
-                    f"Invalid category tag: category '{v}' does not exist in the taxonomy"
-                )
         return v
 
     @model_validator(mode="after")
@@ -468,7 +478,7 @@ class PriceCreate(PriceBase):
 
 
 @partial_model
-class PriceUpdate(PriceBase):
+class PriceUpdateWithValidation(PriceBaseWithValidation):
     pass
 
 
