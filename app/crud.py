@@ -24,8 +24,8 @@ from app.schemas import (
     ProductCreate,
     ProductFilter,
     ProductFull,
-    ProofBasicUpdatableFields,
     ProofFilter,
+    ProofUpdate,
     UserCreate,
 )
 
@@ -489,9 +489,7 @@ def set_proof_location(db: Session, proof: Proof, location: Location) -> Proof:
     return proof
 
 
-def update_proof(
-    db: Session, proof: Proof, new_values: ProofBasicUpdatableFields
-) -> Proof:
+def update_proof(db: Session, proof: Proof, new_values: ProofUpdate) -> Proof:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(proof, key, new_values_cleaned[key])
