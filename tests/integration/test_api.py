@@ -1373,6 +1373,7 @@ def test_create_location(db_session, user_session: SessionModel, clean_locations
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
+    assert response.json()["price_count"] == 0
     # with authentication: existing location
     response = client.post(
         "/api/v1/locations",
@@ -1380,6 +1381,7 @@ def test_create_location(db_session, user_session: SessionModel, clean_locations
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 200
+    assert response.json()["price_count"] == 0
 
 
 def test_get_locations(db_session, clean_locations):
