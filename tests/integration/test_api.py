@@ -97,6 +97,7 @@ PRODUCT_3 = ProductFull(
     created=datetime.datetime.now(),
     updated=datetime.datetime.now(),
 )
+
 LOCATION_1 = LocationFull(
     id=1,
     osm_id=652825274,
@@ -1338,6 +1339,49 @@ def test_get_product(db_session, clean_products):
 
 # Test locations
 # ------------------------------------------------------------------------------
+def test_create_location(db_session, user_session: SessionModel, clean_locations):
+    LOCATION_CREATE = {"osm_id": 1392117416, "osm_type": "NODE"}
+    # without authentication
+    response = client.post(
+        "/api/v1/locations",
+        json=LOCATION_CREATE,
+    )
+    assert response.status_code == 401
+    # with wrong authentication
+    response = client.post(
+        "/api/v1/locations",
+        json=LOCATION_CREATE,
+        headers={"Authorization": f"Bearer {user_session.token}X"},
+    )
+    assert response.status_code == 401
+    # with authentication but validation error
+    LOCATION_CREATE_WRONG_LIST = [
+        {**LOCATION_CREATE, "osm_type": "TEST"},  # wrong type
+        {"osm_id": LOCATION_CREATE["osm_id"]},  # osm_type missing
+    ]
+    for LOCATION_CREATE_WRONG in LOCATION_CREATE_WRONG_LIST:
+        response = client.post(
+            "/api/v1/locations",
+            headers={"Authorization": f"Bearer {user_session.token}"},
+            json=jsonable_encoder(LOCATION_CREATE_WRONG),
+        )
+        assert response.status_code == 422
+    # with authentication: new location
+    response = client.post(
+        "/api/v1/locations",
+        json=LOCATION_CREATE,
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 201
+    # with authentication: existing location
+    response = client.post(
+        "/api/v1/locations",
+        json=LOCATION_CREATE,
+        headers={"Authorization": f"Bearer {user_session.token}"},
+    )
+    assert response.status_code == 200
+
+
 def test_get_locations(db_session, clean_locations):
     crud.create_location(db_session, LOCATION_1)
     crud.create_location(db_session, LOCATION_2)
