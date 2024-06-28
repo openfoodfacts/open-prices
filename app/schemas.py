@@ -164,9 +164,6 @@ class LocationCreate(BaseModel):
 
     osm_id: int = Field(gt=0)
     osm_type: LocationOSMEnum
-    price_count: int = Field(
-        description="number of prices for this location.", examples=[15], default=0
-    )
 
 
 class LocationFull(LocationCreate):
@@ -192,6 +189,9 @@ class LocationFull(LocationCreate):
     )
     osm_lat: float | None = None
     osm_lon: float | None = None
+    price_count: int = Field(
+        description="number of prices for this location.", examples=[15], default=0
+    )
     created: datetime.datetime = Field(description="datetime of the creation.")
     updated: datetime.datetime | None = Field(
         description="datetime of the last update.", default=None

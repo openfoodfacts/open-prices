@@ -14,7 +14,6 @@ from app.models import Location, Price, Product, Proof
 from app.schemas import LocationCreate, ProductCreate, UserCreate
 from app.utils import (
     OFF_FIELDS,
-    fetch_location_openstreetmap_details,
     fetch_product_openfoodfacts_details,
     generate_openfoodfacts_main_image_url,
     normalize_product_fields,
@@ -188,49 +187,30 @@ def create_price_location(db: Session, price: Price) -> None:
     if price.location_osm_id and price.location_osm_type:
         # get or create the corresponding location
         location = LocationCreate(
-            osm_id=price.location_osm_id,
-            osm_type=price.location_osm_type,
-            price_count=1,
+            osm_id=price.location_osm_id, osm_type=price.location_osm_type
         )
-        db_location, created = crud.get_or_create_location(db, location=location)
+        db_location, created = crud.get_or_create_location(
+            db, location=location, if_create_then_fetch_osm_data=True
+        )
         # link the location to the price
         crud.set_price_location(db, price=price, location=db_location)
-        # fetch data from OpenStreetMap if created
-        if created:
-            location_openstreetmap_details = fetch_location_openstreetmap_details(
-                location=db_location
-            )
-            if location_openstreetmap_details:
-                crud.update_location(
-                    db, location=db_location, update_dict=location_openstreetmap_details
-                )
-        else:
-            # Increment the price count of the location
-            crud.increment_location_price_count(db, location=db_location)
+        # Increment the price count of the location
+        crud.increment_location_price_count(db, location=db_location)
 
 
 def create_proof_location(db: Session, proof: Proof) -> None:
     if proof.location_osm_id and proof.location_osm_type:
         # get or create the corresponding location
         location = LocationCreate(
-            osm_id=proof.location_osm_id,
-            osm_type=proof.location_osm_type,
+            osm_id=proof.location_osm_id, osm_type=proof.location_osm_type
         )
-        db_location, created = crud.get_or_create_location(db, location=location)
+        db_location, created = crud.get_or_create_location(
+            db, location=location, if_create_then_fetch_osm_data=True
+        )
         # link the location to the proof
         crud.set_proof_location(db, proof=proof, location=db_location)
-        # fetch data from OpenStreetMap if created
-        if created:
-            location_openstreetmap_details = fetch_location_openstreetmap_details(
-                location=db_location
-            )
-            if location_openstreetmap_details:
-                crud.update_location(
-                    db, location=db_location, update_dict=location_openstreetmap_details
-                )
-        # else:
-        #     # Increment the proof count of the location
-        #     crud.increment_location_proof_count(db, location=db_location)
+        # # Increment the proof count of the location
+        # crud.increment_location_proof_count(db, location=db_location)
 
 
 # Other

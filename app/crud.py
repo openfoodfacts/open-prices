@@ -28,6 +28,7 @@ from app.schemas import (
     ProofUpdate,
     UserCreate,
 )
+from app.utils import fetch_location_openstreetmap_details
 
 
 # Users
@@ -564,7 +565,7 @@ def create_location(db: Session, location: LocationCreate) -> Location:
 
 
 def get_or_create_location(
-    db: Session, location: LocationCreate
+    db: Session, location: LocationCreate, if_create_then_fetch_osm_data: bool = False
 ) -> tuple[Location, bool]:
     """Get or create a location in the database.
 
@@ -582,6 +583,17 @@ def get_or_create_location(
     if not db_location:
         db_location = create_location(db, location=location)
         created = True
+        if if_create_then_fetch_osm_data:
+            location_openstreetmap_details = fetch_location_openstreetmap_details(
+                location=db_location
+            )
+            if location_openstreetmap_details:
+                update_location(
+                    db, location=db_location, update_dict=location_openstreetmap_details
+                )
+                # db_location = get_location_by_osm_id_and_type(
+                #     db, osm_id=location.osm_id, osm_type=location.osm_type
+                # )
     return db_location, created
 
 
