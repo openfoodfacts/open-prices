@@ -69,17 +69,20 @@ def upload_proof(
     This endpoint requires authentication.
     """
     file_path, mimetype = crud.create_proof_file(file)
-    # create proof
-    db_proof = crud.create_proof(
-        db,
-        file_path,
-        mimetype,
+    proof = schemas.ProofCreate(
+        file_path=file_path,
+        mimetype=mimetype,
         type=type,
-        user=current_user,
         location_osm_id=location_osm_id,
         location_osm_type=location_osm_type,
         date=date,
         currency=currency,
+    )
+    # create proof
+    db_proof = crud.create_proof(
+        db,
+        proof=proof,
+        user=current_user,
         source=app_name,
     )
     # relationships

@@ -56,6 +56,7 @@ class SessionBase(BaseModel):
 
 
 # User
+# UserBase > UserCreate
 # ------------------------------------------------------------------------------
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -70,6 +71,7 @@ class UserCreate(UserBase):
 
 
 # Product
+# ProductCreate > ProductFull
 # ------------------------------------------------------------------------------
 class ProductCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
@@ -158,6 +160,7 @@ class ProductFull(ProductCreate):
 
 
 # Location
+# LocationCreate > LocationFull
 # ------------------------------------------------------------------------------
 class LocationCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
@@ -199,6 +202,8 @@ class LocationFull(LocationCreate):
 
 
 # Proof
+# ProofBase > ProofCreate > ProofFull > ProofFullWithRelations
+# ProofBase > ProofUpdate
 # ------------------------------------------------------------------------------
 class ProofBase(BaseModel):
     model_config = ConfigDict(
@@ -233,7 +238,6 @@ class ProofCreate(ProofBase):
         "information about the store using the ID.",
         examples=["NODE", "WAY", "RELATION"],
     )
-    owner: str
 
 
 @partial_model
@@ -247,6 +251,7 @@ class ProofFull(ProofCreate):
         description="number of prices for this proof.", examples=[15], default=0
     )
     location_id: int | None
+    owner: str
     # source: str | None = Field(
     #     description="Source (App name)",
     #     examples=["web app", "mobile app"],
@@ -263,6 +268,9 @@ class ProofFullWithRelations(ProofFull):
 
 
 # Price
+# PriceBase > PriceBaseWithValidation & PriceCreate > PriceCreateWithValidation
+# PriceBase > PriceBaseWithValidation > PriceUpdateWithValidation
+# PriceBase > PriceCreate > PriceFull > PriceFullWithRelations
 # ------------------------------------------------------------------------------
 class PriceBase(BaseModel):
     model_config = ConfigDict(
@@ -307,7 +315,7 @@ class PriceBase(BaseModel):
 
 class PriceBaseWithValidation(PriceBase):
     """A version of `PriceBase` with validations.
-    These validations are not done in the `PriceCreate` or `PriceUpdate` model
+    These validations are not done in the `PriceFull` model
     because they are time-consuming and only necessary when creating or
     updating a price from the API.
     """

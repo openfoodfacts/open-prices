@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 
 from app import config
-from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
+from app.enums import LocationOSMEnum
 from app.models import Location, Price, Product, Proof
 from app.models import Session as SessionModel
 from app.models import User
@@ -24,6 +24,7 @@ from app.schemas import (
     ProductCreate,
     ProductFilter,
     ProductFull,
+    ProofCreate,
     ProofFilter,
     ProofUpdate,
     UserCreate,
@@ -378,37 +379,8 @@ def get_proof_by_id(db: Session, id: int) -> Proof | None:
     return db.query(Proof).filter(Proof.id == id).first()
 
 
-def create_proof(
-    db: Session,
-    file_path: str,
-    mimetype: str,
-    type: ProofTypeEnum,
-    user: UserCreate,
-    location_osm_id: int = None,
-    location_osm_type: LocationOSMEnum = None,
-    date: str = None,
-    currency: CurrencyEnum = None,
-    source: str = None,
-) -> Proof:
-    """Create a proof in the database.
-
-    :param db: the database session
-    :param file_path: the path to the file
-    :param mimetype: the mimetype of the file
-    :param user: the user who uploaded the file
-    :return: the created proof
-    """
-    db_proof = Proof(
-        file_path=file_path,
-        mimetype=mimetype,
-        type=type,
-        location_osm_id=location_osm_id,
-        location_osm_type=location_osm_type,
-        date=date,
-        currency=currency,
-        owner=user.user_id,
-        source=source,
-    )
+def create_proof(db: Session, proof: ProofCreate, user: UserCreate, source: str = None):
+    db_proof = Proof(**proof.model_dump(), owner=user.user_id, source=source)
     db.add(db_proof)
     db.commit()
     db.refresh(db_proof)
