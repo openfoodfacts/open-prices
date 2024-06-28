@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.30.0](https://github.com/openfoodfacts/open-prices/compare/v1.29.1...v1.30.0) (2024-06-28)
+
+
+### Features
+
+* **locations:** add POST endpoint to create a location ([#347](https://github.com/openfoodfacts/open-prices/issues/347)) ([b05925a](https://github.com/openfoodfacts/open-prices/commit/b05925aa32229a0815b97797b5717f60430c92e9))
+
+
+### Technical
+
+* **proofs:** Use ProofCreate schema when possible. Move owner field to ProofFull ([9f09534](https://github.com/openfoodfacts/open-prices/commit/9f09534a0f17216ff9c885333ed74d21848c4443))
+
 ## [1.29.1](https://github.com/openfoodfacts/open-prices/compare/v1.29.0...v1.29.1) (2024-06-27)
 
 
