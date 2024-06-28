@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
+from app.auth import get_current_user
 from app.db import get_db
 from app.models import Location
 
@@ -48,4 +49,29 @@ def get_location_by_id(location_id: int, db: Session = Depends(get_db)) -> Locat
             status_code=404,
             detail=f"Location with id {location_id} not found",
         )
+    return db_location
+
+
+@router.post(
+    "",
+    response_model=schemas.LocationFull,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_location(
+    location: schemas.LocationCreate,
+    response: Response,
+    current_user: schemas.UserCreate = Depends(get_current_user),
+    # app_name: str | None = None,
+    db: Session = Depends(get_db),
+) -> Location:
+    """
+    Create a new location.
+
+    This endpoint requires authentication.
+    """
+    db_location, created = crud.get_or_create_location(
+        db, location=location, if_create_then_fetch_osm_data=True
+    )
+    if not created:
+        response.status_code = status.HTTP_200_OK
     return db_location
