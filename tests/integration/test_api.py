@@ -13,7 +13,7 @@ from app.schemas import (
     LocationFull,
     PriceCreateWithValidation,
     ProductFull,
-    ProofCreate,
+    ProofCreateWithValidation,
     ProofFilter,
     UserCreate,
 )
@@ -98,23 +98,18 @@ PRODUCT_3 = ProductFull(
     created=datetime.datetime.now(),
     updated=datetime.datetime.now(),
 )
-PROOF_1 = ProofCreate(
-    file_path="test.webp",
-    mimetype="webp",
-    type="PRICE_TAG",
-    location_osm_id=None,
-    location_osm_type=None,
-    date=None,
-    currency=None,
+PROOF_CREATE = {
+    "type": "PRICE_TAG",
+    "location_osm_id": 652825274,
+    "location_osm_type": "NODE",
+    "date": "2023-10-31",
+    "currency": "EUR",
+}
+PROOF_1 = ProofCreateWithValidation(
+    file_path="test.webp", mimetype="webp", **PROOF_CREATE
 )
-PROOF_2 = ProofCreate(
-    file_path="test.webp",
-    mimetype="webp",
-    type="RECEIPT",
-    location_osm_id=None,
-    location_osm_type=None,
-    date=None,
-    currency=None,
+PROOF_2 = ProofCreateWithValidation(
+    file_path="test.webp", mimetype="webp", **{**PROOF_CREATE, "type": "RECEIPT"}
 )
 LOCATION_1 = LocationFull(
     id=1,
@@ -873,67 +868,55 @@ def test_create_proof(db_session, user_session: SessionModel, clean_proofs):
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 422
-    # with authentication but validation error (date format)
-    response = client.post(
-        "/api/v1/proofs/upload",
-        data={"type": "PRICE_TAG", "date": "test"},
-        headers={"Authorization": f"Bearer {user_session.token}"},
-    )
-    assert response.status_code == 422
-
-    # with authentication and no validation error
+    # with authentication but validation errors
+    PROOF_CREATE_WRONG_LIST = [
+        {**PROOF_CREATE, "location_osm_id": None},  # location_osm_id missing
+        {**PROOF_CREATE, "location_osm_type": None},  # location_osm_type missing
+        {**PROOF_CREATE, "date": None},  # date missing
+        {**PROOF_CREATE, "currency": None},  # currency missing
+        {**PROOF_CREATE, "date": "TEST"},  # date format
+        {**PROOF_CREATE, "currency": "TEST"},  # currency format
+    ]
+    for PROOF_CREATE_WRONG in PROOF_CREATE_WRONG_LIST:
+        response = client.post(
+            "/api/v1/proofs/upload",
+            files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
+            data=PROOF_CREATE_WRONG,
+            headers={"Authorization": f"Bearer {user_session.token}"},
+        )
+        assert response.status_code == 422
+    # with authentication and no validation errors
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "PRICE_TAG"},
+        data=PROOF_CREATE,
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
-    assert response.json()["location_osm_id"] is None
-    assert response.json()["location_osm_type"] is None
-    assert response.json()["date"] is None
-    assert response.json()["currency"] is None
+    assert response.json()["location_osm_id"] == 652825274
+    assert response.json()["location_osm_type"] == "NODE"
+    assert response.json()["date"] == "2023-10-31"
+    assert response.json()["currency"] == "EUR"
     assert len(crud.get_proofs(db_session)) == 1
 
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={
-            "type": "RECEIPT",
-            "location_osm_id": 123,
-            "location_osm_type": "NODE",
-            "date": "2024-01-01",
-            "currency": "",
-        },
+        data={**PROOF_CREATE, "type": "RECEIPT"},
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
-    assert response.json()["location_osm_id"] == 123
-    assert response.json()["location_osm_type"] == "NODE"
-    assert response.json()["date"] == "2024-01-01"
-    assert response.json()["currency"] is None
     assert len(crud.get_proofs(db_session)) == 1 + 1
-
-    response = client.post(
-        "/api/v1/proofs/upload",
-        files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "RECEIPT", "date": "2024-01-01", "currency": "EUR"},
-        headers={"Authorization": f"Bearer {user_session.token}"},
-    )
-    assert response.status_code == 201
-    assert response.json()["date"] == "2024-01-01"
-    assert response.json()["currency"] == "EUR"
-    assert len(crud.get_proofs(db_session)) == 2 + 1
 
     # with app_name
     response = client.post(
         "/api/v1/proofs/upload?app_name=test",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "RECEIPT"},
+        data=PROOF_CREATE,
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
-    assert len(crud.get_proofs(db_session)) == 3 + 1
+    assert len(crud.get_proofs(db_session)) == 2 + 1
     assert crud.get_proofs(db_session)[-1][0].source == "test"
 
 
@@ -1065,7 +1048,7 @@ def test_update_proof(
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "PRICE_TAG"},
+        data=PROOF_CREATE,
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
@@ -1097,24 +1080,26 @@ def test_update_proof(
         json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
     )
     assert response.status_code == 200
-    assert response.json()["type"] == "RECEIPT"
-    assert response.json()["currency"] is None
-    assert response.json()["date"] is None
-    PROOF_UPDATE_PARTIAL = {"currency": "EUR", "date": "2024-01-01"}
+    assert response.json()["type"] == "RECEIPT"  # changed
+    assert response.json()["date"] == "2023-10-31"  # didn't change
+    assert response.json()["currency"] == "EUR"  # didn't change
+    PROOF_UPDATE_PARTIAL = {"currency": "USD", "date": "2024-01-01"}
     response = client.patch(
         f"/api/v1/proofs/{proof.id}",
         headers={"Authorization": f"Bearer {user_session.token}"},
         json=jsonable_encoder(PROOF_UPDATE_PARTIAL),
     )
     assert response.status_code == 200
-    assert response.json()["type"] == "RECEIPT"
-    assert response.json()["currency"] == "EUR"
-    assert response.json()["date"] == "2024-01-01"
+    assert response.json()["type"] == "RECEIPT"  # didn't change
+    assert response.json()["date"] == "2024-01-01"  # changed
+    assert response.json()["currency"] == "USD"  # changed
 
     # with authentication and proof owner but extra fields
     PROOF_UPDATE_PARTIAL_WRONG_LIST = [
         {**PROOF_UPDATE_PARTIAL, "owner": 1},  # extra field
         {**PROOF_UPDATE_PARTIAL, "type": "TEST"},  # wrong type
+        {**PROOF_UPDATE_PARTIAL, "date": "TEST"},  # wrong date
+        {**PROOF_UPDATE_PARTIAL, "currency": "TEST"},  # wrong currency
     ]
     for PROOF_UPDATE_PARTIAL_WRONG in PROOF_UPDATE_PARTIAL_WRONG_LIST:
         response = client.patch(
@@ -1132,7 +1117,7 @@ def test_update_proof_moderator(
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "PRICE_TAG"},
+        data=PROOF_CREATE,
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
@@ -1161,7 +1146,7 @@ def test_delete_proof(
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "PRICE_TAG"},
+        data=PROOF_CREATE,
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
@@ -1224,11 +1209,11 @@ def test_delete_proof_moderator(
     clean_proofs,
     clean_prices,
 ):
-    # create proof user
+    # create proof
     response = client.post(
         "/api/v1/proofs/upload",
         files={"file": ("filename", (io.BytesIO(b"test")), "image/webp")},
-        data={"type": "PRICE_TAG"},
+        data=PROOF_CREATE,
         headers={"Authorization": f"Bearer {user_session.token}"},
     )
     assert response.status_code == 201
