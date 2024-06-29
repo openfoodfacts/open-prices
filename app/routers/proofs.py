@@ -1,10 +1,7 @@
-from typing import Annotated, Optional
-
 from fastapi import (
     APIRouter,
     BackgroundTasks,
     Depends,
-    Form,
     HTTPException,
     UploadFile,
     status,
@@ -18,7 +15,6 @@ from sqlalchemy.orm import Session
 from app import crud, schemas, tasks
 from app.auth import get_current_user
 from app.db import get_db
-from app.enums import CurrencyEnum, LocationOSMEnum, ProofTypeEnum
 from app.models import Proof
 
 router = APIRouter(prefix="/proofs")
@@ -46,16 +42,10 @@ def get_user_proofs(
 )
 def upload_proof(
     file: UploadFile,
-    type: Annotated[ProofTypeEnum, Form(description="The type of the proof")],
     background_tasks: BackgroundTasks,
-    location_osm_id: Optional[str] = Form(
-        description="Proof location OSM id", default=None
+    proof_partial: schemas.ProofBaseWithValidation = Depends(
+        schemas.ProofBaseWithValidation
     ),
-    location_osm_type: Optional[LocationOSMEnum] = Form(
-        description="Proof location OSM type", default=None
-    ),
-    date: Optional[str] = Form(description="Proof date", default=None),
-    currency: Optional[CurrencyEnum] = Form(description="Proof currency", default=None),
     app_name: str | None = None,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -69,14 +59,8 @@ def upload_proof(
     This endpoint requires authentication.
     """
     file_path, mimetype = crud.create_proof_file(file)
-    proof = schemas.ProofCreate(
-        file_path=file_path,
-        mimetype=mimetype,
-        type=type,
-        location_osm_id=location_osm_id,
-        location_osm_type=location_osm_type,
-        date=date,
-        currency=currency,
+    proof = schemas.ProofCreateWithValidation(
+        file_path=file_path, mimetype=mimetype, **proof_partial.model_dump()
     )
     # create proof
     db_proof = crud.create_proof(
@@ -125,7 +109,7 @@ def get_user_proof_by_id(
 )
 def update_proof(
     proof_id: int,
-    proof_new_values: schemas.ProofUpdate,
+    proof_new_values: schemas.ProofUpdateWithValidation,
     current_user: schemas.UserCreate = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Proof:

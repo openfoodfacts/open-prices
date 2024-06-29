@@ -24,9 +24,9 @@ from app.schemas import (
     ProductCreate,
     ProductFilter,
     ProductFull,
-    ProofCreate,
+    ProofCreateWithValidation,
     ProofFilter,
-    ProofUpdate,
+    ProofUpdateWithValidation,
     UserCreate,
 )
 from app.utils import fetch_location_openstreetmap_details
@@ -379,7 +379,9 @@ def get_proof_by_id(db: Session, id: int) -> Proof | None:
     return db.query(Proof).filter(Proof.id == id).first()
 
 
-def create_proof(db: Session, proof: ProofCreate, user: UserCreate, source: str = None):
+def create_proof(
+    db: Session, proof: ProofCreateWithValidation, user: UserCreate, source: str = None
+):
     db_proof = Proof(**proof.model_dump(), owner=user.user_id, source=source)
     db.add(db_proof)
     db.commit()
@@ -464,7 +466,9 @@ def set_proof_location(db: Session, proof: Proof, location: Location) -> Proof:
     return proof
 
 
-def update_proof(db: Session, proof: Proof, new_values: ProofUpdate) -> Proof:
+def update_proof(
+    db: Session, proof: Proof, new_values: ProofUpdateWithValidation
+) -> Proof:
     new_values_cleaned = new_values.model_dump(exclude_unset=True)
     for key in new_values_cleaned:
         setattr(proof, key, new_values_cleaned[key])
