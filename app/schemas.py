@@ -530,6 +530,7 @@ class PriceFilter(Filter):
     price__lte: Optional[int] | None = None
     currency: Optional[str] | None = None
     date: Optional[str] | None = None
+    date__year: Optional[str] | None = None  # custom (see crud.py)
     date__gt: Optional[str] | None = None
     date__gte: Optional[str] | None = None
     date__lt: Optional[str] | None = None
@@ -572,8 +573,8 @@ class ProductFilter(Filter):
     code: Optional[str] | None = None
     source: Optional[Flavor] | None = None
     product_name__like: Optional[str] | None = None
-    categories_tags__contains: Optional[str] | None = None
-    labels_tags__contains: Optional[str] | None = None
+    categories_tags__contains: Optional[str] | None = None  # custom (see crud.py)
+    labels_tags__contains: Optional[str] | None = None  # custom (see crud.py)
     brands__like: Optional[str] | None = None
     nutriscore_grade: Optional[str] | None = None
     ecoscore_grade: Optional[str] | None = None
