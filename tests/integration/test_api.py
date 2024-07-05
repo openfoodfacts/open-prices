@@ -686,8 +686,14 @@ def test_get_prices_filters(db_session, user_session: SessionModel, clean_prices
     response = client.get(f"/api/v1/prices?date={PRICE_1.date}")
     assert response.status_code == 200
     assert len(response.json()["items"]) == 3
-    # 1 prices with date in 2024
+    # 1 price with date in 2024
     response = client.get("/api/v1/prices?date__year=2024")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    # 1 price with date in january
+    response = client.get(
+        "/api/v1/prices?date__month=01"
+    )  # also works with date__month=1
     assert response.status_code == 200
     assert len(response.json()["items"]) == 1
 

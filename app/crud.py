@@ -184,7 +184,7 @@ def get_products_query(filters: ProductFilter | None = None) -> Select[tuple[Pro
     """Useful for pagination."""
     query = select(Product)
     if filters:
-        # TEMP: custom array filtering (not available in fastapi-filter)  # noqa
+        # TEMP: custom filtering (not available in fastapi-filter)  # noqa
         if filters.categories_tags__contains:
             query = query.filter(
                 Product.categories_tags.contains([filters.categories_tags__contains])
@@ -286,10 +286,13 @@ def get_prices_query(
     if with_join_proof:
         query = query.options(joinedload(Price.proof))
     if filters:
-        # TEMP: custom date filtering (not available in fastapi-filter)
+        # TEMP: custom filtering (not available in fastapi-filter)
         if filters.date__year:
             query = query.filter(extract("year", Price.date) == filters.date__year)
             filters.date__year = None
+        if filters.date__month:
+            query = query.filter(extract("month", Price.date) == filters.date__month)
+            filters.date__month = None
         query = filters.filter(query)
         query = filters.sort(query)
     return query

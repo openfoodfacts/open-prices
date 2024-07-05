@@ -531,6 +531,7 @@ class PriceFilter(Filter):
     currency: Optional[str] | None = None
     date: Optional[str] | None = None
     date__year: Optional[str] | None = None  # custom (see crud.py)
+    date__month: Optional[str] | None = None  # custom (see crud.py)
     date__gt: Optional[str] | None = None
     date__gte: Optional[str] | None = None
     date__lt: Optional[str] | None = None
