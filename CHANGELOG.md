@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.0](https://github.com/openfoodfacts/open-prices/compare/v1.30.0...v1.31.0) (2024-07-05)
+
+
+### Features
+
+* **prices:** new date filter by year & month ([#350](https://github.com/openfoodfacts/open-prices/issues/350)) ([65e3b2d](https://github.com/openfoodfacts/open-prices/commit/65e3b2dad806da3ee86d01b56011dd6a153861ef))
+
 ## [1.30.0](https://github.com/openfoodfacts/open-prices/compare/v1.29.1...v1.30.0) (2024-06-28)
 
 
