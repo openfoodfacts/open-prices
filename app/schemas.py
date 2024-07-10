@@ -2,6 +2,7 @@ import datetime
 from copy import deepcopy
 from typing import Any, Optional, Tuple, Type
 
+from fastapi import Form
 from fastapi_filter.contrib.sqlalchemy import Filter
 from openfoodfacts import Flavor
 from openfoodfacts.taxonomy import get_taxonomy
@@ -43,6 +44,19 @@ def partial_model(model: Type[BaseModel]):
             for field_name, field_info in model.model_fields.items()
         },
     )
+
+
+def form_body(cls):
+    """
+    https://stackoverflow.com/a/65547551/4293684
+    """
+    cls.__signature__ = cls.__signature__.replace(
+        parameters=[
+            arg.replace(default=Form(...))
+            for arg in cls.__signature__.parameters.values()
+        ]
+    )
+    return cls
 
 
 # Session
@@ -202,8 +216,9 @@ class LocationFull(LocationCreate):
 
 
 # Proof
+# ProofBase > ProofBaseWithValidation & ProofCreate > ProofCreateWithValidation
+# ProofBase > ProofBaseWithValidation > ProofUpdateWithValidation
 # ProofBase > ProofCreate > ProofFull > ProofFullWithRelations
-# ProofBase > ProofUpdate
 # ------------------------------------------------------------------------------
 class ProofBase(BaseModel):
     model_config = ConfigDict(
@@ -211,22 +226,6 @@ class ProofBase(BaseModel):
     )
 
     type: ProofTypeEnum | None = None
-    currency: CurrencyEnum | None = Field(
-        description="currency of the price, as a string. "
-        "The currency must be a valid currency code. "
-        "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes.",
-        examples=["EUR", "USD"],
-    )
-    date: datetime.date | None = Field(
-        description="date of the proof.", examples=["2024-01-01"]
-    )
-
-
-class ProofCreate(ProofBase):
-    # file_path is str | null because we can mask the file path in the response
-    # if the proof is not public
-    file_path: str | None
-    mimetype: str
     location_osm_id: int | None = Field(
         gt=0,
         description="ID of the location in OpenStreetMap: the store where the product was bought.",
@@ -238,10 +237,70 @@ class ProofCreate(ProofBase):
         "information about the store using the ID.",
         examples=["NODE", "WAY", "RELATION"],
     )
+    currency: CurrencyEnum | None = Field(
+        description="currency of the price, as a string. "
+        "The currency must be a valid currency code. "
+        "See https://en.wikipedia.org/wiki/ISO_4217 for a list of valid currency codes. "
+        "Must be set if type is PRICE_TAG or RECEIPT.",
+        examples=["EUR", "USD"],
+    )
+    date: datetime.date | None = Field(
+        description="date of the proof. Must be set if type is PRICE_TAG or RECEIPT.",
+        examples=["2024-01-01"],
+    )
+
+
+@form_body
+class ProofBaseWithValidation(ProofBase):
+    """A version of `ProofBase` with validations.
+    These validations are not done in the `ProofFull` model
+    because they are time-consuming and only necessary when creating or
+    updating a price from the API.
+    """
+
+    pass
+
+
+class ProofCreate(ProofBase):
+    # file_path is str | null because we can mask the file path in the response
+    # if the proof is not public
+    file_path: str | None
+    mimetype: str
+
+
+class ProofCreateWithValidation(ProofBaseWithValidation, ProofCreate):
+    @model_validator(mode="after")
+    def location_is_mandatory(self):  # type: ignore
+        if self.type in [ProofTypeEnum.PRICE_TAG, ProofTypeEnum.RECEIPT]:
+            if not self.location_osm_id:
+                raise ValueError(
+                    "`location_osm_id` must be set if `type` is PRICE_TAG or RECEIPT"
+                )
+            elif not self.location_osm_type:
+                raise ValueError(
+                    "`location_osm_type` must be set if `type` is PRICE_TAG or RECEIPT"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def currency_is_mandatory(self):  # type: ignore
+        if self.type in [ProofTypeEnum.PRICE_TAG, ProofTypeEnum.RECEIPT]:
+            if not self.date:
+                raise ValueError(
+                    "`currency` must be set if `type` is PRICE_TAG or RECEIPT"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def date_is_mandatory(self):  # type: ignore
+        if self.type in [ProofTypeEnum.PRICE_TAG, ProofTypeEnum.RECEIPT]:
+            if not self.date:
+                raise ValueError("`date` must be set if `type` is PRICE_TAG or RECEIPT")
+        return self
 
 
 @partial_model
-class ProofUpdate(ProofBase):
+class ProofUpdateWithValidation(ProofBaseWithValidation):
     pass
 
 
