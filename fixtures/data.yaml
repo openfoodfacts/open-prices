@@ -1,0 +1,1073 @@
+users:
+  - user_id: "john_doe"
+    price_count: 15
+    is_moderator: true
+  - user_id: "jane_smith"
+    price_count: 8
+    is_moderator: false
+  - user_id: "alice_jones"
+    price_count: 12
+    is_moderator: false
+  - user_id: "bob_brown"
+    price_count: 7
+    is_moderator: true
+  - user_id: "charlie_davis"
+    price_count: 20
+    is_moderator: true
+  - user_id: "dave_miller"
+    price_count: 9
+    is_moderator: false
+  - user_id: "eva_wilson"
+    price_count: 10
+    is_moderator: false
+  - user_id: "frank_taylor"
+    price_count: 5
+    is_moderator: false
+  - user_id: "grace_clark"
+    price_count: 18
+    is_moderator: true
+  - user_id: "harry_hall"
+    price_count: 6
+    is_moderator: false
+  - user_id: "iris_adams"
+    price_count: 14
+    is_moderator: false
+  - user_id: "jack_thompson"
+    price_count: 11
+    is_moderator: true
+  - user_id: "karen_white"
+    price_count: 13
+    is_moderator: false
+  - user_id: "leo_lopez"
+    price_count: 7
+    is_moderator: false
+  - user_id: "mary_gonzalez"
+    price_count: 16
+    is_moderator: true
+  - user_id: "nick_robinson"
+    price_count: 4
+    is_moderator: false
+  - user_id: "olivia_martinez"
+    price_count: 10
+    is_moderator: false
+  - user_id: "paul_moore"
+    price_count: 9
+    is_moderator: true
+  - user_id: "quincy_harris"
+    price_count: 12
+    is_moderator: false
+  - user_id: "rachel_evans"
+    price_count: 8
+    is_moderator: true
+
+sessions:
+  - id: 1
+    user_id: "john_doe"
+    token: "abcd1234"
+  - id: 2
+    user_id: "jane_smith"
+    token: "efgh5678"
+  - id: 3
+    user_id: "alice_jones"
+    token: "ijkl9012"
+  - id: 4
+    user_id: "bob_brown"
+    token: "mnop3456"
+  - id: 5
+    user_id: "charlie_davis"
+    token: "qrst7890"
+  - id: 6
+    user_id: "dave_miller"
+    token: "uvwx1234"
+  - id: 7
+    user_id: "eva_wilson"
+    token: "yzab5678"
+  - id: 8
+    user_id: "frank_taylor"
+    token: "cdef9012"
+  - id: 9
+    user_id: "grace_clark"
+    token: "ghij3456"
+  - id: 10
+    user_id: "harry_hall"
+    token: "klmn7890"
+  - id: 11
+    user_id: "iris_adams"
+    token: "opqr1234"
+  - id: 12
+    user_id: "jack_thompson"
+    token: "stuv5678"
+  - id: 13
+    user_id: "karen_white"
+    token: "wxyz9012"
+  - id: 14
+    user_id: "leo_lopez"
+    token: "abcd3456"
+  - id: 15
+    user_id: "mary_gonzalez"
+    token: "efgh7890"
+  - id: 16
+    user_id: "nick_robinson"
+    token: "ijkl1234"
+  - id: 17
+    user_id: "olivia_martinez"
+    token: "mnop5678"
+  - id: 18
+    user_id: "paul_moore"
+    token: "qrst9012"
+  - id: 19
+    user_id: "quincy_harris"
+    token: "uvwx3456"
+  - id: 20
+    user_id: "rachel_evans"
+    token: "yzab7890"
+
+products:
+  - id: 1
+    code: "1234567890123"
+    product_name: "Organic Apples"
+    product_quantity: 1000
+    product_quantity_unit: "g"
+    categories_tags: ["organic", "fruit", "fresh"]
+    brands: "BioFarm"
+    brands_tags: ["biofarm"]
+    labels_tags: ["organic", "non-gmo"]
+    image_url: "http://example.com/images/organic_apples.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "B"
+    nova_group: 1
+    unique_scans_n: 50
+  - id: 2
+    code: "9876543210987"
+    product_name: "Whole Wheat Bread"
+    product_quantity: 500
+    product_quantity_unit: "g"
+    categories_tags: ["bread", "wholewheat"]
+    brands: "Healthy Bakery"
+    brands_tags: ["healthy_bakery"]
+    labels_tags: ["wholegrain"]
+    image_url: "http://example.com/images/whole_wheat_bread.jpg"
+    nutriscore_grade: "B"
+    ecoscore_grade: "A"
+    nova_group: 2
+    unique_scans_n: 75
+  - id: 3
+    code: "1234567890124"
+    product_name: "Almond Milk"
+    product_quantity: 1000
+    product_quantity_unit: "ml"
+    categories_tags: ["beverage", "plant-based"]
+    brands: "Nutty"
+    brands_tags: ["nutty"]
+    labels_tags: ["vegan", "dairy-free"]
+    image_url: "http://example.com/images/almond_milk.jpg"
+    nutriscore_grade: "B"
+    ecoscore_grade: "A"
+    nova_group: 1
+    unique_scans_n: 30
+  - id: 4
+    code: "9876543210988"
+    product_name: "Greek Yogurt"
+    product_quantity: 500
+    product_quantity_unit: "g"
+    categories_tags: ["dairy", "yogurt"]
+    brands: "Healthy Dairy"
+    brands_tags: ["healthy_dairy"]
+    labels_tags: ["high-protein"]
+    image_url: "http://example.com/images/greek_yogurt.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "B"
+    nova_group: 2
+    unique_scans_n: 60
+  - id: 5
+    code: "1234567890125"
+    product_name: "Quinoa"
+    product_quantity: 1000
+    product_quantity_unit: "g"
+    categories_tags: ["grain", "superfood"]
+    brands: "SuperGrains"
+    brands_tags: ["supergrains"]
+    labels_tags: ["organic", "non-gmo"]
+    image_url: "http://example.com/images/quinoa.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "A"
+    nova_group: 1
+    unique_scans_n: 40
+  - id: 6
+    code: "9876543210989"
+    product_name: "Chicken Breast"
+    product_quantity: 500
+    product_quantity_unit: "g"
+    categories_tags: ["meat", "poultry"]
+    brands: "Farm Fresh"
+    brands_tags: ["farm_fresh"]
+    labels_tags: ["free-range"]
+    image_url: "http://example.com/images/chicken_breast.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "C"
+    nova_group: 3
+    unique_scans_n: 90
+  - id: 7
+    code: "1234567890126"
+    product_name: "Avocado"
+    product_quantity: 200
+    product_quantity_unit: "g"
+    categories_tags: ["fruit", "fresh"]
+    brands: "Green Farm"
+    brands_tags: ["green_farm"]
+    labels_tags: ["organic"]
+    image_url: "http://example.com/images/avocado.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "B"
+    nova_group: 1
+    unique_scans_n: 70
+  - id: 8
+    code: "9876543210990"
+    product_name: "Tomato Sauce"
+    product_quantity: 500
+    product_quantity_unit: "ml"
+    categories_tags: ["sauce", "canned"]
+    brands: "TomatoCo"
+    brands_tags: ["tomatoco"]
+    labels_tags: ["organic"]
+    image_url: "http://example.com/images/tomato_sauce.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "A"
+    nova_group: 2
+    unique_scans_n: 55
+  - id: 9
+    code: "1234567890127"
+    product_name: "Brown Rice"
+    product_quantity: 1000
+    product_quantity_unit: "g"
+    categories_tags: ["grain", "wholegrain"]
+    brands: "Healthy Grains"
+    brands_tags: ["healthy_grains"]
+    labels_tags: ["organic", "non-gmo"]
+    image_url: "http://example.com/images/brown_rice.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "B"
+    nova_group: 1
+    unique_scans_n: 65
+  - id: 10
+    code: "9876543210991"
+    product_name: "Orange Juice"
+    product_quantity: 1000
+    product_quantity_unit: "ml"
+    categories_tags: ["beverage", "juice"]
+    brands: "Fresh Squeeze"
+    brands_tags: ["fresh_squeeze"]
+    labels_tags: ["organic"]
+    image_url: "http://example.com/images/orange_juice.jpg"
+    nutriscore_grade: "B"
+    ecoscore_grade: "A"
+    nova_group: 1
+    unique_scans_n: 80
+  - id: 11
+    code: "1234567890128"
+    product_name: "Peanut Butter"
+    product_quantity: 500
+    product_quantity_unit: "g"
+    categories_tags: ["spread", "nuts"]
+    brands: "Nutty Spread"
+    brands_tags: ["nutty_spread"]
+    labels_tags: ["organic", "non-gmo"]
+    image_url: "http://example.com/images/peanut_butter.jpg"
+    nutriscore_grade: "B"
+    ecoscore_grade: "A"
+    nova_group: 2
+    unique_scans_n: 45
+  - id: 12
+    code: "9876543210992"
+    product_name: "Cereal"
+    product_quantity: 500
+    product_quantity_unit: "g"
+    categories_tags: ["breakfast", "cereal"]
+    brands: "Healthy Start"
+    brands_tags: ["healthy_start"]
+    labels_tags: ["wholegrain"]
+    image_url: "http://example.com/images/cereal.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "B"
+    nova_group: 2
+    unique_scans_n: 85
+  - id: 13
+    code: "1234567890129"
+    product_name: "Soy Sauce"
+    product_quantity: 250
+    product_quantity_unit: "ml"
+    categories_tags: ["sauce", "asian"]
+    brands: "Asia Delights"
+    brands_tags: ["asia_delights"]
+    labels_tags: ["organic"]
+    image_url: "http://example.com/images/soy_sauce.jpg"
+    nutriscore_grade: "B"
+    ecoscore_grade: "C"
+    nova_group: 1
+    unique_scans_n: 50
+  - id: 14
+    code: "9876543210993"
+    product_name: "Granola"
+    product_quantity: 500
+    product_quantity_unit: "g"
+    categories_tags: ["breakfast", "snack"]
+    brands: "Crunchy Bites"
+    brands_tags: ["crunchy_bites"]
+    labels_tags: ["organic", "non-gmo"]
+    image_url: "http://example.com/images/granola.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "A"
+    nova_group: 1
+    unique_scans_n: 60
+  - id: 15
+    code: "1234567890130"
+    product_name: "Chocolate"
+    product_quantity: 100
+    product_quantity_unit: "g"
+    categories_tags: ["snack", "sweet"]
+    brands: "ChocoDelight"
+    brands_tags: ["chocodelight"]
+    labels_tags: ["fairtrade"]
+    image_url: "http://example.com/images/chocolate.jpg"
+    nutriscore_grade: "C"
+    ecoscore_grade: "B"
+    nova_group: 3
+    unique_scans_n: 75
+  - id: 16
+    code: "9876543210994"
+    product_name: "Coffee"
+    product_quantity: 250
+    product_quantity_unit: "g"
+    categories_tags: ["beverage", "coffee"]
+    brands: "Morning Brew"
+    brands_tags: ["morning_brew"]
+    labels_tags: ["fairtrade", "organic"]
+    image_url: "http://example.com/images/coffee.jpg"
+    nutriscore_grade: "B"
+    ecoscore_grade: "B"
+    nova_group: 1
+    unique_scans_n: 90
+  - id: 17
+    code: "1234567890131"
+    product_name: "Pasta"
+    product_quantity: 500
+    product_quantity_unit: "g"
+    categories_tags: ["staple", "italian"]
+    brands: "PastaWorld"
+    brands_tags: ["pastaworld"]
+    labels_tags: ["wholegrain"]
+    image_url: "http://example.com/images/pasta.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "A"
+    nova_group: 2
+    unique_scans_n: 65
+  - id: 18
+    code: "9876543210995"
+    product_name: "Honey"
+    product_quantity: 500
+    product_quantity_unit: "g"
+    categories_tags: ["sweetener", "natural"]
+    brands: "BeeNatural"
+    brands_tags: ["beenatural"]
+    labels_tags: ["organic"]
+    image_url: "http://example.com/images/honey.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "A"
+    nova_group: 1
+    unique_scans_n: 80
+  - id: 19
+    code: "1234567890132"
+    product_name: "Ketchup"
+    product_quantity: 500
+    product_quantity_unit: "ml"
+    categories_tags: ["condiment", "sauce"]
+    brands: "Saucy"
+    brands_tags: ["saucy"]
+    labels_tags: ["organic", "non-gmo"]
+    image_url: "http://example.com/images/ketchup.jpg"
+    nutriscore_grade: "B"
+    ecoscore_grade: "B"
+    nova_group: 1
+    unique_scans_n: 70
+  - id: 20
+    code: "9876543210996"
+    product_name: "Olive Oil"
+    product_quantity: 500
+    product_quantity_unit: "ml"
+    categories_tags: ["oil", "cooking"]
+    brands: "OliveGold"
+    brands_tags: ["olivegold"]
+    labels_tags: ["extra-virgin", "organic"]
+    image_url: "http://example.com/images/olive_oil.jpg"
+    nutriscore_grade: "A"
+    ecoscore_grade: "A"
+    nova_group: 1
+    unique_scans_n: 85
+
+locations:
+  - id: 1
+    osm_id: 123456789
+    osm_type: "NODE"
+    osm_name: "Local Market"
+    osm_display_name: "Local Market, Main Street, Cityville"
+    osm_address_postcode: "12345"
+    osm_address_city: "Cityville"
+    osm_address_country: "Countryland"
+    osm_lat: 40.712776
+    osm_lon: -74.005974
+  - id: 2
+    osm_id: 987654321
+    osm_type: "WAY"
+    osm_name: "Supermart"
+    osm_display_name: "Supermart, Elm Street, Townsville"
+    osm_address_postcode: "67890"
+    osm_address_city: "Townsville"
+    osm_address_country: "Countryland"
+    osm_lat: 34.052235
+    osm_lon: -118.243683
+  - id: 3
+    osm_id: 123456790
+    osm_type: "NODE"
+    osm_name: "Fresh Mart"
+    osm_display_name: "Fresh Mart, Oak Avenue, Villagetown"
+    osm_address_postcode: "23456"
+    osm_address_city: "Villagetown"
+    osm_address_country: "Countryland"
+    osm_lat: 37.774929
+    osm_lon: -122.419416
+  - id: 4
+    osm_id: 987654322
+    osm_type: "WAY"
+    osm_name: "Grocery World"
+    osm_display_name: "Grocery World, Maple Street, Smallville"
+    osm_address_postcode: "34567"
+    osm_address_city: "Smallville"
+    osm_address_country: "Countryland"
+    osm_lat: 51.507351
+    osm_lon: -0.127758
+  - id: 5
+    osm_id: 123456791
+    osm_type: "NODE"
+    osm_name: "Farmers Market"
+    osm_display_name: "Farmers Market, Birch Road, Farmville"
+    osm_address_postcode: "45678"
+    osm_address_city: "Farmville"
+    osm_address_country: "Countryland"
+    osm_lat: 48.856613
+    osm_lon: 2.352222
+  - id: 6
+    osm_id: 987654323
+    osm_type: "WAY"
+    osm_name: "Organic Shop"
+    osm_display_name: "Organic Shop, Pine Lane, Greenfield"
+    osm_address_postcode: "56789"
+    osm_address_city: "Greenfield"
+    osm_address_country: "Countryland"
+    osm_lat: 55.755825
+    osm_lon: 37.617298
+  - id: 7
+    osm_id: 123456792
+    osm_type: "NODE"
+    osm_name: "Healthy Foods"
+    osm_display_name: "Healthy Foods, Cedar Boulevard, Healthytown"
+    osm_address_postcode: "67890"
+    osm_address_city: "Healthytown"
+    osm_address_country: "Countryland"
+    osm_lat: 35.689487
+    osm_lon: 139.691711
+  - id: 8
+    osm_id: 987654324
+    osm_type: "WAY"
+    osm_name: "Food Market"
+    osm_display_name: "Food Market, Spruce Street, Eatville"
+    osm_address_postcode: "78901"
+    osm_address_city: "Eatville"
+    osm_address_country: "Countryland"
+    osm_lat: 40.73061
+    osm_lon: -73.935242
+  - id: 9
+    osm_id: 123456793
+    osm_type: "NODE"
+    osm_name: "Veggie World"
+    osm_display_name: "Veggie World, Willow Road, Greentown"
+    osm_address_postcode: "89012"
+    osm_address_city: "Greentown"
+    osm_address_country: "Countryland"
+    osm_lat: 34.052235
+    osm_lon: -118.243683
+  - id: 10
+    osm_id: 987654325
+    osm_type: "WAY"
+    osm_name: "Market Place"
+    osm_display_name: "Market Place, Chestnut Avenue, Shoptown"
+    osm_address_postcode: "90123"
+    osm_address_city: "Shoptown"
+    osm_address_country: "Countryland"
+    osm_lat: 51.165691
+    osm_lon: 10.451526
+  - id: 11
+    osm_id: 123456794
+    osm_type: "NODE"
+    osm_name: "Healthy Shop"
+    osm_display_name: "Healthy Shop, Pine Boulevard, Freshville"
+    osm_address_postcode: "11234"
+    osm_address_city: "Freshville"
+    osm_address_country: "Countryland"
+    osm_lat: 41.878113
+    osm_lon: -87.629799
+  - id: 12
+    osm_id: 987654326
+    osm_type: "WAY"
+    osm_name: "Natural Market"
+    osm_display_name: "Natural Market, Poplar Street, EcoCity"
+    osm_address_postcode: "22345"
+    osm_address_city: "EcoCity"
+    osm_address_country: "Countryland"
+    osm_lat: 55.953252
+    osm_lon: -3.188267
+  - id: 13
+    osm_id: 123456795
+    osm_type: "NODE"
+    osm_name: "Eco Foods"
+    osm_display_name: "Eco Foods, Sycamore Lane, Sustainaville"
+    osm_address_postcode: "33456"
+    osm_address_city: "Sustainaville"
+    osm_address_country: "Countryland"
+    osm_lat: 48.856613
+    osm_lon: 2.352222
+  - id: 14
+    osm_id: 987654327
+    osm_type: "WAY"
+    osm_name: "Whole Foods Market"
+    osm_display_name: "Whole Foods Market, Olive Road, Organicville"
+    osm_address_postcode: "44567"
+    osm_address_city: "Organicville"
+    osm_address_country: "Countryland"
+    osm_lat: 41.902782
+    osm_lon: 12.496366
+  - id: 15
+    osm_id: 123456796
+    osm_type: "NODE"
+    osm_name: "Local Grocer"
+    osm_display_name: "Local Grocer, Elm Avenue, GrocerTown"
+    osm_address_postcode: "55678"
+    osm_address_city: "GrocerTown"
+    osm_address_country: "Countryland"
+    osm_lat: 40.416775
+    osm_lon: -3.70379
+  - id: 16
+    osm_id: 987654328
+    osm_type: "WAY"
+    osm_name: "City Market"
+    osm_display_name: "City Market, Oak Road, Urbantown"
+    osm_address_postcode: "66789"
+    osm_address_city: "Urbantown"
+    osm_address_country: "Countryland"
+    osm_lat: 34.052235
+    osm_lon: -118.243683
+  - id: 17
+    osm_id: 123456797
+    osm_type: "NODE"
+    osm_name: "Organic Mart"
+    osm_display_name: "Organic Mart, Cedar Street, HealthCity"
+    osm_address_postcode: "77890"
+    osm_address_city: "HealthCity"
+    osm_address_country: "Countryland"
+    osm_lat: 48.856613
+    osm_lon: 2.352222
+  - id: 18
+    osm_id: 987654329
+    osm_type: "WAY"
+    osm_name: "Healthy Eating"
+    osm_display_name: "Healthy Eating, Pine Boulevard, Freshville"
+    osm_address_postcode: "88901"
+    osm_address_city: "Freshville"
+    osm_address_country: "Countryland"
+    osm_lat: 51.165691
+    osm_lon: 10.451526
+  - id: 19
+    osm_id: 123456798
+    osm_type: "NODE"
+    osm_name: "Green Grocers"
+    osm_display_name: "Green Grocers, Spruce Road, VeggieTown"
+    osm_address_postcode: "99012"
+    osm_address_city: "VeggieTown"
+    osm_address_country: "Countryland"
+    osm_lat: 34.052235
+    osm_lon: -118.243683
+  - id: 20
+    osm_id: 987654330
+    osm_type: "WAY"
+    osm_name: "Farmer's Choice"
+    osm_display_name: "Farmer's Choice, Oak Lane, Farmville"
+    osm_address_postcode: "00123"
+    osm_address_city: "Farmville"
+    osm_address_country: "Countryland"
+    osm_lat: 41.902782
+    osm_lon: 12.496366
+
+proofs:
+  - id: 1
+    file_path: "/proofs/receipt1.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "john_doe"
+  - id: 2
+    file_path: "/proofs/receipt2.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "jane_smith"
+  - id: 3
+    file_path: "/proofs/receipt3.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "alice_jones"
+  - id: 4
+    file_path: "/proofs/receipt4.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "bob_brown"
+  - id: 5
+    file_path: "/proofs/receipt5.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "charlie_davis"
+  - id: 6
+    file_path: "/proofs/receipt6.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "dave_miller"
+  - id: 7
+    file_path: "/proofs/receipt7.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "eva_wilson"
+  - id: 8
+    file_path: "/proofs/receipt8.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "frank_taylor"
+  - id: 9
+    file_path: "/proofs/receipt9.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "grace_clark"
+  - id: 10
+    file_path: "/proofs/receipt10.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "harry_hall"
+  - id: 11
+    file_path: "/proofs/receipt11.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "iris_adams"
+  - id: 12
+    file_path: "/proofs/receipt12.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "jack_thompson"
+  - id: 13
+    file_path: "/proofs/receipt13.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "karen_white"
+  - id: 14
+    file_path: "/proofs/receipt14.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "larry_martin"
+  - id: 15
+    file_path: "/proofs/receipt15.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "mary_lewis"
+  - id: 16
+    file_path: "/proofs/receipt16.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "nancy_walker"
+  - id: 17
+    file_path: "/proofs/receipt17.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "oliver_king"
+  - id: 18
+    file_path: "/proofs/receipt18.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "peter_scott"
+  - id: 19
+    file_path: "/proofs/receipt19.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "queen_roberts"
+  - id: 20
+    file_path: "/proofs/receipt20.jpg"
+    mimetype: "image/jpeg"
+    type: "RECEIPT"
+    owner: "roger_hill"
+
+shopping_lists:
+  - id: 1
+    owner: "john_doe"
+    items:
+      - "fresh_squeeze_juice"
+      - "organic_milk"
+      - "healthy_start_cereal"
+  - id: 2
+    owner: "jane_smith"
+    items:
+      - "nutty_spread_peanut_butter"
+      - "chocodelight_chocolate"
+      - "crunchy_bites_granola"
+  - id: 3
+    owner: "alice_jones"
+    items:
+      - "pastaworld_spaghetti"
+      - "olivegold_olive_oil"
+      - "beenatural_honey"
+  - id: 4
+    owner: "bob_brown"
+    items:
+      - "beenatural_honey"
+      - "crunchy_bites_granola"
+      - "healthy_start_cereal"
+  - id: 5
+    owner: "charlie_davis"
+    items:
+      - "tomatoco_tomato_sauce"
+      - "healthy_grains_oats"
+      - "fresh_squeeze_juice"
+  - id: 6
+    owner: "dave_miller"
+    items:
+      - "morning_brew_coffee"
+      - "asia_delights_soy_sauce"
+      - "saucy_bbq_sauce"
+  - id: 7
+    owner: "eva_wilson"
+    items:
+      - "saucy_bbq_sauce"
+      - "fresh_squeeze_juice"
+      - "olivegold_olive_oil"
+  - id: 8
+    owner: "frank_taylor"
+    items:
+      - "morning_brew_coffee"
+      - "beenatural_honey"
+      - "organic_milk"
+  - id: 9
+    owner: "grace_clark"
+    items:
+      - "chocodelight_chocolate"
+      - "crunchy_bites_granola"
+      - "healthy_start_cereal"
+  - id: 10
+    owner: "harry_hall"
+    items:
+      - "healthy_start_cereal"
+      - "organic_milk"
+      - "fresh_squeeze_juice"
+  - id: 11
+    owner: "iris_adams"
+    items:
+      - "olivegold_olive_oil"
+      - "asia_delights_soy_sauce"
+      - "beenatural_honey"
+  - id: 12
+    owner: "jack_thompson"
+    items:
+      - "healthy_grains_oats"
+      - "pastaworld_spaghetti"
+      - "tomatoco_tomato_sauce"
+  - id: 13
+    owner: "karen_white"
+    items:
+      - "fresh_squeeze_juice"
+      - "crunchy_bites_granola"
+      - "healthy_start_cereal"
+  - id: 14
+    owner: "larry_martin"
+    items:
+      - "nutty_spread_peanut_butter"
+      - "morning_brew_coffee"
+      - "fresh_squeeze_juice"
+  - id: 15
+    owner: "mary_lewis"
+    items:
+      - "beenatural_honey"
+      - "saucy_bbq_sauce"
+      - "organic_milk"
+  - id: 16
+    owner: "nancy_walker"
+    items:
+      - "morning_brew_coffee"
+      - "crunchy_bites_granola"
+      - "healthy_start_cereal"
+  - id: 17
+    owner: "oliver_king"
+    items:
+      - "fresh_squeeze_juice"
+      - "organic_milk"
+      - "healthy_start_cereal"
+  - id: 18
+    owner: "peter_scott"
+    items:
+      - "saucy_bbq_sauce"
+      - "asia_delights_soy_sauce"
+      - "olivegold_olive_oil"
+  - id: 19
+    owner: "queen_roberts"
+    items:
+      - "healthy_grains_oats"
+      - "morning_brew_coffee"
+      - "organic_milk"
+  - id: 20
+    owner: "roger_hill"
+    items:
+      - "asia_delights_soy_sauce"
+      - "fresh_squeeze_juice"
+      - "saucy_bbq_sauce"
+
+prices:
+  - id: 1
+    product_id: 1
+    location_id: 1
+    proof_id: 1
+    price: 2.99
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-01"
+    location_osm_id: 123456789
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 2
+    product_id: 2
+    location_id: 2
+    proof_id: 2
+    price: 1.50
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-02"
+    location_osm_id: 987654321
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 2.00
+  - id: 3
+    product_id: 3
+    location_id: 3
+    proof_id: 3
+    price: 3.20
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-03"
+    location_osm_id: 123456790
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 4
+    product_id: 4
+    location_id: 4
+    proof_id: 4
+    price: 0.99
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-04"
+    location_osm_id: 987654322
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 1.50
+  - id: 5
+    product_id: 5
+    location_id: 5
+    proof_id: 5
+    price: 4.50
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-05"
+    location_osm_id: 123456791
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 6
+    product_id: 6
+    location_id: 6
+    proof_id: 6
+    price: 5.00
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-06"
+    location_osm_id: 987654323
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 6.00
+  - id: 7
+    product_id: 7
+    location_id: 7
+    proof_id: 7
+    price: 1.75
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-07"
+    location_osm_id: 123456792
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 8
+    product_id: 8
+    location_id: 8
+    proof_id: 8
+    price: 2.25
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-08"
+    location_osm_id: 987654324
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 2.50
+  - id: 9
+    product_id: 9
+    location_id: 9
+    proof_id: 9
+    price: 3.00
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-09"
+    location_osm_id: 123456793
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 10
+    product_id: 10
+    location_id: 10
+    proof_id: 10
+    price: 2.00
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-10"
+    location_osm_id: 987654325
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 2.50
+  - id: 11
+    product_id: 11
+    location_id: 11
+    proof_id: 11
+    price: 2.50
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-11"
+    location_osm_id: 123456794
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 12
+    product_id: 12
+    location_id: 12
+    proof_id: 12
+    price: 1.20
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-12"
+    location_osm_id: 987654326
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 1.50
+  - id: 13
+    product_id: 13
+    location_id: 13
+    proof_id: 13
+    price: 3.10
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-13"
+    location_osm_id: 123456795
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 14
+    product_id: 14
+    location_id: 14
+    proof_id: 14
+    price: 0.85
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-14"
+    location_osm_id: 987654327
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 1.00
+  - id: 15
+    product_id: 15
+    location_id: 15
+    proof_id: 15
+    price: 4.00
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-15"
+    location_osm_id: 123456796
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 16
+    product_id: 16
+    location_id: 16
+    proof_id: 16
+    price: 5.50
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-16"
+    location_osm_id: 987654328
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 6.00
+  - id: 17
+    product_id: 17
+    location_id: 17
+    proof_id: 17
+    price: 1.80
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-17"
+    location_osm_id: 123456797
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 18
+    product_id: 18
+    location_id: 18
+    proof_id: 18
+    price: 2.30
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-18"
+    location_osm_id: 987654329
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 2.50
+  - id: 19
+    product_id: 19
+    location_id: 19
+    proof_id: 19
+    price: 3.25
+    currency: "EUR"
+    price_per: "UNIT"
+    date: "2023-01-19"
+    location_osm_id: 123456798
+    location_osm_type: "NODE"
+    price_is_discounted: false
+    price_without_discount: null
+  - id: 20
+    product_id: 20
+    location_id: 20
+    proof_id: 20
+    price: 2.10
+    currency: "EUR"
+    price_per: "KILOGRAM"
+    date: "2023-01-20"
+    location_osm_id: 987654330
+    location_osm_type: "WAY"
+    price_is_discounted: true
+    price_without_discount: 2.50
