@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.1](https://github.com/openfoodfacts/open-prices/compare/v1.31.0...v1.31.1) (2024-07-15)
+
+
+### Technical
+
+* move images and data dump to docker volumes ([#356](https://github.com/openfoodfacts/open-prices/issues/356)) ([dee6550](https://github.com/openfoodfacts/open-prices/commit/dee6550696b6422dd11eefaa82e6511f948e2053))
+
 ## [1.31.0](https://github.com/openfoodfacts/open-prices/compare/v1.30.0...v1.31.0) (2024-07-05)
 
 
