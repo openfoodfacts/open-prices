@@ -147,6 +147,8 @@ integration-tests:
 create_external_volumes:
 	@echo "🥫 Creating external volumes (production only) …"
 	docker volume create open_prices_postgres-data
+	docker volume create open_prices_images
+	docker volume create open_prices_data-dump
 
 
 migrate-db:

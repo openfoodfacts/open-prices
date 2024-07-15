@@ -42,8 +42,8 @@ class Settings(BaseSettings):
     oauth2_server_url: str | None = None
     sentry_dns: str | None = None
     log_level: LoggingLevel = LoggingLevel.INFO
-    images_dir: Path = STATIC_DIR / "img"
-    data_dir: Path = STATIC_DIR / "data"
+    images_dir: Path = ROOT_DIR / "img"
+    data_dir: Path = ROOT_DIR / "data"
     environment: Environment = Environment.org
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
