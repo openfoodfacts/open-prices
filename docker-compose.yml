@@ -18,7 +18,8 @@ services:
   api:
     <<: *api-common
     volumes:
-      - ./static:/opt/open-prices/static
+      - images:/opt/open-prices/img
+      - data-dump:/opt/open-prices/data
     depends_on:
       - postgres
 
@@ -26,7 +27,8 @@ services:
     <<: *api-common
     command: ["python", "-m", "app", "run-scheduler"]
     volumes:
-      - ./static:/opt/open-prices/static
+      - images:/opt/open-prices/img
+      - data-dump:/opt/open-prices/data
     depends_on:
       - postgres
 
@@ -53,9 +55,19 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
       # Mount the static files
       - ./static:/var/static
+      # Mount the images
+      - images:/var/img
+      # And the dir where the daily data dump is stored
+      - data-dump:/var/data-dump
     ports:
       - ${API_PORT}:80
 
 volumes:
   postgres-data:
     name: ${COMPOSE_PROJECT_NAME:-open_prices}_postgres-data
+  # Store all user-uploaded images in a volume
+  images:
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_images
+  # Store the daily data dump in a volume
+  data-dump:
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_data-dump
