@@ -44,6 +44,8 @@ RUN groupadd -g $USER_GID off && \
     useradd -u $USER_UID -g off -m off && \
     mkdir -p /home/off && \
     mkdir -p /opt/open-prices && \
+    mkdir -p /opt/open-prices/data && \
+    mkdir -p /opt/open-prices/img && \
     chown off:off -R /opt/open-prices /home/off
 COPY --chown=off:off app /opt/open-prices/app
 COPY --chown=off:off alembic /opt/open-prices/alembic
