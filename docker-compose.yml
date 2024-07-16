@@ -20,6 +20,7 @@ services:
     volumes:
       - images:/opt/open-prices/img
       - data-dump:/opt/open-prices/data
+      - home_cache:/home/off/.cache
     depends_on:
       - postgres
 
@@ -29,6 +30,7 @@ services:
     volumes:
       - images:/opt/open-prices/img
       - data-dump:/opt/open-prices/data
+      - home_cache:/home/off/.cache
     depends_on:
       - postgres
 
@@ -71,3 +73,6 @@ volumes:
   # Store the daily data dump in a volume
   data-dump:
     name: ${COMPOSE_PROJECT_NAME:-open_prices}_data-dump
+  # store ~/.cache in a volume
+  home_cache:
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_home_cache
