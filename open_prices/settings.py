@@ -28,9 +28,12 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
 ]
 
-THIRD_PARTY_APPS = []
+THIRD_PARTY_APPS = [
+    # "debug_toolbar",  # django-debug-toolbar (see below)
+    "django_extensions",  # django-extensions
+]
 
-LOCAL_APPS = []
+LOCAL_APPS = ["www"]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -121,3 +124,12 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Django Debug Toolbar
+# https://django-debug-toolbar.readthedocs.io/
+# ------------------------------------------------------------------------------
+
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
+    MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
