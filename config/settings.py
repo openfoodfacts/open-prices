@@ -47,7 +47,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "open_prices.urls"
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
@@ -65,7 +65,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "open_prices.wsgi.application"
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
