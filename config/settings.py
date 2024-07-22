@@ -33,7 +33,13 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # django-extensions
 ]
 
-LOCAL_APPS = ["open_prices.products", "open_prices.locations", "open_prices.www"]
+LOCAL_APPS = [
+    "open_prices.common",
+    "open_prices.products",
+    "open_prices.locations",
+    "open_prices.proofs",
+    "open_prices.www",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
