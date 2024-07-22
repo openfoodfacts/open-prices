@@ -33,7 +33,7 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # django-extensions
 ]
 
-LOCAL_APPS = ["www"]
+LOCAL_APPS = ["open_prices.www"]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -52,7 +52,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "DIRS": [os.path.join(BASE_DIR, "open_prices/templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
