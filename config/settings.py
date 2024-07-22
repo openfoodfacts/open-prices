@@ -38,6 +38,7 @@ LOCAL_APPS = [
     "open_prices.products",
     "open_prices.locations",
     "open_prices.proofs",
+    "open_prices.prices",
     "open_prices.www",
 ]
 
