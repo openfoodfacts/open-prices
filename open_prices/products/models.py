@@ -22,10 +22,10 @@ class Product(models.Model):
 
     nutriscore_grade = models.CharField(blank=True, null=True)
     ecoscore_grade = models.CharField(blank=True, null=True)
-    nova_group = models.IntegerField(blank=True, null=True)
-    unique_scans_n = models.IntegerField()
+    nova_group = models.PositiveIntegerField(blank=True, null=True)
+    unique_scans_n = models.PositiveIntegerField(blank=True, null=True)
 
-    price_count = models.IntegerField()
+    price_count = models.PositiveIntegerField(blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)

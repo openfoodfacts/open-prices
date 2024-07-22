@@ -35,7 +35,7 @@ class Price(models.Model):
         max_length=3, choices=constants.CURRENCY_CHOICES, blank=True, null=True
     )
 
-    location_osm_id = models.BigIntegerField(blank=True, null=True)
+    location_osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     location_osm_type = models.CharField(
         max_length=10,
         choices=location_constants.OSM_TYPE_CHOICES,

@@ -5,7 +5,7 @@ from open_prices.locations import constants as location_constants
 
 
 class Location(models.Model):
-    osm_id = models.BigIntegerField(blank=True, null=True)
+    osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     osm_type = models.CharField(
         max_length=10, choices=location_constants.OSM_TYPE_CHOICES
     )
@@ -25,7 +25,7 @@ class Location(models.Model):
         max_digits=11, decimal_places=7, blank=True, null=True
     )
 
-    price_count = models.IntegerField()
+    price_count = models.PositiveIntegerField(blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)

@@ -11,9 +11,12 @@ class Proof(models.Model):
     mimetype = models.CharField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=proof_constants.TYPE_CHOICES)
 
-    location_osm_id = models.BigIntegerField(blank=True, null=True)
+    location_osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     location_osm_type = models.CharField(
-        max_length=10, choices=location_constants.OSM_TYPE_CHOICES, blank=True, null=True
+        max_length=10,
+        choices=location_constants.OSM_TYPE_CHOICES,
+        blank=True,
+        null=True,
     )
     location = models.ForeignKey(
         "locations.Location",
@@ -27,7 +30,7 @@ class Proof(models.Model):
         max_length=3, choices=constants.CURRENCY_CHOICES, blank=True, null=True
     )
 
-    price_count = models.IntegerField()
+    price_count = models.PositiveIntegerField(blank=True, null=True)
 
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
