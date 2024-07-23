@@ -27,7 +27,7 @@ class Price(models.Model):
     )
     price_per = models.CharField(
         max_length=10,
-        constants=price_constants.PRICE_PER_CHOICES,
+        choices=price_constants.PRICE_PER_CHOICES,
         blank=True,
         null=True,
     )
