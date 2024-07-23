@@ -29,6 +29,8 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "rest_framework",  # djangorestframework
+    "drf_spectacular",  # drf-spectacular
     # "debug_toolbar",  # django-debug-toolbar (see below)
     "django_extensions",  # django-extensions
 ]
@@ -40,6 +42,7 @@ LOCAL_APPS = [
     "open_prices.proofs",
     "open_prices.prices",
     "open_prices.users",
+    "open_prices.api",
     "open_prices.www",
 ]
 
@@ -132,6 +135,15 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Django REST Framework (DRF)
+# https://www.django-rest-framework.org/
+# ------------------------------------------------------------------------------
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
 
 
 # Django Debug Toolbar
