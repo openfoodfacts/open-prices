@@ -42,11 +42,11 @@ class UserListFilterApiTest(TestCase):
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["price_count"], 15)
         # lte / gte
-        url = reverse("api:users-list") + "?price__gte=20"
+        url = reverse("api:users-list") + "?price_count__gte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["price_count"], 50)
-        url = reverse("api:users-list") + "?price__lte=20"
+        url = reverse("api:users-list") + "?price_count__lte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["price_count"], 15)
