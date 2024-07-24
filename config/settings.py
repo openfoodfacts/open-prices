@@ -29,6 +29,8 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "rest_framework",  # djangorestframework
+    "drf_spectacular",  # drf-spectacular
     # "debug_toolbar",  # django-debug-toolbar (see below)
     "django_extensions",  # django-extensions
 ]
@@ -40,6 +42,7 @@ LOCAL_APPS = [
     "open_prices.proofs",
     "open_prices.prices",
     "open_prices.users",
+    "open_prices.api",
     "open_prices.www",
 ]
 
@@ -134,6 +137,15 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+# Django REST Framework (DRF)
+# https://www.django-rest-framework.org/
+# ------------------------------------------------------------------------------
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+
 # Django Debug Toolbar
 # https://django-debug-toolbar.readthedocs.io/
 # ------------------------------------------------------------------------------
@@ -141,3 +153,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 if DEBUG:
     INSTALLED_APPS += ["debug_toolbar"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+
+
+# Authentication
+# ------------------------------------------------------------------------------
+
+OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
+SESSION_COOKIE_NAME = "opsession"

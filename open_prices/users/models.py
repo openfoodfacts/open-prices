@@ -18,9 +18,14 @@ class User(models.Model):
         verbose_name = "User"
         verbose_name_plural = "Users"
 
+    def is_authenticated(self):
+        return True
+
 
 class Session(models.Model):
-    user = models.ForeignKey("users.User", on_delete=models.DO_NOTHING, related_name="sessions")
+    user = models.ForeignKey(
+        "users.User", on_delete=models.DO_NOTHING, related_name="sessions"
+    )
     token = models.CharField(unique=True)
 
     created = models.DateTimeField(default=timezone.now)
