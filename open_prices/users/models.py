@@ -8,6 +8,8 @@ class UserQuerySet(models.QuerySet):
 
 
 class User(models.Model):
+    SERIALIZED_FIELDS = ["user_id", "price_count"]
+
     user_id = models.CharField(primary_key=True)
 
     is_moderator = models.BooleanField(default=False)
