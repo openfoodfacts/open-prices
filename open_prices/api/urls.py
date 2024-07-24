@@ -18,6 +18,7 @@ router.register(r"v1/locations", LocationViewSet, basename="locations")
 
 urlpatterns = [
     path("v1/auth/", include("open_prices.api.auth.urls")),
+    # health check
     path("v1/status", StatusView.as_view(), name="status"),
     # Swagger / OpenAPI documentation
     path("v1/schema", SpectacularAPIView.as_view(), name="schema"),
