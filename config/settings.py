@@ -153,3 +153,8 @@ REST_FRAMEWORK = {
 if DEBUG:
     INSTALLED_APPS += ["debug_toolbar"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+
+
+# Open Food Facts API
+# ------------------------------------------------------------------------------
+OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
