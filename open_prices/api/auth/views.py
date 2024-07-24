@@ -2,12 +2,18 @@ import time
 
 from django.conf import settings
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from open_prices.common.authentication import (
+    CustomAuthentication,
+    create_token,
+    get_request_session,
+)
 from open_prices.common.openfoodfacts import off_authenticate
-from open_prices.users.utils import create_token, get_or_create_session
+from open_prices.users.utils import get_or_create_session
 
 
 class LoginView(APIView):
@@ -50,7 +56,7 @@ class LoginView(APIView):
                 # Don't add httponly=True or secure=True as it's still in
                 # development phase, but it should be added once the front-end
                 # is ready
-                response.set_cookie("opsession", token)
+                response.set_cookie(settings.SESSION_COOKIE_NAME, token)
             return response
         elif response.status_code == 403:
             time.sleep(2)  # prevents brute-force
@@ -63,3 +69,24 @@ class LoginView(APIView):
             {"error": "Server error"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+class SessionView(APIView):
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        session = get_request_session(request)
+        return Response(
+            {
+                "user_id": session.user.user_id,
+                "token": session.token,
+                "created": session.created,
+                "last_used": session.last_used,
+            }
+        )
+
+    def delete(self, request: Request) -> Response:
+        session = get_request_session(request)
+        session.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

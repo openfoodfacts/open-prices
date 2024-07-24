@@ -1,12 +1,6 @@
-import uuid
-
 from django.utils import timezone
 
 from open_prices.users.models import Session, User
-
-
-def create_token(user_id: str) -> str:
-    return f"{user_id}__U{str(uuid.uuid4())}"
 
 
 def get_or_create_session(user_id: str, token: str):
@@ -16,8 +10,9 @@ def get_or_create_session(user_id: str, token: str):
     session.save()
 
 
-def get_session(token: str):
+def get_session(token: str, update_last_used=True):
     session = Session.objects.get(token=token)
-    session.last_used = timezone.now()
-    session.save()
+    if update_last_used:
+        session.last_used = timezone.now()
+        session.save()
     return session

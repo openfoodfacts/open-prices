@@ -155,6 +155,8 @@ if DEBUG:
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 
 
-# Open Food Facts API
+# Authentication
 # ------------------------------------------------------------------------------
+
 OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
+SESSION_COOKIE_NAME = "opsession"
