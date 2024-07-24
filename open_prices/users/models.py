@@ -2,7 +2,14 @@ from django.db import models
 from django.utils import timezone
 
 
+class UserQuerySet(models.QuerySet):
+    def has_prices(self):
+        return self.filter(price_count__gt=0)
+
+
 class User(models.Model):
+    SERIALIZED_FIELDS = ["user_id", "price_count"]
+
     user_id = models.CharField(primary_key=True)
 
     is_moderator = models.BooleanField(default=False)
@@ -11,6 +18,8 @@ class User(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(UserQuerySet)()
 
     class Meta:
         managed = False

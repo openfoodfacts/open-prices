@@ -30,6 +30,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",  # djangorestframework
+    "django_filters",  # django-filter
     "drf_spectacular",  # drf-spectacular
     # "debug_toolbar",  # django-debug-toolbar (see below)
     "django_extensions",  # django-extensions
@@ -137,13 +138,18 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Django REST Framework (DRF) & drf-spectacular
+# Django REST Framework (DRF) & django-filters & drf-spectacular
 # https://www.django-rest-framework.org/
+# https://django-filter.readthedocs.io/
 # https://drf-spectacular.readthedocs.io/
 # ------------------------------------------------------------------------------
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "ORDERING_PARAM": "order_by",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 100,
 }
 
 SPECTACULAR_SETTINGS = {
