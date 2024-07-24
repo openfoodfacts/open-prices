@@ -6,7 +6,9 @@ from open_prices.api.locations.serializers import LocationSerializer
 from open_prices.locations.models import Location
 
 
-class LocationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class LocationViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
