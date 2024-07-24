@@ -6,6 +6,7 @@ from drf_spectacular.views import (
 )
 from rest_framework import routers
 
+from open_prices.api.locations.views import LocationViewSet
 from open_prices.api.users.views import UserViewSet
 from open_prices.api.views import StatusView
 
@@ -13,6 +14,7 @@ app_name = "api"
 
 router = routers.DefaultRouter()
 router.register(r"v1/users", UserViewSet, basename="users")
+router.register(r"v1/locations", LocationViewSet, basename="locations")
 
 urlpatterns = [
     path("v1/auth/", include("open_prices.api.auth.urls")),
