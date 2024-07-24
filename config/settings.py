@@ -137,12 +137,27 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Django REST Framework (DRF)
+# Django REST Framework (DRF) & drf-spectacular
 # https://www.django-rest-framework.org/
+# https://drf-spectacular.readthedocs.io/
 # ------------------------------------------------------------------------------
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Open Food Facts open-prices REST API",
+    "DESCRIPTION": "Open Prices API allows you to add product prices",
+    "CONTACT": {
+        "name": "The Open Food Facts team",
+        "url": "https://world.openfoodfacts.org",
+        "email": "contact@openfoodfacts.org",
+    },
+    "LICENSE": {
+        "name": " AGPL-3.0",
+        "url": "https://www.gnu.org/licenses/agpl-3.0.en.html",
+    },
 }
 
 
