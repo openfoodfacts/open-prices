@@ -12,7 +12,13 @@ class ProofFullSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ProofCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Proof
+        fields = Proof.FILE_FIELDS + Proof.CREATE_FIELDS
+
+
 class ProofUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proof
-        fields = ["type", "currency", "date"]
+        fields = Proof.UPDATE_FIELDS
