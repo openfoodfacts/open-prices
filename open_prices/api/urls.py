@@ -9,6 +9,7 @@ from rest_framework import routers
 from open_prices.api.locations.views import LocationViewSet
 from open_prices.api.prices.views import PriceViewSet
 from open_prices.api.products.views import ProductViewSet
+from open_prices.api.proofs.views import ProofViewSet
 from open_prices.api.users.views import UserViewSet
 from open_prices.api.views import StatusView
 
@@ -18,6 +19,7 @@ router = routers.DefaultRouter()
 router.register(r"v1/users", UserViewSet, basename="users")
 router.register(r"v1/locations", LocationViewSet, basename="locations")
 router.register(r"v1/products", ProductViewSet, basename="products")
+router.register(r"v1/proofs", ProofViewSet, basename="proofs")
 router.register(r"v1/prices", PriceViewSet, basename="prices")
 
 urlpatterns = [
