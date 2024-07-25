@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from open_prices.api.products.filters import ProductFilter
-from open_prices.api.products.serializers import ProductSerializer
+from open_prices.api.products.serializers import ProductFullSerializer
 from open_prices.products.models import Product
 
 
@@ -13,7 +13,7 @@ class ProductViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+    serializer_class = ProductFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProductFilter
     ordering_fields = ["price_count"]

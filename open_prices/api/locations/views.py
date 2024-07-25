@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from open_prices.api.locations.filters import LocationFilter
-from open_prices.api.locations.serializers import LocationSerializer
+from open_prices.api.locations.serializers import LocationFullSerializer
 from open_prices.locations.models import Location
 
 
@@ -13,7 +13,7 @@ class LocationViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
     queryset = Location.objects.all()
-    serializer_class = LocationSerializer
+    serializer_class = LocationFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = LocationFilter
     ordering_fields = ["price_count"]

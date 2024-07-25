@@ -7,6 +7,10 @@ from open_prices.proofs import constants as proof_constants
 
 
 class Proof(models.Model):
+    FILE_FIELDS = ["file_path", "mimetype"]
+    UPDATE_FIELDS = ["type", "currency", "date"]
+    CREATE_FIELDS = UPDATE_FIELDS + ["location_osm_id", "location_osm_type"]
+
     file_path = models.CharField()
     mimetype = models.CharField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=proof_constants.TYPE_CHOICES)
