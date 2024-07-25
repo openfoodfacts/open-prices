@@ -10,3 +10,9 @@ class ProofFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proof
         fields = "__all__"
+
+
+class ProofUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Proof
+        fields = ["type", "currency", "date"]
