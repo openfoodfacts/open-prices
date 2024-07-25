@@ -5,6 +5,8 @@ from open_prices.locations import constants as location_constants
 
 
 class Location(models.Model):
+    CREATE_FIELDS = ["osm_id", "osm_type"]
+
     osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     osm_type = models.CharField(
         max_length=10, choices=location_constants.OSM_TYPE_CHOICES

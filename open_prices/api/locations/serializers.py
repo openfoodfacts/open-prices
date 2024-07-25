@@ -7,3 +7,9 @@ class LocationFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = "__all__"
+
+
+class LocationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = Location.CREATE_FIELDS
