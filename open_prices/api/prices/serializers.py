@@ -1,14 +1,15 @@
 from rest_framework import serializers
 
-from open_prices.api.locations.serializers import LocationSerializer
-from open_prices.api.products.serializers import ProductSerializer
+from open_prices.api.locations.serializers import LocationFullSerializer
+from open_prices.api.products.serializers import ProductFullSerializer
+from open_prices.api.proofs.serializers import ProofSerializer
 from open_prices.prices.models import Price
 
 
 class PriceFullSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
-    location = LocationSerializer(read_only=True)
-    # proof = ProofSerializer(read_only=True)
+    product = ProductFullSerializer()
+    location = LocationFullSerializer()
+    proof = ProofSerializer()
 
     class Meta:
         model = Price
