@@ -30,7 +30,7 @@ class Proof(models.Model):
         max_length=3, choices=constants.CURRENCY_CHOICES, blank=True, null=True
     )
 
-    price_count = models.PositiveIntegerField(blank=True, null=True)
+    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)

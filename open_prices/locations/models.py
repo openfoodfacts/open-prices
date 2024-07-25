@@ -25,7 +25,7 @@ class Location(models.Model):
         max_digits=11, decimal_places=7, blank=True, null=True
     )
 
-    price_count = models.PositiveIntegerField(blank=True, null=True)
+    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)

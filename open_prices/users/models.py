@@ -14,7 +14,7 @@ class User(models.Model):
 
     is_moderator = models.BooleanField(default=False)
 
-    price_count = models.PositiveIntegerField(blank=True, null=True)
+    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
