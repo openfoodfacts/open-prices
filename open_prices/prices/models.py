@@ -296,6 +296,15 @@ class Price(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
+    def set_product(self):
+        if self.product_code:
+            from open_prices.products.models import Product
+
+            product, created = Product.objects.get_or_create(code=self.product_code)
+            self.product = product
+
     def save(self, *args, **kwargs):
         self.full_clean()
+        if not self.id:
+            self.set_product()
         super().save(*args, **kwargs)

@@ -227,5 +227,8 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["date"], "2024-01-01")
         self.assertEqual(response.data["source"], None)  # ignored
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
-        # with proof
+        # with proof & product
         self.assertEqual(response.data["proof"]["id"], self.user_proof.id)
+        self.assertEqual(
+            response.data["product"]["code"], "8001505005707"
+        )
