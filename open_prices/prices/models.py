@@ -7,7 +7,25 @@ from open_prices.prices import constants as price_constants
 
 
 class Price(models.Model):
-    product_code = models.CharField(blank=True, null=True)
+    CREATE_FIELDS = [
+        "product_code",
+        "category_tag",
+        "category_tag",
+        "labels_tags",
+        "origins_tags",
+        "price",
+        "price_is_discounted",
+        "price_without_discount",
+        "price_per",
+        "currency",
+        "location_osm_id",
+        "location_osm_type",
+        "date",
+        "proof_id",
+    ]
+
+    product_code = models.CharField(blank=True, null=True, db_index=True)
+    product_name = models.CharField(blank=True, null=True)
     category_tag = models.CharField(blank=True, null=True)
     labels_tags = models.JSONField(blank=True, null=True)
     product_name = models.CharField(blank=True, null=True)
@@ -21,7 +39,9 @@ class Price(models.Model):
     )
 
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    price_is_discounted = models.BooleanField(blank=True, null=True)
+    price_is_discounted = models.BooleanField(
+        default=False, blank=True, null=True
+    )  # TODO: remove default=False
     price_without_discount = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
@@ -35,7 +55,9 @@ class Price(models.Model):
         max_length=3, choices=constants.CURRENCY_CHOICES, blank=True, null=True
     )
 
-    location_osm_id = models.PositiveBigIntegerField(blank=True, null=True)
+    location_osm_id = models.PositiveBigIntegerField(
+        blank=True, null=True, db_index=True
+    )
     location_osm_type = models.CharField(
         max_length=10,
         choices=location_constants.OSM_TYPE_CHOICES,

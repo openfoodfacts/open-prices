@@ -14,3 +14,9 @@ class PriceFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price
         fields = "__all__"
+
+
+class PriceCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Price
+        fields = Price.CREATE_FIELDS

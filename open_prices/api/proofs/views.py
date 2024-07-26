@@ -29,7 +29,7 @@ class ProofViewSet(
     # parser_classes = [FormParser, MultiPartParser]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     # queryset = Proof.objects.all()
-    # serializer_class = ProofFullSerializer
+    serializer_class = ProofFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
     ordering_fields = ["date", "created"]
@@ -40,7 +40,7 @@ class ProofViewSet(
     def get_serializer_class(self):
         if self.request.method == "PATCH":
             return ProofUpdateSerializer
-        return ProofFullSerializer
+        return self.serializer_class
 
     @action(detail=False, methods=["POST"], url_path="upload")
     @parser_classes([FormParser, MultiPartParser])
@@ -57,8 +57,9 @@ class ProofViewSet(
             "mimetype": mimetype,
             **{key: request.data.get(key) for key in Proof.CREATE_FIELDS},
         }
-        # validate, save & return
+        # validate & save
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
         proof = serializer.save(owner=self.request.user.user_id)
-        return Response(self.get_serializer(proof).data)  # return full proof
+        # return full proof
+        return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)
