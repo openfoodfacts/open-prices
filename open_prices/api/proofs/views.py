@@ -44,7 +44,7 @@ class ProofViewSet(
 
     @action(detail=False, methods=["POST"], url_path="upload")
     @parser_classes([FormParser, MultiPartParser])
-    def upload_proof(self, request: Request) -> Response:
+    def upload(self, request: Request) -> Response:
         # build proof
         if not request.data.get("file"):
             return Response(

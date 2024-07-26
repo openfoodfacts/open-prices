@@ -33,7 +33,7 @@ class Location(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = "locations"
         verbose_name = "Location"
         verbose_name_plural = "Locations"

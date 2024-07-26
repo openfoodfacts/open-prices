@@ -20,7 +20,7 @@ class ProductViewSet(
     ordering_fields = ["price_count"]
 
     @action(detail=False, methods=["GET"], url_path=r"code/(?P<code>\d+)")
-    def get_product_by_code(self, request: Request, code):
+    def get_by_code(self, request: Request, code):
         product = get_object_or_404(Product, code=code)
         serializer = self.get_serializer(product)
         return Response(serializer.data)

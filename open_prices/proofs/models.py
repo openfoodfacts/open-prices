@@ -43,7 +43,7 @@ class Proof(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = "proofs"
         verbose_name = "Proof"
         verbose_name_plural = "Proofs"

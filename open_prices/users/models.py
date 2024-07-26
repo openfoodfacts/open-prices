@@ -22,7 +22,7 @@ class User(models.Model):
     objects = models.Manager.from_queryset(UserQuerySet)()
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = "users"
         verbose_name = "User"
         verbose_name_plural = "Users"
@@ -41,7 +41,7 @@ class Session(models.Model):
     last_used = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = "sessions"
         verbose_name = "Session"
         verbose_name_plural = "Sessions"
