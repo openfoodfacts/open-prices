@@ -1,7 +1,7 @@
 import uuid
 
 from django.conf import settings
-from rest_framework import authentication, exceptions
+from rest_framework import authentication
 from rest_framework.request import Request
 
 from open_prices.users.utils import get_session
@@ -38,4 +38,5 @@ class CustomAuthentication(authentication.BaseAuthentication):
         session = get_request_session(request)
         if session:
             return (session.user, None)
-        raise exceptions.AuthenticationFailed("Invalid authentication credentials")
+        # raise exceptions.AuthenticationFailed("Invalid authentication credentials")  # noqa
+        return None

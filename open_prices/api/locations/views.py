@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from open_prices.api.locations.filters import LocationFilter
@@ -32,14 +33,14 @@ class LocationViewSet(
     def perform_create(self, serializer):
         return serializer.save()
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request: Request, *args, **kwargs):
         # validate & save
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         location = self.perform_create(serializer)
         # return full location
         return Response(
-            LocationFullSerializer(location).data, status=status.HTTP_201_CREATED
+            self.serializer_class(location).data, status=status.HTTP_201_CREATED
         )
 
     @action(
