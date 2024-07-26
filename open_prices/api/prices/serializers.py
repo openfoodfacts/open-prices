@@ -20,3 +20,9 @@ class PriceCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price
         fields = Price.CREATE_FIELDS
+
+
+class PriceUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Price
+        fields = Price.UPDATE_FIELDS

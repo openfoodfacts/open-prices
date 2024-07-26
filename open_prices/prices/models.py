@@ -7,20 +7,22 @@ from open_prices.prices import constants as price_constants
 
 
 class Price(models.Model):
-    CREATE_FIELDS = [
-        "product_code",
-        "category_tag",
-        "category_tag",
-        "labels_tags",
-        "origins_tags",
+    UPDATE_FIELDS = [
         "price",
         "price_is_discounted",
         "price_without_discount",
         "price_per",
         "currency",
+        "date",
+    ]
+    CREATE_FIELDS = UPDATE_FIELDS + [
+        "product_code",
+        "product_name",
+        "category_tag",
+        "labels_tags",
+        "origins_tags",
         "location_osm_id",
         "location_osm_type",
-        "date",
         "proof_id",
     ]
 
