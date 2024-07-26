@@ -4,7 +4,7 @@ from open_prices.prices.models import Price
 
 
 class PriceFilter(django_filters.FilterSet):
-    # product_id__isnull
+    # TODO: product_id__isnull
     price__gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
     price__gte = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     price__lt = django_filters.NumberFilter(field_name="price", lookup_expr="lt")
@@ -13,10 +13,10 @@ class PriceFilter(django_filters.FilterSet):
     date__gte = django_filters.DateFilter(field_name="date", lookup_expr="gte")
     date__lt = django_filters.DateFilter(field_name="date", lookup_expr="lt")
     date__lte = django_filters.DateFilter(field_name="date", lookup_expr="lte")
-    # date__year
-    # date__month
-    # created__gte
-    # created__lte
+    date__year = django_filters.NumberFilter(field_name="date", lookup_expr="year")
+    date__month = django_filters.NumberFilter(field_name="date", lookup_expr="month")
+    # created__gte = django_filters.DateTimeFilter(field_name="created", lookup_expr="gte")  # noqa
+    # created__lte = django_filters.DateTimeFilter(field_name="created", lookup_expr="lte")  # noqa
 
     class Meta:
         model = Price

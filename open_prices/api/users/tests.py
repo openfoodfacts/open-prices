@@ -8,13 +8,14 @@ from open_prices.users.models import User
 class UserListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.url = reverse("api:users-list")
         UserFactory(price_count=15)
         UserFactory(price_count=0)
         UserFactory(price_count=50)
 
     def test_user_list(self):
-        url = reverse("api:users-list")  # anonymous user
-        response = self.client.get(url)
+        # anonymous
+        response = self.client.get(self.url)
         self.assertEqual(response.data["count"], 2)
         self.assertEqual(len(response.data["results"]), 2)
         self.assertFalse("id" in response.data["results"][0])

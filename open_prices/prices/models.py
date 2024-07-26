@@ -91,7 +91,7 @@ class Price(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = "prices"
         verbose_name = "Price"
         verbose_name_plural = "Prices"

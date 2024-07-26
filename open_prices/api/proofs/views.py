@@ -35,6 +35,7 @@ class ProofViewSet(
     ordering_fields = ["date", "created"]
 
     def get_queryset(self):
+        # Only return proofs owned by the current user
         return Proof.objects.filter(owner=self.request.user.user_id)
 
     def get_serializer_class(self):
@@ -44,7 +45,7 @@ class ProofViewSet(
 
     @action(detail=False, methods=["POST"], url_path="upload")
     @parser_classes([FormParser, MultiPartParser])
-    def upload_proof(self, request: Request) -> Response:
+    def upload(self, request: Request) -> Response:
         # build proof
         if not request.data.get("file"):
             return Response(
