@@ -92,6 +92,17 @@ class LocationDetailApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["id"], self.location.id)
 
+    def test_location_update_not_allowed(self):
+        data = {"osm_name": "Carrefour"}
+        url = reverse("api:locations-detail", args=[self.location.id])
+        response = self.client.patch(url, data, content_type="application/json")
+        self.assertEqual(response.status_code, 405)
+
+    def test_location_delete_not_allowed(self):
+        url = reverse("api:locations-detail", args=[self.location.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 405)
+
 
 class LocationCreateApiTest(TestCase):
     @classmethod

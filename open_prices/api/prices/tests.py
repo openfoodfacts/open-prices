@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from open_prices.prices.factories import PriceFactory
+from open_prices.prices.models import Price
 from open_prices.users.factories import SessionFactory
 
 
@@ -88,6 +89,84 @@ class PriceListFilterApiTest(TestCase):
         url = reverse("api:prices-list") + "?owner=user_1"
         response = self.client.get(url)
         self.assertEqual(response.data["count"], 2)
+
+
+class PriceDetailApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.price = PriceFactory(
+            product_code="8001505005707",
+            price=15,
+            currency="EUR",
+            date="2024-01-01",
+            owner=cls.user_session_1.user.user_id,
+        )
+        cls.url = reverse("api:prices-detail", args=[cls.price.id])
+
+    def test_price_detail_not_allowed(self):
+        url = reverse("api:prices-detail", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 405)
+
+    def test_price_update(self):
+        data = {"currency": "USD", "product_code": "123"}
+        # anonymous
+        response = self.client.patch(self.url, data, content_type="application/json")
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.patch(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        # not price owner
+        response = self.client.patch(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 404)  # 403 ?
+        # authenticated
+        response = self.client.patch(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(
+            Price.objects.get(id=self.price.id).product_code, "8001505005707"
+        )  # ignored
+
+    def test_price_delete(self):
+        # anonymous
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}X"}
+        )
+        self.assertEqual(response.status_code, 403)
+        # not price owner
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
+        )
+        self.assertEqual(response.status_code, 404)  # 403 ?
+        # authenticated
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(
+            Price.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )
 
 
 class PriceCreateApiTest(TestCase):

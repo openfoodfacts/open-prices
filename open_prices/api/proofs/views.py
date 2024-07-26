@@ -35,6 +35,7 @@ class ProofViewSet(
     ordering_fields = ["date", "created"]
 
     def get_queryset(self):
+        # Only return proofs owned by the current user
         return Proof.objects.filter(owner=self.request.user.user_id)
 
     def get_serializer_class(self):

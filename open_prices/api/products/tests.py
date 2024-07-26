@@ -94,3 +94,14 @@ class ProductDetailApiTest(TestCase):
         url = reverse("api:products-get-by-code", args=[self.product.code])
         response = self.client.get(url)
         self.assertEqual(response.data["id"], self.product.id)
+
+    def test_product_update_not_allowed(self):
+        data = {"product_name": "Nutella"}
+        url = reverse("api:products-detail", args=[self.product.id])
+        response = self.client.patch(url, data, content_type="application/json")
+        self.assertEqual(response.status_code, 405)
+
+    def test_product_delete_not_allowed(self):
+        url = reverse("api:products-detail", args=[self.product.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 405)
