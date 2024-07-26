@@ -94,7 +94,7 @@ def get_product(product_code: str, flavor: Flavor = Flavor.off) -> JSONType | No
 
 
 def get_product_dict(product, flavor=Flavor.off) -> JSONType | None:
-    product_dict = {}
+    product_dict = dict()
     try:
         response = get_product(code=product.code, flavor=flavor)
         if response and response["status"]:
