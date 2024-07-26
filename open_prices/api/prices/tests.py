@@ -182,6 +182,8 @@ class PriceCreateApiTest(TestCase):
             "product_code": "8001505005707",
             "price": 15,
             "currency": "EUR",
+            "location_osm_id": 652825274,
+            "location_osm_type": "NODE",
             "date": "2024-01-01",
             "proof_id": self.user_proof.id,
             "source": "test",
@@ -227,8 +229,7 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["date"], "2024-01-01")
         self.assertEqual(response.data["source"], None)  # ignored
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
-        # with proof & product
+        # with proof, product & location
         self.assertEqual(response.data["proof"]["id"], self.user_proof.id)
-        self.assertEqual(
-            response.data["product"]["code"], "8001505005707"
-        )
+        self.assertEqual(response.data["product"]["code"], "8001505005707")
+        self.assertEqual(response.data["location"]["osm_id"], 652825274)
