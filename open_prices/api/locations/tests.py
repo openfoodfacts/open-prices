@@ -7,13 +7,14 @@ from open_prices.locations.factories import LocationFactory
 class LocationListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.url = reverse("api:locations-list")
         LocationFactory(price_count=15)
         LocationFactory(price_count=0)
         LocationFactory(price_count=50)
 
     def test_location_list(self):
-        url = reverse("api:locations-list")  # anonymous user
-        response = self.client.get(url)
+        # anonymous
+        response = self.client.get(self.url)
         self.assertEqual(response.data["count"], 3)
         self.assertEqual(len(response.data["results"]), 3)
         self.assertTrue("id" in response.data["results"][0])
@@ -69,16 +70,20 @@ class LocationDetailApiTest(TestCase):
         )
 
     def test_location_detail(self):
-        # existing location
-        url = reverse("api:locations-detail", args=[self.location.id])
-        response = self.client.get(url)
-        self.assertEqual(response.data["id"], self.location.id)
         # 404
         url = reverse("api:locations-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+        # existing location
+        url = reverse("api:locations-detail", args=[self.location.id])
+        response = self.client.get(url)
+        self.assertEqual(response.data["id"], self.location.id)
 
     def test_location_detail_by_osm(self):
+        # 404
+        url = reverse("api:locations-get-by-osm", args=["NODE", 999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
         # existing location
         url = reverse(
             "api:locations-get-by-osm",
@@ -86,13 +91,13 @@ class LocationDetailApiTest(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.data["id"], self.location.id)
-        # 404
-        url = reverse("api:locations-get-by-osm", args=["NODE", 999])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
 
 
 class LocationCreateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:locations-list")
+
     def test_location_create(self):
         data = {
             "osm_id": 652825274,
@@ -100,8 +105,7 @@ class LocationCreateApiTest(TestCase):
             "osm_name": "Monoprix",
             "price_count": 15,
         }
-        url = reverse("api:locations-list")
-        response = self.client.post(url, data, format="json")
+        response = self.client.post(self.url, data, content_type="application/json")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["osm_id"], 652825274)
         self.assertEqual(response.data["osm_type"], "NODE")

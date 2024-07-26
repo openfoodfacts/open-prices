@@ -7,13 +7,14 @@ from open_prices.products.factories import ProductFactory
 class ProductListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.url = reverse("api:products-list")
         ProductFactory(price_count=15)
         ProductFactory(price_count=0)
         ProductFactory(price_count=50)
 
     def test_product_list(self):
-        url = reverse("api:products-list")  # anonymous user
-        response = self.client.get(url)
+        # anonymous
+        response = self.client.get(self.url)
         self.assertEqual(response.data["count"], 3)
         self.assertEqual(len(response.data["results"]), 3)
         self.assertTrue("id" in response.data["results"][0])
@@ -75,21 +76,21 @@ class ProductDetailApiTest(TestCase):
         )
 
     def test_product_detail(self):
-        # existing product
-        url = reverse("api:products-detail", args=[self.product.id])
-        response = self.client.get(url)
-        self.assertEqual(response.data["id"], self.product.id)
         # 404
         url = reverse("api:products-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
-
-    def test_product_detail_by_code(self):
         # existing product
-        url = reverse("api:products-get-by-code", args=[self.product.code])
+        url = reverse("api:products-detail", args=[self.product.id])
         response = self.client.get(url)
         self.assertEqual(response.data["id"], self.product.id)
+
+    def test_product_detail_by_code(self):
         # 404
         url = reverse("api:products-get-by-code", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+        # existing product
+        url = reverse("api:products-get-by-code", args=[self.product.code])
+        response = self.client.get(url)
+        self.assertEqual(response.data["id"], self.product.id)

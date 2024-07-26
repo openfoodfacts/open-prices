@@ -8,13 +8,14 @@ from open_prices.users.factories import SessionFactory
 class PriceListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.url = reverse("api:prices-list")
         PriceFactory(price=15)
         PriceFactory(price=0)
         PriceFactory(price=50)
 
     def test_price_list(self):
-        url = reverse("api:prices-list")  # anonymous user
-        response = self.client.get(url)
+        # anonymous
+        response = self.client.get(self.url)
         self.assertEqual(response.data["count"], 3)
         self.assertEqual(len(response.data["results"]), 3)
         self.assertTrue("id" in response.data["results"][0])
@@ -24,10 +25,14 @@ class PriceListFilterApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         PriceFactory(
-            product_code="8001505005707", price=15, currency="EUR", date="2024-01-01"
+            product_code="8001505005707",
+            price=15,
+            currency="EUR",
+            date="2024-01-01",
+            owner="user_1",
         )
-        PriceFactory(price=0, currency="EUR", date="2023-08-30")
-        PriceFactory(price=50, currency="USD", date="2024-06-30")
+        PriceFactory(price=0, currency="EUR", date="2023-08-30", owner="user_1")
+        PriceFactory(price=50, currency="USD", date="2024-06-30", owner="user_2")
 
     def test_price_list_order_by(self):
         url = reverse("api:prices-list") + "?order_by=-price"
@@ -70,11 +75,25 @@ class PriceListFilterApiTest(TestCase):
         url = reverse("api:prices-list") + "?date__gte=2024-01-01"
         response = self.client.get(url)
         self.assertEqual(response.data["count"], 2)
+        # month
+        url = reverse("api:prices-list") + "?date__month=1"
+        response = self.client.get(url)
+        self.assertEqual(response.data["count"], 1)
+        # year
+        url = reverse("api:prices-list") + "?date__year=2024"
+        response = self.client.get(url)
+        self.assertEqual(response.data["count"], 2)
+
+    def test_price_list_filter_by_owner(self):
+        url = reverse("api:prices-list") + "?owner=user_1"
+        response = self.client.get(url)
+        self.assertEqual(response.data["count"], 2)
 
 
 class PriceCreateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
 
     def test_price_create(self):
@@ -85,24 +104,23 @@ class PriceCreateApiTest(TestCase):
             "date": "2024-01-01",
             "source": "test",
         }
-        url = reverse("api:prices-list")
         # anonymous
-        response = self.client.post(url, data, format="json")
+        response = self.client.post(self.url, data, content_type="application/json")
         self.assertEqual(response.status_code, 403)
         # wrong token
         response = self.client.post(
-            url,
+            self.url,
             data,
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
-            format="json",
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
         # authenticated
         response = self.client.post(
-            url,
+            self.url,
             data,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            format="json",
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["product_code"], "8001505005707")
