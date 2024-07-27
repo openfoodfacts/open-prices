@@ -34,9 +34,10 @@ class LocationViewSet(
         return serializer.save()
 
     def create(self, request: Request, *args, **kwargs):
-        # validate & save
+        # validate
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # save
         location = self.perform_create(serializer)
         # return full location
         return Response(

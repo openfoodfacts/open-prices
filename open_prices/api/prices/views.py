@@ -12,6 +12,7 @@ from open_prices.api.prices.serializers import (
 )
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.prices.models import Price
+from open_prices.proofs.models import Proof
 
 
 class PriceViewSet(
@@ -32,7 +33,7 @@ class PriceViewSet(
 
     def get_queryset(self):
         if self.request.method in ["PATCH", "DELETE"]:
-            # Only return prices owned by the current user
+            # only return prices owned by the current user
             return Price.objects.filter(owner=self.request.user.user_id)
         return self.queryset
 
@@ -44,12 +45,23 @@ class PriceViewSet(
         return self.serializer_class
 
     def perform_create(self, serializer):
-        return serializer.save(owner=self.request.user.user_id)
+        print("perform_create", self.request.data.get("proof_id"))
+        return serializer.save(proof=self.proof, owner=self.request.user.user_id)
 
     def create(self, request: Request, *args, **kwargs):
-        # validate & save
+        # validate
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # get proof from proof_id
+        proof_id = self.request.data.get("proof_id")
+        try:
+            self.proof = Proof.objects.get(id=proof_id)
+        except Proof.DoesNotExist:
+            return Response(
+                {"error": "Proof not found or does not belong to the current user"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        # save
         price = self.perform_create(serializer)
         # return full price
         return Response(

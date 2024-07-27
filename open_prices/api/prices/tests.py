@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
+from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import SessionFactory
 
 
@@ -106,8 +107,7 @@ class PriceDetailApiTest(TestCase):
         cls.url = reverse("api:prices-detail", args=[cls.price.id])
 
     def test_price_detail_not_allowed(self):
-        url = reverse("api:prices-detail", args=[999])
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 405)
 
     def test_price_update(self):
@@ -174,6 +174,8 @@ class PriceCreateApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
+        cls.user_proof = ProofFactory(owner=cls.user_session.user.user_id)
+        cls.proof_2 = ProofFactory()
 
     def test_price_create(self):
         data = {
@@ -181,6 +183,7 @@ class PriceCreateApiTest(TestCase):
             "price": 15,
             "currency": "EUR",
             "date": "2024-01-01",
+            "proof_id": self.user_proof.id,
             "source": "test",
         }
         # anonymous
@@ -191,6 +194,22 @@ class PriceCreateApiTest(TestCase):
             self.url,
             data,
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        # unknown proof
+        response = self.client.post(
+            self.url,
+            {**data, "proof_id": 999},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        # not proof owner
+        response = self.client.post(
+            self.url,
+            {**data, "proof_id": self.proof_2.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
@@ -208,3 +227,5 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["date"], "2024-01-01")
         self.assertEqual(response.data["source"], None)  # ignored
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
+        # with proof
+        self.assertEqual(response.data["proof"]["id"], self.user_proof.id)

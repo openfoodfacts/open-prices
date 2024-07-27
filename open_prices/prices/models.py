@@ -1,3 +1,4 @@
+from django.core.validators import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -95,3 +96,24 @@ class Price(models.Model):
         db_table = "prices"
         verbose_name = "Price"
         verbose_name_plural = "Prices"
+
+    def clean(self, *args, **kwargs):
+        # dict to store all ValidationErrors
+        validation_errors = dict()
+        # proof rules
+        # - proof must belong to the price owner
+        if self.proof:
+            if self.proof.owner != self.owner:
+                raise ValidationError(
+                    {
+                        "proof": ["Proof does not belong to the current user"],
+                    }
+                )
+        # return
+        if bool(validation_errors):
+            raise ValidationError(validation_errors)
+        super().clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
