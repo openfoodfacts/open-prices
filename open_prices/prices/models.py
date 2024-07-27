@@ -1,8 +1,8 @@
-from django.core.validators import ValidationError
+from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.utils import timezone
 
-from open_prices.common import constants
+from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.prices import constants as price_constants
 
@@ -41,12 +41,22 @@ class Price(models.Model):
         related_name="prices",
     )
 
-    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+    )
     price_is_discounted = models.BooleanField(
         default=False, blank=True, null=True
     )  # TODO: remove default=False
     price_without_discount = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
     )
     price_per = models.CharField(
         max_length=10,
@@ -100,14 +110,35 @@ class Price(models.Model):
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
         validation_errors = dict()
+        # price rules
+        # - price_is_discounted must be set if price_without_discount is set
+        # - price_without_discount must be greater or equal to price
+        if self.price_without_discount:
+            if not self.price_is_discounted:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "price_is_discounted",
+                    "Should be set to True if `price_without_discount` is filled",
+                )
+            if (
+                self.price
+                and utils.is_float(self.price)
+                and utils.is_float(self.price_without_discount)
+                and (self.price_without_discount <= self.price)
+            ):
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "price_without_discount",
+                    "Should be greater than `price`",
+                )
         # proof rules
         # - proof must belong to the price owner
         if self.proof:
             if self.proof.owner != self.owner:
-                raise ValidationError(
-                    {
-                        "proof": ["Proof does not belong to the current user"],
-                    }
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "proof",
+                    "Proof does not belong to the current user",
                 )
         # return
         if bool(validation_errors):
