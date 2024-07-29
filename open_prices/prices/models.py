@@ -1,6 +1,8 @@
+from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.utils import timezone
+from openfoodfacts.taxonomy import get_taxonomy
 
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
@@ -30,9 +32,8 @@ class Price(models.Model):
     product_code = models.CharField(blank=True, null=True, db_index=True)
     product_name = models.CharField(blank=True, null=True)
     category_tag = models.CharField(blank=True, null=True)
-    labels_tags = models.JSONField(blank=True, null=True)
-    product_name = models.CharField(blank=True, null=True)
-    origins_tags = models.JSONField(blank=True, null=True)
+    labels_tags = ArrayField(models.CharField(), blank=True, null=True)
+    origins_tags = ArrayField(models.CharField(), blank=True, null=True)
     product = models.ForeignKey(
         "products.Product",
         on_delete=models.SET_NULL,
@@ -110,6 +111,86 @@ class Price(models.Model):
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
         validation_errors = dict()
+        # product rules
+        # - if product_code is set, then should be a valid string
+        # - if product_code is not set, then category_tag/labels_tags/origins_tags should not be set  # noqa
+        # - if product_code is set, then price_per should not be set
+        if self.product_code:
+            if not isinstance(self.product_code, str):
+                validation_errors = utils.add_validation_error(
+                    validation_errors, "product_code", "Should be a string"
+                )
+            if not self.product_code.isalnum():
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "product_code",
+                    "Should only contain numbers (or letters)",
+                )
+            if self.product_code.lower() in ["true", "false", "none", "null"]:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "product_code",
+                    "Should not be a boolean or an invalid string",
+                )
+            if self.category_tag:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "category_tag",
+                    "Should not be set if `product_code` is filled",
+                )
+            if self.labels_tags:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "labels_tags",
+                    "Should not be set if `product_code` is filled",
+                )
+            if self.origins_tags:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "origins_tags",
+                    "Should not be set if `product_code` is filled",
+                )
+            if self.price_per:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "price_per",
+                    "Should not be set if `product_code` is filled",
+                )
+        # category_tag rules
+        # - if category_tag is set, then should be a valid taxonomy string
+        # - also check labels_tags & origins_tags
+        elif self.category_tag:
+            category_taxonomy = get_taxonomy("category")
+            if self.category_tag not in category_taxonomy:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "category_tag",
+                    f"Invalid category tag: category '{self.category_tag}' does not exist in the taxonomy",
+                )
+            if self.labels_tags:
+                labels_taxonomy = get_taxonomy("label")
+                for label_tag in self.labels_tags:
+                    if label_tag not in labels_taxonomy:
+                        validation_errors = utils.add_validation_error(
+                            validation_errors,
+                            "labels_tags",
+                            f"Invalid label tag: label '{label_tag}' does not exist in the taxonomy",
+                        )
+            if self.origins_tags:
+                origins_taxonomy = get_taxonomy("origin")
+                for origin_tag in self.origins_tags:
+                    if origin_tag not in origins_taxonomy:
+                        validation_errors = utils.add_validation_error(
+                            validation_errors,
+                            "origins_tags",
+                            f"Invalid origin tag: origin '{origin_tag}' does not exist in the taxonomy",
+                        )
+        else:
+            validation_errors = utils.add_validation_error(
+                validation_errors,
+                "product_code",
+                "Should be set if `category_tag` is not filled",
+            )
         # price rules
         # - price_is_discounted must be set if price_without_discount is set
         # - price_without_discount must be greater or equal to price

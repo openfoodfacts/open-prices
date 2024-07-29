@@ -7,6 +7,10 @@ def is_float(string):
 
 
 def add_validation_error(dict, key, value):
+    """
+    Build a dictionary of validation errors
+    {"field1": ["error1", "error2"], "field2": ["error1"]}
+    """
     if key not in dict:
         dict[key] = value
     else:
