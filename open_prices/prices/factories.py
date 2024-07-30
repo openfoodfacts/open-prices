@@ -6,6 +6,7 @@ import factory.fuzzy
 from factory.django import DjangoModelFactory
 
 from open_prices.common import constants
+from open_prices.locations import constants as location_constants
 from open_prices.prices.models import Price
 
 
@@ -20,4 +21,5 @@ class PriceFactory(DjangoModelFactory):
     location_osm_id = factory.LazyAttribute(
         lambda x: random.randrange(100000, 999999999999)
     )
+    location_osm_type = factory.fuzzy.FuzzyChoice(location_constants.OSM_TYPE_LIST)
     date = date.fromisoformat("2023-10-30")

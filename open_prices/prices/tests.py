@@ -151,3 +151,29 @@ class PriceModelSaveTest(TestCase):
             price_is_discounted=True,
             price_without_discount=5,
         )
+
+    def test_price_currency_validation(self):
+        for CURRENCY_OK in ["EUR", "USD"]:
+            PriceFactory(currency=CURRENCY_OK)
+        for CURRENCY_NOT_OK in ["test", "None"]:
+            self.assertRaises(ValidationError, PriceFactory, currency=CURRENCY_NOT_OK)
+
+    def test_price_location_validation(self):
+        # location_osm_id
+        for LOCATION_OSM_ID_OK in [652825274, 5, 0]:
+            PriceFactory(location_osm_id=LOCATION_OSM_ID_OK)
+        for LOCATION_OSM_ID_NOT_OK in [-5, "test", None, "None"]:
+            self.assertRaises(
+                ValidationError, PriceFactory, location_osm_id=LOCATION_OSM_ID_NOT_OK
+            )
+        # location_osm_type
+        for LOCATION_OSM_TYPE_OK in ["NODE", "WAY"]:
+            PriceFactory(location_osm_type=LOCATION_OSM_TYPE_OK)
+        for LOCATION_OSM_TYPE_NOT_OK in ["way", "W", "test", None, "None"]:
+            self.assertRaises(
+                ValidationError,
+                PriceFactory,
+                location_osm_type=LOCATION_OSM_TYPE_NOT_OK,
+            )
+        # both location_osm_id & location_osm_type not set
+        PriceFactory(location_osm_id=None, location_osm_type=None)

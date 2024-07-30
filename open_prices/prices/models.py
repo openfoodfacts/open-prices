@@ -233,6 +233,22 @@ class Price(models.Model):
                         "price_per",
                         "Should be set if `category_tag` is filled",
                     )
+        # location rules
+        # - location_osm_id should be set if location_osm_type is set
+        if self.location_osm_id:
+            if not self.location_osm_type:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "location_osm_type",
+                    "Should be set if `location_osm_id` is filled",
+                )
+        if self.location_osm_type:
+            if self.location_osm_id in [None, "true", "false", "none", "null"]:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "location_osm_id",
+                    "Should be set if `location_osm_type` is filled",
+                )
         # proof rules
         # - proof must belong to the price owner
         if self.proof:
