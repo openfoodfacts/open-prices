@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.31.2](https://github.com/openfoodfacts/open-prices/compare/v1.31.1...v1.31.2) (2024-07-30)
+
+
+### Technical
+
+* add home_cache volume ([#361](https://github.com/openfoodfacts/open-prices/issues/361)) ([3ec9632](https://github.com/openfoodfacts/open-prices/commit/3ec96325dba4557eff59dfa9ba259b5ce668f5ad))
+* Create label.yml ([4e9d0be](https://github.com/openfoodfacts/open-prices/commit/4e9d0bebfd0059b1347e630b2faf41eb8327650b))
+* Create labeler.yml ([eae407a](https://github.com/openfoodfacts/open-prices/commit/eae407ad816d5720e2ae6548c7adf1054ef5ff4a))
+* fix unit test ([#359](https://github.com/openfoodfacts/open-prices/issues/359)) ([7ca1d2f](https://github.com/openfoodfacts/open-prices/commit/7ca1d2ffc0445da2993e383af175a42fb68b7c42))
+
 ## [1.31.1](https://github.com/openfoodfacts/open-prices/compare/v1.31.0...v1.31.1) (2024-07-15)
 
 
