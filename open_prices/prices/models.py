@@ -192,26 +192,47 @@ class Price(models.Model):
                 "Should be set if `category_tag` is not filled",
             )
         # price rules
+        # - price must be set
         # - price_is_discounted must be set if price_without_discount is set
         # - price_without_discount must be greater or equal to price
-        if self.price_without_discount:
-            if not self.price_is_discounted:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "price_is_discounted",
-                    "Should be set to True if `price_without_discount` is filled",
-                )
-            if (
-                self.price
-                and utils.is_float(self.price)
-                and utils.is_float(self.price_without_discount)
-                and (self.price_without_discount <= self.price)
-            ):
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "price_without_discount",
-                    "Should be greater than `price`",
-                )
+        if self.price in [None, "true", "false", "none", "null"]:
+            validation_errors = utils.add_validation_error(
+                validation_errors,
+                "price",
+                "Should not be a boolean or an invalid string",
+            )
+        else:
+            if self.price_without_discount:
+                if not self.price_is_discounted:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "price_is_discounted",
+                        "Should be set to True if `price_without_discount` is filled",
+                    )
+                if (
+                    utils.is_float(self.price)
+                    and utils.is_float(self.price_without_discount)
+                    and (self.price_without_discount <= self.price)
+                ):
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "price_without_discount",
+                        "Should be greater than `price`",
+                    )
+            if self.product_code:
+                if self.price_per:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "price_per",
+                        "Should not be set if `product_code` is filled",
+                    )
+            if self.category_tag:
+                if not self.price_per:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "price_per",
+                        "Should be set if `category_tag` is filled",
+                    )
         # proof rules
         # - proof must belong to the price owner
         if self.proof:

@@ -41,12 +41,26 @@ class PriceModelSaveTest(TestCase):
             price_per=price_constants.PRICE_PER_UNIT,
         )
         # product_code not set
-        PriceFactory(product_code=None, category_tag="en:tomatoes")
+        PriceFactory(
+            product_code=None,
+            category_tag="en:tomatoes",
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+        )
         self.assertRaises(
-            ValidationError, PriceFactory, product_code=None, category_tag="test"
+            ValidationError,
+            PriceFactory,
+            product_code=None,
+            category_tag="test",
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         PriceFactory(
-            product_code=None, category_tag="en:tomatoes", labels_tags=["en:organic"]
+            product_code=None,
+            category_tag="en:tomatoes",
+            labels_tags=["en:organic"],
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         self.assertRaises(
             ValidationError,
@@ -54,12 +68,16 @@ class PriceModelSaveTest(TestCase):
             product_code=None,
             category_tag="en:tomatoes",
             labels_tags=["en:organic", "test"],
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         PriceFactory(
             product_code=None,
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         self.assertRaises(
             ValidationError,
@@ -68,6 +86,8 @@ class PriceModelSaveTest(TestCase):
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
             origins_tags=["en:france", "test"],
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         # both product_code & category_tag not set
         self.assertRaises(
@@ -75,10 +95,33 @@ class PriceModelSaveTest(TestCase):
         )
 
     def test_price_price_validation(self):
-        for PRICE_OK in [5, 0, None]:
+        for PRICE_OK in [5, 0]:
             PriceFactory(price=PRICE_OK)
-        for PRICE_NOT_OK in [-5, "test"]:  # True
+        for PRICE_NOT_OK in [-5, "test", None, "None"]:  # True
             self.assertRaises(ValidationError, PriceFactory, price=PRICE_NOT_OK)
+        # price_per
+        PriceFactory(
+            product_code=None,
+            category_tag="en:tomatoes",
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+        )
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            product_code=None,
+            category_tag="en:tomatoes",
+            price=3,
+            price_per=None,
+        )
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            product_code=None,
+            category_tag="en:tomatoes",
+            price=3,
+            price_per="test",
+        )
 
     def test_price_discount_validation(self):
         # price set, price_without_discount null
@@ -87,7 +130,7 @@ class PriceModelSaveTest(TestCase):
         # price null, price_without_discount set
         for PRICE_WITHOUT_DISCOUNT_OK in [5, 0, None]:
             PriceFactory(
-                price=None,
+                price=0,
                 price_is_discounted=True,
                 price_without_discount=PRICE_WITHOUT_DISCOUNT_OK,
             )
