@@ -29,7 +29,7 @@ class Price(models.Model):
         "proof_id",
     ]
 
-    product_code = models.CharField(blank=True, null=True, db_index=True)
+    product_code = models.CharField(blank=True, null=True)
     product_name = models.CharField(blank=True, null=True)
     category_tag = models.CharField(blank=True, null=True)
     labels_tags = ArrayField(models.CharField(), blank=True, null=True)
@@ -69,9 +69,7 @@ class Price(models.Model):
         max_length=3, choices=constants.CURRENCY_CHOICES, blank=True, null=True
     )
 
-    location_osm_id = models.PositiveBigIntegerField(
-        blank=True, null=True, db_index=True
-    )
+    location_osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     location_osm_type = models.CharField(
         max_length=10,
         choices=location_constants.OSM_TYPE_CHOICES,
@@ -252,7 +250,7 @@ class Price(models.Model):
                     "location_osm_id",
                     "Should be set if `location_osm_type` is filled",
                 )
-            elif self.location_osm_id in ["true", "false", "none", "null"]:
+            elif self.location_osm_id in [True, "true", "false", "none", "null"]:
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "location_osm_id",

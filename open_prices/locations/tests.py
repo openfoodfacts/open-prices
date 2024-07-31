@@ -6,14 +6,20 @@ from open_prices.locations.factories import LocationFactory
 
 
 class LocationModelSaveTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        pass
+
     def test_location_id_type_validation(self):
+        # both osm_id & osm_type should be set
+        self.assertRaises(ValidationError, LocationFactory, osm_id=None, osm_type=None)
         # osm_id
-        for LOCATION_OSM_ID_OK in [652825274, 5, 0]:
+        for LOCATION_OSM_ID_OK in location_constants.OSM_ID_OK_LIST:
             LocationFactory(
                 osm_id=LOCATION_OSM_ID_OK,
                 osm_type=location_constants.OSM_TYPE_NODE,
             )
-        for LOCATION_OSM_ID_NOT_OK in [-5, "test", None, "None"]:
+        for LOCATION_OSM_ID_NOT_OK in location_constants.OSM_ID_NOT_OK_LIST:
             self.assertRaises(
                 ValidationError,
                 LocationFactory,
@@ -21,14 +27,19 @@ class LocationModelSaveTest(TestCase):
                 osm_type=location_constants.OSM_TYPE_NODE,
             )
         # osm_type
-        for LOCATION_OSM_TYPE_OK in ["NODE", "WAY"]:
-            LocationFactory(osm_id=652825274, osm_type=LOCATION_OSM_TYPE_OK)
-        for LOCATION_OSM_TYPE_NOT_OK in ["way", "W", "test", None, "None"]:
+        for LOCATION_OSM_TYPE_OK in location_constants.OSM_TYPE_OK_LIST:
+            LocationFactory(osm_id=6509705997, osm_type=LOCATION_OSM_TYPE_OK)
+        for LOCATION_OSM_TYPE_NOT_OK in location_constants.OSM_TYPE_NOT_OK_LIST:
             self.assertRaises(
                 ValidationError,
                 LocationFactory,
-                osm_id=652825274,
+                osm_id=6509705997,
                 osm_type=LOCATION_OSM_TYPE_NOT_OK,
             )
-        # both osm_id & osm_type should be set
-        self.assertRaises(ValidationError, LocationFactory, osm_id=None, osm_type=None)
+        # must be unique
+        self.assertRaises(
+            ValidationError,
+            LocationFactory,
+            osm_id=6509705997,
+            osm_type=location_constants.OSM_TYPE_NODE,
+        )

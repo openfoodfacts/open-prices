@@ -37,6 +37,7 @@ class Location(models.Model):
     class Meta:
         # managed = False
         db_table = "locations"
+        unique_together = ["osm_id", "osm_type"]
         verbose_name = "Location"
         verbose_name_plural = "Locations"
 
@@ -44,7 +45,13 @@ class Location(models.Model):
         # dict to store all ValidationErrors
         validation_errors = dict()
         # osm rules
-        if self.osm_id in ["true", "false", "none", "null"]:
+        if not self.osm_id:
+            validation_errors = utils.add_validation_error(
+                validation_errors,
+                "osm_id",
+                "Should be set",
+            )
+        elif self.osm_id in [True, "true", "false", "none", "null"]:
             validation_errors = utils.add_validation_error(
                 validation_errors,
                 "osm_id",
