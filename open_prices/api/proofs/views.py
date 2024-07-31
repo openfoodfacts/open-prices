@@ -35,7 +35,7 @@ class ProofViewSet(
     ordering_fields = ["date", "created"]
 
     def get_queryset(self):
-        # Only return proofs owned by the current user
+        # only return proofs owned by the current user
         return Proof.objects.filter(owner=self.request.user.user_id)
 
     def get_serializer_class(self):
@@ -58,9 +58,10 @@ class ProofViewSet(
             "mimetype": mimetype,
             **{key: request.data.get(key) for key in Proof.CREATE_FIELDS},
         }
-        # validate & save
+        # validate
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
+        # save
         proof = serializer.save(owner=self.request.user.user_id)
         # return full proof
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)

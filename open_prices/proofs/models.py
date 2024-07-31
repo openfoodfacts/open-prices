@@ -1,7 +1,8 @@
+from django.core.validators import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from open_prices.common import constants
+from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
 
@@ -10,6 +11,12 @@ class Proof(models.Model):
     FILE_FIELDS = ["file_path", "mimetype"]
     UPDATE_FIELDS = ["type", "currency", "date"]
     CREATE_FIELDS = UPDATE_FIELDS + ["location_osm_id", "location_osm_type"]
+    DUPLICATE_PRICE_FIELDS = [
+        "location_osm_id",
+        "location_osm_type",
+        "date",
+        "currency",
+    ]  # "owner"
 
     file_path = models.CharField()
     mimetype = models.CharField(blank=True, null=True)
@@ -47,3 +54,32 @@ class Proof(models.Model):
         db_table = "proofs"
         verbose_name = "Proof"
         verbose_name_plural = "Proofs"
+
+    def clean(self, *args, **kwargs):
+        # dict to store all ValidationErrors
+        validation_errors = dict()
+        # location rules
+        # - location_osm_id should be set if location_osm_type is set
+        # - location_osm_type should be set if location_osm_id is set
+        if self.location_osm_id:
+            if not self.location_osm_type:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "location_osm_type",
+                    "Should be set if `location_osm_id` is filled",
+                )
+        if self.location_osm_type:
+            if self.location_osm_id in [None, "true", "false", "none", "null"]:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "location_osm_id",
+                    "Should be set if `location_osm_type` is filled",
+                )
+        # return
+        if bool(validation_errors):
+            raise ValidationError(validation_errors)
+        super().clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

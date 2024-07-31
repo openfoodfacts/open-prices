@@ -1,13 +1,15 @@
+from django.core.validators import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from open_prices.common import utils
 from open_prices.locations import constants as location_constants
 
 
 class Location(models.Model):
     CREATE_FIELDS = ["osm_id", "osm_type"]
 
-    osm_id = models.PositiveBigIntegerField(blank=True, null=True)
+    osm_id = models.PositiveBigIntegerField()
     osm_type = models.CharField(
         max_length=10, choices=location_constants.OSM_TYPE_CHOICES
     )
@@ -37,3 +39,23 @@ class Location(models.Model):
         db_table = "locations"
         verbose_name = "Location"
         verbose_name_plural = "Locations"
+
+    def clean(self, *args, **kwargs):
+        # dict to store all ValidationErrors
+        validation_errors = dict()
+        # location rules
+        # - osm_id checks
+        if self.osm_id in ["true", "false", "none", "null"]:  # None
+            validation_errors = utils.add_validation_error(
+                validation_errors,
+                "osm_id",
+                "Should be set if `osm_type` is filled",
+            )
+        # return
+        if bool(validation_errors):
+            raise ValidationError(validation_errors)
+        super().clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
