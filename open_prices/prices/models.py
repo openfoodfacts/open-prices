@@ -300,7 +300,9 @@ class Price(models.Model):
         if self.product_code:
             from open_prices.products.models import Product
 
-            product, created = Product.objects.get_or_create(code=self.product_code)
+            product, created = Product.objects.get_or_create(
+                code=self.product_code, defaults={"price_count": 1}
+            )
             self.product = product
 
     def set_location(self):
@@ -308,7 +310,9 @@ class Price(models.Model):
             from open_prices.locations.models import Location
 
             location, created = Location.objects.get_or_create(
-                osm_id=self.location_osm_id, osm_type=self.location_osm_type
+                osm_id=self.location_osm_id,
+                osm_type=self.location_osm_type,
+                defaults={"price_count": 1},
             )
             self.location = location
 

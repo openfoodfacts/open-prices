@@ -21,7 +21,7 @@ def get_location_dict(location):
     location_openstreetmap_details = dict()
     try:
         response = get_location(
-            osm_id=location.osm_id, osm_type=location.osm_type.value.lower()
+            osm_id=location.osm_id, osm_type=location.osm_type.lower()
         )
         if len(response):
             for osm_field in OSM_FIELDS:

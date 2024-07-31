@@ -1,7 +1,12 @@
+from django.db.models import signals
 from django.test import TestCase
 from django.urls import reverse
 
 from open_prices.locations.factories import LocationFactory
+from open_prices.locations.models import (
+    Location,
+    location_post_create_fetch_data_from_openstreetmap,
+)
 
 
 class LocationListApiTest(TestCase):
@@ -107,6 +112,9 @@ class LocationDetailApiTest(TestCase):
 class LocationCreateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        signals.post_save.disconnect(
+            location_post_create_fetch_data_from_openstreetmap, sender=Location
+        )
         cls.url = reverse("api:locations-list")
 
     def test_location_create(self):
@@ -120,5 +128,7 @@ class LocationCreateApiTest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["osm_id"], 652825274)
         self.assertEqual(response.data["osm_type"], "NODE")
-        self.assertEqual(response.data["osm_name"], None)  # ignored
+        self.assertEqual(
+            response.data["osm_name"], None
+        )  # ignored (and post_save signal disabled)
         self.assertEqual(response.data["price_count"], 0)  # ignored
