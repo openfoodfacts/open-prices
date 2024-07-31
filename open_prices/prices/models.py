@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.utils import timezone
@@ -32,8 +31,8 @@ class Price(models.Model):
     product_code = models.CharField(blank=True, null=True)
     product_name = models.CharField(blank=True, null=True)
     category_tag = models.CharField(blank=True, null=True)
-    labels_tags = ArrayField(models.CharField(), blank=True, null=True)
-    origins_tags = ArrayField(models.CharField(), blank=True, null=True)
+    labels_tags = models.JSONField(blank=True, null=True)
+    origins_tags = models.JSONField(blank=True, null=True)
     product = models.ForeignKey(
         "products.Product",
         on_delete=models.SET_NULL,
@@ -167,23 +166,37 @@ class Price(models.Model):
                     f"Invalid category tag: category '{self.category_tag}' does not exist in the taxonomy",
                 )
             if self.labels_tags:
-                labels_taxonomy = get_taxonomy("label")
-                for label_tag in self.labels_tags:
-                    if label_tag not in labels_taxonomy:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "labels_tags",
-                            f"Invalid label tag: label '{label_tag}' does not exist in the taxonomy",
-                        )
+                if not isinstance(self.labels_tags, list):
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "labels_tags",
+                        "Should be a list",
+                    )
+                else:
+                    labels_taxonomy = get_taxonomy("label")
+                    for label_tag in self.labels_tags:
+                        if label_tag not in labels_taxonomy:
+                            validation_errors = utils.add_validation_error(
+                                validation_errors,
+                                "labels_tags",
+                                f"Invalid label tag: label '{label_tag}' does not exist in the taxonomy",
+                            )
             if self.origins_tags:
-                origins_taxonomy = get_taxonomy("origin")
-                for origin_tag in self.origins_tags:
-                    if origin_tag not in origins_taxonomy:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "origins_tags",
-                            f"Invalid origin tag: origin '{origin_tag}' does not exist in the taxonomy",
-                        )
+                if not isinstance(self.origins_tags, list):
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "origins_tags",
+                        "Should be a list",
+                    )
+                else:
+                    origins_taxonomy = get_taxonomy("origin")
+                    for origin_tag in self.origins_tags:
+                        if origin_tag not in origins_taxonomy:
+                            validation_errors = utils.add_validation_error(
+                                validation_errors,
+                                "origins_tags",
+                                f"Invalid origin tag: origin '{origin_tag}' does not exist in the taxonomy",
+                            )
         else:
             validation_errors = utils.add_validation_error(
                 validation_errors,

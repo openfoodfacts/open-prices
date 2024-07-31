@@ -53,13 +53,16 @@ class PriceViewSet(
         serializer.is_valid(raise_exception=True)
         # get proof from proof_id
         proof_id = self.request.data.get("proof_id")
-        try:
-            self.proof = Proof.objects.get(id=proof_id)
-        except Proof.DoesNotExist:
-            return Response(
-                {"error": "Proof not found or does not belong to the current user"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if proof_id:
+            try:
+                self.proof = Proof.objects.get(id=proof_id)
+            except Proof.DoesNotExist:
+                return Response(
+                    {"error": "Proof not found or does not belong to the current user"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        else:
+            self.proof = None
         # save
         price = self.perform_create(serializer)
         # return full price

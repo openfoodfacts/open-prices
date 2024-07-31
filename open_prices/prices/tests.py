@@ -74,6 +74,15 @@ class PriceModelSaveTest(TestCase):
             PriceFactory,
             product_code=None,
             category_tag="en:tomatoes",
+            labels_tags="en:organic",
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+        )
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            product_code=None,
+            category_tag="en:tomatoes",
             labels_tags=["en:organic", "test"],
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
@@ -83,6 +92,16 @@ class PriceModelSaveTest(TestCase):
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+        )
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            product_code=None,
+            category_tag="en:tomatoes",
+            labels_tags=["en:organic"],
+            origins_tags="en:france",
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
