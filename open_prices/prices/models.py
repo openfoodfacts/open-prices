@@ -246,11 +246,17 @@ class Price(models.Model):
                     "Should be set if `location_osm_id` is filled",
                 )
         if self.location_osm_type:
-            if self.location_osm_id in [None, "true", "false", "none", "null"]:
+            if not self.location_osm_id:
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "location_osm_id",
                     "Should be set if `location_osm_type` is filled",
+                )
+            elif self.location_osm_id in ["true", "false", "none", "null"]:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "location_osm_id",
+                    "Should not be a boolean or an invalid string",
                 )
         # proof rules
         # - proof must belong to the price owner

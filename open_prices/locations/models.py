@@ -43,13 +43,12 @@ class Location(models.Model):
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
         validation_errors = dict()
-        # location rules
-        # - osm_id checks
-        if self.osm_id in ["true", "false", "none", "null"]:  # None
+        # osm rules
+        if self.osm_id in ["true", "false", "none", "null"]:
             validation_errors = utils.add_validation_error(
                 validation_errors,
                 "osm_id",
-                "Should be set if `osm_type` is filled",
+                "Should not be a boolean or an invalid string",
             )
         # return
         if bool(validation_errors):
