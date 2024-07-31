@@ -2,11 +2,13 @@ import random
 
 import factory
 import factory.fuzzy
+from django.db.models.signals import post_save
 from factory.django import DjangoModelFactory
 
 from open_prices.products.models import Product
 
 
+@factory.django.mute_signals(post_save)
 class ProductFactory(DjangoModelFactory):
     class Meta:
         model = Product

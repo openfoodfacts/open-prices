@@ -32,6 +32,7 @@ class Location(models.Model):
     )
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    # proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)  # noqa
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)

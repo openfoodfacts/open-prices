@@ -18,7 +18,7 @@ def get_location(osm_id: int, osm_type: str) -> list:
 
 
 def get_location_dict(location):
-    location_openstreetmap_details = dict()
+    location_dict = dict()
     try:
         response = get_location(
             osm_id=location.osm_id, osm_type=location.osm_type.lower()
@@ -28,12 +28,12 @@ def get_location_dict(location):
                 if osm_field in response[0]:
                     key = f"osm_{osm_field}"
                     value = response[0][osm_field]
-                    location_openstreetmap_details[key] = value
+                    location_dict[key] = value
             for osm_field in list(OSM_TAG_FIELDS_MAPPING.keys()):
                 if osm_field in response[0]:
                     key = f"osm_{OSM_TAG_FIELDS_MAPPING[osm_field]}"
                     value = response[0][osm_field]
-                    location_openstreetmap_details[key] = value
+                    location_dict[key] = value
             if "address" in response[0]:
                 for osm_address_field in OSM_ADDRESS_FIELDS:
                     if osm_address_field in response[0]["address"]:
@@ -41,17 +41,17 @@ def get_location_dict(location):
                         value = response[0]["address"][osm_address_field]
                         if osm_address_field == "country_code":  # "fr" -> "FR"
                             value = value.upper()
-                        location_openstreetmap_details[key] = value
+                        location_dict[key] = value
                 # manage city
-                location_openstreetmap_details["osm_address_city"] = None
+                location_dict["osm_address_city"] = None
                 for osm_address_place_field in OSM_ADDRESS_PLACE_FIELDS:
                     if osm_address_place_field in response[0]["address"]:
-                        if not location_openstreetmap_details["osm_address_city"]:
+                        if not location_dict["osm_address_city"]:
                             key = "osm_address_city"
                             value = response[0]["address"][osm_address_place_field]
-                            location_openstreetmap_details[key] = value
+                            location_dict[key] = value
 
-        return location_openstreetmap_details
+        return location_dict
     except Exception:
         # logger.exception("Error returned from OpenStreetMap")
         return None

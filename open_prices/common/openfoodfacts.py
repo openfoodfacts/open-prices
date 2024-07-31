@@ -1,6 +1,6 @@
 import requests
 from django.conf import settings
-from openfoodfacts import API, APIVersion, Country, Flavor
+from openfoodfacts import API, APIVersion, Country, Environment, Flavor
 from openfoodfacts.images import generate_image_url
 from openfoodfacts.types import JSONType
 
@@ -74,13 +74,13 @@ def generate_main_image_url(
         image_rev = images[image_key]["rev"]
         image_id = f"{image_key}.{image_rev}.400"
         return generate_image_url(
-            code, image_id=image_id, flavor=flavor, environment=settings.environment
+            code, image_id=image_id, flavor=flavor, environment=Environment.org
         )
 
     return None
 
 
-def get_product(product_code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
+def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
     client = API(
         user_agent=settings.OFF_USER_AGENT,
         username=None,
@@ -88,20 +88,20 @@ def get_product(product_code: str, flavor: Flavor = Flavor.off) -> JSONType | No
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v2,
-        environment=settings.environment,
+        environment=Environment.org,
     )
-    return client.product.get(product_code)
+    return client.product.get(code)
 
 
 def get_product_dict(product, flavor=Flavor.off) -> JSONType | None:
     product_dict = dict()
     try:
         response = get_product(code=product.code, flavor=flavor)
-        if response and response["status"]:
+        if response:
             product_dict["source"] = flavor
             for off_field in OFF_FIELDS:
-                if off_field in response["product"]:
-                    product_dict[off_field] = response["product"][off_field]
+                if off_field in response:
+                    product_dict[off_field] = response[off_field]
             product_dict = normalize_product_fields(product_dict)
         return product_dict
     except Exception:

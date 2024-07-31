@@ -9,6 +9,10 @@ from open_prices.locations.models import (
 )
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.products.models import (
+    Product,
+    product_post_create_fetch_data_from_openfoodfacts,
+)
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import SessionFactory
 
@@ -16,6 +20,9 @@ from open_prices.users.factories import SessionFactory
 class PriceModelSaveTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        signals.post_save.disconnect(
+            product_post_create_fetch_data_from_openfoodfacts, sender=Product
+        )
         signals.post_save.disconnect(
             location_post_create_fetch_data_from_openstreetmap, sender=Location
         )
