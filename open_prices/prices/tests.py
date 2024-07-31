@@ -1,9 +1,18 @@
 from django.core.exceptions import ValidationError
+from django.db.models import signals
 from django.test import TestCase
 
 from open_prices.locations import constants as location_constants
+from open_prices.locations.models import (
+    Location,
+    location_post_create_fetch_data_from_openstreetmap,
+)
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.products.models import (
+    Product,
+    product_post_create_fetch_data_from_openfoodfacts,
+)
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import SessionFactory
 
@@ -11,7 +20,12 @@ from open_prices.users.factories import SessionFactory
 class PriceModelSaveTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        pass
+        signals.post_save.disconnect(
+            product_post_create_fetch_data_from_openfoodfacts, sender=Product
+        )
+        signals.post_save.disconnect(
+            location_post_create_fetch_data_from_openstreetmap, sender=Location
+        )
 
     def test_price_product_validation(self):
         for PRODUCT_CODE_OK in ["8001505005707", 5]:

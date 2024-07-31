@@ -86,6 +86,19 @@ class Proof(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
+    def set_location(self):
+        if self.location_osm_id and self.location_osm_type:
+            from open_prices.locations.models import Location
+
+            location, created = Location.objects.get_or_create(
+                osm_id=self.location_osm_id,
+                osm_type=self.location_osm_type,
+                # defaults={"proof_count": 1},
+            )
+            self.location = location
+
     def save(self, *args, **kwargs):
         self.full_clean()
+        if not self.id:
+            self.set_location()
         super().save(*args, **kwargs)

@@ -1,5 +1,7 @@
 from django.core.validators import ValidationError
 from django.db import models
+from django.db.models import signals
+from django.dispatch import receiver
 from django.utils import timezone
 
 from open_prices.common import utils
@@ -30,6 +32,7 @@ class Location(models.Model):
     )
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    # proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)  # noqa
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -65,3 +68,19 @@ class Location(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+@receiver(signals.post_save, sender=Location)
+def location_post_create_fetch_data_from_openstreetmap(
+    sender, instance, created, **kwargs
+):
+    if created:
+        from open_prices.common import openstreetmap as common_openstreetmap
+
+        location_openstreetmap_details = common_openstreetmap.get_location_dict(
+            instance
+        )
+        if location_openstreetmap_details:
+            for key, value in location_openstreetmap_details.items():
+                setattr(instance, key, value)
+            instance.save()

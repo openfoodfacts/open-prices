@@ -7,12 +7,12 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.common.authentication import (
     CustomAuthentication,
     create_token,
     get_request_session,
 )
-from open_prices.common.openfoodfacts import off_authenticate
 from open_prices.users.utils import get_or_create_session
 
 
@@ -40,7 +40,7 @@ class LoginView(APIView):
             )
         # By specifying body=1, information about the user is returned in the
         # response, including the user_id
-        response = off_authenticate(
+        response = common_openfoodfacts.authenticate(
             username=request.POST.get("username"), password=request.POST.get("password")
         )
         if response.status_code == 200:

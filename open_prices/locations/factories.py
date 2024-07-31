@@ -2,12 +2,14 @@ import random
 
 import factory
 import factory.fuzzy
+from django.db.models.signals import post_save
 from factory.django import DjangoModelFactory
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 
 
+@factory.django.mute_signals(post_save)
 class LocationFactory(DjangoModelFactory):
     class Meta:
         model = Location

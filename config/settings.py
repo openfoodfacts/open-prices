@@ -182,3 +182,4 @@ if DEBUG:
 
 OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
 SESSION_COOKIE_NAME = "opsession"
+OFF_USER_AGENT = "open-prices/0.1.0"

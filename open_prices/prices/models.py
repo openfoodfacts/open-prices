@@ -296,6 +296,29 @@ class Price(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
+    def set_product(self):
+        if self.product_code:
+            from open_prices.products.models import Product
+
+            product, created = Product.objects.get_or_create(
+                code=self.product_code, defaults={"price_count": 1}
+            )
+            self.product = product
+
+    def set_location(self):
+        if self.location_osm_id and self.location_osm_type:
+            from open_prices.locations.models import Location
+
+            location, created = Location.objects.get_or_create(
+                osm_id=self.location_osm_id,
+                osm_type=self.location_osm_type,
+                defaults={"price_count": 1},
+            )
+            self.location = location
+
     def save(self, *args, **kwargs):
         self.full_clean()
+        if not self.id:
+            self.set_product()
+            self.set_location()
         super().save(*args, **kwargs)
