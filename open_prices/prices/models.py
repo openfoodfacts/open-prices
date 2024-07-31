@@ -158,7 +158,8 @@ class Price(models.Model):
                 )
         # category_tag rules
         # - if category_tag is set, then should be a valid taxonomy string
-        # - also check labels_tags & origins_tags
+        # - if labels_tags is set, then all labels_tags should be valid taxonomy strings  # noqa
+        # - if origins_tags is set, then all origins_tags should be valid taxonomy strings  # noqa
         elif self.category_tag:
             category_taxonomy = get_taxonomy("category")
             if self.category_tag not in category_taxonomy:
@@ -195,6 +196,7 @@ class Price(models.Model):
         # - price must be set
         # - price_is_discounted must be set if price_without_discount is set
         # - price_without_discount must be greater or equal to price
+        # - price_per should be set if category_tag is set
         if self.price in [None, "true", "false", "none", "null"]:
             validation_errors = utils.add_validation_error(
                 validation_errors,
@@ -235,6 +237,7 @@ class Price(models.Model):
                     )
         # location rules
         # - location_osm_id should be set if location_osm_type is set
+        # - location_osm_type should be set if location_osm_id is set
         if self.location_osm_id:
             if not self.location_osm_type:
                 validation_errors = utils.add_validation_error(
@@ -251,13 +254,26 @@ class Price(models.Model):
                 )
         # proof rules
         # - proof must belong to the price owner
+        # - some proof fields should be the same as the price fields
         if self.proof:
+            from open_prices.proofs.models import Proof
+
             if self.proof.owner != self.owner:
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "proof",
                     "Proof does not belong to the current user",
                 )
+            for PROOF_FIELD in Proof.DUPLICATE_PRICE_FIELDS:
+                proof_field_value = getattr(self.proof, PROOF_FIELD)
+                if proof_field_value:
+                    price_field_value = getattr(self, PROOF_FIELD)
+                    if str(proof_field_value) != str(price_field_value):
+                        validation_errors = utils.add_validation_error(
+                            validation_errors,
+                            "proof",
+                            f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
+                        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)

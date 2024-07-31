@@ -1,8 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from open_prices.locations import constants as location_constants
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.proofs.factories import ProofFactory
+from open_prices.users.factories import SessionFactory
 
 
 class PriceModelSaveTest(TestCase):
@@ -177,3 +180,78 @@ class PriceModelSaveTest(TestCase):
             )
         # both location_osm_id & location_osm_type not set
         PriceFactory(location_osm_id=None, location_osm_type=None)
+
+    def test_price_proof_validation(self):
+        self.user_session = SessionFactory()
+        self.user_proof = ProofFactory(
+            location_osm_id=652825274,
+            location_osm_type=location_constants.OSM_TYPE_NODE,
+            date="2024-06-30",
+            currency="EUR",
+            owner=self.user_session.user.user_id,
+        )
+        self.proof_2 = ProofFactory()
+        # proof not set
+        PriceFactory(proof=None, owner=self.user_proof.owner)
+        # same price & proof fields
+        PriceFactory(
+            proof=self.user_proof,
+            location_osm_id=self.user_proof.location_osm_id,
+            location_osm_type=self.user_proof.location_osm_type,
+            date=self.user_proof.date,
+            currency=self.user_proof.currency,
+            owner=self.user_proof.owner,
+        )
+        # different price & proof owner
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            proof=self.proof_2,  # different
+            location_osm_id=self.user_proof.location_osm_id,
+            location_osm_type=self.user_proof.location_osm_type,
+            date=self.user_proof.date,
+            currency=self.user_proof.currency,
+            owner=self.user_proof.owner,
+        )
+        # proof location_osm_id & location_osm_type
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            proof=self.user_proof,
+            location_osm_id=5,  # different location_osm_id
+            location_osm_type=self.user_proof.location_osm_type,
+            date=self.user_proof.date,
+            currency=self.user_proof.currency,
+            owner=self.user_proof.owner,
+        )
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            proof=self.user_proof,
+            location_osm_id=self.user_proof.location_osm_id,
+            location_osm_type="WAY",  # different location_osm_type
+            date=self.user_proof.date,
+            currency=self.user_proof.currency,
+            owner=self.user_proof.owner,
+        )
+        # proof date & currency
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            proof=self.user_proof,
+            location_osm_id=self.user_proof.location_osm_id,
+            location_osm_type=self.user_proof.location_osm_type,
+            date="2024-07-01",  # different date
+            currency=self.user_proof.currency,
+            owner=self.user_proof.owner,
+        )
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            proof=self.user_proof,
+            location_osm_id=self.user_proof.location_osm_id,
+            location_osm_type=self.user_proof.location_osm_type,
+            date=self.user_proof.date,
+            currency="USD",  # different currency
+            owner=self.user_proof.owner,
+        )

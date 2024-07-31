@@ -10,6 +10,12 @@ class Proof(models.Model):
     FILE_FIELDS = ["file_path", "mimetype"]
     UPDATE_FIELDS = ["type", "currency", "date"]
     CREATE_FIELDS = UPDATE_FIELDS + ["location_osm_id", "location_osm_type"]
+    DUPLICATE_PRICE_FIELDS = [
+        "location_osm_id",
+        "location_osm_type",
+        "date",
+        "currency",
+    ]  # "owner"
 
     file_path = models.CharField()
     mimetype = models.CharField(blank=True, null=True)
