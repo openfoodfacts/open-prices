@@ -32,6 +32,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",  # djangorestframework
     "django_filters",  # django-filter
     "drf_spectacular",  # drf-spectacular
+    "django_q",  # django-q2
     # "debug_toolbar",  # django-debug-toolbar (see below)
     "django_extensions",  # django-extensions
 ]
@@ -167,6 +168,20 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
+# Django Q2
+# https://django-q2.readthedocs.io/
+# ------------------------------------------------------------------------------
+
+Q_CLUSTER = {
+    "name": "DjangORM",
+    "workers": 1,
+    "timeout": 90,
+    "retry": 120,
+    "queue_limit": 50,
+    "bulk": 10,
+    "orm": "default",
+}
+
 
 # Django Debug Toolbar
 # https://django-debug-toolbar.readthedocs.io/
@@ -175,6 +190,16 @@ SPECTACULAR_SETTINGS = {
 if DEBUG:
     INSTALLED_APPS += ["debug_toolbar"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+
+
+# Shell Plus (django-extensions)
+# ------------------------------------------------------------------------------
+
+SHELL_PLUS_POST_IMPORTS = [
+    "import openfoodfacts",
+    "from open_prices.common import openfoodfacts as common_openfoodfacts",
+    "from open_prices.common import openstreetmap as common_openstreetmap",
+]
 
 
 # Authentication
