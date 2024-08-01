@@ -61,7 +61,9 @@ class ProofViewSet(
         # validate
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
+        # get source
+        self.source = self.request.GET.get("app_name", None)
         # save
-        proof = serializer.save(owner=self.request.user.user_id)
+        proof = serializer.save(owner=self.request.user.user_id, source=self.source)
         # return full proof
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)

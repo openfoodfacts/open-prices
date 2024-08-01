@@ -136,6 +136,7 @@ class ProofCreateApiTest(TestCase):
             "type": proof_constants.TYPE_RECEIPT,
             "currency": "EUR",
             "price_count": 15,
+            "source": "test",
         }
         # anonymous
         response = self.client.post(self.url, data)
@@ -157,3 +158,26 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(response.data["currency"], "EUR")
         self.assertEqual(response.data["price_count"], 0)  # ignored
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
+        self.assertTrue("source" not in response.data)
+        p = Proof.objects.last()
+        self.assertIsNone(p.source)  # ignored
+        # with empty app_name
+        response = self.client.post(
+            f"{self.url}?app_name=",
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue("source" not in response.data)
+        p = Proof.objects.last()
+        self.assertEqual(p.source, "")
+        # with app_name
+        response = self.client.post(
+            f"{self.url}?app_name=test app",
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue("source" not in response.data)
+        p = Proof.objects.last()
+        self.assertEqual(p.source, "test app")

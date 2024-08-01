@@ -242,9 +242,33 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["price"], "15.00")
         self.assertEqual(response.data["currency"], "EUR")
         self.assertEqual(response.data["date"], "2024-01-01")
-        self.assertEqual(response.data["source"], None)  # ignored
+        self.assertTrue("source" not in response.data)
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         # with proof, product & location
         self.assertEqual(response.data["proof"]["id"], self.user_proof.id)
         self.assertEqual(response.data["product"]["code"], "8001505005707")
         self.assertEqual(response.data["location"]["osm_id"], 652825274)
+        p = Price.objects.last()
+        self.assertIsNone(p.source)  # ignored
+        # with empty app_name
+        response = self.client.post(
+            f"{self.url}?app_name=",
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue("source" not in response.data)
+        p = Price.objects.last()
+        self.assertEqual(p.source, "")
+        # with app_name
+        response = self.client.post(
+            f"{self.url}?app_name=test app",
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue("source" not in response.data)
+        p = Price.objects.last()
+        self.assertEqual(p.source, "test app")

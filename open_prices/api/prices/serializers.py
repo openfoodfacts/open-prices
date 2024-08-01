@@ -13,7 +13,8 @@ class PriceFullSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Price
-        fields = "__all__"
+        # fields = "__all__"
+        exclude = ["source"]
 
 
 class PriceCreateSerializer(serializers.ModelSerializer):

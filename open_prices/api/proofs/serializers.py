@@ -9,13 +9,15 @@ class ProofFullSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Proof
-        fields = "__all__"
+        # fields = "__all__"
+        exclude = ["source"]
 
 
 class ProofSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proof
-        fields = "__all__"
+        # fields = "__all__"
+        exclude = ["source"]
 
 
 class ProofCreateSerializer(serializers.ModelSerializer):
