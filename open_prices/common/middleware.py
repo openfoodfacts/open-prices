@@ -15,6 +15,6 @@ def custom_exception_handler(exc: Exception, context: View):
 
     if isinstance(exc, exceptions.ValidationError):
         data = exc.message_dict
-        return Response(data=data, status=status.HTTP_403_FORBIDDEN)
+        return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
 
     return response

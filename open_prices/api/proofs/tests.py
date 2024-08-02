@@ -67,68 +67,13 @@ class ProofDetailApiTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.proof.id)
 
-    def test_proof_update(self):
-        data = {"currency": "USD", "price_count": 20}
-        # anonymous
-        response = self.client.patch(self.url, data, content_type="application/json")
-        self.assertEqual(response.status_code, 403)
-        # wrong token
-        response = self.client.patch(
-            self.url,
-            data,
-            headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 403)
-        # not proof owner
-        response = self.client.patch(
-            self.url,
-            data,
-            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 404)  # 403 ?
-        # authenticated
-        response = self.client.patch(
-            self.url,
-            data,
-            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["currency"], "USD")
-        self.assertEqual(Proof.objects.get(id=self.proof.id).price_count, 15)  # ignored
-
-    def test_proof_delete(self):
-        # anonymous
-        response = self.client.delete(self.url)
-        self.assertEqual(response.status_code, 403)
-        # wrong token
-        response = self.client.delete(
-            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}X"}
-        )
-        self.assertEqual(response.status_code, 403)
-        # not proof owner
-        response = self.client.delete(
-            self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
-        )
-        self.assertEqual(response.status_code, 404)  # 403 ?
-        # authenticated
-        response = self.client.delete(
-            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
-        )
-        self.assertEqual(response.status_code, 204)
-        self.assertEqual(response.data, None)
-        self.assertEqual(
-            Proof.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
-        )
-
 
 class ProofCreateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:proofs-upload")
         cls.user_session = SessionFactory()
+        # cls.data = {}
 
     def test_proof_create(self):
         data = {
@@ -161,23 +106,94 @@ class ProofCreateApiTest(TestCase):
         self.assertTrue("source" not in response.data)
         p = Proof.objects.last()
         self.assertIsNone(p.source)  # ignored
-        # with empty app_name
-        response = self.client.post(
-            f"{self.url}?app_name=",
-            data,
-            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        for app_name in ["", "test app"]:
+            # with empty app_name
+            response = self.client.post(
+                self.url + f"?app_name={app_name}",
+                data,
+                headers={"Authorization": f"Bearer {self.user_session.token}"},
+            )
+            self.assertEqual(response.status_code, 201)
+            self.assertTrue("source" not in response.data)
+            p = Proof.objects.last()
+            self.assertEqual(p.source, app_name)
+
+
+class ProofUpdateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.proof = ProofFactory(
+            currency="EUR", price_count=15, owner=cls.user_session_1.user.user_id
         )
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue("source" not in response.data)
-        p = Proof.objects.last()
-        self.assertEqual(p.source, "")
-        # with app_name
-        response = self.client.post(
-            f"{self.url}?app_name=test app",
-            data,
-            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
+        cls.data = {"currency": "USD", "price_count": 20}
+
+    def test_proof_update(self):
+        # anonymous
+        response = self.client.patch(
+            self.url, self.data, content_type="application/json"
         )
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue("source" not in response.data)
-        p = Proof.objects.last()
-        self.assertEqual(p.source, "test app")
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.patch(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        # not proof owner
+        response = self.client.patch(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 404)  # 403 ?
+        # authenticated
+        response = self.client.patch(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(Proof.objects.get(id=self.proof.id).price_count, 15)  # ignored
+
+
+class ProofDeleteApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.proof = ProofFactory(
+            currency="EUR", price_count=15, owner=cls.user_session_1.user.user_id
+        )
+        cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
+
+    def test_proof_delete(self):
+        # anonymous
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}X"}
+        )
+        self.assertEqual(response.status_code, 403)
+        # not proof owner
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
+        )
+        self.assertEqual(response.status_code, 404)  # 403 ?
+        # authenticated
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(
+            Proof.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )

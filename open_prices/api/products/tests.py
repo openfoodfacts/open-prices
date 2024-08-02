@@ -74,6 +74,7 @@ class ProductDetailApiTest(TestCase):
         cls.product = ProductFactory(
             code="8001505005707", product_name="Nocciolata", price_count=15
         )
+        cls.url = reverse("api:products-detail", args=[cls.product.id])
 
     def test_product_detail(self):
         # 404
@@ -81,8 +82,7 @@ class ProductDetailApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         # existing product
-        url = reverse("api:products-detail", args=[self.product.id])
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.data["id"], self.product.id)
 
     def test_product_detail_by_code(self):
@@ -95,13 +95,29 @@ class ProductDetailApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["id"], self.product.id)
 
+
+class ProductUpdateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product = ProductFactory(
+            code="8001505005707", product_name="Nocciolata", price_count=15
+        )
+        cls.url = reverse("api:products-detail", args=[cls.product.id])
+
     def test_product_update_not_allowed(self):
         data = {"product_name": "Nutella"}
-        url = reverse("api:products-detail", args=[self.product.id])
-        response = self.client.patch(url, data, content_type="application/json")
+        response = self.client.patch(self.url, data, content_type="application/json")
         self.assertEqual(response.status_code, 405)
 
+
+class ProductDeleteApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product = ProductFactory(
+            code="8001505005707", product_name="Nocciolata", price_count=15
+        )
+        cls.url = reverse("api:products-detail", args=[cls.product.id])
+
     def test_product_delete_not_allowed(self):
-        url = reverse("api:products-detail", args=[self.product.id])
-        response = self.client.delete(url)
+        response = self.client.delete(self.url)
         self.assertEqual(response.status_code, 405)

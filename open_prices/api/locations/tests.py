@@ -73,6 +73,7 @@ class LocationDetailApiTest(TestCase):
         cls.location = LocationFactory(
             osm_id=652825274, osm_type="NODE", osm_name="Monoprix", price_count=15
         )
+        cls.url = reverse("api:locations-detail", args=[cls.location.id])
 
     def test_location_detail(self):
         # 404
@@ -80,8 +81,7 @@ class LocationDetailApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         # existing location
-        url = reverse("api:locations-detail", args=[self.location.id])
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.data["id"], self.location.id)
 
     def test_location_detail_by_osm(self):
@@ -96,17 +96,6 @@ class LocationDetailApiTest(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.data["id"], self.location.id)
-
-    def test_location_update_not_allowed(self):
-        data = {"osm_name": "Carrefour"}
-        url = reverse("api:locations-detail", args=[self.location.id])
-        response = self.client.patch(url, data, content_type="application/json")
-        self.assertEqual(response.status_code, 405)
-
-    def test_location_delete_not_allowed(self):
-        url = reverse("api:locations-detail", args=[self.location.id])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, 405)
 
 
 class LocationCreateApiTest(TestCase):
@@ -132,3 +121,30 @@ class LocationCreateApiTest(TestCase):
             response.data["osm_name"], None
         )  # ignored (and post_save signal disabled)
         self.assertEqual(response.data["price_count"], 0)  # ignored
+
+
+class LocationUpdateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.location = LocationFactory(
+            osm_id=652825274, osm_type="NODE", osm_name="Monoprix", price_count=15
+        )
+        cls.url = reverse("api:locations-detail", args=[cls.location.id])
+
+    def test_location_update_not_allowed(self):
+        data = {"osm_name": "Carrefour"}
+        response = self.client.patch(self.url, data, content_type="application/json")
+        self.assertEqual(response.status_code, 405)
+
+
+class LocationDeleteApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.location = LocationFactory(
+            osm_id=652825274, osm_type="NODE", osm_name="Monoprix", price_count=15
+        )
+        cls.url = reverse("api:locations-detail", args=[cls.location.id])
+
+    def test_location_delete_not_allowed(self):
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 405)
