@@ -273,3 +273,30 @@ class PriceCreateApiTest(TestCase):
         self.assertTrue("source" not in response.data)
         p = Price.objects.last()
         self.assertEqual(p.source, "test app")
+
+
+class PriceDeleteApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.price = PriceFactory(owner=cls.user_session.user.user_id)
+        cls.url = reverse("api:prices-detail", args=[cls.price.id])
+
+    def test_price_delete(self):
+        # anonymous
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session.token}X"}
+        )
+        self.assertEqual(response.status_code, 403)
+        # authenticated
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(
+            Price.objects.filter(owner=self.user_session.user.user_id).count(), 0
+        )

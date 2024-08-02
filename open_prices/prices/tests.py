@@ -331,3 +331,25 @@ class PriceModelSaveTest(TestCase):
         self.assertEqual(Proof.objects.get(id=user_proof_2.id).price_count, 1)
         self.assertEqual(Location.objects.get(id=location.id).price_count, 2)
         self.assertEqual(Product.objects.get(id=product.id).price_count, 2)
+
+
+class PriceModelDeleteTest(TestCase):
+    def test_price_count_decrement(self):
+        user_session = SessionFactory()
+        user_proof = ProofFactory(owner=user_session.user.user_id)
+        location = LocationFactory()
+        product = ProductFactory()
+        price = PriceFactory(
+            proof=user_proof,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            product_code=product.code,
+            owner=user_session.user.user_id,
+        )
+        self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 1)
+        self.assertEqual(Location.objects.get(id=location.id).price_count, 1)
+        self.assertEqual(Product.objects.get(id=product.id).price_count, 1)
+        price.delete()
+        self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 0)
+        self.assertEqual(Location.objects.get(id=location.id).price_count, 0)
+        self.assertEqual(Product.objects.get(id=product.id).price_count, 0)

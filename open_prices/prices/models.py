@@ -344,3 +344,16 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
     if instance.location:
         instance.location.price_count += 1
         instance.location.save()
+
+
+@receiver(signals.post_delete, sender=Price)
+def price_post_create_decrement_counts(sender, instance, **kwargs):
+    if instance.proof:
+        instance.proof.price_count -= 1
+        instance.proof.save()
+    if instance.product:
+        instance.product.price_count -= 1
+        instance.product.save()
+    if instance.location:
+        instance.location.price_count -= 1
+        instance.location.save()
