@@ -1,5 +1,3 @@
-import random
-
 import factory
 import factory.fuzzy
 from factory.django import DjangoModelFactory
@@ -17,4 +15,4 @@ class ProofFactory(DjangoModelFactory):
     type = factory.fuzzy.FuzzyChoice(proof_constants.TYPE_LIST)
     # date = factory.Faker("date")
     # currency = factory.Faker("currency_symbol")
-    price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
+    # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))

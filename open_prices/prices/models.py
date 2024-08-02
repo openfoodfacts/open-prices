@@ -1,5 +1,7 @@
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
+from django.db.models import signals
+from django.dispatch import receiver
 from django.utils import timezone
 from openfoodfacts.taxonomy import get_taxonomy
 
@@ -25,7 +27,7 @@ class Price(models.Model):
         "origins_tags",
         "location_osm_id",
         "location_osm_type",
-        "proof_id",
+        "proof_id",  # extra field
     ]
 
     product_code = models.CharField(blank=True, null=True)
@@ -270,27 +272,37 @@ class Price(models.Model):
                     "Should not be a boolean or an invalid string",
                 )
         # proof rules
-        # - proof must belong to the price owner
+        # - proof must exist and belong to the price owner
         # - some proof fields should be the same as the price fields
-        if self.proof:
+        if self.proof_id:
             from open_prices.proofs.models import Proof
 
-            if self.proof.owner != self.owner:
+            try:
+                proof = Proof.objects.get(id=self.proof_id)
+            except Proof.DoesNotExist:
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "proof",
-                    "Proof does not belong to the current user",
+                    "Proof not found",
                 )
-            for PROOF_FIELD in Proof.DUPLICATE_PRICE_FIELDS:
-                proof_field_value = getattr(self.proof, PROOF_FIELD)
-                if proof_field_value:
-                    price_field_value = getattr(self, PROOF_FIELD)
-                    if str(proof_field_value) != str(price_field_value):
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "proof",
-                            f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
-                        )
+
+            if proof:
+                if proof.owner != self.owner:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "proof",
+                        "Proof does not belong to the current user",
+                    )
+                for PROOF_FIELD in Proof.DUPLICATE_PRICE_FIELDS:
+                    proof_field_value = getattr(self.proof, PROOF_FIELD)
+                    if proof_field_value:
+                        price_field_value = getattr(self, PROOF_FIELD)
+                        if str(proof_field_value) != str(price_field_value):
+                            validation_errors = utils.add_validation_error(
+                                validation_errors,
+                                "proof",
+                                f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
+                            )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
@@ -300,9 +312,7 @@ class Price(models.Model):
         if self.product_code:
             from open_prices.products.models import Product
 
-            product, created = Product.objects.get_or_create(
-                code=self.product_code, defaults={"price_count": 1}
-            )
+            product, created = Product.objects.get_or_create(code=self.product_code)
             self.product = product
 
     def set_location(self):
@@ -310,15 +320,40 @@ class Price(models.Model):
             from open_prices.locations.models import Location
 
             location, created = Location.objects.get_or_create(
-                osm_id=self.location_osm_id,
-                osm_type=self.location_osm_type,
-                defaults={"price_count": 1},
+                osm_id=self.location_osm_id, osm_type=self.location_osm_type
             )
             self.location = location
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        if not self.id:
+        if not self.id:  # new price
+            # self.set_proof()
             self.set_product()
             self.set_location()
         super().save(*args, **kwargs)
+
+
+@receiver(signals.post_save, sender=Price)
+def price_post_create_increment_counts(sender, instance, created, **kwargs):
+    if instance.proof:
+        instance.proof.price_count += 1
+        instance.proof.save()
+    if instance.product:
+        instance.product.price_count += 1
+        instance.product.save()
+    if instance.location:
+        instance.location.price_count += 1
+        instance.location.save()
+
+
+@receiver(signals.post_delete, sender=Price)
+def price_post_create_decrement_counts(sender, instance, **kwargs):
+    if instance.proof:
+        instance.proof.price_count -= 1
+        instance.proof.save()
+    if instance.product:
+        instance.product.price_count -= 1
+        instance.product.save()
+    if instance.location:
+        instance.location.price_count -= 1
+        instance.location.save()

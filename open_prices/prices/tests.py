@@ -3,17 +3,20 @@ from django.db.models import signals
 from django.test import TestCase
 
 from open_prices.locations import constants as location_constants
+from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import (
     Location,
     location_post_create_fetch_data_from_openstreetmap,
 )
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.products.factories import ProductFactory
 from open_prices.products.models import (
     Product,
     product_post_create_fetch_data_from_openfoodfacts,
 )
 from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
 
@@ -301,3 +304,52 @@ class PriceModelSaveTest(TestCase):
             currency="USD",  # different currency
             owner=self.user_proof.owner,
         )
+
+    def test_price_count_increment(self):
+        user_session = SessionFactory()
+        user_proof_1 = ProofFactory(owner=user_session.user.user_id)
+        user_proof_2 = ProofFactory(owner=user_session.user.user_id)
+        location = LocationFactory()
+        product = ProductFactory()
+        PriceFactory(
+            proof=user_proof_1,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            product_code=product.code,
+            owner=user_session.user.user_id,
+        )
+        self.assertEqual(Proof.objects.get(id=user_proof_1.id).price_count, 1)
+        self.assertEqual(Location.objects.get(id=location.id).price_count, 1)
+        self.assertEqual(Product.objects.get(id=product.id).price_count, 1)
+        PriceFactory(
+            proof=user_proof_2,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            product_code=product.code,
+            owner=user_session.user.user_id,
+        )
+        self.assertEqual(Proof.objects.get(id=user_proof_2.id).price_count, 1)
+        self.assertEqual(Location.objects.get(id=location.id).price_count, 2)
+        self.assertEqual(Product.objects.get(id=product.id).price_count, 2)
+
+
+class PriceModelDeleteTest(TestCase):
+    def test_price_count_decrement(self):
+        user_session = SessionFactory()
+        user_proof = ProofFactory(owner=user_session.user.user_id)
+        location = LocationFactory()
+        product = ProductFactory()
+        price = PriceFactory(
+            proof=user_proof,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            product_code=product.code,
+            owner=user_session.user.user_id,
+        )
+        self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 1)
+        self.assertEqual(Location.objects.get(id=location.id).price_count, 1)
+        self.assertEqual(Product.objects.get(id=product.id).price_count, 1)
+        price.delete()
+        self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 0)
+        self.assertEqual(Location.objects.get(id=location.id).price_count, 0)
+        self.assertEqual(Product.objects.get(id=product.id).price_count, 0)
