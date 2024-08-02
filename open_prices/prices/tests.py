@@ -16,6 +16,7 @@ from open_prices.products.models import (
     product_post_create_fetch_data_from_openfoodfacts,
 )
 from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
 
@@ -317,9 +318,9 @@ class PriceModelSaveTest(TestCase):
             product_code=product.code,
             owner=user_session.user.user_id,
         )
-        self.assertEqual(user_proof_1.price_count, 1)
-        self.assertEqual(location.price_count, 1)
-        self.assertEqual(product.price_count, 1)
+        self.assertEqual(Proof.objects.get(id=user_proof_1.id).price_count, 1)
+        self.assertEqual(Location.objects.get(id=location.id).price_count, 1)
+        self.assertEqual(Product.objects.get(id=product.id).price_count, 1)
         PriceFactory(
             proof=user_proof_2,
             location_osm_id=location.osm_id,
@@ -327,6 +328,6 @@ class PriceModelSaveTest(TestCase):
             product_code=product.code,
             owner=user_session.user.user_id,
         )
-        self.assertEqual(user_proof_2.price_count, 1)
-        self.assertEqual(location.price_count, 2)
-        self.assertEqual(product.price_count, 2)
+        self.assertEqual(Proof.objects.get(id=user_proof_2.id).price_count, 1)
+        self.assertEqual(Location.objects.get(id=location.id).price_count, 2)
+        self.assertEqual(Product.objects.get(id=product.id).price_count, 2)
