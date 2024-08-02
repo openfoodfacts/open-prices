@@ -18,4 +18,4 @@ class LocationFactory(DjangoModelFactory):
     osm_type = factory.fuzzy.FuzzyChoice(location_constants.OSM_TYPE_LIST)
     osm_name = factory.Faker("name")
     osm_address_country = factory.Faker("country")
-    price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
+    # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))

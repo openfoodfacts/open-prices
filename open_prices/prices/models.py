@@ -1,5 +1,7 @@
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
+from django.db.models import signals
+from django.dispatch import receiver
 from django.utils import timezone
 from openfoodfacts.taxonomy import get_taxonomy
 
@@ -322,3 +324,18 @@ class Price(models.Model):
             self.set_product()
             self.set_location()
         super().save(*args, **kwargs)
+
+
+@receiver(signals.post_save, sender=Price)
+def price_post_create_increment_counts(sender, instance, created, **kwargs):
+    # existing price
+    if not created:
+        if instance.product:
+            instance.product.price_count += 1
+            instance.product.save()
+        if instance.location:
+            instance.location.price_count += 1
+            instance.location.save()
+        if instance.proof:
+            instance.proof.price_count += 1
+            instance.proof.save()

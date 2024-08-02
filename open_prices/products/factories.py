@@ -1,5 +1,3 @@
-import random
-
 import factory
 import factory.fuzzy
 from django.db.models.signals import post_save
@@ -15,4 +13,4 @@ class ProductFactory(DjangoModelFactory):
 
     code = factory.Faker("ean13")
     product_name = factory.Faker("name")
-    price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
+    # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
