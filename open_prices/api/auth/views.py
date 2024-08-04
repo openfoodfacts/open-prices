@@ -1,12 +1,18 @@
 import time
 
 from django.conf import settings
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from open_prices.api.auth.serializers import (
+    LoginSerializer,
+    SessionFullSerializer,
+    SessionResponseSerializer,
+)
 from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.common.authentication import (
     CustomAuthentication,
@@ -17,6 +23,9 @@ from open_prices.users.utils import get_or_create_session
 
 
 class LoginView(APIView):
+    serializer_class = LoginSerializer
+
+    @extend_schema(responses=SessionResponseSerializer)
     def post(self, request: Request) -> Response:
         """
         Authentication: provide username/password
@@ -74,6 +83,7 @@ class LoginView(APIView):
 class SessionView(APIView):
     authentication_classes = [CustomAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = SessionFullSerializer
 
     def get(self, request: Request) -> Response:
         session = get_request_session(request)
