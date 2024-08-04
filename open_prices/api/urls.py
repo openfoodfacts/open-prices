@@ -25,15 +25,15 @@ router.register(r"v1/prices", PriceViewSet, basename="prices")
 urlpatterns = [
     path("v1/auth/", include("open_prices.api.auth.urls")),
     # health check
-    path("v1/status", StatusView.as_view(), name="status"),
+    path("status", StatusView.as_view(), name="status"),
     # Swagger / OpenAPI documentation
-    path("v1/schema", SpectacularAPIView.as_view(), name="schema"),
+    path("schema", SpectacularAPIView.as_view(), name="schema"),
     path(
-        "v1/docs",
+        "docs",
         SpectacularSwaggerView.as_view(url_name="api:schema"),
         name="swagger-ui",
     ),
-    path("v1/redoc", SpectacularRedocView.as_view(url_name="api:schema"), name="redoc"),
+    path("redoc", SpectacularRedocView.as_view(url_name="api:schema"), name="redoc"),
 ]
 
 urlpatterns += router.urls
