@@ -73,30 +73,30 @@ class ProofCreateApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:proofs-upload")
         cls.user_session = SessionFactory()
-        # cls.data = {}
-
-    def test_proof_create(self):
-        data = {
-            "file": open("filename.webp", "rb"),
+        cls.data = {
+            # "file": open("filename.webp", "rb"),
             "type": proof_constants.TYPE_RECEIPT,
             "currency": "EUR",
             "price_count": 15,
             "source": "test",
         }
+
+    def test_proof_create(self):
+        self.data["file"] = open("filename.webp", "rb")
         # anonymous
-        response = self.client.post(self.url, data)
+        response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, 403)
         # wrong token
         response = self.client.post(
             self.url,
-            data,
+            self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
         )
         self.assertEqual(response.status_code, 403)
         # authenticated
         response = self.client.post(
             self.url,
-            data,
+            self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 201)
@@ -105,12 +105,15 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         self.assertTrue("source" not in response.data)
         p = Proof.objects.last()
-        self.assertIsNone(p.source)  # ignored
+        self.assertEqual(p.source, "API")  # default value
+
+    def test_proof_create_with_app_name(self):
+        self.data["file"] = open("filename.webp", "rb")
         for app_name in ["", "test app"]:
             # with empty app_name
             response = self.client.post(
                 self.url + f"?app_name={app_name}",
-                data,
+                self.data,
                 headers={"Authorization": f"Bearer {self.user_session.token}"},
             )
             self.assertEqual(response.status_code, 201)
