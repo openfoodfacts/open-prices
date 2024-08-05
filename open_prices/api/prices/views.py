@@ -52,7 +52,7 @@ class PriceViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # get source
-        self.source = self.request.GET.get("app_name", None)
+        self.source = self.request.GET.get("app_name", "API")
         # save
         price = self.perform_create(serializer)
         # return full price

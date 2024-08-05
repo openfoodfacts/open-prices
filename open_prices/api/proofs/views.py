@@ -64,7 +64,7 @@ class ProofViewSet(
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
         # get source
-        self.source = self.request.GET.get("app_name", None)
+        self.source = self.request.GET.get("app_name", "API")
         # save
         proof = serializer.save(owner=self.request.user.user_id, source=self.source)
         # return full proof

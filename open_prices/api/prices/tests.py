@@ -211,7 +211,7 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["product"]["code"], "8001505005707")
         self.assertEqual(response.data["location"]["osm_id"], 652825274)
         p = Price.objects.last()
-        self.assertIsNone(p.source)  # ignored
+        self.assertEqual(p.source, "API")  # default value
 
     def test_price_create_with_app_name(self):
         for app_name in ["", "test app"]:

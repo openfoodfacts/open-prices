@@ -105,7 +105,7 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         self.assertTrue("source" not in response.data)
         p = Proof.objects.last()
-        self.assertIsNone(p.source)  # ignored
+        self.assertEqual(p.source, "API")  # default value
 
     def test_proof_create_with_app_name(self):
         self.data["file"] = open("filename.webp", "rb")
