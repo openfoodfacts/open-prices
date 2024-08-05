@@ -1,3 +1,9 @@
+import gzip
+import json
+
+import tqdm
+
+
 def is_float(string):
     try:
         float(string)
@@ -19,3 +25,11 @@ def add_validation_error(dict, key, value):
         if type(dict[key]) is str:
             dict[key] = [dict[key], value]
     return dict
+
+
+def export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir):
+    output_path = output_dir / f"{table_name}.jsonl.gz"
+    with gzip.open(output_path, "wt") as f:
+        for item in tqdm.tqdm(model_class.objects.all(), desc=table_name):
+            f.write(json.dumps(schema_class(item).data))
+            f.write("\n")
