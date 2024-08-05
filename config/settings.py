@@ -168,7 +168,11 @@ SPECTACULAR_SETTINGS = {
         "url": "https://www.gnu.org/licenses/agpl-3.0.en.html",
     },
     "SCHEMA_PATH_PREFIX": "/api/v[0-9]",
+    "ENUM_NAME_OVERRIDES": {
+        "LocationOsmTypeEnum": "open_prices.locations.constants.OSM_TYPE_CHOICES"
+    },
 }
+
 
 # Django Q2
 # https://django-q2.readthedocs.io/
