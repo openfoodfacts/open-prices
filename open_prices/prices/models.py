@@ -1,3 +1,5 @@
+import decimal
+
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import signals
@@ -46,7 +48,7 @@ class Price(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
     )
@@ -56,7 +58,7 @@ class Price(models.Model):
     price_without_discount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
     )
