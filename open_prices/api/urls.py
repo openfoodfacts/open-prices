@@ -15,7 +15,7 @@ from open_prices.api.views import StatusView
 
 app_name = "api"
 
-router = routers.DefaultRouter()
+router = routers.DefaultRouter(trailing_slash=False)
 router.register(r"v1/users", UserViewSet, basename="users")
 router.register(r"v1/locations", LocationViewSet, basename="locations")
 router.register(r"v1/products", ProductViewSet, basename="products")
