@@ -28,7 +28,7 @@ class ProofViewSet(
     permission_classes = [IsAuthenticated]
     # parser_classes = [FormParser, MultiPartParser]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
-    # queryset = Proof.objects.all()
+    queryset = Proof.objects.none()
     serializer_class = ProofFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
@@ -36,7 +36,9 @@ class ProofViewSet(
 
     def get_queryset(self):
         # only return proofs owned by the current user
-        return Proof.objects.filter(owner=self.request.user.user_id)
+        if self.request.user.is_authenticated:
+            return Proof.objects.filter(owner=self.request.user.user_id)
+        return self.queryset
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":

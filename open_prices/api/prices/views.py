@@ -33,7 +33,8 @@ class PriceViewSet(
     def get_queryset(self):
         if self.request.method in ["PATCH", "DELETE"]:
             # only return prices owned by the current user
-            return Price.objects.filter(owner=self.request.user.user_id)
+            if self.request.user.is_authenticated:
+                return Price.objects.filter(owner=self.request.user.user_id)
         return self.queryset
 
     def get_serializer_class(self):
