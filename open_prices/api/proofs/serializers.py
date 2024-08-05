@@ -1,23 +1,27 @@
 from rest_framework import serializers
 
-from open_prices.api.locations.serializers import LocationFullSerializer
+from open_prices.api.locations.serializers import LocationSerializer
+from open_prices.locations.models import Location
 from open_prices.proofs.models import Proof
 
 
-class ProofFullSerializer(serializers.ModelSerializer):
-    location = LocationFullSerializer()
-
-    class Meta:
-        model = Proof
-        # fields = "__all__"
-        exclude = ["source"]
-
-
 class ProofSerializer(serializers.ModelSerializer):
+    location_id = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), source="location"
+    )
+
     class Meta:
         model = Proof
         # fields = "__all__"
         exclude = ["source"]
+
+
+class ProofFullSerializer(ProofSerializer):
+    location = LocationSerializer()
+
+    class Meta:
+        model = Proof
+        exclude = ProofSerializer.Meta.exclude
 
 
 class ProofCreateSerializer(serializers.ModelSerializer):

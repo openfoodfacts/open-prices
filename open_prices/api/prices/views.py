@@ -45,7 +45,6 @@ class PriceViewSet(
         return self.serializer_class
 
     def perform_create(self, serializer):
-        print("price perform_create", serializer.validated_data)
         return serializer.save(owner=self.request.user.user_id, source=self.source)
 
     def create(self, request: Request, *args, **kwargs):
