@@ -158,6 +158,24 @@ class PriceCreateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
+        # proof_id field missing
+        data = self.data.copy()
+        del data["proof_id"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        # empty proof
+        response = self.client.post(
+            self.url,
+            {**self.data, "proof_id": None},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
         # unknown proof
         response = self.client.post(
             self.url,
@@ -194,8 +212,9 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["location"]["osm_id"], 652825274)
         p = Price.objects.last()
         self.assertIsNone(p.source)  # ignored
+
+    def test_price_create_with_app_name(self):
         for app_name in ["", "test app"]:
-            # with empty app_name
             response = self.client.post(
                 self.url + f"?app_name={app_name}",
                 self.data,
