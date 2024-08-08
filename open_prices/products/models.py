@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import signals
 from django.dispatch import receiver
 from django.utils import timezone
+from django_q.tasks import async_task
 
 from open_prices.products import constants as product_constants
 
@@ -49,10 +50,7 @@ def product_post_create_fetch_data_from_openfoodfacts(
     sender, instance, created, **kwargs
 ):
     if created:
-        from open_prices.common import openfoodfacts as common_openfoodfacts
-
-        product_openfoodfacts_details = common_openfoodfacts.get_product_dict(instance)
-        if product_openfoodfacts_details:
-            for key, value in product_openfoodfacts_details.items():
-                setattr(instance, key, value)
-            instance.save()
+        async_task(
+            "open_prices.products.tasks.fetch_and_save_data_from_openfoodfacts",
+            instance,
+        )

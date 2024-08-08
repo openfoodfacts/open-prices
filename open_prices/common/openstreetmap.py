@@ -1,5 +1,7 @@
 from OSMPythonTools.nominatim import Nominatim
 
+from open_prices.common.utils import truncate_decimal
+
 OSM_FIELDS = ["name", "display_name", "lat", "lon"]
 OSM_TAG_FIELDS_MAPPING = {"class": "tag_key", "type": "tag_value"}
 OSM_ADDRESS_FIELDS = [
@@ -28,6 +30,9 @@ def get_location_dict(location):
                 if osm_field in response[0]:
                     key = f"osm_{osm_field}"
                     value = response[0][osm_field]
+                    # cleanup lat & lon (max 7 decimal places)
+                    if osm_field in ["lat", "lon"]:
+                        value = truncate_decimal(value)
                     location_dict[key] = value
             for osm_field in list(OSM_TAG_FIELDS_MAPPING.keys()):
                 if osm_field in response[0]:
@@ -50,7 +55,6 @@ def get_location_dict(location):
                             key = "osm_address_city"
                             value = response[0]["address"][osm_address_place_field]
                             location_dict[key] = value
-
         return location_dict
     except Exception:
         # logger.exception("Error returned from OpenStreetMap")
