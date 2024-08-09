@@ -50,7 +50,6 @@ def get_location_dict(location):
                             key = "osm_address_city"
                             value = response[0]["address"][osm_address_place_field]
                             location_dict[key] = value
-
         return location_dict
     except Exception:
         # logger.exception("Error returned from OpenStreetMap")

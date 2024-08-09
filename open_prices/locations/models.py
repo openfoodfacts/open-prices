@@ -3,13 +3,16 @@ from django.db import models
 from django.db.models import signals
 from django.dispatch import receiver
 from django.utils import timezone
+from django_q.tasks import async_task
 
 from open_prices.common import utils
+from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
 
 
 class Location(models.Model):
     CREATE_FIELDS = ["osm_id", "osm_type"]
+    LAT_LON_DECIMAL_FIELDS = ["osm_lat", "osm_lon"]
 
     osm_id = models.PositiveBigIntegerField()
     osm_type = models.CharField(
@@ -66,6 +69,20 @@ class Location(models.Model):
         super().clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        """
+        - truncate decimal fields
+        - run validations
+        """
+        if not self.id:
+            for field_name in self.LAT_LON_DECIMAL_FIELDS:
+                if getattr(self, field_name) is not None:
+                    setattr(
+                        self,
+                        field_name,
+                        truncate_decimal(
+                            getattr(self, field_name), max_decimal_places=7
+                        ),
+                    )
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -75,12 +92,7 @@ def location_post_create_fetch_data_from_openstreetmap(
     sender, instance, created, **kwargs
 ):
     if created:
-        from open_prices.common import openstreetmap as common_openstreetmap
-
-        location_openstreetmap_details = common_openstreetmap.get_location_dict(
-            instance
+        async_task(
+            "open_prices.locations.tasks.fetch_and_save_data_from_openstreetmap",
+            instance,
         )
-        if location_openstreetmap_details:
-            for key, value in location_openstreetmap_details.items():
-                setattr(instance, key, value)
-            instance.save()

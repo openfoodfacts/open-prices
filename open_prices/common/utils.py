@@ -33,3 +33,14 @@ def export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir):
         for item in tqdm.tqdm(model_class.objects.all(), desc=table_name):
             f.write(json.dumps(schema_class(item).data))
             f.write("\n")
+
+
+def truncate_decimal(value, max_decimal_places=7):
+    if value:
+        if type(value) is str:
+            if "." in value:
+                integer_part, decimal_part = value.split(".")
+                if len(decimal_part) > max_decimal_places:
+                    decimal_part = decimal_part[:max_decimal_places]
+                value = f"{integer_part}.{decimal_part}"
+    return value
