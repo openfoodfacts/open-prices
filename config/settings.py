@@ -205,6 +205,7 @@ if DEBUG:
 # Shell Plus (django-extensions)
 # ------------------------------------------------------------------------------
 
+SHELL_PLUS = "ipython"
 SHELL_PLUS_POST_IMPORTS = [
     "import openfoodfacts",
     "from open_prices.common import openfoodfacts as common_openfoodfacts",

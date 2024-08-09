@@ -74,6 +74,7 @@ factory-boy = "^3.3.0"
 django-q2 = "^1.6.2"
 croniter = "^3.0.3"
 blessed = "^1.20.0"
+ipython = "^8.26.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "~23.12.1"
