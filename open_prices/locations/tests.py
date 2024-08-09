@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -43,3 +45,15 @@ class LocationModelSaveTest(TestCase):
             osm_id=6509705997,
             osm_type=location_constants.OSM_TYPE_NODE,
         )
+
+    def test_location_decimal_truncate_on_create(self):
+        location = LocationFactory(
+            osm_id=652825274,
+            osm_type="NODE",
+            osm_name="Monoprix",
+            osm_lat="45.1805534",
+            osm_lon="5.7153387000",  # will be truncated
+            price_count=15,
+        )
+        self.assertEqual(location.osm_lat, Decimal("45.1805534"))
+        self.assertEqual(location.osm_lon, Decimal("5.7153387"))

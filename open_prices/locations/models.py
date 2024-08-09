@@ -6,11 +6,13 @@ from django.utils import timezone
 from django_q.tasks import async_task
 
 from open_prices.common import utils
+from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
 
 
 class Location(models.Model):
     CREATE_FIELDS = ["osm_id", "osm_type"]
+    LAT_LON_DECIMAL_FIELDS = ["osm_lat", "osm_lon"]
 
     osm_id = models.PositiveBigIntegerField()
     osm_type = models.CharField(
@@ -45,11 +47,6 @@ class Location(models.Model):
         verbose_name = "Location"
         verbose_name_plural = "Locations"
 
-    def clean_osm_lat(self):
-        osm_lat = self.cleaned_data["osm_lat"]
-        print(osm_lat)
-        return osm_lat
-
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
         validation_errors = dict()
@@ -72,6 +69,20 @@ class Location(models.Model):
         super().clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        """
+        - truncate decimal fields
+        - run validations
+        """
+        if not self.id:
+            for field_name in self.LAT_LON_DECIMAL_FIELDS:
+                if getattr(self, field_name) is not None:
+                    setattr(
+                        self,
+                        field_name,
+                        truncate_decimal(
+                            getattr(self, field_name), max_decimal_places=7
+                        ),
+                    )
         self.full_clean()
         super().save(*args, **kwargs)
 
