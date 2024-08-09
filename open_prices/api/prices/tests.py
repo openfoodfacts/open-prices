@@ -49,7 +49,7 @@ class PriceListFilterApiTest(TestCase):
         url = reverse("api:prices-list") + "?order_by=-price"
         response = self.client.get(url)
         self.assertEqual(response.data["count"], 3)
-        self.assertEqual(response.data["results"][0]["price"], "50.00")
+        self.assertEqual(response.data["results"][0]["price"], 50.00)
 
     def test_price_list_filter_by_product_code(self):
         url = reverse("api:prices-list") + "?product_code=8001505005707"
@@ -61,16 +61,16 @@ class PriceListFilterApiTest(TestCase):
         url = reverse("api:prices-list") + "?price=15"
         response = self.client.get(url)
         self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["price"], "15.00")
+        self.assertEqual(response.data["results"][0]["price"], 15.00)
         # lte / gte
         url = reverse("api:prices-list") + "?price__gte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["price"], "50.00")
+        self.assertEqual(response.data["results"][0]["price"], 50.00)
         url = reverse("api:prices-list") + "?price__lte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["count"], 2)
-        self.assertEqual(response.data["results"][0]["price"], "15.00")
+        self.assertEqual(response.data["results"][0]["price"], 15.00)
 
     def test_price_list_filter_by_currency(self):
         url = reverse("api:prices-list") + "?currency=EUR"
@@ -201,7 +201,7 @@ class PriceCreateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["product_code"], "8001505005707")
-        self.assertEqual(response.data["price"], "15.00")
+        self.assertEqual(response.data["price"], 15.00)
         self.assertEqual(response.data["currency"], "EUR")
         self.assertEqual(response.data["date"], "2024-01-01")
         self.assertTrue("source" not in response.data)

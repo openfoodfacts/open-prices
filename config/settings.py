@@ -155,6 +155,7 @@ REST_FRAMEWORK = {
     "ORDERING_PARAM": "order_by",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
+    "COERCE_DECIMAL_TO_STRING": False,
 }
 
 SPECTACULAR_SETTINGS = {
@@ -188,6 +189,7 @@ Q_CLUSTER = {
     "queue_limit": 50,
     "bulk": 10,
     "orm": "default",
+    "sync": True if DEBUG else False,
 }
 
 

@@ -71,7 +71,12 @@ class LocationDetailApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.location = LocationFactory(
-            osm_id=652825274, osm_type="NODE", osm_name="Monoprix", price_count=15
+            osm_id=652825274,
+            osm_type="NODE",
+            osm_name="Monoprix",
+            osm_lat="45.1805534",
+            osm_lon="5.7153387",
+            price_count=15,
         )
         cls.url = reverse("api:locations-detail", args=[cls.location.id])
 
@@ -83,6 +88,7 @@ class LocationDetailApiTest(TestCase):
         # existing location
         response = self.client.get(self.url)
         self.assertEqual(response.data["id"], self.location.id)
+        # self.assertEqual(response.data["osm_lat"], 45.1805534)
 
     def test_location_detail_by_osm(self):
         # 404
