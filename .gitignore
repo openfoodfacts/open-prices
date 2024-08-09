@@ -139,6 +139,6 @@ dmypy.json
 
 # Project specific
 
-static/app
-static/img/*/*
+www/app
+www/img/*/*
 gh_pages
