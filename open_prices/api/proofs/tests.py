@@ -30,9 +30,9 @@ class ProofListApiTest(TestCase):
             self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(len(response.data["results"]), 1)
-        self.assertEqual(response.data["results"][0]["id"], self.proof.id)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["items"][0]["id"], self.proof.id)
 
 
 class ProofDetailApiTest(TestCase):

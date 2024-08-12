@@ -27,9 +27,9 @@ class PriceListApiTest(TestCase):
     def test_price_list(self):
         # anonymous
         response = self.client.get(self.url)
-        self.assertEqual(response.data["count"], 3)
-        self.assertEqual(len(response.data["results"]), 3)
-        self.assertTrue("id" in response.data["results"][0])
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertTrue("id" in response.data["items"][0])
 
 
 class PriceListFilterApiTest(TestCase):
@@ -48,57 +48,57 @@ class PriceListFilterApiTest(TestCase):
     def test_price_list_order_by(self):
         url = reverse("api:prices-list") + "?order_by=-price"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 3)
-        self.assertEqual(response.data["results"][0]["price"], 50.00)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(response.data["items"][0]["price"], 50.00)
 
     def test_price_list_filter_by_product_code(self):
         url = reverse("api:prices-list") + "?product_code=8001505005707"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_price(self):
         # exact price
         url = reverse("api:prices-list") + "?price=15"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["price"], 15.00)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["price"], 15.00)
         # lte / gte
         url = reverse("api:prices-list") + "?price__gte=20"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["price"], 50.00)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["price"], 50.00)
         url = reverse("api:prices-list") + "?price__lte=20"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 2)
-        self.assertEqual(response.data["results"][0]["price"], 15.00)
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["items"][0]["price"], 15.00)
 
     def test_price_list_filter_by_currency(self):
         url = reverse("api:prices-list") + "?currency=EUR"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(response.data["total"], 2)
 
     def test_price_list_filter_by_date(self):
         # exact date
         url = reverse("api:prices-list") + "?date=2024-01-01"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["total"], 1)
         # lte / gte
         url = reverse("api:prices-list") + "?date__gte=2024-01-01"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(response.data["total"], 2)
         # month
         url = reverse("api:prices-list") + "?date__month=1"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["total"], 1)
         # year
         url = reverse("api:prices-list") + "?date__year=2024"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(response.data["total"], 2)
 
     def test_price_list_filter_by_owner(self):
         url = reverse("api:prices-list") + "?owner=user_1"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(response.data["total"], 2)
 
 
 class PriceDetailApiTest(TestCase):
