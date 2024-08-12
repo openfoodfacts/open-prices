@@ -73,16 +73,13 @@ class Location(models.Model):
         - truncate decimal fields
         - run validations
         """
-        if not self.id:
-            for field_name in self.LAT_LON_DECIMAL_FIELDS:
-                if getattr(self, field_name) is not None:
-                    setattr(
-                        self,
-                        field_name,
-                        truncate_decimal(
-                            getattr(self, field_name), max_decimal_places=7
-                        ),
-                    )
+        for field_name in self.LAT_LON_DECIMAL_FIELDS:
+            if getattr(self, field_name) is not None:
+                setattr(
+                    self,
+                    field_name,
+                    truncate_decimal(getattr(self, field_name), max_decimal_places=7),
+                )
         self.full_clean()
         super().save(*args, **kwargs)
 
