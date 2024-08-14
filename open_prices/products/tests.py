@@ -60,5 +60,7 @@ class ProductModelSaveTest(TransactionTestCase):
         ProductFactory(code="0123456789103", categories_tags=None)
         ProductFactory(code="0123456789104", categories_tags=[])
         ProductFactory(code="0123456789105", categories_tags=["test"])
+        # unique_scan_n
+        ProductFactory(code="0123456789106", unique_scans_n=None)
         # full OFF object
         ProductFactory(**PRODUCT_OFF)

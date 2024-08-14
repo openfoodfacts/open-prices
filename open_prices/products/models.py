@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import signals
 from django.dispatch import receiver
@@ -8,6 +9,8 @@ from open_prices.products import constants as product_constants
 
 
 class Product(models.Model):
+    ARRAY_FIELDS = ["categories_tags", "brands_tags", "labels_tags"]
+
     code = models.CharField(unique=True)
 
     source = models.CharField(
@@ -19,10 +22,12 @@ class Product(models.Model):
     image_url = models.CharField(blank=True, null=True)
     product_quantity = models.IntegerField(blank=True, null=True)
     product_quantity_unit = models.CharField(blank=True, null=True)
-    categories_tags = models.JSONField(blank=True, null=True)
+    categories_tags = ArrayField(
+        base_field=models.CharField(), blank=True, default=list
+    )
     brands = models.CharField(blank=True, null=True)
-    brands_tags = models.JSONField(blank=True, null=True)
-    labels_tags = models.JSONField(blank=True, null=True)
+    brands_tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
+    labels_tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
 
     nutriscore_grade = models.CharField(blank=True, null=True)
     ecoscore_grade = models.CharField(blank=True, null=True)
@@ -40,7 +45,17 @@ class Product(models.Model):
         verbose_name = "Product"
         verbose_name_plural = "Products"
 
+    def set_default_values(self):
+        for field_name in self.ARRAY_FIELDS:
+            if getattr(self, field_name) is None:
+                setattr(self, field_name, [])
+
     def save(self, *args, **kwargs):
+        """
+        - set default values
+        - run validations
+        """
+        self.set_default_values()
         self.full_clean()
         super().save(*args, **kwargs)
 
