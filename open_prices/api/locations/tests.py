@@ -20,9 +20,9 @@ class LocationListApiTest(TestCase):
     def test_location_list(self):
         # anonymous
         response = self.client.get(self.url)
-        self.assertEqual(response.data["count"], 3)
-        self.assertEqual(len(response.data["results"]), 3)
-        self.assertTrue("id" in response.data["results"][0])
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertTrue("id" in response.data["items"][0])
 
 
 class LocationListFilterApiTest(TestCase):
@@ -41,30 +41,30 @@ class LocationListFilterApiTest(TestCase):
     def test_location_list_order_by(self):
         url = reverse("api:locations-list") + "?order_by=-price_count"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 3)
-        self.assertEqual(response.data["results"][0]["price_count"], 50)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(response.data["items"][0]["price_count"], 50)
 
     def test_location_list_filter_by_osm_name(self):
         url = reverse("api:locations-list") + "?osm_name__like=monop"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["osm_name"], "Monoprix")
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["osm_name"], "Monoprix")
 
     def test_location_list_filter_by_price_count(self):
         # exact price_count
         url = reverse("api:locations-list") + "?price_count=15"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["price_count"], 15)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["price_count"], 15)
         # lte / gte
         url = reverse("api:locations-list") + "?price_count__gte=20"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["price_count"], 50)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["price_count"], 50)
         url = reverse("api:locations-list") + "?price_count__lte=20"
         response = self.client.get(url)
-        self.assertEqual(response.data["count"], 2)
-        self.assertEqual(response.data["results"][0]["price_count"], 15)
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["items"][0]["price_count"], 15)
 
 
 class LocationDetailApiTest(TestCase):

@@ -2,14 +2,18 @@ import decimal
 
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import signals
+from django.db.models import F, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from openfoodfacts.taxonomy import get_taxonomy
 
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
+from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
+from open_prices.products.models import Product
+from open_prices.proofs.models import Proof
+from open_prices.users.models import User
 
 
 class Price(models.Model):
@@ -337,25 +341,39 @@ class Price(models.Model):
 
 @receiver(signals.post_save, sender=Price)
 def price_post_create_increment_counts(sender, instance, created, **kwargs):
+    if instance.owner:
+        User.objects.filter(user_id=instance.owner).update(
+            price_count=F("price_count") + 1
+        )
     if instance.proof:
-        instance.proof.price_count += 1
-        instance.proof.save()
+        Proof.objects.filter(id=instance.proof.id).update(
+            price_count=F("price_count") + 1
+        )
     if instance.product:
-        instance.product.price_count += 1
-        instance.product.save()
+        Product.objects.filter(id=instance.product.id).update(
+            price_count=F("price_count") + 1
+        )
     if instance.location:
-        instance.location.price_count += 1
-        instance.location.save()
+        Location.objects.filter(id=instance.location.id).update(
+            price_count=F("price_count") + 1
+        )
 
 
 @receiver(signals.post_delete, sender=Price)
 def price_post_create_decrement_counts(sender, instance, **kwargs):
+    if instance.owner:
+        User.objects.filter(user_id=instance.owner).update(
+            price_count=F("price_count") - 1
+        )
     if instance.proof:
-        instance.proof.price_count -= 1
-        instance.proof.save()
+        Proof.objects.filter(id=instance.proof.id).update(
+            price_count=F("price_count") - 1
+        )
     if instance.product:
-        instance.product.price_count -= 1
-        instance.product.save()
+        Product.objects.filter(id=instance.product.id).update(
+            price_count=F("price_count") - 1
+        )
     if instance.location:
-        instance.location.price_count -= 1
-        instance.location.save()
+        Location.objects.filter(id=instance.location.id).update(
+            price_count=F("price_count") - 1
+        )

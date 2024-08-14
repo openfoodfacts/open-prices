@@ -1,4 +1,4 @@
-from django.urls import include, path
+from django.urls import path
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -6,6 +6,7 @@ from drf_spectacular.views import (
 )
 from rest_framework import routers
 
+from open_prices.api.auth.views import LoginView, SessionView
 from open_prices.api.locations.views import LocationViewSet
 from open_prices.api.prices.views import PriceViewSet
 from open_prices.api.products.views import ProductViewSet
@@ -23,7 +24,9 @@ router.register(r"v1/proofs", ProofViewSet, basename="proofs")
 router.register(r"v1/prices", PriceViewSet, basename="prices")
 
 urlpatterns = [
-    path("v1/auth/", include("open_prices.api.auth.urls")),
+    # auth urls
+    path("v1/auth", LoginView.as_view(), name="login"),
+    path("v1/session", SessionView.as_view(), name="session"),
     # health check
     path("status", StatusView.as_view(), name="status"),
     # Swagger / OpenAPI documentation

@@ -47,6 +47,15 @@ class Location(models.Model):
         verbose_name = "Location"
         verbose_name_plural = "Locations"
 
+    def truncate_lat_lon(self):
+        for field_name in self.LAT_LON_DECIMAL_FIELDS:
+            if getattr(self, field_name) is not None:
+                setattr(
+                    self,
+                    field_name,
+                    truncate_decimal(getattr(self, field_name), max_decimal_places=7),
+                )
+
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
         validation_errors = dict()
@@ -73,13 +82,7 @@ class Location(models.Model):
         - truncate decimal fields
         - run validations
         """
-        for field_name in self.LAT_LON_DECIMAL_FIELDS:
-            if getattr(self, field_name) is not None:
-                setattr(
-                    self,
-                    field_name,
-                    truncate_decimal(getattr(self, field_name), max_decimal_places=7),
-                )
+        self.truncate_lat_lon()
         self.full_clean()
         super().save(*args, **kwargs)
 

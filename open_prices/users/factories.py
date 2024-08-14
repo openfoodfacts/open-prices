@@ -1,5 +1,3 @@
-import random
-
 import factory
 import factory.fuzzy
 from factory.django import DjangoModelFactory
@@ -13,7 +11,7 @@ class UserFactory(DjangoModelFactory):
         model = User
 
     user_id = factory.Faker("user_name")
-    price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
+    # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
 
 
 class SessionFactory(DjangoModelFactory):
