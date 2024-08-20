@@ -18,6 +18,7 @@ class ProductViewSet(
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProductFilter
     ordering_fields = ["price_count"]
+    ordering = ["id"]
 
     @action(detail=False, methods=["GET"], url_path=r"code/(?P<code>\d+)")
     def get_by_code(self, request: Request, code):

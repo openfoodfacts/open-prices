@@ -7,9 +7,15 @@ class ProductFilter(django_filters.FilterSet):
     product_name__like = django_filters.CharFilter(
         field_name="product_name", lookup_expr="icontains"
     )
-    # categories_tags__contains
-    # labels_tags__contains
-    # brands_tags__contains
+    categories_tags__contains = django_filters.CharFilter(
+        field_name="categories_tags", lookup_expr="icontains"
+    )
+    labels_tags__contains = django_filters.CharFilter(
+        field_name="labels_tags", lookup_expr="icontains"
+    )
+    brands_tags__contains = django_filters.CharFilter(
+        field_name="brands_tags", lookup_expr="icontains"
+    )
     brands__like = django_filters.CharFilter(
         field_name="brands", lookup_expr="icontains"
     )
