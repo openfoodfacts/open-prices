@@ -9,6 +9,7 @@ class ProductFilter(django_filters.FilterSet):
     )
     # categories_tags__contains
     # labels_tags__contains
+    # brands_tags__contains
     brands__like = django_filters.CharFilter(
         field_name="brands", lookup_expr="icontains"
     )
