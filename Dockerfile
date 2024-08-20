@@ -43,6 +43,7 @@ ARG USER_GID=$USER_UID
 RUN groupadd -g $USER_GID off && \
     useradd -u $USER_UID -g off -m off && \
     mkdir -p /home/off && \
+    mkdir -p /home/off/.cache && \
     mkdir -p /opt/open-prices && \
     mkdir -p /opt/open-prices/data && \
     mkdir -p /opt/open-prices/img && \
