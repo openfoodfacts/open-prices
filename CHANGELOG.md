@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.32.1](https://github.com/openfoodfacts/open-prices/compare/v1.32.0...v1.32.1) (2024-08-20)
+
+
+### Bug Fixes
+
+* fix permission issue ([c6e566a](https://github.com/openfoodfacts/open-prices/commit/c6e566ad99d5229aa0a532e7535a65803365f877))
+
 ## [1.32.0](https://github.com/openfoodfacts/open-prices/compare/v1.31.1...v1.32.0) (2024-08-20)
 
 
