@@ -576,6 +576,7 @@ class ProductFilter(Filter):
     product_name__like: Optional[str] | None = None
     categories_tags__contains: Optional[str] | None = None  # custom (see crud.py)
     labels_tags__contains: Optional[str] | None = None  # custom (see crud.py)
+    brands_tags__contains: Optional[str] | None = None  # custom (see crud.py)
     brands__like: Optional[str] | None = None
     nutriscore_grade: Optional[str] | None = None
     ecoscore_grade: Optional[str] | None = None

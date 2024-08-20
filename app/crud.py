@@ -195,6 +195,11 @@ def get_products_query(filters: ProductFilter | None = None) -> Select[tuple[Pro
                 Product.labels_tags.contains([filters.labels_tags__contains])
             )
             filters.labels_tags__contains = None
+        if filters.brands_tags__contains:
+            query = query.filter(
+                Product.brands_tags.contains([filters.brands_tags__contains])
+            )
+            filters.brands_tags__contains = None
         query = filters.filter(query)
         query = filters.sort(query)
     return query
