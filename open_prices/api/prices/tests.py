@@ -15,6 +15,13 @@ from open_prices.products.models import (
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import SessionFactory
 
+PRICE_8001505005707 = {
+    "product_code": "8001505005707",
+    "price": 15,
+    "currency": "EUR",
+    "date": "2024-01-01",
+}
+
 
 class PriceListApiTest(TestCase):
     @classmethod
@@ -32,71 +39,75 @@ class PriceListApiTest(TestCase):
         self.assertTrue("id" in response.data["items"][0])
 
 
+class PriceListOrderApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:prices-list")
+        PriceFactory(price=15)
+        PriceFactory(price=0)
+        PriceFactory(price=50)
+
+    def test_price_list_order_by(self):
+        url = self.url + "?order_by=-price"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(response.data["items"][0]["price"], 50.00)  # default order
+
+
 class PriceListFilterApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        PriceFactory(
-            product_code="8001505005707",
-            price=15,
-            currency="EUR",
-            date="2024-01-01",
-            owner="user_1",
-        )
+        cls.url = reverse("api:prices-list")
+        PriceFactory(**PRICE_8001505005707, owner="user_1")
         PriceFactory(price=0, currency="EUR", date="2023-08-30", owner="user_1")
         PriceFactory(price=50, currency="USD", date="2024-06-30", owner="user_2")
 
-    def test_price_list_order_by(self):
-        url = reverse("api:prices-list") + "?order_by=-price"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
-        self.assertEqual(response.data["items"][0]["price"], 50.00)
-
     def test_price_list_filter_by_product_code(self):
-        url = reverse("api:prices-list") + "?product_code=8001505005707"
+        url = self.url + "?product_code=8001505005707"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_price(self):
         # exact price
-        url = reverse("api:prices-list") + "?price=15"
+        url = self.url + "?price=15"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["price"], 15.00)
         # lte / gte
-        url = reverse("api:prices-list") + "?price__gte=20"
+        url = self.url + "?price__gte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["price"], 50.00)
-        url = reverse("api:prices-list") + "?price__lte=20"
+        url = self.url + "?price__lte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price"], 15.00)
 
     def test_price_list_filter_by_currency(self):
-        url = reverse("api:prices-list") + "?currency=EUR"
+        url = self.url + "?currency=EUR"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
     def test_price_list_filter_by_date(self):
         # exact date
-        url = reverse("api:prices-list") + "?date=2024-01-01"
+        url = self.url + "?date=2024-01-01"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         # lte / gte
-        url = reverse("api:prices-list") + "?date__gte=2024-01-01"
+        url = self.url + "?date__gte=2024-01-01"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         # month
-        url = reverse("api:prices-list") + "?date__month=1"
+        url = self.url + "?date__month=1"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         # year
-        url = reverse("api:prices-list") + "?date__year=2024"
+        url = self.url + "?date__year=2024"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
     def test_price_list_filter_by_owner(self):
-        url = reverse("api:prices-list") + "?owner=user_1"
+        url = self.url + "?owner=user_1"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
@@ -107,10 +118,7 @@ class PriceDetailApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.price = PriceFactory(
-            product_code="8001505005707",
-            price=15,
-            currency="EUR",
-            date="2024-01-01",
+            **PRICE_8001505005707,
             owner=cls.user_session_1.user.user_id,
         )
         cls.url = reverse("api:prices-detail", args=[cls.price.id])
@@ -134,12 +142,9 @@ class PriceCreateApiTest(TestCase):
         cls.user_proof = ProofFactory(owner=cls.user_session.user.user_id)
         cls.proof_2 = ProofFactory()
         cls.data = {
-            "product_code": "8001505005707",
-            "price": 15,
-            "currency": "EUR",
+            **PRICE_8001505005707,
             "location_osm_id": 652825274,
             "location_osm_type": "NODE",
-            "date": "2024-01-01",
             "proof_id": cls.user_proof.id,
             "source": "test",
         }
@@ -233,11 +238,7 @@ class PriceUpdateApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.price = PriceFactory(
-            product_code="8001505005707",
-            price=15,
-            currency="EUR",
-            date="2024-01-01",
-            owner=cls.user_session_1.user.user_id,
+            **PRICE_8001505005707, owner=cls.user_session_1.user.user_id
         )
         cls.url = reverse("api:prices-detail", args=[cls.price.id])
         cls.data = {"currency": "USD", "product_code": "123"}
@@ -284,11 +285,7 @@ class PriceDeleteApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.price = PriceFactory(
-            product_code="8001505005707",
-            price=15,
-            currency="EUR",
-            date="2024-01-01",
-            owner=cls.user_session_1.user.user_id,
+            **PRICE_8001505005707, owner=cls.user_session_1.user.user_id
         )
         cls.url = reverse("api:prices-detail", args=[cls.price.id])
 

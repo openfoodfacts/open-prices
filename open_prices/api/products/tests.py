@@ -33,12 +33,13 @@ class ProductListApiTest(TestCase):
 class ProductListOrderApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.url = reverse("api:products-list")
         ProductFactory(price_count=15)
         ProductFactory(price_count=0)
         ProductFactory(price_count=50)
 
     def test_product_list_order_by(self):
-        url = reverse("api:products-list") + "?order_by=-price_count"
+        url = self.url + "?order_by=-price_count"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(response.data["items"][0]["price_count"], 50)
@@ -47,6 +48,7 @@ class ProductListOrderApiTest(TestCase):
 class ProductListFilterApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.url = reverse("api:products-list")
         ProductFactory(**PRODUCT_8001505005707)
         ProductFactory(
             code="0022314010100", product_name="Chestnut spread 100 g", price_count=0
@@ -56,13 +58,13 @@ class ProductListFilterApiTest(TestCase):
         )
 
     def test_product_list_filter_by_code(self):
-        url = reverse("api:products-list") + "?code=8001505005707"
+        url = self.url + "?code=8001505005707"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["code"], "8001505005707")
 
     def test_product_list_filter_by_product_name(self):
-        url = reverse("api:products-list") + "?product_name__like=rice"
+        url = self.url + "?product_name__like=rice"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(
@@ -70,36 +72,36 @@ class ProductListFilterApiTest(TestCase):
         )
 
     def test_product_list_filter_by_tags(self):
-        url = reverse("api:products-list") + "?categories_tags__contains=en:breakfasts"
+        url = self.url + "?categories_tags__contains=en:breakfasts"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(
             response.data["items"][0]["categories_tags"],
             ["en:breakfasts", "en:spreads"],
         )
-        url = reverse("api:products-list") + "?labels_tags__contains=en:no-gluten"
+        url = self.url + "?labels_tags__contains=en:no-gluten"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(
             response.data["items"][0]["labels_tags"], ["en:no-gluten", "en:organic"]
         )
-        url = reverse("api:products-list") + "?brands_tags__contains=rigoni-di-asiago"
+        url = self.url + "?brands_tags__contains=rigoni-di-asiago"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["brands_tags"], ["rigoni-di-asiago"])
 
     def test_product_list_filter_by_price_count(self):
         # exact price_count
-        url = reverse("api:products-list") + "?price_count=15"
+        url = self.url + "?price_count=15"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
         # lte / gte
-        url = reverse("api:products-list") + "?price_count__gte=20"
+        url = self.url + "?price_count__gte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["price_count"], 50)
-        url = reverse("api:products-list") + "?price_count__lte=20"
+        url = self.url + "?price_count__lte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)

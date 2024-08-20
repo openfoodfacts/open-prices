@@ -29,6 +29,7 @@ class PriceViewSet(
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = PriceFilter
     ordering_fields = ["price", "date", "created"]
+    ordering = ["created"]
 
     def get_queryset(self):
         if self.request.method in ["PATCH", "DELETE"]:
