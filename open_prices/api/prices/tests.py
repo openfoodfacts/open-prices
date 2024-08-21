@@ -6,12 +6,14 @@ from open_prices.locations.models import (
     Location,
     location_post_create_fetch_data_from_openstreetmap,
 )
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.products.models import (
     Product,
     product_post_create_fetch_data_from_openfoodfacts,
 )
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import SessionFactory
 
@@ -58,12 +60,54 @@ class PriceListFilterApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
-        PriceFactory(**PRICE_8001505005707, owner="user_1")
-        PriceFactory(price=0, currency="EUR", date="2023-08-30", owner="user_1")
-        PriceFactory(price=50, currency="USD", date="2024-06-30", owner="user_2")
+        cls.user_session = SessionFactory()
+        cls.user_proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
+        )
+        cls.user_price = PriceFactory(
+            **PRICE_8001505005707,
+            proof_id=cls.user_proof.id,
+            owner=cls.user_session.user.user_id,
+        )
+        PriceFactory(
+            product_code=None,
+            category_tag="en:croissants",
+            price_per=price_constants.PRICE_PER_UNIT,
+            price=1,
+            currency="EUR",
+            date="2023-08-30",
+            owner=cls.user_session.user.user_id,
+        )
+        PriceFactory(
+            price=50,
+            price_without_discount=70,
+            price_is_discounted=True,
+            currency="USD",
+            location_osm_id=None,
+            location_osm_type=None,
+            date="2024-06-30",
+            owner="user_2",
+        )
 
-    def test_price_list_filter_by_product_code(self):
+    def test_price_list_filter_by_product(self):
+        # product_code
         url = self.url + "?product_code=8001505005707"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["product_code"], "8001505005707")
+        # product_id__isnull
+        url = self.url + "?product_id__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["category_tag"], "en:croissants")
+        url = self.url + "?product_id__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # category_tag
+        url = self.url + "?category_tag=croissants"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
+        url = self.url + "?category_tag=en:croissants"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
 
@@ -82,11 +126,49 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price"], 15.00)
+        # price_is_discounted
+        url = self.url + "?price_is_discounted=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["price"], 50.00)
+        url = self.url + "?price_is_discounted=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
 
     def test_price_list_filter_by_currency(self):
         url = self.url + "?currency=EUR"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
+
+    def test_price_list_filter_by_location(self):
+        # location_osm_id
+        url = self.url + f"?location_osm_id={self.user_price.location_osm_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # location_id
+        url = self.url + f"?location_id={self.user_price.location_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # location_id__isnull
+        url = self.url + "?location_id__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?location_id__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+
+    def test_price_list_filter_by_proof(self):
+        # proof_id
+        url = self.url + f"?proof_id={self.user_price.proof_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # proof_id__isnull
+        url = self.url + "?proof_id__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?proof_id__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_date(self):
         # exact date
@@ -107,7 +189,7 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)
 
     def test_price_list_filter_by_owner(self):
-        url = self.url + "?owner=user_1"
+        url = self.url + f"?owner={self.user_session.user.user_id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
@@ -139,7 +221,9 @@ class PriceCreateApiTest(TestCase):
         )
         cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
-        cls.user_proof = ProofFactory(owner=cls.user_session.user.user_id)
+        cls.user_proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
+        )
         cls.proof_2 = ProofFactory()
         cls.data = {
             **PRICE_8001505005707,
