@@ -58,6 +58,21 @@ class Proof(models.Model):
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
         validation_errors = dict()
+        # proof rules
+        # - date should have the right format & not be in the future
+        if self.date:
+            if type(self.date) is str:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "date",
+                    "Parsing error. Expected format: YYYY-MM-DD",
+                )
+            elif self.date > timezone.now().date():
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "date",
+                    "Should not be in the future",
+                )
         # location rules
         # - location_osm_id should be set if location_osm_type is set
         # - location_osm_type should be set if location_osm_id is set

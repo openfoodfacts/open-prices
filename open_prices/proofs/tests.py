@@ -17,6 +17,12 @@ class ProofModelSaveTest(TestCase):
             location_post_create_fetch_data_from_openstreetmap, sender=Location
         )
 
+    def test_proof_date_validation(self):
+        for DATE_OK in [None, "2024-01-01"]:
+            ProofFactory(date=DATE_OK)
+        for DATE_NOT_OK in ["3000-01-01", "01-01-2000"]:
+            self.assertRaises(ValidationError, ProofFactory, date=DATE_NOT_OK)
+
     def test_proof_location_validation(self):
         # both location_osm_id & location_osm_type not set
         ProofFactory(location_osm_id=None, location_osm_type=None)
