@@ -118,7 +118,7 @@ class Price(models.Model):
         validation_errors = dict()
         # product rules
         # - if product_code is set, then should be a valid string
-        # - if product_code is not set, then category_tag/labels_tags/origins_tags should not be set  # noqa
+        # - if product_code is set, then category_tag/labels_tags/origins_tags should not be set  # noqa
         # - if product_code is set, then price_per should not be set
         if self.product_code:
             if not isinstance(self.product_code, str):
@@ -299,29 +299,30 @@ class Price(models.Model):
                         "proof",
                         "Proof does not belong to the current user",
                     )
-                for PROOF_FIELD in Proof.DUPLICATE_PRICE_FIELDS:
-                    proof_field_value = getattr(self.proof, PROOF_FIELD)
-                    if proof_field_value:
-                        price_field_value = getattr(self, PROOF_FIELD)
-                        if str(proof_field_value) != str(price_field_value):
-                            validation_errors = utils.add_validation_error(
-                                validation_errors,
-                                "proof",
-                                f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
-                            )
+                if proof.type in [Proof.TYPE_RECEIPT, Proof.TYPE_PRICE_TAG]:
+                    for PROOF_FIELD in Proof.DUPLICATE_PRICE_FIELDS:
+                        proof_field_value = getattr(self.proof, PROOF_FIELD)
+                        if proof_field_value:
+                            price_field_value = getattr(self, PROOF_FIELD)
+                            if str(proof_field_value) != str(price_field_value):
+                                validation_errors = utils.add_validation_error(
+                                    validation_errors,
+                                    "proof",
+                                    f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
+                                )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def set_product(self):
+    def get_or_create_product(self):
         if self.product_code:
             from open_prices.products.models import Product
 
             product, created = Product.objects.get_or_create(code=self.product_code)
             self.product = product
 
-    def set_location(self):
+    def get_or_create_location(self):
         if self.location_osm_id and self.location_osm_type:
             from open_prices.locations.models import Location
 
@@ -333,9 +334,9 @@ class Price(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         if not self.id:  # new price
-            # self.set_proof()
-            self.set_product()
-            self.set_location()
+            # self.set_proof()  # should already exist
+            self.get_or_create_product()
+            self.get_or_create_location()
         super().save(*args, **kwargs)
 
 
@@ -360,7 +361,7 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
 
 
 @receiver(signals.post_delete, sender=Price)
-def price_post_create_decrement_counts(sender, instance, **kwargs):
+def price_post_delete_decrement_counts(sender, instance, **kwargs):
     if instance.owner:
         User.objects.filter(user_id=instance.owner).update(
             price_count=F("price_count") - 1
