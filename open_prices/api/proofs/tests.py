@@ -6,15 +6,23 @@ from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
+PROOF = {"type": proof_constants.TYPE_RECEIPT, "currency": "EUR", "date": "2024-01-01"}
+
 
 class ProofListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:proofs-list")
         cls.user_session = SessionFactory()
-        cls.proof = ProofFactory(price_count=15, owner=cls.user_session.user.user_id)
+        cls.proof = ProofFactory(
+            **PROOF, price_count=15, owner=cls.user_session.user.user_id
+        )
         ProofFactory(price_count=0)
-        ProofFactory(price_count=50)
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            price_count=50,
+            owner=cls.user_session.user.user_id,
+        )
 
     def test_proof_list(self):
         # anonymous
@@ -30,9 +38,59 @@ class ProofListApiTest(TestCase):
             self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
         )
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 2)  # only user's proofs
+        self.assertEqual(len(response.data["items"]), 2)
+        self.assertEqual(
+            response.data["items"][0]["id"], self.proof.id
+        )  # default order
+
+
+class ProofListOrderApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:proofs-list")
+        cls.user_session = SessionFactory()
+        cls.proof = ProofFactory(
+            **PROOF, price_count=15, owner=cls.user_session.user.user_id
+        )
+        ProofFactory(price_count=0)
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            price_count=50,
+            owner=cls.user_session.user.user_id,
+        )
+
+    def test_proof_list_order_by(self):
+        url = self.url + "?order_by=-price_count"
+        response = self.client.get(
+            url, headers={"Authorization": f"Bearer {self.user_session.token}"}
+        )
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["items"][0]["price_count"], 50)
+
+
+class ProofListFilterApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:proofs-list")
+        cls.user_session = SessionFactory()
+        cls.proof = ProofFactory(
+            **PROOF, price_count=15, owner=cls.user_session.user.user_id
+        )
+        ProofFactory(price_count=0)
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            price_count=50,
+            owner=cls.user_session.user.user_id,
+        )
+
+    def test_proof_list_filter_by_type(self):
+        url = self.url + "?type=RECEIPT"
+        response = self.client.get(
+            url, headers={"Authorization": f"Bearer {self.user_session.token}"}
+        )
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(len(response.data["items"]), 1)
-        self.assertEqual(response.data["items"][0]["id"], self.proof.id)
+        self.assertEqual(response.data["items"][0]["price_count"], 15)
 
 
 class ProofDetailApiTest(TestCase):
@@ -41,7 +99,7 @@ class ProofDetailApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.proof = ProofFactory(
-            currency="EUR", price_count=15, owner=cls.user_session_1.user.user_id
+            **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
         )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
 
@@ -75,8 +133,7 @@ class ProofCreateApiTest(TestCase):
         cls.user_session = SessionFactory()
         cls.data = {
             # "file": open("filename.webp", "rb"),
-            "type": proof_constants.TYPE_RECEIPT,
-            "currency": "EUR",
+            **PROOF,
             "price_count": 15,
             "source": "test",
         }
@@ -128,7 +185,7 @@ class ProofUpdateApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.proof = ProofFactory(
-            currency="EUR", price_count=15, owner=cls.user_session_1.user.user_id
+            **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
         )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
         cls.data = {"currency": "USD", "price_count": 20}
@@ -173,7 +230,7 @@ class ProofDeleteApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.proof = ProofFactory(
-            currency="EUR", price_count=15, owner=cls.user_session_1.user.user_id
+            **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
         )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
 

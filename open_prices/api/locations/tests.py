@@ -8,6 +8,27 @@ from open_prices.locations.models import (
     location_post_create_fetch_data_from_openstreetmap,
 )
 
+LOCATION_NODE_652825274 = {
+    "osm_id": 652825274,
+    "osm_type": "NODE",
+    "osm_name": "Monoprix",
+    "osm_lat": "45.1805534",
+    "osm_lon": "5.7153387",
+    "price_count": 15,
+}
+LOCATION_NODE_6509705997 = {
+    "osm_id": 6509705997,
+    "osm_type": "NODE",
+    "osm_name": "Carrefour",
+    "price_count": 0,
+}
+LOCATION_WAY_872934393 = {
+    "osm_id": 872934393,
+    "osm_type": "WAY",
+    "osm_name": "Auchan",
+    "price_count": 50,
+}
+
 
 class LocationListApiTest(TestCase):
     @classmethod
@@ -23,45 +44,50 @@ class LocationListApiTest(TestCase):
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(len(response.data["items"]), 3)
         self.assertTrue("id" in response.data["items"][0])
+        self.assertEqual(response.data["items"][0]["price_count"], 15)  # default order
+
+
+class LocationListOrderApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:locations-list")
+        LocationFactory(price_count=15)
+        LocationFactory(price_count=0)
+        LocationFactory(price_count=50)
+
+    def test_location_list_order_by(self):
+        url = self.url + "?order_by=-price_count"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(response.data["items"][0]["price_count"], 50)
 
 
 class LocationListFilterApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        LocationFactory(
-            osm_id=652825274, osm_type="NODE", osm_name="Monoprix", price_count=15
-        )
-        LocationFactory(
-            osm_id=6509705997, osm_type="NODE", osm_name="Carrefour", price_count=0
-        )
-        LocationFactory(
-            osm_id=872934393, osm_type="WAY", osm_name="Auchan", price_count=50
-        )
-
-    def test_location_list_order_by(self):
-        url = reverse("api:locations-list") + "?order_by=-price_count"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
-        self.assertEqual(response.data["items"][0]["price_count"], 50)
+        cls.url = reverse("api:locations-list")
+        LocationFactory(**LOCATION_NODE_652825274)
+        LocationFactory(**LOCATION_NODE_6509705997)
+        LocationFactory(**LOCATION_WAY_872934393)
 
     def test_location_list_filter_by_osm_name(self):
-        url = reverse("api:locations-list") + "?osm_name__like=monop"
+        url = self.url + "?osm_name__like=monop"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["osm_name"], "Monoprix")
 
     def test_location_list_filter_by_price_count(self):
         # exact price_count
-        url = reverse("api:locations-list") + "?price_count=15"
+        url = self.url + "?price_count=15"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
         # lte / gte
-        url = reverse("api:locations-list") + "?price_count__gte=20"
+        url = self.url + "?price_count__gte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["price_count"], 50)
-        url = reverse("api:locations-list") + "?price_count__lte=20"
+        url = self.url + "?price_count__lte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
@@ -70,14 +96,7 @@ class LocationListFilterApiTest(TestCase):
 class LocationDetailApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location = LocationFactory(
-            osm_id=652825274,
-            osm_type="NODE",
-            osm_name="Monoprix",
-            osm_lat="45.1805534",
-            osm_lon="5.7153387",
-            price_count=15,
-        )
+        cls.location = LocationFactory(**LOCATION_NODE_652825274)
         cls.url = reverse("api:locations-detail", args=[cls.location.id])
 
     def test_location_detail(self):
@@ -113,13 +132,9 @@ class LocationCreateApiTest(TestCase):
         cls.url = reverse("api:locations-list")
 
     def test_location_create(self):
-        data = {
-            "osm_id": 652825274,
-            "osm_type": "NODE",
-            "osm_name": "Monoprix",
-            "price_count": 15,
-        }
-        response = self.client.post(self.url, data, content_type="application/json")
+        response = self.client.post(
+            self.url, LOCATION_NODE_652825274, content_type="application/json"
+        )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["osm_id"], 652825274)
         self.assertEqual(response.data["osm_type"], "NODE")
@@ -132,9 +147,7 @@ class LocationCreateApiTest(TestCase):
 class LocationUpdateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location = LocationFactory(
-            osm_id=652825274, osm_type="NODE", osm_name="Monoprix", price_count=15
-        )
+        cls.location = LocationFactory(**LOCATION_NODE_652825274)
         cls.url = reverse("api:locations-detail", args=[cls.location.id])
 
     def test_location_update_not_allowed(self):
@@ -146,9 +159,7 @@ class LocationUpdateApiTest(TestCase):
 class LocationDeleteApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location = LocationFactory(
-            osm_id=652825274, osm_type="NODE", osm_name="Monoprix", price_count=15
-        )
+        cls.location = LocationFactory(**LOCATION_NODE_652825274)
         cls.url = reverse("api:locations-detail", args=[cls.location.id])
 
     def test_location_delete_not_allowed(self):
