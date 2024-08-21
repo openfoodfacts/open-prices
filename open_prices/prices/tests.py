@@ -15,6 +15,7 @@ from open_prices.products.models import (
     Product,
     product_post_create_fetch_data_from_openfoodfacts,
 )
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
@@ -202,6 +203,12 @@ class PriceModelSaveTest(TestCase):
         for CURRENCY_NOT_OK in ["test", "None"]:
             self.assertRaises(ValidationError, PriceFactory, currency=CURRENCY_NOT_OK)
 
+    def test_price_date_validation(self):
+        for DATE_OK in [None, "2024-01-01"]:
+            PriceFactory(date=DATE_OK)
+        for DATE_NOT_OK in ["3000-01-01", "01-01-2000"]:
+            self.assertRaises(ValidationError, PriceFactory, date=DATE_NOT_OK)
+
     def test_price_location_validation(self):
         # both location_osm_id & location_osm_type not set
         PriceFactory(location_osm_id=None, location_osm_type=None)
@@ -234,6 +241,7 @@ class PriceModelSaveTest(TestCase):
     def test_price_proof_validation(self):
         self.user_session = SessionFactory()
         self.user_proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
             location_osm_id=652825274,
             location_osm_type=location_constants.OSM_TYPE_NODE,
             date="2024-06-30",

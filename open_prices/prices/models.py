@@ -12,6 +12,7 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.products.models import Product
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof
 from open_prices.users.models import User
 
@@ -216,6 +217,7 @@ class Price(models.Model):
         # - price_is_discounted must be set if price_without_discount is set
         # - price_without_discount must be greater or equal to price
         # - price_per should be set if category_tag is set
+        # - date should have the right format & not be in the future
         if self.price in [None, "true", "false", "none", "null"]:
             validation_errors = utils.add_validation_error(
                 validation_errors,
@@ -240,20 +242,33 @@ class Price(models.Model):
                         "price_without_discount",
                         "Should be greater than `price`",
                     )
-            if self.product_code:
-                if self.price_per:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "price_per",
-                        "Should not be set if `product_code` is filled",
-                    )
-            if self.category_tag:
-                if not self.price_per:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "price_per",
-                        "Should be set if `category_tag` is filled",
-                    )
+        if self.product_code:
+            if self.price_per:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "price_per",
+                    "Should not be set if `product_code` is filled",
+                )
+        if self.category_tag:
+            if not self.price_per:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "price_per",
+                    "Should be set if `category_tag` is filled",
+                )
+        if self.date:
+            if type(self.date) is str:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "date",
+                    "Parsing error. Expected format: YYYY-MM-DD",
+                )
+            elif self.date > timezone.now().date():
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "date",
+                    "Should not be in the future",
+                )
         # location rules
         # - location_osm_id should be set if location_osm_type is set
         # - location_osm_type should be set if location_osm_id is set
@@ -299,7 +314,10 @@ class Price(models.Model):
                         "proof",
                         "Proof does not belong to the current user",
                     )
-                if proof.type in [Proof.TYPE_RECEIPT, Proof.TYPE_PRICE_TAG]:
+                if proof.type in [
+                    proof_constants.TYPE_RECEIPT,
+                    proof_constants.TYPE_PRICE_TAG,
+                ]:
                     for PROOF_FIELD in Proof.DUPLICATE_PRICE_FIELDS:
                         proof_field_value = getattr(self.proof, PROOF_FIELD)
                         if proof_field_value:
