@@ -594,6 +594,7 @@ class ProductFilter(Filter):
 
 class LocationFilter(Filter):
     osm_name__like: Optional[str] | None = None
+    osm_address_city__like: Optional[str] | None = None
     osm_address_country__like: Optional[str] | None = None
     price_count: Optional[int] | None = None
     price_count__gte: Optional[int] | None = None
