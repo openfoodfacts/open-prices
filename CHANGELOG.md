@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.33.0](https://github.com/openfoodfacts/open-prices/compare/v1.32.1...v1.33.0) (2024-08-22)
+
+
+### Features
+
+* **locations:** add extra filter by osm_address_city ([eb27b72](https://github.com/openfoodfacts/open-prices/commit/eb27b72d914b6e51d2249299eef0be78aba0cdc6))
+
 ## [1.32.1](https://github.com/openfoodfacts/open-prices/compare/v1.32.0...v1.32.1) (2024-08-20)
 
 
