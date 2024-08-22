@@ -3,7 +3,7 @@ name: Container Image Build CI
 on:
   push:
     branches:
-      - main
+      - raphodn/django-5-rewrite
       - deploy-*
     tags:
       - v*.*.*
