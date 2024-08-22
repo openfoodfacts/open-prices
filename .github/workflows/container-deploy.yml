@@ -3,7 +3,9 @@ name: Container Image Deployment CI
 on:
   push:
     branches:
-      - main
+      # Temporarily use django rewrite branch,
+      # we should switch back to main once the migration to Django is done
+      - raphodn/django-5-rewrite
       - deploy-*
     tags:
       - v*.*.*
@@ -115,8 +117,10 @@ jobs:
           echo "RESTART_POLICY=always" >> .env
           # Set App variables
           echo "API_PORT=8190" >> .env
-          echo 'CORS_ALLOW_ORIGINS=["https://openfoodfacts-explorer.vercel.app", "https://prices.openfoodfacts.net", "https://prices.openfoodfacts.org"]' >> .env
+          echo "DEBUG=False" >> .env
+          echo 'ALLOWED_HOSTS=openfoodfacts-explorer.vercel.app,prices.openfoodfacts.net,prices.openfoodfacts.org' >> .env
           echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
+          echo "SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
           echo "SENTRY_DNS=${{ secrets.SENTRY_DSN }}" >> .env
           echo "POSTGRES_EXPOSE=127.0.0.1:5433" >> .env
           echo "POSTGRES_HOST=postgres.open_prices_default" >> .env

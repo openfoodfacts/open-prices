@@ -2,7 +2,7 @@ ARG PYTHON_VERSION=3.11
 
 # base python setup
 # -----------------
-FROM python:$PYTHON_VERSION-slim as python-base
+FROM python:$PYTHON_VERSION-slim AS python-base
 RUN apt-get update && \
     apt-get install --no-install-suggests --no-install-recommends -y curl && \
     apt-get autoremove --purge && \
@@ -23,7 +23,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 # building packages
 # -----------------
-FROM python-base as builder-base
+FROM python-base AS builder-base
 RUN curl -sSL https://install.python-poetry.org | python3 -
 WORKDIR $PYSETUP_PATH
 COPY poetry.lock  pyproject.toml ./
@@ -31,7 +31,7 @@ RUN poetry install --without dev
 
 # This is our final image
 # ------------------------
-FROM python-base as runtime
+FROM python-base AS runtime
 COPY --from=builder-base $VENV_PATH $VENV_PATH
 COPY --from=builder-base $POETRY_HOME $POETRY_HOME
 RUN poetry config virtualenvs.create false
@@ -43,6 +43,7 @@ ARG USER_GID=$USER_UID
 RUN groupadd -g $USER_GID off && \
     useradd -u $USER_UID -g off -m off && \
     mkdir -p /home/off && \
+    mkdir -p /home/off/.cache && \
     mkdir -p /opt/open-prices && \
     mkdir -p /opt/open-prices/data && \
     mkdir -p /opt/open-prices/img && \
@@ -67,7 +68,7 @@ CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--workers", "1"]
 
 # building dev packages
 # ----------------------
-FROM builder-base as builder-dev
+FROM builder-base AS builder-dev
 WORKDIR $PYSETUP_PATH
 COPY poetry.lock  pyproject.toml ./
 # full install, with dev packages
@@ -76,7 +77,7 @@ RUN poetry install
 # image with dev tooling
 # ----------------------
 # This image will be used by default, unless a target is specified in docker-compose.yml
-FROM runtime as runtime-dev
+FROM runtime AS runtime-dev
 COPY --from=builder-dev $VENV_PATH $VENV_PATH
 COPY --from=builder-dev $POETRY_HOME $POETRY_HOME
 # Handle possible issue with Docker being too eager after copying files
