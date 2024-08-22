@@ -16,7 +16,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYSETUP_PATH="/opt/pysetup" \
     VENV_PATH="/opt/pysetup/.venv" \
     POETRY_HOME="/opt/poetry" \
-    POETRY_VERSION=1.6.1 \
+    POETRY_VERSION=1.8.3 \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_NO_INTERACTION=1
     ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
@@ -46,20 +46,23 @@ RUN groupadd -g $USER_GID off && \
     mkdir -p /opt/open-prices && \
     mkdir -p /opt/open-prices/data && \
     mkdir -p /opt/open-prices/img && \
+    mkdir -p /opt/open-prices/static && \
     chown off:off -R /opt/open-prices /home/off
-COPY --chown=off:off app /opt/open-prices/app
-COPY --chown=off:off alembic /opt/open-prices/alembic
+COPY --chown=off:off config /opt/open-prices/config
+COPY --chown=off:off open_prices /opt/open-prices/open_prices
 
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-COPY --chown=off:off poetry.lock pyproject.toml alembic.ini /opt/open-prices/
+COPY --chown=off:off poetry.lock pyproject.toml manage.py /opt/open-prices/
 
 USER off:off
 WORKDIR /opt/open-prices
 ENTRYPOINT /docker-entrypoint.sh $0 $@
 
-CMD ["uvicorn", "app.api:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+RUN ["python", "manage.py", "collectstatic", "--noinput"]
+
+CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--workers", "1"]
 
 
 # building dev packages
