@@ -1,8 +1,6 @@
-import os
 import random
 import string
 from mimetypes import guess_extension
-from pathlib import Path
 
 from django.conf import settings
 
@@ -46,7 +44,7 @@ def store_file(file):
     # the directory ID
     # This is used to prevent the base image directory from containing too many
     # files
-    images_dir = Path(os.path.join(settings.BASE_DIR, "static/img"))
+    images_dir = settings.IMAGES_DIR
     current_dir_id = max(
         (int(p.name) for p in images_dir.iterdir() if p.is_dir() and p.name.isdigit()),
         default=1,
