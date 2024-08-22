@@ -7,6 +7,9 @@ class LocationFilter(django_filters.FilterSet):
     osm_name__like = django_filters.CharFilter(
         field_name="osm_name", lookup_expr="icontains"
     )
+    osm_address_city__like = django_filters.CharFilter(
+        field_name="osm_address_city", lookup_expr="icontains"
+    )
     osm_address_country__like = django_filters.CharFilter(
         field_name="osm_address_country", lookup_expr="icontains"
     )

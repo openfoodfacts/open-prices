@@ -32,7 +32,8 @@ class ProofViewSet(
     serializer_class = ProofFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
-    ordering_fields = ["date", "created"]
+    ordering_fields = ["date", "price_count", "created"]
+    ordering = ["created"]
 
     def get_queryset(self):
         # only return proofs owned by the current user

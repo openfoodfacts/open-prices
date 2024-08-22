@@ -21,10 +21,10 @@ OFF_FIELDS = [
     "product_name",
     "product_quantity",
     "product_quantity_unit",
-    # "categories_tags",
+    "categories_tags",
     "brands",
-    # "brands_tags",
-    # "labels_tags",
+    "brands_tags",
+    "labels_tags",
     "image_url",
     "nutriscore_grade",
     "ecoscore_grade",
@@ -51,16 +51,6 @@ def normalize_product_fields(product: JSONType) -> JSONType:
         # If the product quantity is too high, it's probably an
         # error, and may cause an OutOfRangeError in the database
         product["product_quantity"] = None
-
-    # Some products have null unique_scans_n
-    if product.get("unique_scans_n") is None:
-        product["unique_scans_n"] = 0
-
-    for key in ("categories_tags", "labels_tags", "brands_tags"):
-        if key in product and product[key] is None:
-            # Set the field to an empty list if it's None
-            product[key] = []
-
     return product
 
 

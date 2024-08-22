@@ -18,6 +18,7 @@ from open_prices.products.models import (
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
+from open_prices.users.models import User
 
 
 class PriceModelSaveTest(TestCase):
@@ -318,6 +319,9 @@ class PriceModelSaveTest(TestCase):
             product_code=product.code,
             owner=user_session.user.user_id,
         )
+        self.assertEqual(
+            User.objects.get(user_id=user_session.user.user_id).price_count, 1
+        )
         self.assertEqual(Proof.objects.get(id=user_proof_1.id).price_count, 1)
         self.assertEqual(Location.objects.get(id=location.id).price_count, 1)
         self.assertEqual(Product.objects.get(id=product.id).price_count, 1)
@@ -327,6 +331,9 @@ class PriceModelSaveTest(TestCase):
             location_osm_type=location.osm_type,
             product_code=product.code,
             owner=user_session.user.user_id,
+        )
+        self.assertEqual(
+            User.objects.get(user_id=user_session.user.user_id).price_count, 2
         )
         self.assertEqual(Proof.objects.get(id=user_proof_2.id).price_count, 1)
         self.assertEqual(Location.objects.get(id=location.id).price_count, 2)
@@ -346,10 +353,16 @@ class PriceModelDeleteTest(TestCase):
             product_code=product.code,
             owner=user_session.user.user_id,
         )
+        self.assertEqual(
+            User.objects.get(user_id=user_session.user.user_id).price_count, 1
+        )
         self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 1)
         self.assertEqual(Location.objects.get(id=location.id).price_count, 1)
         self.assertEqual(Product.objects.get(id=product.id).price_count, 1)
         price.delete()
+        self.assertEqual(
+            User.objects.get(user_id=user_session.user.user_id).price_count, 0
+        )
         self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 0)
         self.assertEqual(Location.objects.get(id=location.id).price_count, 0)
         self.assertEqual(Product.objects.get(id=product.id).price_count, 0)

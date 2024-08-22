@@ -29,6 +29,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "corsheaders",  # django-cors-headers
     "rest_framework",  # djangorestframework
     "django_filters",  # django-filter
     "drf_spectacular",  # drf-spectacular
@@ -53,6 +54,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -143,6 +145,13 @@ STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+# Security
+# ------------------------------------------------------------------------------
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+
 # Django REST Framework (DRF) & django-filters & drf-spectacular
 # https://www.django-rest-framework.org/
 # https://django-filter.readthedocs.io/
@@ -155,7 +164,7 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "open_prices.common.middleware.custom_exception_handler",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "ORDERING_PARAM": "order_by",
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "DEFAULT_PAGINATION_CLASS": "open_prices.api.pagination.CustomPagination",
     "PAGE_SIZE": 100,
     "COERCE_DECIMAL_TO_STRING": False,
 }

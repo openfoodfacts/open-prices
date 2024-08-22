@@ -4,11 +4,19 @@ from open_prices.prices.models import Price
 
 
 class PriceFilter(django_filters.FilterSet):
-    # TODO: product_id__isnull
+    product_id__isnull = django_filters.BooleanFilter(
+        field_name="product_id", lookup_expr="isnull"
+    )
     price__gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
     price__gte = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     price__lt = django_filters.NumberFilter(field_name="price", lookup_expr="lt")
     price__lte = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
+    location_id__isnull = django_filters.BooleanFilter(
+        field_name="location_id", lookup_expr="isnull"
+    )
+    proof_id__isnull = django_filters.BooleanFilter(
+        field_name="proof_id", lookup_expr="isnull"
+    )
     date__gt = django_filters.DateFilter(field_name="date", lookup_expr="gt")
     date__gte = django_filters.DateFilter(field_name="date", lookup_expr="gte")
     date__lt = django_filters.DateFilter(field_name="date", lookup_expr="lt")

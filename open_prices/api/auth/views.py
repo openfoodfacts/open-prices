@@ -25,7 +25,7 @@ from open_prices.users.utils import get_or_create_session
 class LoginView(APIView):
     serializer_class = LoginSerializer
 
-    @extend_schema(responses=SessionResponseSerializer)
+    @extend_schema(responses=SessionResponseSerializer, tags=["auth"])
     def post(self, request: Request) -> Response:
         """
         Authentication: provide username/password
@@ -85,6 +85,7 @@ class SessionView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = SessionFullSerializer
 
+    @extend_schema(tags=["auth"])
     def get(self, request: Request) -> Response:
         session = get_request_session(request)
         return Response(
@@ -96,6 +97,7 @@ class SessionView(APIView):
             }
         )
 
+    @extend_schema(tags=["auth"])
     def delete(self, request: Request) -> Response:
         session = get_request_session(request)
         session.delete()
