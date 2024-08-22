@@ -29,4 +29,4 @@ services:
 
   scheduler:
     <<: *api-base
-    command: ["python", "-m", "app", "run-scheduler"]
+    command: ["python", "manage.py", "qcluster"]

@@ -153,7 +153,8 @@ create_external_volumes:
 
 # TODO: update to Django migrate command
 migrate-db:
-	@echo "🥫 Migrating database … (to be implemented)"
+	@echo "🥫 Migrating database …"
+	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py migrate
 
 add-db-revision: guard-message
 	${DOCKER_COMPOSE} run --rm --no-deps api alembic revision --autogenerate -m "${message}"

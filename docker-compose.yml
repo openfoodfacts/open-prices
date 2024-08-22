@@ -29,7 +29,7 @@ services:
 
   scheduler:
     <<: *api-common
-    command: ["python", "-m", "app", "run-scheduler"]
+    command: ["python", "manage.py", "qcluster"]
     volumes:
       - images:/opt/open-prices/img
       - data-dump:/opt/open-prices/data
