@@ -28,7 +28,7 @@ urlpatterns = [
     path("v1/auth", LoginView.as_view(), name="login"),
     path("v1/session", SessionView.as_view(), name="session"),
     # health check
-    path("status", StatusView.as_view(), name="status"),
+    path("v1/status", StatusView.as_view(), name="status"),
     # Swagger / OpenAPI documentation
     path("schema", SpectacularAPIView.as_view(), name="schema"),
     path(
