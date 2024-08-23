@@ -12,6 +12,7 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.products.models import Product
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof
 from open_prices.users.models import User
 
@@ -118,7 +119,7 @@ class Price(models.Model):
         validation_errors = dict()
         # product rules
         # - if product_code is set, then should be a valid string
-        # - if product_code is not set, then category_tag/labels_tags/origins_tags should not be set  # noqa
+        # - if product_code is set, then category_tag/labels_tags/origins_tags should not be set  # noqa
         # - if product_code is set, then price_per should not be set
         if self.product_code:
             if not isinstance(self.product_code, str):
@@ -216,6 +217,7 @@ class Price(models.Model):
         # - price_is_discounted must be set if price_without_discount is set
         # - price_without_discount must be greater or equal to price
         # - price_per should be set if category_tag is set
+        # - date should have the right format & not be in the future
         if self.price in [None, "true", "false", "none", "null"]:
             validation_errors = utils.add_validation_error(
                 validation_errors,
@@ -240,20 +242,33 @@ class Price(models.Model):
                         "price_without_discount",
                         "Should be greater than `price`",
                     )
-            if self.product_code:
-                if self.price_per:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "price_per",
-                        "Should not be set if `product_code` is filled",
-                    )
-            if self.category_tag:
-                if not self.price_per:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "price_per",
-                        "Should be set if `category_tag` is filled",
-                    )
+        if self.product_code:
+            if self.price_per:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "price_per",
+                    "Should not be set if `product_code` is filled",
+                )
+        if self.category_tag:
+            if not self.price_per:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "price_per",
+                    "Should be set if `category_tag` is filled",
+                )
+        if self.date:
+            if type(self.date) is str:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "date",
+                    "Parsing error. Expected format: YYYY-MM-DD",
+                )
+            elif self.date > timezone.now().date():
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "date",
+                    "Should not be in the future",
+                )
         # location rules
         # - location_osm_id should be set if location_osm_type is set
         # - location_osm_type should be set if location_osm_id is set
@@ -299,29 +314,33 @@ class Price(models.Model):
                         "proof",
                         "Proof does not belong to the current user",
                     )
-                for PROOF_FIELD in Proof.DUPLICATE_PRICE_FIELDS:
-                    proof_field_value = getattr(self.proof, PROOF_FIELD)
-                    if proof_field_value:
-                        price_field_value = getattr(self, PROOF_FIELD)
-                        if str(proof_field_value) != str(price_field_value):
-                            validation_errors = utils.add_validation_error(
-                                validation_errors,
-                                "proof",
-                                f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
-                            )
+                if proof.type in [
+                    proof_constants.TYPE_RECEIPT,
+                    proof_constants.TYPE_PRICE_TAG,
+                ]:
+                    for PROOF_FIELD in Proof.DUPLICATE_PRICE_FIELDS:
+                        proof_field_value = getattr(self.proof, PROOF_FIELD)
+                        if proof_field_value:
+                            price_field_value = getattr(self, PROOF_FIELD)
+                            if str(proof_field_value) != str(price_field_value):
+                                validation_errors = utils.add_validation_error(
+                                    validation_errors,
+                                    "proof",
+                                    f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
+                                )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def set_product(self):
+    def get_or_create_product(self):
         if self.product_code:
             from open_prices.products.models import Product
 
             product, created = Product.objects.get_or_create(code=self.product_code)
             self.product = product
 
-    def set_location(self):
+    def get_or_create_location(self):
         if self.location_osm_id and self.location_osm_type:
             from open_prices.locations.models import Location
 
@@ -333,9 +352,9 @@ class Price(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         if not self.id:  # new price
-            # self.set_proof()
-            self.set_product()
-            self.set_location()
+            # self.set_proof()  # should already exist
+            self.get_or_create_product()
+            self.get_or_create_location()
         super().save(*args, **kwargs)
 
 
@@ -360,7 +379,7 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
 
 
 @receiver(signals.post_delete, sender=Price)
-def price_post_create_decrement_counts(sender, instance, **kwargs):
+def price_post_delete_decrement_counts(sender, instance, **kwargs):
     if instance.owner:
         User.objects.filter(user_id=instance.owner).update(
             price_count=F("price_count") - 1
