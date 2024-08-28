@@ -39,6 +39,38 @@ class PriceListApiTest(TestCase):
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(len(response.data["items"]), 3)
         self.assertTrue("id" in response.data["items"][0])
+        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
+
+
+class PriceListPaginationApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:prices-list")
+        PriceFactory(price=15)
+        PriceFactory(price=0)
+        PriceFactory(price=50)
+
+    def test_price_list_size(self):
+        # default
+        response = self.client.get(self.url)
+        for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
+            with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
+                self.assertTrue(PAGINATION_KEY in response.data)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(response.data["pages"], 1)
+        self.assertEqual(response.data["size"], 100)
+        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
+        # size=1
+        url = self.url + "?size=1"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(response.data["pages"], 3)
+        self.assertEqual(response.data["size"], 1)
+        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
 
 
 class PriceListOrderApiTest(TestCase):
@@ -53,7 +85,7 @@ class PriceListOrderApiTest(TestCase):
         url = self.url + "?order_by=-price"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
-        self.assertEqual(response.data["items"][0]["price"], 50.00)  # default order
+        self.assertEqual(response.data["items"][0]["price"], 50.00)
 
 
 class PriceListFilterApiTest(TestCase):
@@ -88,6 +120,10 @@ class PriceListFilterApiTest(TestCase):
             date="2024-06-30",
             owner="user_2",
         )
+
+    def test_price_list_without_filter(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.data["total"], 3)
 
     def test_price_list_filter_by_product(self):
         # product_code
@@ -192,6 +228,14 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + f"?owner={self.user_session.user.user_id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
+
+    def test_price_list_filter_by_created(self):
+        url = self.url + "?created__gte=2024-01-01T00:00:00Z"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        url = self.url + "?created__lte=2024-01-01T00:00:00Z"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
 
 class PriceDetailApiTest(TestCase):
