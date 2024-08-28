@@ -2,11 +2,11 @@ name: Open Prices unit and integration tests
 
 on:
   push:
-    paths:
-      - "**/app/**"
+    paths:  # Django code
+      - "config/**"
+      - "open_prices/**"
       - "pyproject.toml"
       - "poetry.lock"
-      - "tests/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
