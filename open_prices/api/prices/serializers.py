@@ -29,7 +29,7 @@ class PriceSerializer(serializers.ModelSerializer):
 class PriceFullSerializer(PriceSerializer):
     product = ProductFullSerializer()
     location = LocationSerializer()
-    proof = ProofSerializer()
+    proof = ProofSerializer()  # without location object
 
     class Meta:
         model = Price
