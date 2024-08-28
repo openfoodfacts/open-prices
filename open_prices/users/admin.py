@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from open_prices.users.models import User, Session
+from open_prices.users.models import Session, User
 
 
 @admin.register(User)
