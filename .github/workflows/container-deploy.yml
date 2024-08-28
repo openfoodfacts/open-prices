@@ -121,7 +121,7 @@ jobs:
           echo 'ALLOWED_HOSTS=openfoodfacts-explorer.vercel.app,prices.openfoodfacts.net,prices.openfoodfacts.org' >> .env
           echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
           echo "SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
-          echo "SENTRY_DNS=${{ secrets.SENTRY_DSN }}" >> .env
+          echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
           echo "POSTGRES_EXPOSE=127.0.0.1:5433" >> .env
           echo "POSTGRES_HOST=postgres.open_prices_default" >> .env
           echo "POSTGRES_DB=postgres" >> .env

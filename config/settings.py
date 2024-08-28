@@ -207,6 +207,25 @@ Q_CLUSTER = {
 }
 
 
+# Sentry
+# https://docs.sentry.io/platforms/python/integrations/django/
+# ------------------------------------------------------------------------------
+
+if not DEBUG:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        integrations=[DjangoIntegration()],
+        # Set traces_sample_rate to 1.0 to capture 100% of transactions for tracing.  # noqa
+        traces_sample_rate=1.0,
+        # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.  # noqa
+        # We recommend adjusting this value in production.
+        # profiles_sample_rate=1.0,
+    )
+
+
 # Django Debug Toolbar
 # https://django-debug-toolbar.readthedocs.io/
 # ------------------------------------------------------------------------------

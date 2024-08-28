@@ -11,7 +11,7 @@ x-api-common: &api-common
     - DEBUG
     - ALLOWED_HOSTS
     - OAUTH2_SERVER_URL
-    - SENTRY_DNS
+    - SENTRY_DSN
     - LOG_LEVEL
   networks:
     - default

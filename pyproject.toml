@@ -50,7 +50,6 @@ openfoodfacts = "0.2.1"
 psycopg2-binary = "~2.9.9"
 python-multipart = "~0.0.7"
 requests = "~2.31.0"
-sentry-sdk = {extras = ["fastapi"], version = "~1.35.0"}
 osmpythontools = "^0.3.5"
 typer = "~0.9.0"
 django = "^5.0.7"
@@ -66,6 +65,7 @@ blessed = "^1.20.0"
 ipython = "^8.26.0"
 gunicorn = "^22.0.0"
 django-cors-headers = "^4.4.0"
+sentry-sdk = {extras = ["django"], version = "^2.13.0"}
 
 [tool.poetry.group.dev.dependencies]
 black = "~23.12.1"
