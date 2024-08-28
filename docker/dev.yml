@@ -22,6 +22,7 @@ x-api-base: &api-base
     - ./alembic:/opt/open-prices/alembic
     # mount tests
     - ./tests:/opt/open-prices/tests
+    - ./manage.py:/opt/open-prices/manage.py
 
 services:
   api:
