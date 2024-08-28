@@ -364,16 +364,16 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
         User.objects.filter(user_id=instance.owner).update(
             price_count=F("price_count") + 1
         )
-    if instance.proof:
-        Proof.objects.filter(id=instance.proof.id).update(
+    if instance.proof_id:
+        Proof.objects.filter(id=instance.proof_id).update(
             price_count=F("price_count") + 1
         )
-    if instance.product:
-        Product.objects.filter(id=instance.product.id).update(
+    if instance.product_id:
+        Product.objects.filter(id=instance.product_id).update(
             price_count=F("price_count") + 1
         )
-    if instance.location:
-        Location.objects.filter(id=instance.location.id).update(
+    if instance.location_id:
+        Location.objects.filter(id=instance.location_id).update(
             price_count=F("price_count") + 1
         )
 
@@ -384,15 +384,15 @@ def price_post_delete_decrement_counts(sender, instance, **kwargs):
         User.objects.filter(user_id=instance.owner).update(
             price_count=F("price_count") - 1
         )
-    if instance.proof:
-        Proof.objects.filter(id=instance.proof.id).update(
+    if instance.proof_id:
+        Proof.objects.filter(id=instance.proof_id).update(
             price_count=F("price_count") - 1
         )
-    if instance.product:
-        Product.objects.filter(id=instance.product.id).update(
+    if instance.product_id:
+        Product.objects.filter(id=instance.product_id).update(
             price_count=F("price_count") - 1
         )
-    if instance.location:
+    if instance.location_id:
         Location.objects.filter(id=instance.location.id).update(
             price_count=F("price_count") - 1
         )
