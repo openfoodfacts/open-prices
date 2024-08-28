@@ -5,7 +5,7 @@ on:
     branches:
       # Temporarily use django rewrite branch,
       # we should switch back to main once the migration to Django is done
-      - raphodn/django-5-rewrite
+      - main
       - deploy-*
     tags:
       - v*.*.*
