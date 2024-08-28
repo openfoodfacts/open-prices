@@ -11,6 +11,8 @@ class CustomPagination(pagination.PageNumberPagination):
     - previous -> ?
     """
 
+    page_size_query_param = "size"
+
     def get_paginated_response(self, data):
         return Response(
             {
