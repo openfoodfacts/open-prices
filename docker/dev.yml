@@ -1,8 +1,10 @@
 # this file setup various thinks that are for dev environment
 
 x-api-base: &api-base
+  image: openfoodfacts/robotoff:dev
   build:
     context: .
+    target: runtime-dev
     args:
       USER_UID: ${USER_UID:-1000}
       USER_GID: ${USER_GID:-1000}
