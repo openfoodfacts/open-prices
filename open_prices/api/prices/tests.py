@@ -121,6 +121,10 @@ class PriceListFilterApiTest(TestCase):
             owner="user_2",
         )
 
+    def test_price_list_without_filter(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.data["total"], 3)
+
     def test_price_list_filter_by_product(self):
         # product_code
         url = self.url + "?product_code=8001505005707"
@@ -224,6 +228,14 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + f"?owner={self.user_session.user.user_id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
+
+    def test_price_list_filter_by_created(self):
+        url = self.url + "?created__gte=2024-01-01T00:00:00Z"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        url = self.url + "?created__lte=2024-01-01T00:00:00Z"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
 
 class PriceDetailApiTest(TestCase):
