@@ -151,9 +151,10 @@ create_external_volumes:
 	docker volume create open_prices_data-dump
 
 
+# TODO: update to Django migrate command
 migrate-db:
 	@echo "🥫 Migrating database …"
-	${DOCKER_COMPOSE} run --rm --no-deps api poetry run alembic upgrade head
+	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py migrate
 
 add-db-revision: guard-message
 	${DOCKER_COMPOSE} run --rm --no-deps api alembic revision --autogenerate -m "${message}"

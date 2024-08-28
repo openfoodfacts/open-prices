@@ -4,3 +4,10 @@ volumes:
   postgres-data:
     external: true
     name: ${COMPOSE_PROJECT_NAME:-open_prices}_postgres-data
+  images:
+    external: true
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_images
+  # Store the daily data dump in a volume
+  data-dump:
+    external: true
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_data-dump

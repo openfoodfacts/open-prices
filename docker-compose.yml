@@ -7,9 +7,11 @@ x-api-common: &api-common
     - POSTGRES_PASSWORD
     - POSTGRES_HOST
     - POSTGRES_PORT
-    - CORS_ALLOW_ORIGINS
+    - SECRET_KEY
+    - DEBUG
+    - ALLOWED_HOSTS
     - OAUTH2_SERVER_URL
-    - SENTRY_DNS
+    - SENTRY_DSN
     - LOG_LEVEL
   networks:
     - default
@@ -21,12 +23,13 @@ services:
       - images:/opt/open-prices/img
       - data-dump:/opt/open-prices/data
       - home_cache:/home/off/.cache
+      - ./static:/opt/open-prices/static
     depends_on:
       - postgres
 
   scheduler:
     <<: *api-common
-    command: ["python", "-m", "app", "run-scheduler"]
+    command: ["python", "manage.py", "qcluster"]
     volumes:
       - images:/opt/open-prices/img
       - data-dump:/opt/open-prices/data
@@ -55,7 +58,9 @@ services:
     volumes:
       # Mount the nginx configuration file
       - ./nginx.conf:/etc/nginx/nginx.conf
-      # Mount the static files
+      # Mount the static files (for index & vue.js app)
+      - ./www:/var/www
+      # Mount the Django staticfiles
       - ./static:/var/static
       # Mount the images
       - images:/var/img
@@ -76,3 +81,5 @@ volumes:
   # store ~/.cache in a volume
   home_cache:
     name: ${COMPOSE_PROJECT_NAME:-open_prices}_home_cache
+  static:
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_static

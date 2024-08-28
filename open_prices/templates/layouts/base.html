@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>{% block title %} - Open Prices{% endblock %}</title>
+
+        <link rel="stylesheet" href="https://static.openfoodfacts.org/css/dist/app-ltr.css?v=1699366348" data-base-layout="true">
+        <link rel="stylesheet" href="https://static.openfoodfacts.org/css/dist/jqueryui/themes/base/jquery-ui.css" data-base-layout="true">
+        <link rel="stylesheet" href="https://static.openfoodfacts.org/css/dist/select2.min.css">
+
+        {% block extra_css %}{% endblock %}
+
+        {% block extra_head %}{% endblock %}
+    </head>
+    <body>
+        {% block header %}{% endblock %}
+
+        <main id="main" role="main">
+            {% block breadcrumbs %}{% endblock %}
+            {% block content %}{% endblock %}
+        </main>
+
+        {% block footer %}{% endblock %}
+
+        {% block script %}{% endblock %}
+    </body>
+</html>
