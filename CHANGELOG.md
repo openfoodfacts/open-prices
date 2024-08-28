@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.33.0](https://github.com/openfoodfacts/open-prices/compare/v1.32.1...v1.33.0) (2024-08-22)
+
+
+### Features
+
+* **locations:** add extra filter by osm_address_city ([eb27b72](https://github.com/openfoodfacts/open-prices/commit/eb27b72d914b6e51d2249299eef0be78aba0cdc6))
+
+## [1.32.1](https://github.com/openfoodfacts/open-prices/compare/v1.32.0...v1.32.1) (2024-08-20)
+
+
+### Bug Fixes
+
+* fix permission issue ([c6e566a](https://github.com/openfoodfacts/open-prices/commit/c6e566ad99d5229aa0a532e7535a65803365f877))
+
+## [1.32.0](https://github.com/openfoodfacts/open-prices/compare/v1.31.1...v1.32.0) (2024-08-20)
+
+
+### Features
+
+* **products:** new filter by brands_tags ([#390](https://github.com/openfoodfacts/open-prices/issues/390)) ([a4f77c0](https://github.com/openfoodfacts/open-prices/commit/a4f77c0785acdf3ea804e198ec52e95426efe5dd))
+
+
+### Technical
+
+* add home_cache volume ([#361](https://github.com/openfoodfacts/open-prices/issues/361)) ([3ec9632](https://github.com/openfoodfacts/open-prices/commit/3ec96325dba4557eff59dfa9ba259b5ce668f5ad))
+* Create label.yml ([4e9d0be](https://github.com/openfoodfacts/open-prices/commit/4e9d0bebfd0059b1347e630b2faf41eb8327650b))
+* Create labeler.yml ([eae407a](https://github.com/openfoodfacts/open-prices/commit/eae407ad816d5720e2ae6548c7adf1054ef5ff4a))
+* fix unit test ([#359](https://github.com/openfoodfacts/open-prices/issues/359)) ([7ca1d2f](https://github.com/openfoodfacts/open-prices/commit/7ca1d2ffc0445da2993e383af175a42fb68b7c42))
+
 ## [1.31.1](https://github.com/openfoodfacts/open-prices/compare/v1.31.0...v1.31.1) (2024-07-15)
 
 
