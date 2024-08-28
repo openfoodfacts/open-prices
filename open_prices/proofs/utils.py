@@ -7,6 +7,7 @@ from django.conf import settings
 
 def get_file_extension_and_mimetype(file) -> tuple[str, str]:
     """Get the extension and mimetype of the file.
+
     Defaults to '.bin', 'application/octet-stream'.
     Also manage webp case: https://stackoverflow.com/a/67938698/4293684
     """
