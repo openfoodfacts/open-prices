@@ -40,6 +40,7 @@ jobs:
           # Use dev compose file to build the image locally (instead of pulling image)
           echo "COMPOSE_PATH_SEPARATOR=;" >> .env
           echo "COMPOSE_FILE=docker-compose.yml;docker/dev.yml" >> .env
+          echo "COMPOSE_PROJECT_NAME=open_prices" >> .env
 
       - name: Launch tests
         run: make tests
