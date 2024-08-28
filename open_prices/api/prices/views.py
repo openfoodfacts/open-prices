@@ -32,7 +32,9 @@ class PriceViewSet(
     ordering = ["created"]
 
     def get_queryset(self):
-        if self.request.method in ["PATCH", "DELETE"]:
+        if self.request.method in ["GET"]:
+            return self.queryset.select_related("product", "location", "proof")
+        elif self.request.method in ["PATCH", "DELETE"]:
             # only return prices owned by the current user
             if self.request.user.is_authenticated:
                 return Price.objects.filter(owner=self.request.user.user_id)
