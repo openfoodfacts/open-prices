@@ -1,6 +1,12 @@
+from django.db.models import signals
 from django.test import TestCase
 from django.urls import reverse
 
+from open_prices.locations import constants as location_constants
+from open_prices.locations.models import (
+    Location,
+    location_post_create_fetch_data_from_openstreetmap,
+)
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
@@ -20,6 +26,8 @@ class ProofListApiTest(TestCase):
         ProofFactory(price_count=0)
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=652825274,
+            location_osm_type=location_constants.OSM_TYPE_NODE,
             price_count=50,
             owner=cls.user_session.user.user_id,
         )
@@ -34,15 +42,16 @@ class ProofListApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
         # authenticated
-        response = self.client.get(
-            self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["total"], 2)  # only user's proofs
-        self.assertEqual(len(response.data["items"]), 2)
-        self.assertEqual(
-            response.data["items"][0]["id"], self.proof.id
-        )  # default order
+        with self.assertNumQueries(4 + 1):  # thanks to select_related
+            response = self.client.get(
+                self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["total"], 2)  # only user's proofs
+            self.assertEqual(len(response.data["items"]), 2)
+            self.assertEqual(
+                response.data["items"][0]["id"], self.proof.id
+            )  # default order
 
 
 class ProofListOrderApiTest(TestCase):
@@ -129,6 +138,9 @@ class ProofDetailApiTest(TestCase):
 class ProofCreateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        signals.post_save.disconnect(
+            location_post_create_fetch_data_from_openstreetmap, sender=Location
+        )
         cls.url = reverse("api:proofs-upload")
         cls.user_session = SessionFactory()
         cls.data = {

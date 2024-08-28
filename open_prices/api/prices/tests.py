@@ -35,11 +35,12 @@ class PriceListApiTest(TestCase):
 
     def test_price_list(self):
         # anonymous
-        response = self.client.get(self.url)
-        self.assertEqual(response.data["total"], 3)
-        self.assertEqual(len(response.data["items"]), 3)
-        self.assertTrue("id" in response.data["items"][0])
-        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
+        with self.assertNumQueries(1 + 1):  # thanks to select_related
+            response = self.client.get(self.url)
+            self.assertEqual(response.data["total"], 3)
+            self.assertEqual(len(response.data["items"]), 3)
+            self.assertTrue("id" in response.data["items"][0])
+            self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
 
 
 class PriceListPaginationApiTest(TestCase):

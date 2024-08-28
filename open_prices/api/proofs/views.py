@@ -38,7 +38,10 @@ class ProofViewSet(
     def get_queryset(self):
         # only return proofs owned by the current user
         if self.request.user.is_authenticated:
-            return Proof.objects.filter(owner=self.request.user.user_id)
+            queryset = Proof.objects.filter(owner=self.request.user.user_id)
+            if self.request.method in ["GET"]:
+                return queryset.select_related("location")
+            return queryset
         return self.queryset
 
     def get_serializer_class(self):
