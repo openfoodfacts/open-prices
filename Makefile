@@ -124,19 +124,12 @@ docs:
 
 checks: toml-check flake8 black-check mypy isort-check docs
 
+tests: django-tests
 
-tests: unit-tests integration-tests
-
-unit-tests:
+django-tests:
 	@echo "🥫 Running tests …"
 	# change project name to run in isolation
-	${DOCKER_COMPOSE_TEST} run --rm api poetry run pytest tests/unit
-
-integration-tests:
-	@echo "🥫 Running integration tests …"
-	# change project name to run in isolation
-	${DOCKER_COMPOSE_TEST} run --rm api poetry run pytest tests/integration
-	( ${DOCKER_COMPOSE_TEST} down -v || true )
+	${DOCKER_COMPOSE_TEST} run --rm api poetry run python3 manage.py test
 
 
 #------------#
