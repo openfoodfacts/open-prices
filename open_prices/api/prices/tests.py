@@ -15,6 +15,7 @@ from open_prices.products.models import (
 )
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
 PRICE_8001505005707 = {
@@ -342,8 +343,22 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         # with proof, product & location
         self.assertEqual(response.data["proof"]["id"], self.user_proof.id)
+        self.assertEqual(
+            response.data["proof"]["price_count"], 0
+        )  # not yet incremented
+        self.assertEqual(Proof.objects.get(id=self.user_proof.id).price_count, 1)
         self.assertEqual(response.data["product"]["code"], "8001505005707")
+        self.assertEqual(
+            response.data["product"]["price_count"], 0
+        )  # not yet incremented
+        self.assertEqual(Product.objects.get(code="8001505005707").price_count, 1)
         self.assertEqual(response.data["location"]["osm_id"], 652825274)
+        self.assertEqual(
+            response.data["location"]["price_count"], 0
+        )  # not yet incremented
+        self.assertEqual(
+            Location.objects.get(osm_id=652825274, osm_type="NODE").price_count, 1
+        )
         p = Price.objects.last()
         self.assertEqual(p.source, "API")  # default value
 

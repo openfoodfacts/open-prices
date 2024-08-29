@@ -1,7 +1,7 @@
 # this file setup various thinks that are for dev environment
 
 x-api-base: &api-base
-  image: openfoodfacts/robotoff:dev
+  image: openfoodfacts/open-prices:dev
   build:
     context: .
     target: runtime-dev
