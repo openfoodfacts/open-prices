@@ -3,8 +3,6 @@ name: Container Image Deployment CI
 on:
   push:
     branches:
-      # Temporarily use django rewrite branch,
-      # we should switch back to main once the migration to Django is done
       - main
       - deploy-*
     tags:

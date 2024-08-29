@@ -2,11 +2,6 @@ name: Open Prices unit and integration tests
 
 on:
   push:
-    paths:  # Django code
-      - "config/**"
-      - "open_prices/**"
-      - "pyproject.toml"
-      - "poetry.lock"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -37,9 +32,8 @@ jobs:
           # align user id
           echo "USER_UID=$UID" >> .env
           echo "PYTHON_VERSION=${{ matrix.python-version }}" >> .env
-          # Use dev compose file to build the image locally (instead of pulling image)
-          echo "COMPOSE_PATH_SEPARATOR=;" >> .env
-          echo "COMPOSE_FILE=docker-compose.yml;docker/dev.yml" >> .env
 
       - name: Launch tests
-        run: make tests
+        run: |
+          make build
+          make tests
