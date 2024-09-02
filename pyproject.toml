@@ -19,9 +19,6 @@ profile = "black"
 strict = true
 disable_error_code = ["no-untyped-call", "no-any-return"]
 python_version = "3.11"
-exclude = [
-  'alembic/',
-]
 plugins = [
   "sqlalchemy.ext.mypy.plugin",
   "pydantic.mypy"

@@ -1,3 +1,11 @@
+#!/usr/bin/make
+
+ifneq (,$(wildcard ./.env))
+    -include .env
+    -include .envrc
+    export
+endif
+
 MOUNT_POINT ?= /mnt
 DOCKER_LOCAL_DATA ?= /srv/off/docker_data
 ENV_FILE ?= .env
@@ -8,11 +16,8 @@ export USER_UID:=${UID}
 # prefer to use docker buildkit
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
-# we need COMPOSE_PROJECT_NAME for some commands
-# take it form env, or from env file
-COMPOSE_PROJECT_NAME ?= $(shell grep COMPOSE_PROJECT_NAME ${ENV_FILE} | cut -d '=' -f 2)
 DOCKER_COMPOSE=docker compose --env-file=${ENV_FILE}
-DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}_test docker compose --env-file=${ENV_FILE}
+DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=open_prices_test docker compose --env-file=${ENV_FILE}
 
 # avoid target corresponding to file names, to depends on them
 .PHONY: *
@@ -33,7 +38,7 @@ guard-%: # guard clause for targets that require an environment variable (usuall
 #------------#
 
 test:
-	echo ${ENV_FILE} ${COMPOSE_PROJECT_NAME}
+	echo ${ENV_FILE}
 
 livecheck:
 	@echo "🥫 livecheck services…" ; \

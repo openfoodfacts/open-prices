@@ -35,5 +35,4 @@ jobs:
 
       - name: Launch tests
         run: |
-          make build
           make tests
