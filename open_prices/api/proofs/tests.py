@@ -1,6 +1,9 @@
+from io import BytesIO
+
 from django.db.models import signals
 from django.test import TestCase
 from django.urls import reverse
+from PIL import Image
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import (
@@ -13,6 +16,14 @@ from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
 PROOF = {"type": proof_constants.TYPE_RECEIPT, "currency": "EUR", "date": "2024-01-01"}
+
+
+def create_fake_image() -> bytes:
+    fp = BytesIO()
+    image = Image.new("RGB", (100, 100))
+    image.save(fp, format="WEBP")
+    fp.seek(0)
+    return fp
 
 
 class ProofListApiTest(TestCase):
@@ -151,7 +162,7 @@ class ProofCreateApiTest(TestCase):
         }
 
     def test_proof_create(self):
-        self.data["file"] = open("filename.webp", "rb")
+        self.data["file"] = create_fake_image()
         # anonymous
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, 403)
@@ -177,7 +188,7 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(p.source, "API")  # default value
 
     def test_proof_create_with_app_name(self):
-        self.data["file"] = open("filename.webp", "rb")
+        self.data["file"] = create_fake_image()
         for app_name in ["", "test app"]:
             # with empty app_name
             response = self.client.post(

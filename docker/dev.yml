@@ -1,6 +1,7 @@
 # this file setup various thinks that are for dev environment
 
 x-api-base: &api-base
+  image: openfoodfacts/open-prices/api:dev
   build:
     context: .
     target: runtime-dev
@@ -9,7 +10,8 @@ x-api-base: &api-base
       USER_GID: ${USER_GID:-1000}
   volumes:
     # mount code dynamically
-    - "./app:/opt/open-prices/app"
+    - "./open_prices:/opt/open-prices/open_prices"
+    - "./config:/opt/open-prices/config"
     - ./pyproject.toml:/opt/open-prices/pyproject.toml
     # make doc generation available
     - ./mkdocs.yml:/opt/open-prices/mkdocs.yml
@@ -17,8 +19,6 @@ x-api-base: &api-base
     - ./README.md:/opt/open-prices/README.md
     - ./docs:/opt/open-prices/docs
     - ./gh_pages:/opt/open-prices/gh_pages
-    # make migrations available so that we can run them easily
-    - ./alembic:/opt/open-prices/alembic
     # mount tests
     - ./tests:/opt/open-prices/tests
     - ./manage.py:/opt/open-prices/manage.py
