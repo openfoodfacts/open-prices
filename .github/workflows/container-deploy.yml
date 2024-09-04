@@ -159,6 +159,8 @@ jobs:
           make migrate-db
           # Launch new version
           make up
+          # copy static files so they can be served by nginx
+          make cp-static-files
 
     - name: Check services are up
       uses: appleboy/ssh-action@master
