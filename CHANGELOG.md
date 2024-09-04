@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.34.2](https://github.com/openfoodfacts/open-prices/compare/v1.34.1...v1.34.2) (2024-09-04)
+
+
+### Bug Fixes
+
+* **Django:** allow querying api/status with any auth ([#417](https://github.com/openfoodfacts/open-prices/issues/417)) ([3d9b486](https://github.com/openfoodfacts/open-prices/commit/3d9b4867cab27f44cae46c2da4a788e31bfd1e13))
+
 ## [1.34.1](https://github.com/openfoodfacts/open-prices/compare/v1.34.0...v1.34.1) (2024-09-04)
 
 
