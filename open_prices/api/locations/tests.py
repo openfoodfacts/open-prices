@@ -106,6 +106,7 @@ class LocationDetailApiTest(TestCase):
         self.assertEqual(response.status_code, 404)
         # existing location
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.location.id)
         # self.assertEqual(response.data["osm_lat"], 45.1805534)
 
@@ -120,6 +121,7 @@ class LocationDetailApiTest(TestCase):
             args=[self.location.osm_type, self.location.osm_id],
         )
         response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.location.id)
 
 

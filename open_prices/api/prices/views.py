@@ -16,6 +16,7 @@ from open_prices.prices.models import Price
 
 class PriceViewSet(
     mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
     mixins.CreateModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
