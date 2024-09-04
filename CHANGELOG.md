@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.34.0](https://github.com/openfoodfacts/open-prices/compare/v1.33.0...v1.34.0) (2024-09-02)
+
+
+### Features
+
+* rewrite backend from FastAPI to Django ([#366](https://github.com/openfoodfacts/open-prices/issues/366)) ([081a22d](https://github.com/openfoodfacts/open-prices/commit/081a22dadda4b6a388c4204bad1390759d455282))
+
+
+### Bug Fixes
+
+* **Django:** extra API fixes round 2 ([#401](https://github.com/openfoodfacts/open-prices/issues/401)) ([1bb28d8](https://github.com/openfoodfacts/open-prices/commit/1bb28d835e8f87b4c7bf622d645da633f8e54b24))
+* **Django:** fix update price_counts on Price create/delete ([#404](https://github.com/openfoodfacts/open-prices/issues/404)) ([9134f3c](https://github.com/openfoodfacts/open-prices/commit/9134f3cfedc9f9715266335d582856b241de56e2))
+* **Django:** run Django tests instead of FastAPI ([#402](https://github.com/openfoodfacts/open-prices/issues/402)) ([0628f62](https://github.com/openfoodfacts/open-prices/commit/0628f62ad230c9caef1f0cad16c1f4f974e7e879))
+* **Django:** update CI test config. ref [#402](https://github.com/openfoodfacts/open-prices/issues/402) ([5edf691](https://github.com/openfoodfacts/open-prices/commit/5edf6914b5f26935ff82879efdfa5be9bed7dfc4))
+
+
+### Technical
+
+* add compose project name ([6c83c4c](https://github.com/openfoodfacts/open-prices/commit/6c83c4c7220a0bf2bc33972acb758797162fac75))
+* always launch quality checks ([18c51f8](https://github.com/openfoodfacts/open-prices/commit/18c51f8975a42315b0623d03431f1e38f7350d5c))
+* **Django:** Use select_related to avoid N+1 queries ([#403](https://github.com/openfoodfacts/open-prices/issues/403)) ([7302a0e](https://github.com/openfoodfacts/open-prices/commit/7302a0ecdaf5d1a76c3c3966951c2163ca83e3b7))
+* fix CI ([#406](https://github.com/openfoodfacts/open-prices/issues/406)) ([f862116](https://github.com/openfoodfacts/open-prices/commit/f862116a64bfd4cbcfa559cf1a0546bab84d64b9))
+* fix test CI ([#411](https://github.com/openfoodfacts/open-prices/issues/411)) ([982c9d1](https://github.com/openfoodfacts/open-prices/commit/982c9d100da65151cba73dd3765e4b4181998fe2))
+* rename data-import folder to scripts ([612c939](https://github.com/openfoodfacts/open-prices/commit/612c939e42536318e32afb6b3419f931fc9fb460))
+* **Sentry:** add Sentry environment variable (net or org). ref [#400](https://github.com/openfoodfacts/open-prices/issues/400) ([554fc3f](https://github.com/openfoodfacts/open-prices/commit/554fc3f5728202bbb13073ee2b44c07a2fcde8ab))
+* try to remove image in dev.yml ([b79b052](https://github.com/openfoodfacts/open-prices/commit/b79b05224d74f2ee2f108ad5da39e4fd8886e986))
+* update build branch ([682955c](https://github.com/openfoodfacts/open-prices/commit/682955c17b956933209273b3b6b9baca4032e25b))
+
 ## [1.33.0](https://github.com/openfoodfacts/open-prices/compare/v1.32.1...v1.33.0) (2024-08-22)
 
 
