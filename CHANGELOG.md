@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.34.1](https://github.com/openfoodfacts/open-prices/compare/v1.34.0...v1.34.1) (2024-09-04)
+
+
+### Technical
+
+* fix static configuration ([#415](https://github.com/openfoodfacts/open-prices/issues/415)) ([79002d6](https://github.com/openfoodfacts/open-prices/commit/79002d61b7257511544b24ef8088bdaaa75aeb41))
+
 ## [1.34.0](https://github.com/openfoodfacts/open-prices/compare/v1.33.0...v1.34.0) (2024-09-02)
 
 
