@@ -23,7 +23,6 @@ services:
       - images:/opt/open-prices/img
       - data-dump:/opt/open-prices/data
       - home_cache:/home/off/.cache
-      - ./static:/opt/open-prices/static
     depends_on:
       - postgres
 
@@ -60,8 +59,6 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
       # Mount the static files (for index & vue.js app)
       - ./www:/var/www
-      # Mount the Django staticfiles
-      - ./static:/var/static
       # Mount the images
       - images:/var/img
       # And the dir where the daily data dump is stored
