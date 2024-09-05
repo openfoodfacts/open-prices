@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.35.0](https://github.com/openfoodfacts/open-prices/compare/v1.34.2...v1.35.0) (2024-09-05)
+
+
+### Features
+
+* **prices:** GET /prices/id detail endpoint ([#423](https://github.com/openfoodfacts/open-prices/issues/423)) ([0d67b5c](https://github.com/openfoodfacts/open-prices/commit/0d67b5c7911876afb1f345e43f36d25675ae246b))
+
+
+### Technical
+
+* Create github-projects.yml ([092f591](https://github.com/openfoodfacts/open-prices/commit/092f591ca60302c0f9cef9188c5f812452348a54))
+* fix github-project.yml ([4d9a1fd](https://github.com/openfoodfacts/open-prices/commit/4d9a1fd2d87cde22e8245822ad1d7272f951b41d))
+* Update github-projects.yml ([04e9e10](https://github.com/openfoodfacts/open-prices/commit/04e9e10527bedbb0d67e210af31c71d04ab3609b))
+
 ## [1.34.2](https://github.com/openfoodfacts/open-prices/compare/v1.34.1...v1.34.2) (2024-09-04)
 
 
