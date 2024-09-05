@@ -120,6 +120,7 @@ class ProductDetailApiTest(TestCase):
         self.assertEqual(response.status_code, 404)
         # existing product
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.product.id)
 
     def test_product_detail_by_code(self):
@@ -130,6 +131,7 @@ class ProductDetailApiTest(TestCase):
         # existing product
         url = reverse("api:products-get-by-code", args=[self.product.code])
         response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.product.id)
 
 

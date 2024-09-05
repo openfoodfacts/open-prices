@@ -251,9 +251,15 @@ class PriceDetailApiTest(TestCase):
         )
         cls.url = reverse("api:prices-detail", args=[cls.price.id])
 
-    def test_price_detail_not_allowed(self):
+    def test_price_detail(self):
+        # 404
+        url = reverse("api:prices-detail", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        # existing price
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], self.price.id)
 
 
 class PriceCreateApiTest(TestCase):
