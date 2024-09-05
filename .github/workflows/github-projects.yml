@@ -1,0 +1,37 @@
+name: Add bugs to relevant GitHub Projects
+
+on:
+  issues:
+    types:
+      - opened
+      - labeled
+
+jobs:
+  add-to-design-project:
+    name: Add issues to the 🎨 openfoodfacts-design or 📚 documentation project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@main
+        with:
+          project-url: https://github.com/orgs/openfoodfacts/projects/11
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          labeled: 🎨 Mockup available, 🎨 Mockup required
+          label-operator: OR
+      - uses: actions/add-to-project@main
+        with:
+          project-url: https://github.com/orgs/openfoodfacts/projects/25 # Add issue to the documentation project
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          labeled: 📚 documentation
+          label-operator: OR
+      - uses: actions/add-to-project@main
+        with:
+          project-url: https://github.com/orgs/openfoodfacts/projects/132 # Add issue to the Top upvoted issues board
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          labeled: ⭐ top issue, 👍 Top 10 Issue!
+          label-operator: OR
+      - uses: actions/add-to-project@main
+        with:
+          project-url: https://github.com/orgs/openfoodfacts/projects/57 # Add issue to the Most impactful issues board
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          labeled: 🎯 P0, 🎯 P1
+          label-operator: OR
