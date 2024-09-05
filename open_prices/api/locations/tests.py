@@ -104,6 +104,9 @@ class LocationDetailApiTest(TestCase):
         url = reverse("api:locations-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.data["detail"], "No Location matches the given query."
+        )
         # existing location
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -115,6 +118,9 @@ class LocationDetailApiTest(TestCase):
         url = reverse("api:locations-get-by-osm", args=["NODE", 999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.data["detail"], "No Location matches the given query."
+        )
         # existing location
         url = reverse(
             "api:locations-get-by-osm",

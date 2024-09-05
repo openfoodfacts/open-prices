@@ -118,6 +118,7 @@ class ProductDetailApiTest(TestCase):
         url = reverse("api:products-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "No Product matches the given query.")
         # existing product
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -128,6 +129,7 @@ class ProductDetailApiTest(TestCase):
         url = reverse("api:products-get-by-code", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "No Product matches the given query.")
         # existing product
         url = reverse("api:products-get-by-code", args=[self.product.code])
         response = self.client.get(url)
