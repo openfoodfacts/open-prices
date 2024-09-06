@@ -130,6 +130,7 @@ class ProofDetailApiTest(TestCase):
             url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "No Proof matches the given query.")
         # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403)

@@ -44,7 +44,7 @@ class LoginView(APIView):
         """
         if not settings.OAUTH2_SERVER_URL:
             return Response(
-                {"error": "OAUTH2_SERVER_URL environment variable missing"},
+                {"detail": "OAUTH2_SERVER_URL environment variable missing"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         # By specifying body=1, information about the user is returned in the
@@ -70,12 +70,12 @@ class LoginView(APIView):
         elif response.status_code == 403:
             time.sleep(2)  # prevents brute-force
             return Response(
-                {"error": "Invalid authentication credentials"},
+                {"detail": "Invalid authentication credentials"},
                 status=status.HTTP_401_UNAUTHORIZED,
                 headers={"WWW-Authenticate": "Bearer"},
             )
         raise Response(
-            {"error": "Server error"},
+            {"detail": "Server error"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
