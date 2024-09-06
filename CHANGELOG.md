@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.35.1](https://github.com/openfoodfacts/open-prices/compare/v1.35.0...v1.35.1) (2024-09-06)
+
+
+### Bug Fixes
+
+* **Django:** improve some API returns ([#426](https://github.com/openfoodfacts/open-prices/issues/426)) ([092e436](https://github.com/openfoodfacts/open-prices/commit/092e436b58195df9fa00e2c7a9d0ab0c2c821f2f))
+
 ## [1.35.0](https://github.com/openfoodfacts/open-prices/compare/v1.34.2...v1.35.0) (2024-09-05)
 
 
