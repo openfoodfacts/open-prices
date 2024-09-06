@@ -256,6 +256,7 @@ class PriceDetailApiTest(TestCase):
         url = reverse("api:prices-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "No Price matches the given query.")
         # existing price
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
