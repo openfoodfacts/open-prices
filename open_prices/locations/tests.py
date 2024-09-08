@@ -5,6 +5,8 @@ from django.test import TestCase
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
+from open_prices.locations.models import Location
+from open_prices.prices.factories import PriceFactory
 
 
 class LocationModelSaveTest(TestCase):
@@ -57,3 +59,26 @@ class LocationModelSaveTest(TestCase):
         )
         self.assertEqual(location.osm_lat, Decimal("45.1805534"))
         self.assertEqual(location.osm_lon, Decimal("5.7153387"))
+
+
+class LocationQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.location_without_price = LocationFactory()
+        cls.location_with_price = LocationFactory()
+        PriceFactory(
+            location_osm_id=cls.location_with_price.osm_id,
+            location_osm_type=cls.location_with_price.osm_type,
+            price=1.0,
+        )
+
+    def test_has_prices(self):
+        self.assertEqual(Location.objects.has_prices().count(), 1)
+
+    def test_with_stats(self):
+        location = Location.objects.with_stats().get(id=self.location_without_price.id)
+        self.assertEqual(location.price_count_annotated, 0)
+        self.assertEqual(location.price_count, 0)
+        location = Location.objects.with_stats().get(id=self.location_with_price.id)
+        self.assertEqual(location.price_count_annotated, 1)
+        self.assertEqual(location.price_count, 1)

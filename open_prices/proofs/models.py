@@ -1,10 +1,19 @@
 from django.core.validators import ValidationError
 from django.db import models
+from django.db.models import Count
 from django.utils import timezone
 
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
+
+
+class ProofQuerySet(models.QuerySet):
+    def has_prices(self):
+        return self.filter(price_count__gt=0)
+
+    def with_stats(self):
+        return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
 
 class Proof(models.Model):
@@ -48,6 +57,8 @@ class Proof(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(ProofQuerySet)()
 
     class Meta:
         # managed = False

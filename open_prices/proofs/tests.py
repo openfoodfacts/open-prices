@@ -7,7 +7,9 @@ from open_prices.locations.models import (
     Location,
     location_post_create_fetch_data_from_openstreetmap,
 )
+from open_prices.prices.factories import PriceFactory
 from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.models import Proof
 
 
 class ProofModelSaveTest(TestCase):
@@ -51,3 +53,22 @@ class ProofModelSaveTest(TestCase):
                 location_osm_id=652825274,
                 location_osm_type=LOCATION_OSM_TYPE_NOT_OK,
             )
+
+
+class ProofQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof_without_price = ProofFactory()
+        cls.proof_with_price = ProofFactory()
+        PriceFactory(proof_id=cls.proof_with_price.id, price=1.0)
+
+    def test_has_prices(self):
+        self.assertEqual(Proof.objects.has_prices().count(), 1)
+
+    def test_with_stats(self):
+        proof = Proof.objects.with_stats().get(id=self.proof_without_price.id)
+        self.assertEqual(proof.price_count_annotated, 0)
+        self.assertEqual(proof.price_count, 0)
+        proof = Proof.objects.with_stats().get(id=self.proof_with_price.id)
+        self.assertEqual(proof.price_count_annotated, 1)
+        self.assertEqual(proof.price_count, 1)

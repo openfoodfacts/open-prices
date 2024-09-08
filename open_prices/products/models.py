@@ -1,11 +1,19 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import signals
+from django.db.models import Count, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
 
 from open_prices.products import constants as product_constants
+
+
+class ProductQuerySet(models.QuerySet):
+    def has_prices(self):
+        return self.filter(price_count__gt=0)
+
+    def with_stats(self):
+        return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
 
 class Product(models.Model):
@@ -38,6 +46,8 @@ class Product(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(ProductQuerySet)()
 
     class Meta:
         # managed = False

@@ -1,6 +1,6 @@
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import signals
+from django.db.models import Count, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -8,6 +8,14 @@ from django_q.tasks import async_task
 from open_prices.common import utils
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
+
+
+class LocationQuerySet(models.QuerySet):
+    def has_prices(self):
+        return self.filter(price_count__gt=0)
+
+    def with_stats(self):
+        return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
 
 class Location(models.Model):
@@ -39,6 +47,8 @@ class Location(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(LocationQuerySet)()
 
     class Meta:
         # managed = False
