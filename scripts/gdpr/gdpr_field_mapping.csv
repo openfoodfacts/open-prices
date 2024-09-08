@@ -1,8 +1,8 @@
-OPEN_PRICES_FIELD,AUCHAN_FIELD,AUCHAN_COMMENT,CARREFOUR_FIELD,CARREFOUR_COMMENT,ELECLERC_FIELD,ELECLERC_COMMENT,INTERMARCHE_FIELD,INTERMARCHE_COMMENT
-product_code,CODE_PRODUIT,"raw products have a length of 4 or 12 or 13 but ending with lots of 0 (fruits, vegetables, meat, cheese) (ex: 4400, 200512000000, 2630329000000)",Code Barre du produit,prefixed and suffixed with |,ean,,COD_ARTC_EAN,duplicate column with EAN_GD
-product_name,NOM_PRODUIT,,Description du produit,,article_libelle,,LB_ARTC,duplicate column with LB_COMM0
-price,PRIX_UNITAIRE,,Prix unitaire TTC avec remise (€),,article_prix_unitaire,,CA TTC Produit,has commas instead of points
-discount,,,"Remise sur le produit (€) (chaque remise d'un produit regroupe les promotions, les avantages de la carte PASS,  les bons d'achats…  appliqués lors du passage en caisse)",,,,,
-quantity,,,Quantité,,,,Qte Vendues,
-date,JOUR,format YYYY-MM-DD,Date de transaction,format DD/MM/YYYY,date_ticket,format YYYY-MM-DD,DT_TICK,format DD/MM/YYYY
-location,CODE_POSTAL,,NOM DU MAGASIN,,code_postal,,LB_COMM,
+OPEN_PRICES_FIELD,AUCHAN_FIELD,AUCHAN_COMMENT,CARREFOUR_FIELD,CARREFOUR_COMMENT,ELECLERC_FIELD,ELECLERC_COMMENT,INTERMARCHE_FIELD,INTERMARCHE_COMMENT,PICARD_FIELD,PICARD_COMMENT
+product_code,CODE_PRODUIT,"raw products have a length of 4 or 12 or 13 but ending with lots of 0 (fruits, vegetables, meat, cheese) (ex: 4400, 200512000000, 2630329000000)",Code Barre du produit,prefixed and suffixed with |,ean,,COD_ARTC_EAN,duplicate column with EAN_GD,CODE PRODUIT,a 5-number code. need to do an extra API search to find the corresponding product
+product_name,NOM_PRODUIT,,Description du produit,,article_libelle,,LB_ARTC,duplicate column with LB_COMM0,LIBELLE ARTICLE,
+price,PRIX_UNITAIRE,,Prix unitaire TTC avec remise (€),,article_prix_unitaire,,CA TTC Produit,has commas instead of points,PRIX TTC,has commas instead of points
+discount,,,"Remise sur le produit (€) (chaque remise d'un produit regroupe les promotions, les avantages de la carte PASS,  les bons d'achats…  appliqués lors du passage en caisse)",,,,,,IDENTIFIANT REMISE,a string ID to another table
+quantity,,,Quantité,,,,Qte Vendues,,NOMBRE UNITES,
+date,JOUR,format YYYY-MM-DD,Date de transaction,format DD/MM/YYYY,date_ticket,format YYYY-MM-DD,DT_TICK,format DD/MM/YYYY,DATE TICKET,
+location,CODE_POSTAL,,NOM DU MAGASIN,,code_postal,,LB_COMM,,NOM DU MAGASIN,
