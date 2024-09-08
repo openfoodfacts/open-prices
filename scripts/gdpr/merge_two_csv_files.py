@@ -13,19 +13,29 @@ def read_csv(filepath):
     return data
 
 
-def merge_data_of_two_lists(list_1, list_2, pivot_list=["ticket"]):
-    print(pivot_list)
+def merge_data_of_two_lists(list_1, list_2, pivot_field_name_list=["ticket"]):
     data_merged = list()
 
     for row_1 in list_1:
         row_2 = None
         for row in list_2:
-            if all(row_1[pivot] == row[pivot] for pivot in pivot_list):
+            if all(
+                row_1[pivot_field_name] == row[pivot_field_name]
+                for pivot_field_name in pivot_field_name_list
+            ):
                 row_2 = row
         if not row_2:
             row_2 = {
-                **{key: row_1[key] for key in list_2[0].keys() if key in pivot_list},
-                **{key: "" for key in list_2[0].keys() if key not in pivot_list},
+                **{
+                    key: row_1[key]
+                    for key in list_2[0].keys()
+                    if key in pivot_field_name_list
+                },
+                **{
+                    key: ""
+                    for key in list_2[0].keys()
+                    if key not in pivot_field_name_list
+                },
             }
         data_merged.append({**row_1, **row_2})
 
@@ -44,12 +54,12 @@ def write_csv(data, filepath):
 if __name__ == "__main__":
     """
     How-to run:
-    > FILEPATH_1= FILEPATH_2= PIVOT_FIELD_NAME= poetry run python data/gdpr/merge_two_csv_files.py  # noqa
+    > FILEPATH_1= FILEPATH_2= PIVOT_FIELD_NAME_LIST= poetry run python scripts/gdpr/merge_two_csv_files.py  # noqa
     """
     filepath_1 = os.environ.get("FILEPATH_1")
     filepath_2 = os.environ.get("FILEPATH_2")
-    pivot_field_name = os.environ.get("PIVOT_FIELD_NAME")
-    pivot_field_name_list = pivot_field_name.split(",")
+    pivot_field_name_str = os.environ.get("PIVOT_FIELD_NAME_LIST")
+    pivot_field_name_list = pivot_field_name_str.split(",")
     output_filepath = filepath_1.split(".csv")[0] + "_merged.csv"
 
     print(f"Step 1: reading {filepath_1}")
@@ -62,7 +72,7 @@ if __name__ == "__main__":
 
     print(f"Step 3: merging the two lists with pivot(s): {pivot_field_name_list}")
     data_merged = merge_data_of_two_lists(
-        data_1, data_2, pivot_list=pivot_field_name_list
+        data_1, data_2, pivot_field_name_list=pivot_field_name_list
     )
     print(f"{len(data_merged)} lines")
 

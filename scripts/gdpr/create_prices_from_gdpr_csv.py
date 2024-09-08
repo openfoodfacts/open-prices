@@ -8,7 +8,7 @@ import requests
 
 OPEN_PRICES_CREATE_PRICE_ENDPOINT = f'{os.environ.get("API_ENDPOINT")}/prices'
 OPEN_PRICES_TOKEN = os.environ.get("API_TOKEN")
-GDPR_FIELD_MAPPING_FILEPATH = "data/gdpr/gdpr_field_mapping.csv"
+GDPR_FIELD_MAPPING_FILEPATH = "scripts/gdpr/gdpr_field_mapping.csv"
 
 DEFAULT_PRICE_CURRENCY = "EUR"
 PRICE_FIELDS = [
@@ -219,7 +219,7 @@ def create_price(price):
 if __name__ == "__main__":
     """
     How-to run:
-    > FILEPATH= poetry run python data/gdpr/create_prices_from_gdpr_csv.py
+    > FILEPATH= poetry run python scripts/gdpr/create_prices_from_gdpr_csv.py
     Required params: see REQUIRED_ENV_PARAMS
     """
     # Step 1: read input file
