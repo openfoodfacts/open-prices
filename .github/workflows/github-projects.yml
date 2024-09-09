@@ -5,7 +5,10 @@ on:
     types:
       - opened
       - labeled
-
+  pull_request:
+    types:
+      - opened
+      - edited
 jobs:
   add-to-design-project:
     name: Add issues to the 🎨 openfoodfacts-design or 📚 documentation project
@@ -101,3 +104,9 @@ jobs:
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           labeled: 🎯 P0, 🎯 P1
           label-operator: OR
+      - uses: actions/add-to-project@main
+        with:
+          project-url: https://github.com/orgs/openfoodfacts/projects/133 # Add issue to the Releases project
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          labeled: autorelease:\pending
+          label-operator: OR   
