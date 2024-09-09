@@ -1,6 +1,8 @@
+from django.contrib.postgres.search import TrigramSimilarity  # SearchVector
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Count, signals
+from django.db.models import Count, Q, signals
+from django.db.models.functions import Greatest
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -11,6 +13,19 @@ from open_prices.locations import constants as location_constants
 
 
 class LocationQuerySet(models.QuerySet):
+    def filter_full_text(self, full_text_string):
+        # Simple method 1: SearchVectors
+        # return self.annotate(
+        #     search=SearchVector("osm_name") + SearchVector("osm_display_name")  # noqa
+        # ).filter(Q(search=full_text_string) | Q(osm_id__contains=full_text_string))  # noqa
+        # Simple method 2: TrigramSimilarity (can use Greatest() to combine multiple fields)  # noqa
+        return self.annotate(
+            similarity=Greatest(
+                TrigramSimilarity("osm_name", full_text_string),
+                TrigramSimilarity("osm_display_name", full_text_string),
+            )
+        ).filter(Q(similarity__gt=0.2) | Q(osm_id__contains=full_text_string))
+
     def has_prices(self):
         return self.filter(price_count__gt=0)
 

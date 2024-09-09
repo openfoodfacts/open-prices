@@ -8,6 +8,22 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices.factories import PriceFactory
 
+LOCATION_NODE_652825274 = {
+    "osm_id": 652825274,
+    "osm_type": "NODE",
+    "osm_name": "Monoprix",
+    "osm_display_name": "Monoprix, Boulevard Joseph Vallier, Secteur 1, Grenoble, Isère, Auvergne-Rhône-Alpes, France métropolitaine, 38000, France",
+    "osm_lat": "45.1805534",
+    "osm_lon": "5.7153387",
+}
+
+LOCATION_NODE_1392117416 = {
+    "osm_id": 1392117416,
+    "osm_type": "NODE",
+    "osm_name": "L'Éléfàn",
+    "osm_display_name": "L'Éléfàn, 32, Avenue Marcelin Berthelot, Capuche, Secteur 4, Grenoble, Isère, Auvergne-Rhône-Alpes, France métropolitaine, 38100, France",
+}
+
 
 class LocationModelSaveTest(TestCase):
     @classmethod
@@ -64,13 +80,18 @@ class LocationModelSaveTest(TestCase):
 class LocationQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location_without_price = LocationFactory()
-        cls.location_with_price = LocationFactory()
+        cls.location_without_price = LocationFactory(**LOCATION_NODE_652825274)
+        cls.location_with_price = LocationFactory(**LOCATION_NODE_1392117416)
         PriceFactory(
             location_osm_id=cls.location_with_price.osm_id,
             location_osm_type=cls.location_with_price.osm_type,
             price=1.0,
         )
+
+    def test_filter_full_text(self):
+        self.assertEqual(Location.objects.filter_full_text("Grenoble").count(), 2)
+        self.assertEqual(Location.objects.filter_full_text("Monoprix").count(), 1)
+        self.assertEqual(Location.objects.filter_full_text("elefan").count(), 1)
 
     def test_has_prices(self):
         self.assertEqual(Location.objects.has_prices().count(), 1)
