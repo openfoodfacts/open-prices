@@ -150,24 +150,44 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
         elif gdpr_source == "PICARD":
             # the product_code is incomplete
             # use Search-a-licious API to get the full product code
-            # works only if a unique product is found
+            # and prompt the user to find the correct one
+            print("==================")
+            print(
+                "Input:",
+                op_price["product_code"],
+                op_price["product_name"],
+                op_price["price"],
+            )
             response = requests.get(
                 OFF_SEARCHLICIOUS_API_ENDPOINT,
                 params={"q": f"code:*{op_price['product_code']}* brands:picard"},
             )
             if response.status_code == 200:
                 response_product_list = response.json()["hits"]
-                if len(response_product_list) > 1:
-                    response_product_list = list(
-                        filter(
-                            lambda x: "picard" in x["brands_tags"],
-                            response_product_list,
-                        )
+                response_product_list = list(
+                    filter(
+                        lambda x: "picard" in x["brands_tags"],
+                        response_product_list,
                     )
-                if len(response_product_list) == 1:
-                    op_price["product_code"] = response_product_list[0]["code"]
-                else:
-                    passes_test = False
+                )
+                print("Products found:", len(response_product_list))
+                if len(response_product_list):
+                    for index, response_product in enumerate(response_product_list):
+                        print(
+                            index + 1,
+                            ":",
+                            response_product["code"],
+                            response_product["product_name"],
+                        )
+                    user_choice_number = int(input("Which product ? Type 0 to skip. "))
+                    if user_choice_number:
+                        user_choice_product_code = response_product_list[
+                            user_choice_number - 1
+                        ]["code"]
+                        print("Chosen product code:", user_choice_product_code)
+                        op_price["product_code"] = user_choice_product_code
+                    else:
+                        passes_test = False
 
         if passes_test:
             op_price_list_filtered.append(op_price)
