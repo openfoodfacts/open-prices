@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Count, signals
@@ -71,11 +72,12 @@ class Product(models.Model):
 
 
 @receiver(signals.post_save, sender=Product)
-def product_post_create_fetch_data_from_openfoodfacts(
+def product_post_create_fetch_and_save_data_from_openfoodfacts(
     sender, instance, created, **kwargs
 ):
-    if created:
-        async_task(
-            "open_prices.products.tasks.fetch_and_save_data_from_openfoodfacts",
-            instance,
-        )
+    if not settings.TESTING:
+        if created:
+            async_task(
+                "open_prices.products.tasks.fetch_and_save_data_from_openfoodfacts",
+                instance,
+            )

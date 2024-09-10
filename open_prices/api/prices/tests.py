@@ -1,18 +1,11 @@
-from django.db.models import signals
 from django.test import TestCase
 from django.urls import reverse
 
-from open_prices.locations.models import (
-    Location,
-    location_post_create_fetch_data_from_openstreetmap,
-)
+from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
-from open_prices.products.models import (
-    Product,
-    product_post_create_fetch_data_from_openfoodfacts,
-)
+from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
@@ -266,12 +259,6 @@ class PriceDetailApiTest(TestCase):
 class PriceCreateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        signals.post_save.disconnect(
-            product_post_create_fetch_data_from_openfoodfacts, sender=Product
-        )
-        signals.post_save.disconnect(
-            location_post_create_fetch_data_from_openstreetmap, sender=Location
-        )
         cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
         cls.user_proof = ProofFactory(

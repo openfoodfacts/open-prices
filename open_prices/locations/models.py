@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import ValidationError
 from django.db import models
 from django.db.models import Count, signals
@@ -101,8 +102,9 @@ class Location(models.Model):
 def location_post_create_fetch_data_from_openstreetmap(
     sender, instance, created, **kwargs
 ):
-    if created:
-        async_task(
-            "open_prices.locations.tasks.fetch_and_save_data_from_openstreetmap",
-            instance,
-        )
+    if not settings.TESTING:
+        if created:
+            async_task(
+                "open_prices.locations.tasks.fetch_and_save_data_from_openstreetmap",
+                instance,
+            )

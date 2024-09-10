@@ -1,15 +1,10 @@
 from io import BytesIO
 
-from django.db.models import signals
 from django.test import TestCase
 from django.urls import reverse
 from PIL import Image
 
 from open_prices.locations import constants as location_constants
-from open_prices.locations.models import (
-    Location,
-    location_post_create_fetch_data_from_openstreetmap,
-)
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
@@ -150,9 +145,6 @@ class ProofDetailApiTest(TestCase):
 class ProofCreateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        signals.post_save.disconnect(
-            location_post_create_fetch_data_from_openstreetmap, sender=Location
-        )
         cls.url = reverse("api:proofs-upload")
         cls.user_session = SessionFactory()
         cls.data = {
