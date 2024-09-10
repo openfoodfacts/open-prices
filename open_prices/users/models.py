@@ -30,6 +30,12 @@ class User(models.Model):
     def is_authenticated(self):
         return True
 
+    def update_price_count(self):
+        from open_prices.prices.models import Price
+
+        self.price_count = Price.objects.filter(owner=self).count()
+        self.save(update_fields=["price_count"])
+
 
 class Session(models.Model):
     user = models.ForeignKey(
