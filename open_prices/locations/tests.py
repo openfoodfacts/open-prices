@@ -8,6 +8,12 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices.factories import PriceFactory
 
+LOCATION_NODE_652825274 = {
+    "osm_id": 652825274,
+    "osm_type": "NODE",
+    "osm_name": "Monoprix",
+}
+
 
 class LocationModelSaveTest(TestCase):
     @classmethod
@@ -50,9 +56,7 @@ class LocationModelSaveTest(TestCase):
 
     def test_location_decimal_truncate_on_create(self):
         location = LocationFactory(
-            osm_id=652825274,
-            osm_type="NODE",
-            osm_name="Monoprix",
+            **LOCATION_NODE_652825274,
             osm_lat="45.1805534",
             osm_lon="5.7153387000",  # will be truncated
             price_count=15,
@@ -82,3 +86,29 @@ class LocationQuerySetTest(TestCase):
         location = Location.objects.with_stats().get(id=self.location_with_price.id)
         self.assertEqual(location.price_count_annotated, 1)
         self.assertEqual(location.price_count, 1)
+
+
+class LocationPropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.location = LocationFactory(**LOCATION_NODE_652825274)
+        PriceFactory(
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            price=1.0,
+        )
+        PriceFactory(
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            price=2.0,
+        )
+
+    def test_update_price_count(self):
+        self.location.refresh_from_db()
+        self.assertEqual(self.location.price_count, 2)
+        # bulk delete prices to skip signals
+        self.location.prices.all().delete()
+        self.assertEqual(self.location.price_count, 2)  # should be 0
+        # update_price_count() should fix price_count
+        self.location.update_price_count()
+        self.assertEqual(self.location.price_count, 0)

@@ -85,3 +85,21 @@ class ProductQuerySetTest(TestCase):
         product = Product.objects.with_stats().get(id=self.product_with_price.id)
         self.assertEqual(product.price_count_annotated, 1)
         self.assertEqual(product.price_count, 1)
+
+
+class ProductPropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product = ProductFactory(code="0123456789100", product_quantity=1000)
+        PriceFactory(product_code=cls.product.code, price=1.0)
+        PriceFactory(product_code=cls.product.code, price=2.0)
+
+    def test_update_price_count(self):
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.price_count, 2)
+        # bulk delete prices to skip signals
+        self.product.prices.all().delete()
+        self.assertEqual(self.product.price_count, 2)  # should be 0
+        # update_price_count() should fix price_count
+        self.product.update_price_count()
+        self.assertEqual(self.product.price_count, 0)
