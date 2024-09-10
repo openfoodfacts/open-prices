@@ -119,7 +119,6 @@ class Proof(models.Model):
             location, created = Location.objects.get_or_create(
                 osm_id=self.location_osm_id,
                 osm_type=self.location_osm_type,
-                # defaults={"proof_count": 1},
             )
             self.location = location
 
@@ -128,3 +127,7 @@ class Proof(models.Model):
         if not self.id:
             self.set_location()
         super().save(*args, **kwargs)
+
+    def update_price_count(self):
+        self.price_count = self.prices.count()
+        self.save(update_fields=["price_count"])
