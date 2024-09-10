@@ -7,13 +7,18 @@
 
 ## Setup
 
-### Without Docker
-
 ```
 # Clone repo
 git clone https://github.com/openfoodfacts/open-prices.git
 cd open-prices
 
+# Copy .env.example to .env
+
+```
+
+### Without Docker
+
+```
 # Install poetry (Python dependency manager) at version 1.6.1
 # see https://python-poetry.org/docs/
 
