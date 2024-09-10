@@ -70,6 +70,10 @@ class Product(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def update_price_count(self):
+        self.price_count = self.prices.count()
+        self.save(update_fields=["price_count"])
+
 
 @receiver(signals.post_save, sender=Product)
 def product_post_create_fetch_and_save_data_from_openfoodfacts(
