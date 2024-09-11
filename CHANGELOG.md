@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.36.1](https://github.com/openfoodfacts/open-prices/compare/v1.36.0...v1.36.1) (2024-09-11)
+
+
+### Technical
+
+* **Django:** Update contributing.md. ref [#431](https://github.com/openfoodfacts/open-prices/issues/431) ([c2bfb1d](https://github.com/openfoodfacts/open-prices/commit/c2bfb1d82ad1b7464f2eb7c3ffadf0839ba28e6c))
+* **Django:** Updated project setup instruction ([#432](https://github.com/openfoodfacts/open-prices/issues/432)) ([d5fa2b8](https://github.com/openfoodfacts/open-prices/commit/d5fa2b8c52c7a0e081846e2b907246421a743f67))
+* fix pre-commit. ref [#425](https://github.com/openfoodfacts/open-prices/issues/425) ([211beb2](https://github.com/openfoodfacts/open-prices/commit/211beb24821a164c4446c492334cb3b8a5e5533f))
+* **proofs:** simple update_location() method ([#437](https://github.com/openfoodfacts/open-prices/issues/437)) ([d54ded6](https://github.com/openfoodfacts/open-prices/commit/d54ded6feee537aba8be3a97e39f42f53d92f4a2))
+
 ## [1.36.0](https://github.com/openfoodfacts/open-prices/compare/v1.35.1...v1.36.0) (2024-09-11)
 
 
