@@ -1,4 +1,4 @@
-# Contributing to Open-Prices
+# Contributing to Open Prices
 
 ## How to install on your local machine
 
@@ -16,9 +16,10 @@ Now `pre-commit` will run automatically on `git commit` :)
 
 ## Write and run tests
 
-You should create unit tests for each new feature or API change (see [test_api.py](https://github.com/openfoodfacts/open-prices/blob/main/tests/test_api.py)).
+You should create basic tests for each new feature or API change.
 
-To run tests, just launch:
-```bash
-pytest
+To run tests locally, just launch:
+
+```
+poetry run python manage.py test
 ```
