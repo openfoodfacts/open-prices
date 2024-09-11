@@ -1,35 +1,48 @@
-# HOWTO install/test Open Prices API
+# HOW TO install Open Prices API
 
 ## Prerequisites
 
-- Python 3.11 (lower version may be OK, but untested)
-- PostgreSQL 13 (lower version may be OK, but untested)
+* Python 3.11 (lower version may be OK, but untested)
+* PostgreSQL 13 (lower version may be OK, but untested)
 
 ## Setup
+
+```
+# Clone repo
+git clone https://github.com/openfoodfacts/open-prices.git
+cd open-prices
+
+# Copy .env.example to .env
+
+```
 
 ### Without Docker
 
 ```
-# clone repo
-git clone https://github.com/openfoodfacts/open-prices.git
-cd open-prices
-
-# install poetry (Python dependency manager) at version 1.6.1
+# Install poetry (Python dependency manager)
 # see https://python-poetry.org/docs/
 
-# install dependencies (pyproject.toml)
+# Install dependencies (pyproject.toml)
 poetry install
 
-# note: all future commands should be prefixed with `poetry run`
+# Note: all future commands should be prefixed with `poetry run`
 
-# run migrations
-alembic upgrade head
+# Apply migrations
+python manage.py migrate
+
+# Run Locally
+python manage.py runserver
+
+# Now the server will run on http://127.0.0.1:8000 !
+
+# Note: you can change the port if you want
+python manage.py runserver 8001
 ```
 
 ### With Docker
 
-:::info
-Open Prices now only supports docker compose v2 (`docker compose`)
+::: Info
+Open Prices now only supports docker compose v2 ( `docker compose` )
 :::
 
 create the dockers with
@@ -38,7 +51,7 @@ create the dockers with
 docker compose up
 ```
 
-The sever should be running on <http://localhost:8000/>.
+The sever should be running on <http://127.0.0.1:8000/>.
 
 The run the migration of the database with
 
@@ -47,15 +60,3 @@ make migrate-db
 ```
 
 Congrats, you can now contribute to the codebase :tada:
-
-## Run locally
-
-```
-uvicorn app.api:app --reload
-```
-
-or use `--host` if you want to make it available on your local network, eg.:
-
-```
-uvicorn app.api:app --reload --host 192.168.0.100
-```

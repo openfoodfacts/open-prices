@@ -12,7 +12,7 @@ A REST API designed to interact with the Open Food Facts _Open Prices_ database.
 ## Dependencies
 
 * Python 3.11
-* [FastAPI](https://fastapi.tiangolo.com/) framework
+* [Django](https://www.djangoproject.com/) framework
 * PostgreSQL database
 
 ## How to install on your local machine
