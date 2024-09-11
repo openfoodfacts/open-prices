@@ -2,9 +2,21 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from open_prices.locations import constants as location_constants
+from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
+
+LOCATION_NODE_652825274 = {
+    "osm_id": 652825274,
+    "osm_type": "NODE",
+    "osm_name": "Monoprix",
+}
+# LOCATION_NODE_6509705997 = {
+#     "osm_id": 6509705997,
+#     "osm_type": "NODE",
+#     "osm_name": "Carrefour",
+# }
 
 
 class ProofModelSaveTest(TestCase):
@@ -70,9 +82,22 @@ class ProofQuerySetTest(TestCase):
 class ProofPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.proof = ProofFactory()
-        PriceFactory(proof_id=cls.proof.id, price=1.0)
-        PriceFactory(proof_id=cls.proof.id, price=2.0)
+        cls.location = LocationFactory(**LOCATION_NODE_652825274)
+        cls.proof = ProofFactory(
+            location_osm_id=cls.location.osm_id, location_osm_type=cls.location.osm_type
+        )
+        PriceFactory(
+            proof_id=cls.proof.id,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            price=1.0,
+        )
+        PriceFactory(
+            proof_id=cls.proof.id,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            price=2.0,
+        )
 
     def test_update_price_count(self):
         self.proof.refresh_from_db()
@@ -83,3 +108,33 @@ class ProofPropertyTest(TestCase):
         # update_price_count() should fix price_count
         self.proof.update_price_count()
         self.assertEqual(self.proof.price_count, 0)
+
+    def test_update_location(self):
+        # existing
+        self.proof.refresh_from_db()
+        self.location.refresh_from_db()
+        self.assertEqual(self.proof.price_count, 2)
+        self.assertEqual(self.proof.location.id, self.location.id)
+        self.assertEqual(self.location.price_count, 2)
+        # update location
+        self.proof.update_location(
+            location_osm_id=6509705997,
+            location_osm_type=location_constants.OSM_TYPE_NODE,
+        )
+        # check changes
+        self.proof.refresh_from_db()
+        self.location.refresh_from_db()
+        new_location = self.proof.location
+        self.assertNotEqual(self.location, new_location)
+        self.assertEqual(self.proof.price_count, 2)
+        self.assertEqual(new_location.price_count, 2)
+        self.assertEqual(self.location.price_count, 0)
+        # update again, same location
+        self.proof.update_location(
+            location_osm_id=6509705997,
+            location_osm_type=location_constants.OSM_TYPE_NODE,
+        )
+        self.proof.refresh_from_db()
+        self.location.refresh_from_db()
+        self.assertEqual(self.proof.price_count, 2)
+        self.assertEqual(self.proof.location.price_count, 2)

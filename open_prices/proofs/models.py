@@ -124,10 +124,28 @@ class Proof(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        if not self.id:
-            self.set_location()
+        self.set_location()
         super().save(*args, **kwargs)
 
     def update_price_count(self):
         self.price_count = self.prices.count()
         self.save(update_fields=["price_count"])
+
+    def update_location(self, location_osm_id, location_osm_type):
+        old_location = self.location
+        # update proof location
+        self.location_osm_id = location_osm_id
+        self.location_osm_type = location_osm_type
+        self.save()
+        # update proof's prices location
+        for price in self.prices.all():
+            price.location_osm_id = location_osm_id
+            price.location_osm_type = location_osm_type
+            price.save()
+        # update old & new location price counts
+        self.refresh_from_db()
+        new_location = self.location
+        if old_location:
+            old_location.update_price_count()
+        if new_location:
+            new_location.update_price_count()
