@@ -1,4 +1,4 @@
-# HOW TO install/test Open Prices API
+# HOW TO install Open Prices API
 
 ## Prerequisites
 
@@ -19,14 +19,13 @@ cd open-prices
 ### Without Docker
 
 ```
-# Install poetry (Python dependency manager) at version 1.6.1
+# Install poetry (Python dependency manager)
 # see https://python-poetry.org/docs/
 
 # Install dependencies (pyproject.toml)
 poetry install
 
-# Note: 
-    All future commands should be prefixed with `poetry run`
+# Note: all future commands should be prefixed with `poetry run`
 
 # Apply migrations
 python manage.py migrate
@@ -34,9 +33,10 @@ python manage.py migrate
 # Run Locally
 python manage.py runserver
 
-# Now server will run on http://127.0.0.1:8000/ but you can change the port as
-python manage.py runserver 8001 
-    Will run on http://127.0.0.1:8001/
+# Now the server will run on http://127.0.0.1:8000 !
+
+# Note: you can change the port if you want
+python manage.py runserver 8001
 ```
 
 ### With Docker
