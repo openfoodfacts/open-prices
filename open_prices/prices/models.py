@@ -351,31 +351,31 @@ class Price(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        if not self.id:  # new price
-            # self.set_proof()  # should already exist
-            self.get_or_create_product()
-            self.get_or_create_location()
+        # self.set_proof()  # should already exist
+        self.get_or_create_product()
+        self.get_or_create_location()
         super().save(*args, **kwargs)
 
 
 @receiver(signals.post_save, sender=Price)
 def price_post_create_increment_counts(sender, instance, created, **kwargs):
-    if instance.owner:
-        User.objects.filter(user_id=instance.owner).update(
-            price_count=F("price_count") + 1
-        )
-    if instance.proof_id:
-        Proof.objects.filter(id=instance.proof_id).update(
-            price_count=F("price_count") + 1
-        )
-    if instance.product_id:
-        Product.objects.filter(id=instance.product_id).update(
-            price_count=F("price_count") + 1
-        )
-    if instance.location_id:
-        Location.objects.filter(id=instance.location_id).update(
-            price_count=F("price_count") + 1
-        )
+    if created:
+        if instance.owner:
+            User.objects.filter(user_id=instance.owner).update(
+                price_count=F("price_count") + 1
+            )
+        if instance.proof_id:
+            Proof.objects.filter(id=instance.proof_id).update(
+                price_count=F("price_count") + 1
+            )
+        if instance.product_id:
+            Product.objects.filter(id=instance.product_id).update(
+                price_count=F("price_count") + 1
+            )
+        if instance.location_id:
+            Location.objects.filter(id=instance.location_id).update(
+                price_count=F("price_count") + 1
+            )
 
 
 @receiver(signals.post_delete, sender=Price)
