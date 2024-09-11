@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.36.0](https://github.com/openfoodfacts/open-prices/compare/v1.35.1...v1.36.0) (2024-09-11)
+
+
+### Features
+
+* **Django:** add model init migrations ([#413](https://github.com/openfoodfacts/open-prices/issues/413)) ([8aabad6](https://github.com/openfoodfacts/open-prices/commit/8aabad60e95bd8ca51d16b1bb78310294d60eee8))
+
+
+### Technical
+
+* add model with_stats() queryset. Add tests ([5aa00e7](https://github.com/openfoodfacts/open-prices/commit/5aa00e7d6483a0f435f69bac8ec177f4aa39038e))
+* **stats:** new model update_price_count() methods ([#435](https://github.com/openfoodfacts/open-prices/issues/435)) ([b25146d](https://github.com/openfoodfacts/open-prices/commit/b25146ddca79f9bd75207131f7855b222abc3241))
+* **tests:** skip Product & Location post_save signals ([#434](https://github.com/openfoodfacts/open-prices/issues/434)) ([639cee6](https://github.com/openfoodfacts/open-prices/commit/639cee6ac17836a9da9e6ded712f3529446865d9))
+* Update github-projects.yml ([8d82664](https://github.com/openfoodfacts/open-prices/commit/8d826644fea2391bd9a20af973a2db3e2f164363))
+
 ## [1.35.1](https://github.com/openfoodfacts/open-prices/compare/v1.35.0...v1.35.1) (2024-09-06)
 
 
