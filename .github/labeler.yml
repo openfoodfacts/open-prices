@@ -4,3 +4,27 @@
 GitHub Actions:
 - changed-files:
   - any-glob-to-any-file: '.github/**/*'
+
+GDPR imports:
+- changed-files:
+  - any-glob-to-any-file: '**/*gdpr*'
+
+Proofs:
+- changed-files:
+  - any-glob-to-any-file: '**/*proof*'
+
+DB migrations:
+- changed-files:
+  - any-glob-to-any-file: '**/*migrations*'
+
+Users:
+- changed-files:
+  - any-glob-to-any-file: '**/*user*'
+
+Products:
+- changed-files:
+  - any-glob-to-any-file: '**/*products*'
+
+Prices:
+- changed-files:
+  - any-glob-to-any-file: '**/*prices*'
