@@ -5,6 +5,7 @@ import sys
 import time
 
 import requests
+from utils import get_picard_product_from_subcode
 
 OPEN_PRICES_CREATE_PRICE_ENDPOINT = f'{os.environ.get("API_ENDPOINT")}/prices'
 OPEN_PRICES_TOKEN = os.environ.get("API_TOKEN")
@@ -36,12 +37,6 @@ REQUIRED_ENV_PARAMS = [
     "API_TOKEN",
     # DRY_MODE
 ]
-
-OFF_SEARCHLICIOUS_API_ENDPOINT = (
-    "https://search.openfoodfacts.org/search"  # ?q=code:*81714* brands:picard
-)
-
-PICARD_GS1_PREFIX = "327016"
 
 
 def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
@@ -150,66 +145,11 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
         elif gdpr_source == "INTERMARCHE":
             pass
         elif gdpr_source == "PICARD":
-            # the product_code is incomplete
-            # use Search-a-licious API to get the full product code
-            # and prompt the user to find the correct one
-            print(
-                "----- Input:",
-                op_price["product_code"],
-                op_price["product_name"],
-                op_price["price"],
-            )
-            for q_index, q_params in enumerate(
-                [
-                    f"code:{PICARD_GS1_PREFIX}?{op_price['product_code']}? brands:picard",
-                    f"code:{PICARD_GS1_PREFIX}?{op_price['product_code']}?",
-                    f"code:*{op_price['product_code']}? brands:picard",
-                    f"code:*{op_price['product_code']}?&page_size=50",
-                ]
-            ):
-                response = requests.get(
-                    OFF_SEARCHLICIOUS_API_ENDPOINT,
-                    params={"q": q_params},
-                )
-                print(response.url)
-                if response.status_code == 200:
-                    response_product_count = response.json()["count"]
-                    print("Products found:", response_product_count)
-                    if response_product_count:
-                        # confidence strong enough: take the first product
-                        if (q_index < 2) and (response_product_count == 1):
-                            op_price["product_code"] = response.json()["hits"][0][
-                                "code"
-                            ]
-                        else:
-                            response_product_list = response.json()["hits"]
-                            for index, response_product in enumerate(
-                                response_product_list
-                            ):
-                                print(
-                                    index + 1,
-                                    ":",
-                                    response_product.get("code"),
-                                    response_product.get("product_name", ""),
-                                    response_product.get("brands_tags", ""),
-                                    response_product.get("stores", ""),
-                                )
-                            user_choice_number_str = input(
-                                "Which product ? Type 0 to skip. Or provide the correct code. "
-                            )
-                            if len(user_choice_number_str) == 1:
-                                user_choice_product_code = response_product_list[
-                                    int(user_choice_number_str) - 1
-                                ]["code"]
-                                print("Chosen product code:", user_choice_product_code)
-                                op_price["product_code"] = user_choice_product_code
-                            elif 3 < len(user_choice_number_str) <= 13:
-                                print("Chosen product code:", user_choice_number_str)
-                                op_price["product_code"] = user_choice_number_str
-                            else:
-                                print("Product not found...")
-                                passes_test = False
-                        break
+            full_product_code = get_picard_product_from_subcode(op_price)
+            if full_product_code:
+                op_price["product_code"] = full_product_code
+            else:
+                passes_test = False
 
         if passes_test:
             op_price_list_filtered.append(op_price)

@@ -14,7 +14,7 @@ See https://wiki.openfoodfacts.org/GDPR_request
 |Carrefour  |1 file with 2 tabs|- merge files<br/>- skip discounts|
 |E.Leclerc  |2 files           |- merge files|
 |Intermarché|1 single file     ||
-|Picard     |1 file with multiple tables||
+|Picard     |1 file with multiple tables|- create seperate files<br>- merge files|
 
 ## Usage
 
