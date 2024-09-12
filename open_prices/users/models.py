@@ -8,7 +8,13 @@ class UserQuerySet(models.QuerySet):
 
 
 class User(models.Model):
-    SERIALIZED_FIELDS = ["user_id", "price_count", "location_count", "product_count"]
+    SERIALIZED_FIELDS = [
+        "user_id",
+        "price_count",
+        "location_count",
+        "product_count",
+        "proof_count",
+    ]
 
     user_id = models.CharField(primary_key=True)
 
@@ -17,6 +23,7 @@ class User(models.Model):
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -59,6 +66,17 @@ class User(models.Model):
             .count()
         )
         self.save(update_fields=["product_count"])
+
+    def update_proof_count(self):
+        from open_prices.prices.models import Price
+
+        self.proof_count = (
+            Price.objects.filter(owner=self.user_id)
+            .values_list("proof_id", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["proof_count"])
 
 
 class Session(models.Model):

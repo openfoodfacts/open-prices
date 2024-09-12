@@ -3,6 +3,7 @@ from django.test import TestCase
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
+from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
 from open_prices.users.models import User
 
@@ -29,10 +30,16 @@ class UserPropertyTest(TestCase):
     def setUpTestData(cls):
         cls.user = UserFactory()
         cls.location = LocationFactory(**LOCATION_NODE_652825274)
+        cls.proof = ProofFactory(
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            owner=cls.user.user_id,
+        )
         PriceFactory(
             product_code="0123456789100",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            proof_id=cls.proof.id,
             price=1.0,
             owner=cls.user.user_id,
         )
@@ -40,6 +47,7 @@ class UserPropertyTest(TestCase):
             product_code="0123456789101",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            proof_id=cls.proof.id,
             price=2.0,
             owner=cls.user.user_id,
         )
@@ -67,3 +75,10 @@ class UserPropertyTest(TestCase):
         # update_product_count() should fix product_count
         self.user.update_product_count()
         self.assertEqual(self.user.product_count, 2)
+
+    def test_update_proof_count(self):
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.proof_count, 0)
+        # update_proof_count() should fix proof_count
+        self.user.update_proof_count()
+        self.assertEqual(self.user.proof_count, 1)

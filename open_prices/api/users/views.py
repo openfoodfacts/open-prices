@@ -11,5 +11,11 @@ class UserViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = UserFilter
-    ordering_fields = ["user_id", "price_count", "location_count", "product_count"]
+    ordering_fields = [
+        "user_id",
+        "price_count",
+        "location_count",
+        "product_count",
+        "proof_count",
+    ]
     ordering = ["user_id"]
