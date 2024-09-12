@@ -10,6 +10,8 @@ class UserAdmin(admin.ModelAdmin):
         "is_moderator",
         "price_count",
         "location_count",
+        "product_count",
+        "proof_count",
         "created",
     )
     list_filter = ("is_moderator",)

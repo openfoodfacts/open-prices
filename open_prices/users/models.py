@@ -8,7 +8,13 @@ class UserQuerySet(models.QuerySet):
 
 
 class User(models.Model):
-    SERIALIZED_FIELDS = ["user_id", "price_count", "location_count", "product_count"]
+    SERIALIZED_FIELDS = [
+        "user_id",
+        "price_count",
+        "location_count",
+        "product_count",
+        "proof_count",
+    ]
 
     user_id = models.CharField(primary_key=True)
 
