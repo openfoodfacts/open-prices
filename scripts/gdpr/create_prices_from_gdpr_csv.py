@@ -80,6 +80,10 @@ def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
         if op_field == "product_code":
             if len(gdpr_field_value) == 4:
                 gdpr_field_value = f"0{gdpr_field_value}"
+        elif op_field == "date":
+            gdpr_field_value = datetime.datetime.strptime(
+                gdpr_field_value, "%d/%m/%Y"
+            ).strftime("%Y-%m-%d")
 
     return gdpr_field_value
 
@@ -226,9 +230,12 @@ def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_da
 
 def create_price(price):
     headers = {"Authorization": f"Bearer {OPEN_PRICES_TOKEN}"}
-    requests.post(OPEN_PRICES_CREATE_PRICE_ENDPOINT, json=price, headers=headers)
-    # if response.status_code == 201:
-    #     print("Price created !")
+    response = requests.post(
+        OPEN_PRICES_CREATE_PRICE_ENDPOINT, json=price, headers=headers
+    )
+    if not response.status_code == 201:
+        print(response.json())
+        print(price)
 
 
 if __name__ == "__main__":
