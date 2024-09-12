@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.37.0](https://github.com/openfoodfacts/open-prices/compare/v1.36.1...v1.37.0) (2024-09-12)
+
+
+### Features
+
+* **GDPR:** improve script to manage Picard ([#430](https://github.com/openfoodfacts/open-prices/issues/430)) ([955cecc](https://github.com/openfoodfacts/open-prices/commit/955ceccdce65b147189c9d1421d02fd0bf6577e1))
+* **users:** New User.location_count field ([#440](https://github.com/openfoodfacts/open-prices/issues/440)) ([ba02e6b](https://github.com/openfoodfacts/open-prices/commit/ba02e6bfc8bf37b6e2190d24062ba8a17b704346))
+* **users:** New User.product_count field ([#441](https://github.com/openfoodfacts/open-prices/issues/441)) ([c440ced](https://github.com/openfoodfacts/open-prices/commit/c440ced63d86fe3862091b30ca255f233e4b1f8c))
+* **users:** New User.proof_count field ([#442](https://github.com/openfoodfacts/open-prices/issues/442)) ([2cb5fb1](https://github.com/openfoodfacts/open-prices/commit/2cb5fb123f4053261708ea177313f18c3ca43989))
+
+
+### Bug Fixes
+
+* **GDPR:** fix Picard import script after testing in prod. ref [#430](https://github.com/openfoodfacts/open-prices/issues/430) ([38e50c9](https://github.com/openfoodfacts/open-prices/commit/38e50c907f12aed3bbf54b52669adb824b5ba862))
+
+
+### Technical
+
+* **GDPR:** add proof images. ref [#213](https://github.com/openfoodfacts/open-prices/issues/213) ([db749f9](https://github.com/openfoodfacts/open-prices/commit/db749f92fc3f54cb108892e3bafe56482beed91b))
+
 ## [1.36.1](https://github.com/openfoodfacts/open-prices/compare/v1.36.0...v1.36.1) (2024-09-11)
 
 
