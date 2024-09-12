@@ -16,6 +16,7 @@ class User(models.Model):
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -34,7 +35,7 @@ class User(models.Model):
     def update_price_count(self):
         from open_prices.prices.models import Price
 
-        self.price_count = Price.objects.filter(owner=self).count()
+        self.price_count = Price.objects.filter(owner=self.user_id).count()
         self.save(update_fields=["price_count"])
 
     def update_location_count(self):
@@ -47,6 +48,17 @@ class User(models.Model):
             .count()
         )
         self.save(update_fields=["location_count"])
+
+    def update_product_count(self):
+        from open_prices.prices.models import Price
+
+        self.product_count = (
+            Price.objects.filter(owner=self.user_id)
+            .values_list("product_id", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["product_count"])
 
 
 class Session(models.Model):
