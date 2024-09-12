@@ -30,13 +30,25 @@ class UserListOrderApiTest(TestCase):
         cls.url = reverse("api:users-list")
         UserFactory(price_count=15)
         UserFactory(price_count=0)
-        UserFactory(price_count=50)
+        UserFactory(price_count=50, location_count=5, product_count=25)
 
-    def test_user_list_order_by(self):
+    def test_user_list_order_by_price_count(self):
         url = self.url + "?order_by=-price_count"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 2)  # only users with prices
         self.assertEqual(response.data["items"][0]["price_count"], 50)
+
+    def test_user_list_order_by_location_count(self):
+        url = self.url + "?order_by=-location_count"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)  # only users with prices
+        self.assertEqual(response.data["items"][0]["location_count"], 5)
+
+    def test_user_list_order_by_product_count(self):
+        url = self.url + "?order_by=-product_count"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)  # only users with prices
+        self.assertEqual(response.data["items"][0]["product_count"], 25)
 
 
 class UserListFilterApiTest(TestCase):

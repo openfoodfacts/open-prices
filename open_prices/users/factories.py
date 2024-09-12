@@ -13,6 +13,7 @@ class UserFactory(DjangoModelFactory):
     user_id = factory.Faker("user_name")
     # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
     # location_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))  # noqa
+    # product_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))  # noqa
 
 
 class SessionFactory(DjangoModelFactory):
