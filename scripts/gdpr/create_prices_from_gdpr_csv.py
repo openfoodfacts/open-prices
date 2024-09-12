@@ -5,10 +5,12 @@ import sys
 import time
 
 import requests
+from utils import get_picard_product_from_subcode
 
 OPEN_PRICES_CREATE_PRICE_ENDPOINT = f'{os.environ.get("API_ENDPOINT")}/prices'
 OPEN_PRICES_TOKEN = os.environ.get("API_TOKEN")
-GDPR_FIELD_MAPPING_FILEPATH = "data/gdpr/gdpr_field_mapping.csv"
+
+GDPR_FIELD_MAPPING_FILEPATH = "scripts/gdpr/gdpr_field_mapping.csv"
 
 DEFAULT_PRICE_CURRENCY = "EUR"
 PRICE_FIELDS = [
@@ -44,10 +46,14 @@ def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
     # remove any whitespace
     gdpr_field_value = gdpr_field_value.strip()
 
-    # shop specific rules
-    if gdpr_source == "AUCHAN":
-        if op_field == "price":
+    # field-specific rules
+    if op_field in ["price", "quantity"]:
+        if gdpr_field_value:
             gdpr_field_value = float(gdpr_field_value.replace(",", "."))
+
+    # shop-specific rules
+    if gdpr_source == "AUCHAN":
+        pass
     elif gdpr_source == "CARREFOUR":
         # input: |3178050000749|
         # output: 3178050000749
@@ -62,15 +68,18 @@ def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
     elif gdpr_source == "ELECLERC":
         pass
     elif gdpr_source == "INTERMARCHE":
-        if op_field in ["price", "quantity"]:
-            # divide price by quantity
-            gdpr_field_value = float(gdpr_field_value.replace(",", "."))
         # input: 27/05/2021
         # output: 2021-05-27
         if op_field == "date":
             gdpr_field_value = datetime.datetime.strptime(
                 gdpr_field_value, "%d/%m/%Y"
             ).strftime("%Y-%m-%d")
+    elif gdpr_source == "PICARD":
+        # Picard codes are a subset of the EAN codes
+        # They have a length of 5 (4 if missing leading 0)
+        if op_field == "product_code":
+            if len(gdpr_field_value) == 4:
+                gdpr_field_value = f"0{gdpr_field_value}"
 
     return gdpr_field_value
 
@@ -79,15 +88,15 @@ def gdpr_source_price_cleanup_rules(gdpr_source, gdpr_op_price):
     """
     Rules to cleanup the price object
     """
-    if gdpr_source == "AUCHAN":
-        pass
-    elif gdpr_source == "CARREFOUR":
-        pass
-    elif gdpr_source == "ELECLERC":
-        pass
-    elif gdpr_source == "INTERMARCHE":
-        # price must be divided by quantity
-        gdpr_op_price["price"] = gdpr_op_price["price"] / gdpr_op_price["quantity"]
+    # price must be divided by quantity
+    if "quantity" in gdpr_op_price:
+        if gdpr_op_price["quantity"]:
+            gdpr_op_price["price"] = gdpr_op_price["price"] / gdpr_op_price["quantity"]
+
+    # discount boolean flag
+    if "discount" in gdpr_op_price:
+        if gdpr_op_price["discount"]:
+            gdpr_op_price["price_is_discounted"] = True
 
     return gdpr_op_price
 
@@ -135,6 +144,12 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
                 passes_test = False
         elif gdpr_source == "INTERMARCHE":
             pass
+        elif gdpr_source == "PICARD":
+            full_product_code = get_picard_product_from_subcode(op_price)
+            if full_product_code:
+                op_price["product_code"] = full_product_code
+            else:
+                passes_test = False
 
         if passes_test:
             op_price_list_filtered.append(op_price)
@@ -219,7 +234,7 @@ def create_price(price):
 if __name__ == "__main__":
     """
     How-to run:
-    > FILEPATH= poetry run python data/gdpr/create_prices_from_gdpr_csv.py
+    > FILEPATH= poetry run python scripts/gdpr/create_prices_from_gdpr_csv.py
     Required params: see REQUIRED_ENV_PARAMS
     """
     # Step 1: read input file
@@ -256,21 +271,21 @@ if __name__ == "__main__":
     )
     print(len(open_prices_price_list))
 
-    # Step 4a: filter prices depending on specific source rules
-    print("===== Applying source filtering rules")
-    open_prices_price_list_filtered_1 = gdpr_source_filter_rules(
-        open_prices_price_list, gdpr_source=source
+    # Step 4a: filter prices depending on location
+    print("===== Applying location filtering rules")
+    open_prices_price_list_filtered_1 = gdpr_source_location_rules(
+        open_prices_price_list
     )
     print(len(open_prices_price_list_filtered_1))
 
-    # Step 4b: filter prices depending on location
-    print("===== Applying location filtering rules")
-    open_prices_price_list_filtered_2 = gdpr_source_location_rules(
-        open_prices_price_list_filtered_1
+    # Step 4b: filter prices depending on specific source rules
+    print("===== Applying source filtering rules")
+    open_prices_price_list_filtered_2 = gdpr_source_filter_rules(
+        open_prices_price_list_filtered_1, gdpr_source=source
     )
     print(len(open_prices_price_list_filtered_2))
 
-    print("===== Output example (extra fields will be ignored):")
+    print("===== Output example (extra fields will be ignored)")
     print(open_prices_price_list_filtered_2[0])
 
     # Step 5: send prices to backend via API
