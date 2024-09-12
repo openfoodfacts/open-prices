@@ -5,7 +5,13 @@ from open_prices.users.models import Session, User
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("user_id", "is_moderator", "price_count", "created")
+    list_display = (
+        "user_id",
+        "is_moderator",
+        "price_count",
+        "location_count",
+        "created",
+    )
     list_filter = ("is_moderator",)
     search_fields = ("user_id",)
 
