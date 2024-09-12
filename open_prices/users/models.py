@@ -8,13 +8,14 @@ class UserQuerySet(models.QuerySet):
 
 
 class User(models.Model):
-    SERIALIZED_FIELDS = ["user_id", "price_count"]
+    SERIALIZED_FIELDS = ["user_id", "price_count", "location_count"]
 
     user_id = models.CharField(primary_key=True)
 
     is_moderator = models.BooleanField(default=False)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -35,6 +36,17 @@ class User(models.Model):
 
         self.price_count = Price.objects.filter(owner=self).count()
         self.save(update_fields=["price_count"])
+
+    def update_location_count(self):
+        from open_prices.prices.models import Price
+
+        self.location_count = (
+            Price.objects.filter(owner=self.user_id)
+            .values_list("location_id", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["location_count"])
 
 
 class Session(models.Model):
