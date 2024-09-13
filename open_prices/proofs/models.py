@@ -126,9 +126,11 @@ class Proof(models.Model):
 
     def set_location(self):
         if self.location_osm_id and self.location_osm_type:
+            from open_prices.locations import constants as location_constants
             from open_prices.locations.models import Location
 
             location, created = Location.objects.get_or_create(
+                type=location_constants.TYPE_OSM,
                 osm_id=self.location_osm_id,
                 osm_type=self.location_osm_type,
             )
