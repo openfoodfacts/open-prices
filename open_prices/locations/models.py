@@ -20,15 +20,21 @@ class LocationQuerySet(models.QuerySet):
 
 
 class Location(models.Model):
-    CREATE_FIELDS = ["osm_id", "osm_type"]
+    CREATE_FIELDS = ["type", "osm_id", "osm_type", "website_url"]
     LAT_LON_DECIMAL_FIELDS = ["osm_lat", "osm_lon"]
+    URL_FIELDS = ["website_url"]
     COUNT_FIELDS = ["price_count", "user_count", "product_count", "proof_count"]
 
-    osm_id = models.PositiveBigIntegerField()
-    osm_type = models.CharField(
-        max_length=10, choices=location_constants.OSM_TYPE_CHOICES
-    )
+    type = models.CharField(max_length=20, choices=location_constants.TYPE_CHOICES)
 
+    # OSM
+    osm_id = models.PositiveBigIntegerField(blank=True, null=True)
+    osm_type = models.CharField(
+        max_length=10,
+        choices=location_constants.OSM_TYPE_CHOICES,
+        blank=True,
+        null=True,
+    )
     osm_name = models.CharField(blank=True, null=True)
     osm_display_name = models.CharField(blank=True, null=True)
     osm_tag_key = models.CharField(blank=True, null=True)
@@ -43,6 +49,9 @@ class Location(models.Model):
     osm_lon = models.DecimalField(
         max_digits=11, decimal_places=7, blank=True, null=True
     )
+
+    # WEBSITE
+    website_url = models.URLField(blank=True, null=True)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     user_count = models.PositiveIntegerField(default=0, blank=True, null=True)
@@ -70,22 +79,62 @@ class Location(models.Model):
                     truncate_decimal(getattr(self, field_name), max_decimal_places=7),
                 )
 
+    def cleanup_url(self):
+        for field_name in self.URL_FIELDS:
+            if getattr(self, field_name) is not None:
+                if not getattr(self, field_name).startswith("https://"):
+                    setattr(self, field_name, f"https://{getattr(self, field_name)}")
+
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
         validation_errors = dict()
         # osm rules
-        if not self.osm_id:
-            validation_errors = utils.add_validation_error(
-                validation_errors,
-                "osm_id",
-                "Should be set",
-            )
-        elif self.osm_id in [True, "true", "false", "none", "null"]:
-            validation_errors = utils.add_validation_error(
-                validation_errors,
-                "osm_id",
-                "Should not be a boolean or an invalid string",
-            )
+        if self.type == location_constants.TYPE_OSM:
+            if not self.osm_id:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "osm_id",
+                    f"Should be set (type = {self.type})",
+                )
+            elif self.osm_id in [True, "true", "false", "none", "null"]:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "osm_id",
+                    "Should not be a boolean or an invalid string",
+                )
+            if not self.osm_type:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "osm_type",
+                    f"Should be set (type = {self.type})",
+                )
+            if self.website_url:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "website_url",
+                    f"Should not be set (type = {self.type})",
+                )
+        # website rules
+        elif self.type == location_constants.TYPE_WEBSITE:
+            if not self.website_url:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "website_url",
+                    f"Should be set (type = {self.type})",
+                )
+            if self.osm_id:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "osm_id",
+                    f"Should not be set (type = {self.type})",
+                )
+            if self.osm_type:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "osm_type",
+                    f"Should not be set (type = {self.type})",
+                )
+
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
@@ -96,9 +145,20 @@ class Location(models.Model):
         - truncate decimal fields
         - run validations
         """
-        self.truncate_lat_lon()
+        if self.type == location_constants.TYPE_OSM:
+            self.truncate_lat_lon()
+        elif self.type == location_constants.TYPE_WEBSITE:
+            self.cleanup_url()
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def is_type_osm(self):
+        return self.type == location_constants.TYPE_OSM
+
+    @property
+    def is_type_website(self):
+        return self.type == location_constants.TYPE_WEBSITE
 
     def update_price_count(self):
         self.price_count = self.prices.count()
@@ -136,8 +196,9 @@ def location_post_create_fetch_and_save_data_from_openstreetmap(
     sender, instance, created, **kwargs
 ):
     if not settings.TESTING:
-        if created:
-            async_task(
-                "open_prices.locations.tasks.fetch_and_save_data_from_openstreetmap",
-                instance,
-            )
+        if instance.type == location_constants.TYPE_OSM:
+            if created:
+                async_task(
+                    "open_prices.locations.tasks.fetch_and_save_data_from_openstreetmap",
+                    instance,
+                )
