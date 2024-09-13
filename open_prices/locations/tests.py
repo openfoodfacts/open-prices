@@ -86,19 +86,19 @@ class LocationModelSaveTest(TestCase):
         self.assertEqual(location.osm_lat, Decimal("45.1805534"))
         self.assertEqual(location.osm_lon, Decimal("5.7153387"))
 
-    def test_location_website_validation(self):
+    def test_location_online_validation(self):
         # website_url should be set
         self.assertRaises(
             ValidationError,
             LocationFactory,
-            type=location_constants.TYPE_WEBSITE,
+            type=location_constants.TYPE_ONLINE,
             website_url=None,
         )
         # ok
         for WEBSITE_URL in location_constants.WEBSITE_URL_OK_LIST:
             with self.subTest(website_url=WEBSITE_URL):
                 LocationFactory(
-                    type=location_constants.TYPE_WEBSITE, website_url=WEBSITE_URL
+                    type=location_constants.TYPE_ONLINE, website_url=WEBSITE_URL
                 )
 
 

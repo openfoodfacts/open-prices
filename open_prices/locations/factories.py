@@ -39,7 +39,7 @@ class LocationFactory(DjangoModelFactory):
 
     website_url = factory.LazyAttribute(
         lambda x: factory.Faker("uri")
-        if x.type == location_constants.TYPE_WEBSITE
+        if x.type == location_constants.TYPE_ONLINE
         else None
     )
 

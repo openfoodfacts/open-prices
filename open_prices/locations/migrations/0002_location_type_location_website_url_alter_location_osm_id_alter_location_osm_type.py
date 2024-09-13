@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
             model_name="location",
             name="type",
             field=models.CharField(
-                choices=[("OSM", "OSM"), ("WEBSITE", "WEBSITE")],
+                choices=[("OSM", "OSM"), ("ONLINE", "ONLINE")],
                 default="OSM",
                 max_length=20,
             ),
