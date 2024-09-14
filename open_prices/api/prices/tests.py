@@ -175,6 +175,13 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?origins_tags__contains=en:unknown"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # combine
+        url = (
+            self.url
+            + "?category_tag=en:apples&labels_tags__contains=en:organic&origins_tags__contains=en:france"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_price(self):
         # exact price
