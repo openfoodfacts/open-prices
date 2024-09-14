@@ -18,6 +18,14 @@ PRICE_8001505005707 = {
     "date": "2024-01-01",
 }
 
+PRICE_APPLES = {
+    "category_tag": "en:apples",
+    "price_per": price_constants.PRICE_PER_UNIT,
+    "price": 1,
+    "currency": "EUR",
+    "date": "2023-08-30",
+}
+
 
 class PriceListApiTest(TestCase):
     @classmethod
@@ -98,11 +106,23 @@ class PriceListFilterApiTest(TestCase):
         )
         PriceFactory(
             product_code=None,
-            category_tag="en:croissants",
-            price_per=price_constants.PRICE_PER_UNIT,
-            price=1,
-            currency="EUR",
-            date="2023-08-30",
+            **PRICE_APPLES,
+            labels_tags=[],
+            origins_tags=["en:spain"],
+            owner=cls.user_session.user.user_id,
+        )
+        PriceFactory(
+            product_code=None,
+            **PRICE_APPLES,
+            labels_tags=["en:organic"],
+            origins_tags=["en:unknown"],
+            owner=cls.user_session.user.user_id,
+        )
+        PriceFactory(
+            product_code=None,
+            **PRICE_APPLES,
+            labels_tags=["en:organic"],
+            origins_tags=["en:france"],
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
@@ -118,7 +138,7 @@ class PriceListFilterApiTest(TestCase):
 
     def test_price_list_without_filter(self):
         response = self.client.get(self.url)
-        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(response.data["total"], 5)
 
     def test_price_list_filter_by_product(self):
         # product_code
@@ -129,16 +149,37 @@ class PriceListFilterApiTest(TestCase):
         # product_id__isnull
         url = self.url + "?product_id__isnull=true"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["category_tag"], "en:croissants")
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(response.data["items"][0]["category_tag"], "en:apples")
         url = self.url + "?product_id__isnull=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         # category_tag
-        url = self.url + "?category_tag=croissants"
+        url = self.url + "?category_tag=apples"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)
-        url = self.url + "?category_tag=en:croissants"
+        url = self.url + "?category_tag=en:apples"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+
+    def test_price_list_filter_by_tags(self):
+        # labels_tags
+        url = self.url + "?labels_tags__contains=en:organic"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["items"][0]["labels_tags"], ["en:organic"])
+        # origins_tags
+        url = self.url + "?origins_tags__contains=en:france"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?origins_tags__contains=en:unknown"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # combine
+        url = (
+            self.url
+            + "?category_tag=en:apples&labels_tags__contains=en:organic&origins_tags__contains=en:france"
+        )
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
 
@@ -155,7 +196,7 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["items"][0]["price"], 50.00)
         url = self.url + "?price__lte=20"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 4)
         self.assertEqual(response.data["items"][0]["price"], 15.00)
         # price_is_discounted
         url = self.url + "?price_is_discounted=true"
@@ -164,12 +205,12 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["items"][0]["price"], 50.00)
         url = self.url + "?price_is_discounted=false"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_currency(self):
         url = self.url + "?currency=EUR"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_location(self):
         # location_osm_id
@@ -186,7 +227,7 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 1)
         url = self.url + "?location_id__isnull=false"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_proof(self):
         # proof_id
@@ -196,7 +237,7 @@ class PriceListFilterApiTest(TestCase):
         # proof_id__isnull
         url = self.url + "?proof_id__isnull=true"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 4)
         url = self.url + "?proof_id__isnull=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
@@ -222,12 +263,12 @@ class PriceListFilterApiTest(TestCase):
     def test_price_list_filter_by_owner(self):
         url = self.url + f"?owner={self.user_session.user.user_id}"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_created(self):
         url = self.url + "?created__gte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(response.data["total"], 5)
         url = self.url + "?created__lte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)
