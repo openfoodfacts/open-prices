@@ -72,6 +72,7 @@ class ProductListFilterApiTest(TestCase):
         )
 
     def test_product_list_filter_by_tags(self):
+        # categories_tags
         url = self.url + "?categories_tags__contains=en:breakfasts"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
@@ -79,12 +80,14 @@ class ProductListFilterApiTest(TestCase):
             response.data["items"][0]["categories_tags"],
             ["en:breakfasts", "en:spreads"],
         )
+        # labels_tags
         url = self.url + "?labels_tags__contains=en:no-gluten"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(
             response.data["items"][0]["labels_tags"], ["en:no-gluten", "en:organic"]
         )
+        # brands_tags
         url = self.url + "?brands_tags__contains=rigoni-di-asiago"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)

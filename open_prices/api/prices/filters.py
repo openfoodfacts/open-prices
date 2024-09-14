@@ -7,6 +7,12 @@ class PriceFilter(django_filters.FilterSet):
     product_id__isnull = django_filters.BooleanFilter(
         field_name="product_id", lookup_expr="isnull"
     )
+    labels_tags__contains = django_filters.CharFilter(
+        field_name="labels_tags", lookup_expr="icontains"
+    )
+    origins_tags__contains = django_filters.CharFilter(
+        field_name="origins_tags", lookup_expr="icontains"
+    )
     price__gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
     price__gte = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     price__lt = django_filters.NumberFilter(field_name="price", lookup_expr="lt")
