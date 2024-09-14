@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Count, signals
+from django.db.models import Count, Q, UniqueConstraint, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -80,7 +80,18 @@ class Location(models.Model):
     class Meta:
         # managed = False
         db_table = "locations"
-        unique_together = ["osm_id", "osm_type"]
+        constraints = [
+            UniqueConstraint(
+                name="unique_osm_constraint",
+                fields=["osm_id", "osm_type"],
+                condition=Q(type=location_constants.TYPE_OSM),
+            ),
+            UniqueConstraint(
+                name="unique_online_constraint",
+                fields=["website_url"],
+                condition=Q(type=location_constants.TYPE_ONLINE),
+            ),
+        ]
         verbose_name = "Location"
         verbose_name_plural = "Locations"
 

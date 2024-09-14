@@ -39,4 +39,24 @@ class Migration(migrations.Migration):
                 null=True,
             ),
         ),
+        migrations.AlterUniqueTogether(
+            name="location",
+            unique_together=set(),
+        ),
+        migrations.AddConstraint(
+            model_name="location",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("type", "OSM")),
+                fields=("osm_id", "osm_type"),
+                name="unique_osm_constraint",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="location",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("type", "ONLINE")),
+                fields=("website_url",),
+                name="unique_online_constraint",
+            ),
+        ),
     ]

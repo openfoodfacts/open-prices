@@ -27,6 +27,11 @@ LOCATION_OSM_WAY_872934393 = {
     "osm_name": "Auchan",
     "price_count": 50,
 }
+LOCATION_ONLINE_DECATHLON = {
+    "type": location_constants.TYPE_ONLINE,
+    "website_url": "https://www.decathlon.fr/",
+    "price_count": 15,
+}
 
 
 class LocationListApiTest(TestCase):
@@ -68,6 +73,7 @@ class LocationListFilterApiTest(TestCase):
         LocationFactory(**LOCATION_OSM_NODE_652825274)
         LocationFactory(**LOCATION_OSM_NODE_6509705997)
         LocationFactory(**LOCATION_OSM_WAY_872934393)
+        LocationFactory(**LOCATION_ONLINE_DECATHLON)
 
     def test_location_list_filter_by_osm_name(self):
         url = self.url + "?osm_name__like=monop"
@@ -75,11 +81,19 @@ class LocationListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["osm_name"], "Monoprix")
 
+    def test_location_list_filter_by_type(self):
+        url = self.url + "?type=ONLINE"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["type"], location_constants.TYPE_ONLINE
+        )
+
     def test_location_list_filter_by_price_count(self):
         # exact price_count
         url = self.url + "?price_count=15"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["total"], 1 + 1)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
         # lte / gte
         url = self.url + "?price_count__gte=20"
@@ -88,7 +102,7 @@ class LocationListFilterApiTest(TestCase):
         self.assertEqual(response.data["items"][0]["price_count"], 50)
         url = self.url + "?price_count__lte=20"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 3)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
 
 
@@ -135,7 +149,7 @@ class LocationCreateApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:locations-list")
 
-    def test_location_create(self):
+    def test_location_create_osm(self):
         response = self.client.post(
             self.url, LOCATION_OSM_NODE_652825274, content_type="application/json"
         )
@@ -145,6 +159,14 @@ class LocationCreateApiTest(TestCase):
         self.assertEqual(
             response.data["osm_name"], None
         )  # ignored (and post_save signal disabled)
+        self.assertEqual(response.data["price_count"], 0)  # ignored
+
+    def test_location_create_online(self):
+        response = self.client.post(
+            self.url, LOCATION_ONLINE_DECATHLON, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["website_url"], "https://www.decathlon.fr/")
         self.assertEqual(response.data["price_count"], 0)  # ignored
 
 

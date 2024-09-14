@@ -67,13 +67,13 @@ class LocationModelSaveTest(TestCase):
                     osm_id=6509705997,
                     osm_type=LOCATION_OSM_TYPE_NOT_OK,
                 )
-        # must be unique
+        # unique constraint
         self.assertRaises(
             ValidationError,
             LocationFactory,
             type=location_constants.TYPE_OSM,
             osm_id=6509705997,
-            osm_type=location_constants.OSM_TYPE_NODE,
+            osm_type=location_constants.OSM_TYPE_OK_LIST[0],
         )
 
     def test_location_decimal_truncate_on_create(self):
@@ -100,6 +100,13 @@ class LocationModelSaveTest(TestCase):
                 LocationFactory(
                     type=location_constants.TYPE_ONLINE, website_url=WEBSITE_URL
                 )
+        # unique constraint
+        self.assertRaises(
+            ValidationError,
+            LocationFactory,
+            type=location_constants.TYPE_ONLINE,
+            website_url=location_constants.WEBSITE_URL_OK_LIST[0],
+        )
 
 
 class LocationQuerySetTest(TestCase):

@@ -18,7 +18,7 @@ OSM_TYPE_NOT_OK_LIST = ["way", "W", "test", None, "None"]
 
 WEBSITE_URL_OK_LIST = [
     "https://www.decathlon.fr/",
-    "https://www.decathlon.fr",
-    "www.decathlon.fr/",
-    "www.decathlon.fr",
+    "https://www.alltricks.fr",
+    "www.ekosport.fr/",
+    "www.auvieuxcampeur.fr",
 ]
