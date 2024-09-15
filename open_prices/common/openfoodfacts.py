@@ -51,6 +51,10 @@ def normalize_product_fields(product: JSONType) -> JSONType:
         # If the product quantity is too high, it's probably an
         # error, and may cause an OutOfRangeError in the database
         product["product_quantity"] = None
+
+    # avoid null value in column "unique_scans_n" error
+    if not product.get("unique_scans_n"):
+        product["unique_scans_n"] = 0
     return product
 
 
