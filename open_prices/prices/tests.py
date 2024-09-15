@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -26,6 +28,18 @@ class PriceQuerySetTest(TestCase):
     def test_exclude_discounted(self):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.exclude_discounted().count(), 2)
+
+    def test_min(self):
+        self.assertEqual(Price.objects.calculate_min(), 5)
+        self.assertEqual(Price.objects.exclude_discounted().calculate_min(), 8)
+
+    def test_max(self):
+        self.assertEqual(Price.objects.calculate_max(), 10)
+        self.assertEqual(Price.objects.exclude_discounted().calculate_max(), 10)
+
+    def test_avg(self):
+        self.assertEqual(Price.objects.calculate_avg(), Decimal("7.67"))
+        self.assertEqual(Price.objects.exclude_discounted().calculate_avg(), 9)
 
 
 class PriceModelSaveTest(TestCase):
