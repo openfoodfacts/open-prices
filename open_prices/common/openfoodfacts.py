@@ -126,6 +126,7 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
     from open_prices.products.models import Product
 
     print((f"Launching import_product_db ({flavor})"))
+    existing_product_codes = set(Product.objects.values_list("code", flat=True))
     existing_product_flavor_codes = set(
         Product.objects.filter(source=flavor).values_list("code", flat=True)
     )
@@ -140,7 +141,8 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
     )
 
     seen_codes = set()
-    products_to_create_or_update = list()
+    products_to_create = list()
+    products_to_update = list()
     added_count = 0
     updated_count = 0
     # the dataset was created after the start of the day, every product updated
@@ -200,9 +202,10 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
         product_dict = normalize_product_fields(product_dict)
 
         # Case 1: new OFF product (not in OP database)
-        if product_code not in existing_product_flavor_codes:
+        if product_code not in existing_product_codes:
             product_dict["code"] = product_code
-            products_to_create_or_update.append(Product(**product_dict))
+            products_to_create.append(Product(**product_dict))
+            existing_product_codes.add(product_code)
             added_count += 1
 
         # Case 2: existing product (already in OP database)
@@ -219,28 +222,43 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
                 )
             )
             if existing_product_qs.exists():
-                products_to_create_or_update.append(Product(**product_dict))
+                if existing_product_qs.count() == 1:
+                    products_to_update.append(
+                        Product(
+                            **{"id": existing_product_qs.first().id}, **product_dict
+                        )
+                    )
                 updated_count += 1
 
         # update the database regularly
+        products_to_create_or_update = products_to_create + products_to_update
         if (
             len(products_to_create_or_update)
             and len(products_to_create_or_update) % batch_size == 0
         ):
             Product.objects.bulk_create(
-                products_to_create_or_update,
+                products_to_create,
                 update_conflicts=True,
                 update_fields=OFF_FIELDS,
                 unique_fields=["code"],
             )
+            Product.objects.bulk_update(
+                products_to_update,
+                fields=OFF_FIELDS,
+            )
             print(f"Products: {added_count} added, {updated_count} updated")
-            products_to_create_or_update = list()
+            products_to_create = list()
+            products_to_update = list()
 
     # final database update
     Product.objects.bulk_create(
-        products_to_create_or_update,
+        products_to_create,
         update_conflicts=True,
         update_fields=OFF_FIELDS,
         unique_fields=["code"],
+    )
+    Product.objects.bulk_update(
+        products_to_update,
+        fields=OFF_FIELDS,
     )
     print(f"Products: {added_count} added, {updated_count} updated. Done!")
