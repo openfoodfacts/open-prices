@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -6,6 +8,7 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.prices.models import Price
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
@@ -13,6 +16,50 @@ from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 from open_prices.users.models import User
+
+
+class PriceQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        PriceFactory(price=5, price_is_discounted=True, price_without_discount=10)
+        PriceFactory(price=8)
+        PriceFactory(price=10)
+
+    def test_exclude_discounted(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.exclude_discounted().count(), 2)
+
+    def test_min(self):
+        self.assertEqual(Price.objects.calculate_min(), 5)
+        self.assertEqual(Price.objects.exclude_discounted().calculate_min(), 8)
+
+    def test_max(self):
+        self.assertEqual(Price.objects.calculate_max(), 10)
+        self.assertEqual(Price.objects.exclude_discounted().calculate_max(), 10)
+
+    def test_avg(self):
+        self.assertEqual(Price.objects.calculate_avg(), Decimal("7.67"))
+        self.assertEqual(Price.objects.exclude_discounted().calculate_avg(), 9)
+
+    def test_calculate_stats(self):
+        self.assertEqual(
+            Price.objects.calculate_stats(),
+            {
+                "price__count": 3,
+                "price__min": 5,
+                "price__max": 10,
+                "price__avg": Decimal("7.67"),
+            },
+        )
+        self.assertEqual(
+            Price.objects.exclude_discounted().calculate_stats(),
+            {
+                "price__count": 2,
+                "price__min": 8,
+                "price__max": 10,
+                "price__avg": 9,
+            },
+        )
 
 
 class PriceModelSaveTest(TestCase):

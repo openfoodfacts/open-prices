@@ -2,7 +2,8 @@ import decimal
 
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import F, signals
+from django.db.models import Avg, Count, F, Max, Min, signals
+from django.db.models.functions import Cast
 from django.dispatch import receiver
 from django.utils import timezone
 from openfoodfacts.taxonomy import get_taxonomy
@@ -15,6 +16,36 @@ from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof
 from open_prices.users.models import User
+
+
+class PriceQuerySet(models.QuerySet):
+    def exclude_discounted(self):
+        return self.filter(price_is_discounted=False)
+
+    def calculate_min(self):
+        return self.aggregate(Min("price"))["price__min"]
+
+    def calculate_max(self):
+        return self.aggregate(Max("price"))["price__max"]
+
+    def calculate_avg(self):
+        return self.aggregate(
+            price__avg=Cast(
+                Avg("price"),
+                output_field=models.DecimalField(max_digits=10, decimal_places=2),
+            )
+        )["price__avg"]
+
+    def calculate_stats(self):
+        return self.aggregate(
+            price__count=Count("pk"),
+            price__min=Min("price"),
+            price__max=Max("price"),
+            price__avg=Cast(
+                Avg("price"),
+                output_field=models.DecimalField(max_digits=10, decimal_places=2),
+            ),
+        )
 
 
 class Price(models.Model):
@@ -107,6 +138,8 @@ class Price(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(PriceQuerySet)()
 
     class Meta:
         # managed = False
