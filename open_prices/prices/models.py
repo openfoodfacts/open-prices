@@ -17,6 +17,11 @@ from open_prices.proofs.models import Proof
 from open_prices.users.models import User
 
 
+class PriceQuerySet(models.QuerySet):
+    def exclude_discounted(self):
+        return self.filter(price_is_discounted=False)
+
+
 class Price(models.Model):
     UPDATE_FIELDS = [
         "price",
@@ -107,6 +112,8 @@ class Price(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(PriceQuerySet)()
 
     class Meta:
         # managed = False

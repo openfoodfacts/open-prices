@@ -6,6 +6,7 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.prices.models import Price
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
@@ -13,6 +14,18 @@ from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 from open_prices.users.models import User
+
+
+class PriceQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        PriceFactory(price=5, price_is_discounted=True, price_without_discount=10)
+        PriceFactory(price=8)
+        PriceFactory(price=10)
+
+    def test_exclude_discounted(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.exclude_discounted().count(), 2)
 
 
 class PriceModelSaveTest(TestCase):
