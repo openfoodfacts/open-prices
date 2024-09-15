@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase, TransactionTestCase
 
@@ -91,7 +93,12 @@ class ProductPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.product = ProductFactory(code="0123456789100", product_quantity=1000)
-        PriceFactory(product_code=cls.product.code, price=1.0)
+        PriceFactory(
+            product_code=cls.product.code,
+            price=1.0,
+            price_is_discounted=True,
+            price_without_discount=1.5,
+        )
         PriceFactory(product_code=cls.product.code, price=2.0)
 
     def test_update_price_count(self):
@@ -103,3 +110,35 @@ class ProductPropertyTest(TestCase):
         # update_price_count() should fix price_count
         self.product.update_price_count()
         self.assertEqual(self.product.price_count, 0)
+
+    def test_price__min(self):
+        self.assertEqual(self.product.price__min(), 1.0)
+        self.assertEqual(self.product.price__min(exclude_discounted=True), 2.0)
+
+    def test_price__max(self):
+        self.assertEqual(self.product.price__max(), 2.0)
+        self.assertEqual(self.product.price__max(exclude_discounted=True), 2.0)
+
+    def test_price__avg(self):
+        self.assertEqual(self.product.price__avg(), 1.5)
+        self.assertEqual(self.product.price__avg(exclude_discounted=True), 2.0)
+
+    def test_price__stats(self):
+        self.assertEqual(
+            self.product.price__stats(),
+            {
+                "price__count": 2,
+                "price__min": Decimal("1.0"),
+                "price__max": Decimal("2.0"),
+                "price__avg": Decimal("1.50"),
+            },
+        )
+        self.assertEqual(
+            self.product.price__stats(exclude_discounted=True),
+            {
+                "price__count": 1,
+                "price__min": Decimal("2.0"),
+                "price__max": Decimal("2.0"),
+                "price__avg": Decimal("2.00"),
+            },
+        )
