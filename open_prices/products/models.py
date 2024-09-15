@@ -74,22 +74,22 @@ class Product(models.Model):
         self.price_count = self.prices.count()
         self.save(update_fields=["price_count"])
 
-    def price_min(self, exclude_discounted=False):
+    def price__min(self, exclude_discounted=False):
         if exclude_discounted:
             return self.prices.exclude_discounted().calculate_min()
         return self.prices.calculate_min()
 
-    def price_max(self, exclude_discounted=False):
+    def price__max(self, exclude_discounted=False):
         if exclude_discounted:
             return self.prices.exclude_discounted().calculate_max()
         return self.prices.calculate_max()
 
-    def price_avg(self, exclude_discounted=False):
+    def price__avg(self, exclude_discounted=False):
         if exclude_discounted:
             return self.prices.exclude_discounted().calculate_avg()
         return self.prices.calculate_avg()
 
-    def price_stats(self, exclude_discounted=False):
+    def price__stats(self, exclude_discounted=False):
         if exclude_discounted:
             return self.prices.exclude_discounted().calculate_stats()
         return self.prices.calculate_stats()

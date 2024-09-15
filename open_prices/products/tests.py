@@ -111,20 +111,21 @@ class ProductPropertyTest(TestCase):
         self.product.update_price_count()
         self.assertEqual(self.product.price_count, 0)
 
-    def test_price_min(self):
-        self.assertEqual(self.product.price_min(), 1.0)
-        self.assertEqual(self.product.price_min(exclude_discounted=True), 2.0)
+    def test_price__min(self):
+        self.assertEqual(self.product.price__min(), 1.0)
+        self.assertEqual(self.product.price__min(exclude_discounted=True), 2.0)
 
-    def test_price_max(self):
-        self.assertEqual(self.product.price_max(), 2.0)
+    def test_price__max(self):
+        self.assertEqual(self.product.price__max(), 2.0)
+        self.assertEqual(self.product.price__max(exclude_discounted=True), 2.0)
 
-    def test_price_avg(self):
-        self.assertEqual(self.product.price_avg(), 1.5)
-        self.assertEqual(self.product.price_avg(exclude_discounted=True), 2.0)
+    def test_price__avg(self):
+        self.assertEqual(self.product.price__avg(), 1.5)
+        self.assertEqual(self.product.price__avg(exclude_discounted=True), 2.0)
 
-    def test_price_stats(self):
+    def test_price__stats(self):
         self.assertEqual(
-            self.product.price_stats(),
+            self.product.price__stats(),
             {
                 "price__count": 2,
                 "price__min": Decimal("1.0"),
@@ -133,7 +134,7 @@ class ProductPropertyTest(TestCase):
             },
         )
         self.assertEqual(
-            self.product.price_stats(exclude_discounted=True),
+            self.product.price__stats(exclude_discounted=True),
             {
                 "price__count": 1,
                 "price__min": Decimal("2.0"),
