@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.38.0](https://github.com/openfoodfacts/open-prices/compare/v1.37.0...v1.38.0) (2024-09-15)
+
+
+### Features
+
+* **prices:** add API filter by labels_tags & origins_tags ([#449](https://github.com/openfoodfacts/open-prices/issues/449)) ([dab02ae](https://github.com/openfoodfacts/open-prices/commit/dab02ae2d1b402bd03d3482788958e74337a1eb3))
+
+
+### Bug Fixes
+
+* **Django:** fix babel currency list order ([#447](https://github.com/openfoodfacts/open-prices/issues/447)) ([4da6da2](https://github.com/openfoodfacts/open-prices/commit/4da6da2260dc3e7fb207738156743aafdc280606))
+* **Django:** fix daily import script (avoid unique_scans_n null). ref [#376](https://github.com/openfoodfacts/open-prices/issues/376) ([0656431](https://github.com/openfoodfacts/open-prices/commit/0656431c6e1ac38c31ab83944edd4631609e07b3))
+* **Django:** fix daily import script (seperate bulk_create & bulk_update). ref [#376](https://github.com/openfoodfacts/open-prices/issues/376) ([294261f](https://github.com/openfoodfacts/open-prices/commit/294261fecc828c5a9032c7fb0b979b05f2403707))
+
 ## [1.37.0](https://github.com/openfoodfacts/open-prices/compare/v1.36.1...v1.37.0) (2024-09-12)
 
 
