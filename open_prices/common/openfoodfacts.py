@@ -17,7 +17,7 @@ from openfoodfacts import (
 from openfoodfacts.images import generate_image_url
 from openfoodfacts.types import JSONType
 
-OFF_FIELDS = [
+OFF_CREATE_FIELDS = [
     "product_name",
     "product_quantity",
     "product_quantity_unit",
@@ -31,6 +31,7 @@ OFF_FIELDS = [
     "nova_group",
     "unique_scans_n",
 ]
+OFF_UPDATE_FIELDS = OFF_CREATE_FIELDS + ["source", "source_last_synced"]
 
 
 def authenticate(username, password):
@@ -106,7 +107,7 @@ def get_product_dict(product, flavor=Flavor.off) -> JSONType | None:
         response = get_product(code=product.code, flavor=flavor)
         if response:
             product_dict["source"] = flavor
-            for off_field in OFF_FIELDS:
+            for off_field in OFF_CREATE_FIELDS:
                 if off_field in response:
                     product_dict[off_field] = response[off_field]
             product_dict = normalize_product_fields(product_dict)
@@ -192,7 +193,7 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
 
         # Build product dict to create/update
         product_dict = {
-            key: product[key] if (key in product) else None for key in OFF_FIELDS
+            key: product[key] if (key in product) else None for key in OFF_CREATE_FIELDS
         }
         product_dict["image_url"] = generate_main_image_url(
             product_code, product_images, product_lang, flavor=flavor
@@ -212,7 +213,7 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
         else:
             # Update the product if it:
             # - is part of the current flavor sync (or if it has no source (created in Open Prices before OFF))  # noqa
-            # - has not been updated since the creation of the current dataset
+            # - has been updated since the last sync
             existing_product_qs = (
                 Product.objects.filter(code=product_code)
                 .filter(Q(source=flavor) | Q(source=None))
@@ -239,12 +240,12 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
             Product.objects.bulk_create(
                 products_to_create,
                 update_conflicts=True,
-                update_fields=OFF_FIELDS,
+                update_fields=OFF_CREATE_FIELDS,
                 unique_fields=["code"],
             )
             Product.objects.bulk_update(
                 products_to_update,
-                fields=OFF_FIELDS,
+                fields=OFF_UPDATE_FIELDS,
             )
             print(f"Products: {added_count} added, {updated_count} updated")
             products_to_create = list()
@@ -254,11 +255,11 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
     Product.objects.bulk_create(
         products_to_create,
         update_conflicts=True,
-        update_fields=OFF_FIELDS,
+        update_fields=OFF_CREATE_FIELDS,
         unique_fields=["code"],
     )
     Product.objects.bulk_update(
         products_to_update,
-        fields=OFF_FIELDS,
+        fields=OFF_UPDATE_FIELDS,
     )
     print(f"Products: {added_count} added, {updated_count} updated. Done!")
