@@ -41,6 +41,26 @@ class PriceQuerySetTest(TestCase):
         self.assertEqual(Price.objects.calculate_avg(), Decimal("7.67"))
         self.assertEqual(Price.objects.exclude_discounted().calculate_avg(), 9)
 
+    def test_calculate_stats(self):
+        self.assertEqual(
+            Price.objects.calculate_stats(),
+            {
+                "price__count": 3,
+                "price__min": 5,
+                "price__max": 10,
+                "price__avg": Decimal("7.67"),
+            },
+        )
+        self.assertEqual(
+            Price.objects.exclude_discounted().calculate_stats(),
+            {
+                "price__count": 2,
+                "price__min": 8,
+                "price__max": 10,
+                "price__avg": 9,
+            },
+        )
+
 
 class PriceModelSaveTest(TestCase):
     @classmethod

@@ -2,7 +2,7 @@ import decimal
 
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import Avg, F, Max, Min, signals
+from django.db.models import Avg, Count, F, Max, Min, signals
 from django.db.models.functions import Cast
 from django.dispatch import receiver
 from django.utils import timezone
@@ -35,6 +35,17 @@ class PriceQuerySet(models.QuerySet):
                 output_field=models.DecimalField(max_digits=10, decimal_places=2),
             )
         )["price__avg"]
+
+    def calculate_stats(self):
+        return self.aggregate(
+            price__count=Count("pk"),
+            price__min=Min("price"),
+            price__max=Max("price"),
+            price__avg=Cast(
+                Avg("price"),
+                output_field=models.DecimalField(max_digits=10, decimal_places=2),
+            ),
+        )
 
 
 class Price(models.Model):
