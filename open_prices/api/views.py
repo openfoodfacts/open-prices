@@ -12,4 +12,4 @@ class StatusView(APIView):
 
     @extend_schema(responses=StatusSerializer, tags=["status"])
     def get(self, request: Request) -> Response:
-        return Response({"status": "running"})
+        return Response({"status": "running"}, status=200)

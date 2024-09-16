@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -5,6 +7,7 @@ from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
+from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
@@ -491,3 +494,42 @@ class PriceDeleteApiTest(TestCase):
         self.assertEqual(
             Price.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
         )
+
+
+class PriceStatsApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:prices-stats")
+        cls.product = ProductFactory()
+        PriceFactory(
+            product_code=cls.product.code,
+            price=15,
+            price_is_discounted=True,
+            price_without_discount=20,
+        )
+        PriceFactory(product_code=cls.product.code, price=25)
+        PriceFactory(product_code=cls.product.code, price=30)
+        PriceFactory(
+            product_code=None,
+            category_tag="en:apples",
+            price=2,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+        )
+
+    def test_price_stats(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price__count"], 4)
+        self.assertEqual(response.data["price__min"], 2.00)
+        self.assertEqual(response.data["price__max"], 30.00)
+        self.assertEqual(response.data["price__avg"], Decimal(18.00))
+        url = self.url + "?price_is_discounted=False"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price__count"], 3)
+        self.assertEqual(response.data["price__avg"], Decimal(19.00))
+        url = self.url + f"?price_is_discounted=false&product_code={self.product.code}"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price__count"], 2)
+        self.assertEqual(response.data["price__avg"], Decimal(27.50))

@@ -50,3 +50,10 @@ class PriceUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price
         fields = Price.UPDATE_FIELDS
+
+
+class PriceStatsSerializer(serializers.Serializer):
+    price__count = serializers.IntegerField()
+    price__min = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price__max = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price__avg = serializers.DecimalField(max_digits=10, decimal_places=2)
