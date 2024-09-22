@@ -35,6 +35,12 @@ OFF_UPDATE_FIELDS = OFF_CREATE_FIELDS + ["source", "source_last_synced"]
 
 
 def authenticate(username, password):
+    """
+    Request: POST with form data
+    Response:
+    - 200: {"status":1,"status_verbose":"user signed-in","user":{"admin":0,"cc":"fr","country":"en:france","moderator":1,"name":"Prenom","preferred_language":"fr"},"user_id":"username"}  # noqa
+    - 403: {"status": 0,"status_verbose": "user not signed-in"}
+    """
     data = {"user_id": username, "password": password, "body": 1}
     return requests.post(f"{settings.OAUTH2_SERVER_URL}", data=data)
 
