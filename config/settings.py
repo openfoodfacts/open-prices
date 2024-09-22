@@ -244,7 +244,8 @@ if DEBUG:
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 
 
-# Shell Plus (django-extensions)
+# Django-extensions
+# https://django-extensions.readthedocs.io/
 # ------------------------------------------------------------------------------
 
 SHELL_PLUS = "ipython"
