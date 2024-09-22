@@ -14,14 +14,30 @@ from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
 from open_prices.proofs.models import Proof
+from open_prices.users.models import User
 
 
 def import_product_db_task():
+    """
+    Sync product database with Open Food Facts
+    """
     for flavor in [Flavor.off, Flavor.obf, Flavor.opff, Flavor.opf]:
         import_product_db(flavor=flavor)
 
 
+def update_user_counts_task():
+    """
+    Update all user price_counts
+    """
+    for user in User.objects.all():
+        for field in User.COUNT_FIELDS:
+            getattr(user, f"update_{field}")()
+
+
 def dump_db_task():
+    """
+    Dump the database as JSONL files to the data directory
+    """
     output_dir = Path(os.path.join(settings.BASE_DIR, "static/data"))
 
     for table_name, model_class, schema_class in (
@@ -32,20 +48,18 @@ def dump_db_task():
         export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir)
 
 
-# sync product database with Open Food Facts daily at 15:00
-# https://cron.help/#0_15_*_*_*
-schedule(
-    "open_prices.common.tasks.import_product_db_task",
-    name="import_product_db_task",
-    schedule_type=Schedule.CRON,
-    cron="0 15 * * *",
-)
+CRON_SCHEDULES = {
+    "import_product_db_task": "0 15 * * *",  # daily at 15:00
+    "update_user_counts_task": "0 2 * * 1",  # every start of the week
+    "dump_db_task": "0 23 * * *",  # daily at 23:00
+}
 
-# dump the database as JSONL files to the data directory daily at 23:00
-# https://cron.help/#0_23_*_*_*
-schedule(
-    "open_prices.common.tasks.dump_db_task",
-    name="dump_db_task",
-    schedule_type=Schedule.CRON,
-    cron="0 23 * * *",
-)
+for task_name, task_cron in CRON_SCHEDULES.items():
+    if not Schedule.objects.filter(name=task_name).exists():
+        schedule(
+            f"open_prices.common.tasks.{task_name}",
+            name=task_name,
+            schedule_type=Schedule.CRON,
+            cron=task_cron,
+        )
+        print(f"Task {task_name} scheduled with cron {task_cron}")

@@ -253,6 +253,7 @@ SHELL_PLUS_POST_IMPORTS = [
     "import openfoodfacts",
     "from open_prices.common import openfoodfacts as common_openfoodfacts",
     "from open_prices.common import openstreetmap as common_openstreetmap",
+    "from open_prices.common import tasks as common_tasks",
 ]
 
 
