@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.39.0](https://github.com/openfoodfacts/open-prices/compare/v1.38.0...v1.39.0) (2024-09-22)
+
+
+### Features
+
+* **prices:** new querysets to calculate min, max & average ([#452](https://github.com/openfoodfacts/open-prices/issues/452)) ([ab9ed15](https://github.com/openfoodfacts/open-prices/commit/ab9ed15b0ddc7675ed4142edf1726595ecbd5bdd))
+* **prices:** new stats endpoint ([#454](https://github.com/openfoodfacts/open-prices/issues/454)) ([540feba](https://github.com/openfoodfacts/open-prices/commit/540febaf3dccdb8ade02b16f9c0ab0d28477ef89))
+* **products:** new properties to calculate price min, max & average ([#453](https://github.com/openfoodfacts/open-prices/issues/453)) ([f662710](https://github.com/openfoodfacts/open-prices/commit/f6627104125e13b879f95c91169fcf7e2bd9d7b1))
+
+
+### Bug Fixes
+
+* **Django:** fix daily import script (add source in updated fields). ref [#376](https://github.com/openfoodfacts/open-prices/issues/376) ([fe569d7](https://github.com/openfoodfacts/open-prices/commit/fe569d7a778da99ebe3fe81ad7b7ddf5bfdb9f09))
+
+
+### Technical
+
+* Autolabel some PRs ([#436](https://github.com/openfoodfacts/open-prices/issues/436)) ([c6122be](https://github.com/openfoodfacts/open-prices/commit/c6122be842a3b3cf2e4e6a5516381221b2e6823a))
+* generate price schema ([#457](https://github.com/openfoodfacts/open-prices/issues/457)) ([4d66eee](https://github.com/openfoodfacts/open-prices/commit/4d66eee7c5b415aec2d5b81909da6193ef77a89b))
+* **users:** New weekly CRON to update User counts ([#458](https://github.com/openfoodfacts/open-prices/issues/458)) ([f7072b8](https://github.com/openfoodfacts/open-prices/commit/f7072b8c9eaf549ba5d4bfebe9580306d6736977))
+* **users:** update is_moderator on login ([#456](https://github.com/openfoodfacts/open-prices/issues/456)) ([67caa6f](https://github.com/openfoodfacts/open-prices/commit/67caa6f6c1d609654257613a920a11d1c3a91e4e))
+
 ## [1.38.0](https://github.com/openfoodfacts/open-prices/compare/v1.37.0...v1.38.0) (2024-09-15)
 
 
