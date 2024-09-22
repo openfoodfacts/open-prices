@@ -57,8 +57,11 @@ class LoginView(APIView):
             # fetch the user_id from the response
             # We also need to lowercase the user_id as it's case-insensitive
             user_id = response.json()["user_id"].lower().strip()
+            is_moderator = response.json()["user"]["moderator"] == 1
             token = create_token(user_id)
-            get_or_create_session(user_id=user_id, token=token)
+            get_or_create_session(
+                user_id=user_id, token=token, is_moderator=is_moderator
+            )
             # set the cookie if requested
             response = Response({"access_token": token, "token_type": "bearer"})
             if request.GET.get("set_cookie") == "1":
