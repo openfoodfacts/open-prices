@@ -31,10 +31,10 @@ class PriceFilter(django_filters.FilterSet):
     date__month = django_filters.NumberFilter(field_name="date", lookup_expr="month")
     created__gte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="gte"
-    )  # noqa
+    )
     created__lte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="lte"
-    )  # noqa
+    )
 
     class Meta:
         model = Price
