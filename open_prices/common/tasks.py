@@ -38,7 +38,8 @@ def dump_db_task():
     """
     Dump the database as JSONL files to the data directory
     """
-    output_dir = Path(os.path.join(settings.BASE_DIR, "static/data"))
+    output_dir = Path(os.path.join(settings.BASE_DIR, "static", "data"))
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     for table_name, model_class, schema_class in (
         ("prices", Price, PriceSerializer),
