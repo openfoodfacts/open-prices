@@ -206,9 +206,7 @@ SPECTACULAR_SETTINGS = {
 Q_CLUSTER = {
     "name": "DjangORM",
     "workers": 1,
-    "timeout": 90,
     "max_attempts": 1,
-    "retry": 120,
     "queue_limit": 50,
     "bulk": 10,
     "orm": "default",
