@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.39.2](https://github.com/openfoodfacts/open-prices/compare/v1.39.1...v1.39.2) (2024-09-23)
+
+
+### Bug Fixes
+
+* **Django:** fix daily DB backup task ([#461](https://github.com/openfoodfacts/open-prices/issues/461)) ([35cbb81](https://github.com/openfoodfacts/open-prices/commit/35cbb819b9469d2e7db1eb0a7b8e7129a732ae96))
+* **Django:** tentative fix by removing task timeout. ref [#376](https://github.com/openfoodfacts/open-prices/issues/376) ([c03af3c](https://github.com/openfoodfacts/open-prices/commit/c03af3c0a31c4e79044c6f208c3014a0ab8a92be))
+
+
+### Technical
+
+* **proofs:** extra API filtering (on date year & month, on empty location_id) ([99e88c0](https://github.com/openfoodfacts/open-prices/commit/99e88c0afabdc2a8f757a1961b1fc1fe6d641708))
+
 ## [1.39.1](https://github.com/openfoodfacts/open-prices/compare/v1.39.0...v1.39.1) (2024-09-23)
 
 
