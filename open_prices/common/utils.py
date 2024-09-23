@@ -1,7 +1,9 @@
 import gzip
 import json
+import os
 
 import tqdm
+from django.core.serializers.json import DjangoJSONEncoder
 
 
 def is_float(string):
@@ -28,10 +30,10 @@ def add_validation_error(dict, key, value):
 
 
 def export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir):
-    output_path = output_dir / f"{table_name}.jsonl.gz"
+    output_path = os.path.join(output_dir, f"{table_name}.jsonl.gz")
     with gzip.open(output_path, "wt") as f:
         for item in tqdm.tqdm(model_class.objects.all(), desc=table_name):
-            f.write(json.dumps(schema_class(item).data))
+            f.write(json.dumps(schema_class(item).data, cls=DjangoJSONEncoder))
             f.write("\n")
 
 
