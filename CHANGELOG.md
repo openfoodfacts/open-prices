@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.39.1](https://github.com/openfoodfacts/open-prices/compare/v1.39.0...v1.39.1) (2024-09-23)
+
+
+### Bug Fixes
+
+* **Django:** set task max retry to 1. ref [#376](https://github.com/openfoodfacts/open-prices/issues/376) ([2814a53](https://github.com/openfoodfacts/open-prices/commit/2814a535dcb77825cb62f20de26b361c3185916d))
+
 ## [1.39.0](https://github.com/openfoodfacts/open-prices/compare/v1.38.0...v1.39.0) (2024-09-22)
 
 
