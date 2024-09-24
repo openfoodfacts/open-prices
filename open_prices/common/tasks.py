@@ -17,12 +17,30 @@ from open_prices.proofs.models import Proof
 from open_prices.users.models import User
 
 
-def import_product_db_task():
+def import_off_db_task():
+    import_product_db(flavor=Flavor.off)
+
+
+def import_obf_db_task():
+    import_product_db(flavor=Flavor.obf)
+
+
+def import_opff_db_task():
+    import_product_db(flavor=Flavor.opff)
+
+
+def import_opf_db_task():
+    import_product_db(flavor=Flavor.opf)
+
+
+def import_all_product_db_task():
     """
     Sync product database with Open Food Facts
     """
-    for flavor in [Flavor.off, Flavor.obf, Flavor.opff, Flavor.opf]:
-        import_product_db(flavor=flavor)
+    import_off_db_task()
+    import_obf_db_task()
+    import_opff_db_task()
+    import_opf_db_task()
 
 
 def update_user_counts_task():
@@ -50,7 +68,10 @@ def dump_db_task():
 
 
 CRON_SCHEDULES = {
-    "import_product_db_task": "0 15 * * *",  # daily at 15:00
+    "import_obf_db_task": "0 15 * * *",  # daily at 15:00
+    "import_opff_db_task": "10 15 * * *",  # daily at 15:10
+    "import_opf_db_task": "20 15 * * *",  # daily at 15:20
+    "import_off_db_task": "30 15 * * *",  # daily at 15:30
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
     "dump_db_task": "0 23 * * *",  # daily at 23:00
 }
