@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.39.3](https://github.com/openfoodfacts/open-prices/compare/v1.39.2...v1.39.3) (2024-09-24)
+
+
+### Bug Fixes
+
+* **Django:** set 2h long task timeout & retry. ref [#376](https://github.com/openfoodfacts/open-prices/issues/376) ([87b6e21](https://github.com/openfoodfacts/open-prices/commit/87b6e21b1c20878de771b0d7cb3b52e47500f6b6))
+* **Django:** split OFF product sync into 4 flavors. ref [#376](https://github.com/openfoodfacts/open-prices/issues/376) ([4fab7b8](https://github.com/openfoodfacts/open-prices/commit/4fab7b8d0e5f6db8d9ab059f2d0f4ecbd58eb192))
+
 ## [1.39.2](https://github.com/openfoodfacts/open-prices/compare/v1.39.1...v1.39.2) (2024-09-23)
 
 
