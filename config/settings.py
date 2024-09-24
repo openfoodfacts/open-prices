@@ -205,7 +205,9 @@ SPECTACULAR_SETTINGS = {
 
 Q_CLUSTER = {
     "name": "DjangORM",
-    "workers": 1,
+    "workers": 2,
+    "timeout": 2 * 60 * 60,  # 2h
+    "retry": 2 * 60 * 60 + 1,
     "max_attempts": 1,
     "queue_limit": 50,
     "bulk": 10,
