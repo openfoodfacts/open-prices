@@ -22,7 +22,7 @@ class LocationQuerySet(models.QuerySet):
 class Location(models.Model):
     CREATE_FIELDS = ["osm_id", "osm_type"]
     LAT_LON_DECIMAL_FIELDS = ["osm_lat", "osm_lon"]
-    COUNT_FIELDS = ["price_count", "proof_count"]
+    COUNT_FIELDS = ["price_count", "product_count", "proof_count"]
 
     osm_id = models.PositiveBigIntegerField()
     osm_type = models.CharField(
@@ -45,6 +45,7 @@ class Location(models.Model):
     )
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
@@ -101,6 +102,17 @@ class Location(models.Model):
     def update_price_count(self):
         self.price_count = self.prices.count()
         self.save(update_fields=["price_count"])
+
+    def update_product_count(self):
+        from open_prices.prices.models import Price
+
+        self.product_count = (
+            Price.objects.filter(location=self)
+            .values_list("product_id", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["product_count"])
 
     def update_proof_count(self):
         self.proof_count = self.proofs.count()
