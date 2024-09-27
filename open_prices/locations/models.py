@@ -22,7 +22,7 @@ class LocationQuerySet(models.QuerySet):
 class Location(models.Model):
     CREATE_FIELDS = ["osm_id", "osm_type"]
     LAT_LON_DECIMAL_FIELDS = ["osm_lat", "osm_lon"]
-    COUNT_FIELDS = ["price_count", "product_count", "proof_count"]
+    COUNT_FIELDS = ["price_count", "user_count", "product_count", "proof_count"]
 
     osm_id = models.PositiveBigIntegerField()
     osm_type = models.CharField(

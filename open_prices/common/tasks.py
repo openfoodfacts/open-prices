@@ -52,6 +52,15 @@ def update_user_counts_task():
             getattr(user, f"update_{field}")()
 
 
+def update_location_counts_task():
+    """
+    Update all user price_counts
+    """
+    for location in Location.objects.all():
+        for field in Location.COUNT_FIELDS:
+            getattr(location, f"update_{field}")()
+
+
 def dump_db_task():
     """
     Dump the database as JSONL files to the data directory
@@ -73,6 +82,7 @@ CRON_SCHEDULES = {
     "import_opf_db_task": "20 15 * * *",  # daily at 15:20
     "import_off_db_task": "30 15 * * *",  # daily at 15:30
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
+    "update_location_counts_task": "10 2 * * 1",  # every start of the week
     "dump_db_task": "0 23 * * *",  # daily at 23:00
 }
 
