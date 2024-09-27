@@ -23,7 +23,7 @@ class LocationViewSet(
     serializer_class = LocationSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = LocationFilter
-    ordering_fields = ["price_count", "created"]
+    ordering_fields = Location.COUNT_FIELDS + ["created"]
     ordering = ["created"]
 
     def get_serializer_class(self):
