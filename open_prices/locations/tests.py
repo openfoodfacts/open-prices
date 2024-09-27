@@ -101,6 +101,7 @@ class LocationPropertyTest(TestCase):
             owner=cls.user.user_id,
         )
         PriceFactory(
+            product_code="0123456789100",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             proof_id=cls.proof.id,
@@ -108,6 +109,7 @@ class LocationPropertyTest(TestCase):
             owner=cls.user.user_id,
         )
         PriceFactory(
+            product_code="0123456789101",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             price=2.0,
@@ -122,6 +124,13 @@ class LocationPropertyTest(TestCase):
         # update_price_count() should fix price_count
         self.location.update_price_count()
         self.assertEqual(self.location.price_count, 0)
+
+    def test_update_product_count(self):
+        self.location.refresh_from_db()
+        self.assertEqual(self.location.product_count, 0)
+        # update_product_count() should fix product_count
+        self.location.update_product_count()
+        self.assertEqual(self.location.product_count, 2)
 
     def test_update_proof_count(self):
         self.location.refresh_from_db()
