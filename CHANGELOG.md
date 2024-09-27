@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.40.0](https://github.com/openfoodfacts/open-prices/compare/v1.39.3...v1.40.0) (2024-09-27)
+
+
+### Features
+
+* **locations:** New Location.product_count field ([#470](https://github.com/openfoodfacts/open-prices/issues/470)) ([cebc523](https://github.com/openfoodfacts/open-prices/commit/cebc5236d9507263055c8c683e5e6c423ba24219))
+* **locations:** New Location.proof_count field ([#468](https://github.com/openfoodfacts/open-prices/issues/468)) ([004af12](https://github.com/openfoodfacts/open-prices/commit/004af12e067df04d464f84762696fd8b9c9c099a))
+* **locations:** New Location.user_count field ([#471](https://github.com/openfoodfacts/open-prices/issues/471)) ([be0c796](https://github.com/openfoodfacts/open-prices/commit/be0c7968838a283e08f98be5153e4029cbb0ac09))
+
+
+### Technical
+
+* **locations:** New weekly CRON to update Location counts ([#473](https://github.com/openfoodfacts/open-prices/issues/473)) ([07b1c4c](https://github.com/openfoodfacts/open-prices/commit/07b1c4ca3424bc885dcc5c9dfff179f6ea45a9c6))
+
 ## [1.39.3](https://github.com/openfoodfacts/open-prices/compare/v1.39.2...v1.39.3) (2024-09-24)
 
 
