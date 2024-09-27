@@ -45,6 +45,7 @@ class Location(models.Model):
     )
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    user_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
@@ -102,6 +103,17 @@ class Location(models.Model):
     def update_price_count(self):
         self.price_count = self.prices.count()
         self.save(update_fields=["price_count"])
+
+    def update_user_count(self):
+        from open_prices.prices.models import Price
+
+        self.user_count = (
+            Price.objects.filter(location=self)
+            .values_list("owner", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["user_count"])
 
     def update_product_count(self):
         from open_prices.prices.models import Price
