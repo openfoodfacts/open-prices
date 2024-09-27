@@ -7,6 +7,8 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices.factories import PriceFactory
+from open_prices.proofs.factories import ProofFactory
+from open_prices.users.factories import UserFactory
 
 LOCATION_NODE_652825274 = {
     "osm_id": 652825274,
@@ -91,11 +93,19 @@ class LocationQuerySetTest(TestCase):
 class LocationPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user = UserFactory()
         cls.location = LocationFactory(**LOCATION_NODE_652825274)
+        cls.proof = ProofFactory(
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            owner=cls.user.user_id,
+        )
         PriceFactory(
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            proof_id=cls.proof.id,
             price=1.0,
+            owner=cls.user.user_id,
         )
         PriceFactory(
             location_osm_id=cls.location.osm_id,
@@ -112,3 +122,10 @@ class LocationPropertyTest(TestCase):
         # update_price_count() should fix price_count
         self.location.update_price_count()
         self.assertEqual(self.location.price_count, 0)
+
+    def test_update_proof_count(self):
+        self.location.refresh_from_db()
+        self.assertEqual(self.location.proof_count, 0)
+        # update_proof_count() should fix location_count
+        self.location.update_proof_count()
+        self.assertEqual(self.location.proof_count, 1)

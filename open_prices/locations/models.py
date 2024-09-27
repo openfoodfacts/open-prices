@@ -22,6 +22,7 @@ class LocationQuerySet(models.QuerySet):
 class Location(models.Model):
     CREATE_FIELDS = ["osm_id", "osm_type"]
     LAT_LON_DECIMAL_FIELDS = ["osm_lat", "osm_lon"]
+    COUNT_FIELDS = ["price_count", "proof_count"]
 
     osm_id = models.PositiveBigIntegerField()
     osm_type = models.CharField(
@@ -44,7 +45,7 @@ class Location(models.Model):
     )
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    # proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)  # noqa
+    proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -100,6 +101,10 @@ class Location(models.Model):
     def update_price_count(self):
         self.price_count = self.prices.count()
         self.save(update_fields=["price_count"])
+
+    def update_proof_count(self):
+        self.proof_count = self.proofs.count()
+        self.save(update_fields=["proof_count"])
 
 
 @receiver(signals.post_save, sender=Location)

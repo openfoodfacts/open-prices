@@ -19,3 +19,4 @@ class LocationFactory(DjangoModelFactory):
     osm_name = factory.Faker("name")
     osm_address_country = factory.Faker("country")
     # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
+    # proof_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))

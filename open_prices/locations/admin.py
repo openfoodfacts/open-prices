@@ -12,6 +12,7 @@ class LocationAdmin(admin.ModelAdmin):
         "osm_tag_key",
         "osm_tag_value",
         "price_count",
+        "proof_count",
         "created",
     )
     list_filter = ("osm_type",)
