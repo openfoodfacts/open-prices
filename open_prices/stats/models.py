@@ -34,7 +34,6 @@ class TotalStats(SingletonModel):
 
     class Meta:
         verbose_name = "Total Stats"
-        verbose_name_plural = "Total Stats"
 
     def update_price_stats(self):
         from open_prices.prices.models import Price

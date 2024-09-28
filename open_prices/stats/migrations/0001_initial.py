@@ -38,7 +38,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 "verbose_name": "Total Stats",
-                "verbose_name_plural": "Total Stats",
             },
         ),
     ]

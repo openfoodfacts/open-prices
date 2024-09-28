@@ -2,6 +2,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from open_prices.locations.factories import LocationFactory
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs.factories import ProofFactory
 from open_prices.stats.models import TotalStats
@@ -51,6 +52,17 @@ class TotalStatsTest(TestCase):
             owner=cls.user.user_id,
         )
         PriceFactory(
+            product_code=None,
+            category_tag="en:tomatoes",
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            labels_tags=["en:organic"],
+            origins_tags=["en:france"],
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+            owner=cls.user.user_id,
+        )
+        PriceFactory(
             product_code="0123456789101",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
@@ -64,9 +76,9 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_category_count, 0)
         # update_price_stats() will update price_counts
         self.total_stats.update_price_stats()
-        self.assertEqual(self.total_stats.price_count, 2)
+        self.assertEqual(self.total_stats.price_count, 3)
         self.assertEqual(self.total_stats.price_barcode_count, 2)
-        self.assertEqual(self.total_stats.price_category_count, 0)
+        self.assertEqual(self.total_stats.price_category_count, 1)
 
     def test_update_product_stats(self):
         self.assertEqual(self.total_stats.product_count, 0)

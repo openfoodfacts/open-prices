@@ -13,5 +13,6 @@ class StatsView(APIView):
 
     @extend_schema(responses=TotalStatsSerializer, tags=["stats"])
     def get(self, request: Request) -> Response:
-        serializer = TotalStatsSerializer(TotalStats.get_solo())
+        total_stats = TotalStats.get_solo()
+        serializer = TotalStatsSerializer(total_stats)
         return Response(serializer.data, status=200)
