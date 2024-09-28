@@ -39,6 +39,7 @@ THIRD_PARTY_APPS = [
     "django_filters",  # django-filter
     "drf_spectacular",  # drf-spectacular
     "django_q",  # django-q2
+    "solo",  # django-solo
     # "debug_toolbar",  # django-debug-toolbar (see below)
     "django_extensions",  # django-extensions
 ]
