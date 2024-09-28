@@ -9,6 +9,13 @@ class TotalStats(SingletonModel):
     LOCATION_COUNT_FIELDS = ["location_count", "location_with_price_count"]
     PROOF_COUNT_FIELDS = ["proof_count", "proof_with_price_count"]
     USER_COUNT_FIELDS = ["user_count", "user_with_price_count"]
+    COUNT_FIELDS = (
+        PRICE_COUNT_FIELDS
+        + PRODUCT_COUNT_FIELDS
+        + LOCATION_COUNT_FIELDS
+        + PROOF_COUNT_FIELDS
+        + USER_COUNT_FIELDS
+    )
 
     price_count = models.PositiveIntegerField(default=0)
     price_barcode_count = models.PositiveIntegerField(default=0)

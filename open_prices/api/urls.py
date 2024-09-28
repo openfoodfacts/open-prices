@@ -11,6 +11,7 @@ from open_prices.api.locations.views import LocationViewSet
 from open_prices.api.prices.views import PriceViewSet
 from open_prices.api.products.views import ProductViewSet
 from open_prices.api.proofs.views import ProofViewSet
+from open_prices.api.stats.views import StatsView
 from open_prices.api.users.views import UserViewSet
 from open_prices.api.views import StatusView
 
@@ -27,6 +28,8 @@ urlpatterns = [
     # auth urls
     path("v1/auth", LoginView.as_view(), name="login"),
     path("v1/session", SessionView.as_view(), name="session"),
+    # stats urls
+    path("v1/stats", StatsView.as_view(), name="stats"),
     # health check
     path("v1/status", StatusView.as_view(), name="status"),
     # Swagger / OpenAPI documentation
