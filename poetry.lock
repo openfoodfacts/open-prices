@@ -681,6 +681,20 @@ sentry = ["django-q-sentry (>=0.1)"]
 testing = ["blessed (>=1.19.1,<2.0.0)", "boto3 (>=1.24.92,<2.0.0)", "croniter (>=2.0.1,<3.0.0)", "django-redis (>=5.2.0,<6.0.0)", "hiredis (>=2.0.0,<3.0.0)", "iron-mq (>=0.9,<0.10)", "psutil (>=5.9.2,<6.0.0)", "pymongo (>=4.2.0,<5.0.0)", "redis (>=4.3.4,<5.0.0)", "setproctitle (>=1.3.2,<2.0.0)"]
 
 [[package]]
+name = "django-solo"
+version = "2.3.0"
+description = "Django Solo helps working with singletons"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django_solo-2.3.0-py3-none-any.whl", hash = "sha256:8069319fc9a3dc1080dc47b134d42526bf71749127eca1bf94bd7eb831c02fb2"},
+    {file = "django_solo-2.3.0.tar.gz", hash = "sha256:e82ee8b0aeccb97c401dc722bf01f665c93484c880e929f2a0ea53f5cbf2bf61"},
+]
+
+[package.dependencies]
+django = ">=3.2"
+
+[[package]]
 name = "djangorestframework"
 version = "3.15.2"
 description = "Web APIs for Django, made easy."
@@ -3368,4 +3382,4 @@ viz = ["matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "1774e7a2db12e23fbab83c68b7bdfa7e826ea34fca4093db18df8c5611853804"
+content-hash = "3314770e1ee6292311a52bf32bc85b27188df48d844a58a1c125bccf087a6441"
