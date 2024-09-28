@@ -14,6 +14,7 @@ from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
 from open_prices.proofs.models import Proof
+from open_prices.stats.models import TotalStats
 from open_prices.users.models import User
 
 
@@ -41,6 +42,18 @@ def import_all_product_db_task():
     import_obf_db_task()
     import_opff_db_task()
     import_opf_db_task()
+
+
+def update_total_stats_task():
+    """
+    Update all total stats
+    """
+    total_stats = TotalStats.get_solo()
+    total_stats.update_price_stats()
+    total_stats.update_product_stats()
+    total_stats.update_location_stats()
+    total_stats.update_proof_stats()
+    total_stats.update_user_stats()
 
 
 def update_user_counts_task():
@@ -81,6 +94,7 @@ CRON_SCHEDULES = {
     "import_opff_db_task": "10 15 * * *",  # daily at 15:10
     "import_opf_db_task": "20 15 * * *",  # daily at 15:20
     "import_off_db_task": "30 15 * * *",  # daily at 15:30
+    "update_total_stats_task": "0 1 * * *",  # daily at 01:00
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
     "update_location_counts_task": "10 2 * * 1",  # every start of the week
     "dump_db_task": "0 23 * * *",  # daily at 23:00
