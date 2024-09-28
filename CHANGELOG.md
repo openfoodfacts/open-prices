@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.41.0](https://github.com/openfoodfacts/open-prices/compare/v1.40.0...v1.41.0) (2024-09-28)
+
+
+### Features
+
+* **API:** new /stats endpoint for TotalStats ([#476](https://github.com/openfoodfacts/open-prices/issues/476)) ([4f8384f](https://github.com/openfoodfacts/open-prices/commit/4f8384f0ef0c36541357bd85b23ec832647d93c4))
+* **Stats:** new TotalStats model ([#475](https://github.com/openfoodfacts/open-prices/issues/475)) ([034025b](https://github.com/openfoodfacts/open-prices/commit/034025b58c07f2450215c50a779c88b42e5f43bd))
+
+
+### Technical
+
+* **locations:** add new count fields in API ordering settings. ref [#419](https://github.com/openfoodfacts/open-prices/issues/419) ([b02c480](https://github.com/openfoodfacts/open-prices/commit/b02c48008e397605e43901407e56e828120f1a2a))
+* **stats:** add to admin, cleanup ([#479](https://github.com/openfoodfacts/open-prices/issues/479)) ([39866ac](https://github.com/openfoodfacts/open-prices/commit/39866ac386f4a27457c6c7c0837aa724dafedcdf))
+* **stats:** New daily CRON to update TotalStats ([#478](https://github.com/openfoodfacts/open-prices/issues/478)) ([63f5a76](https://github.com/openfoodfacts/open-prices/commit/63f5a762c17c1f933d64dc027b584d0c32da4e9b))
+
 ## [1.40.0](https://github.com/openfoodfacts/open-prices/compare/v1.39.3...v1.40.0) (2024-09-27)
 
 
