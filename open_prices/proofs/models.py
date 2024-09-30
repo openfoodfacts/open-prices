@@ -177,3 +177,53 @@ class Proof(models.Model):
             old_location.update_price_count()
         if new_location:
             new_location.update_price_count()
+
+    def set_missing_location_from_prices(self):
+        if self.is_type_single_shop and not self.location and self.prices.exists():
+            proof_prices_location_list = list(
+                self.prices.values_list("location", flat=True).distinct()
+            )
+            if len(proof_prices_location_list) == 1:
+                location = self.prices.first().location
+                self.location_osm_id = location.osm_id
+                self.location_osm_type = location.osm_type
+                self.save()
+            else:
+                print(
+                    "different locations",
+                    self,
+                    self.prices.count(),
+                    proof_prices_location_list,
+                )
+
+    def set_missing_date_from_prices(self):
+        if self.is_type_single_shop and not self.date and self.prices.exists():
+            proof_prices_dates_list = list(
+                self.prices.values_list("date", flat=True).distinct()
+            )
+            if len(proof_prices_dates_list) == 1:
+                self.date = self.prices.first().date
+                self.save()
+            else:
+                print(
+                    "different dates",
+                    self,
+                    self.prices.count(),
+                    proof_prices_dates_list,
+                )
+
+    def set_missing_currency_from_prices(self):
+        if self.is_type_single_shop and not self.currency and self.prices.exists():
+            proof_prices_currencies_list = list(
+                self.prices.values_list("currency", flat=True).distinct()
+            )
+            if len(proof_prices_currencies_list) == 1:
+                self.currency = self.prices.first().currency
+                self.save()
+            else:
+                print(
+                    "different currencies",
+                    self,
+                    self.prices.count(),
+                    proof_prices_currencies_list,
+                )
