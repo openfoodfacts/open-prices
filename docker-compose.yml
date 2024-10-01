@@ -57,7 +57,7 @@ services:
     volumes:
       # Mount the nginx configuration file
       - ./nginx.conf:/etc/nginx/nginx.conf
-      # Mount the static files (for index & vue.js app)
+      # Mount the static files (robots.txt and vue.js app)
       - ./www:/var/www
       # Mount the images
       - images:/var/img
