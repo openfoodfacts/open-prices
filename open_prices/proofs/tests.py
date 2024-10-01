@@ -4,6 +4,7 @@ from django.test import TestCase
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 
@@ -63,11 +64,16 @@ class ProofModelSaveTest(TestCase):
 class ProofQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.proof_without_price = ProofFactory()
-        cls.proof_with_price = ProofFactory()
+        cls.proof_without_price = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.proof_with_price = ProofFactory(type=proof_constants.TYPE_GDPR_REQUEST)
         PriceFactory(proof_id=cls.proof_with_price.id, price=1.0)
 
+    def test_has_type_single_shop(self):
+        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.has_type_single_shop().count(), 1)
+
     def test_has_prices(self):
+        self.assertEqual(Proof.objects.count(), 2)
         self.assertEqual(Proof.objects.has_prices().count(), 1)
 
     def test_with_stats(self):
@@ -84,7 +90,9 @@ class ProofPropertyTest(TestCase):
     def setUpTestData(cls):
         cls.location = LocationFactory(**LOCATION_NODE_652825274)
         cls.proof = ProofFactory(
-            location_osm_id=cls.location.osm_id, location_osm_type=cls.location.osm_type
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
         )
         PriceFactory(
             proof_id=cls.proof.id,
@@ -98,6 +106,9 @@ class ProofPropertyTest(TestCase):
             location_osm_type=cls.location.osm_type,
             price=2.0,
         )
+
+    def test_is_type_single_shop(self):
+        self.assertTrue(self.proof.is_type_single_shop)
 
     def test_update_price_count(self):
         self.proof.refresh_from_db()
