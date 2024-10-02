@@ -30,9 +30,11 @@ class Proof(models.Model):
         "currency",
     ]  # "owner"
 
-    file_path = models.CharField()
+    file_path = models.CharField(blank=True, null=True)
     mimetype = models.CharField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=proof_constants.TYPE_CHOICES)
+
+    image_thumb_path = models.CharField(blank=True, null=True)
 
     location_osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     location_osm_type = models.CharField(
