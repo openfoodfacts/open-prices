@@ -11,6 +11,7 @@ class ProductAdmin(admin.ModelAdmin):
         "product_name",
         "price_count",
         "location_count",
+        "user_count",
         "created",
     )
     list_filter = ("source",)

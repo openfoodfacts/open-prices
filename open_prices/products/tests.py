@@ -8,6 +8,7 @@ from open_prices.prices.factories import PriceFactory
 from open_prices.products import constants as product_constants
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
+from open_prices.users.factories import UserFactory
 
 PRODUCT_OFF = {
     "code": "3017620425035",
@@ -100,6 +101,7 @@ class ProductPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.product = ProductFactory(code="0123456789100", product_quantity=1000)
+        cls.user = UserFactory()
         cls.location = LocationFactory(**LOCATION_NODE_652825274)
         PriceFactory(
             product_code=cls.product.code,
@@ -108,12 +110,14 @@ class ProductPropertyTest(TestCase):
             price_without_discount=1.5,
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            owner=cls.user.user_id,
         )
         PriceFactory(
             product_code=cls.product.code,
             price=2.0,
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            owner=cls.user.user_id,
         )
 
     def test_price__min(self):
@@ -164,3 +168,10 @@ class ProductPropertyTest(TestCase):
         # update_location_count() should fix location_count
         self.product.update_location_count()
         self.assertEqual(self.product.location_count, 1)
+
+    def test_update_user_count(self):
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.user_count, 0)
+        # update_user_count() should fix user_count
+        self.product.update_user_count()
+        self.assertEqual(self.product.user_count, 1)
