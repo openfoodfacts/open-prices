@@ -3,7 +3,7 @@ import string
 from mimetypes import guess_extension
 
 from django.conf import settings
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 def get_file_extension_and_mimetype(file) -> tuple[str, str]:
@@ -58,11 +58,14 @@ def generate_thumbnail(
         file_full_path = get_full_path(current_dir, file_stem, extension)
         with Image.open(file_full_path) as img:
             img_thumb = img.copy()
-            img_thumb.thumbnail(thumbnail_size)
+            # set any rotation info
+            img_thumb = ImageOps.exif_transpose(img)
+            # transform into a thumbnail
+            img_thumb.thumbnail(thumbnail_size, Image.ANTIALIAS)
             image_thumb_full_path = get_full_path(
                 current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
             )
-            img_thumb.save(image_thumb_full_path)
+            img_thumb.save(image_thumb_full_path)  # exif will be stripped
             image_thumb_path = get_relative_path(
                 current_dir_id_str,
                 f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}",
