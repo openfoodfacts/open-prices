@@ -173,6 +173,8 @@ class ProofCreateApiTest(TestCase):
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.data["file_path"] is not None)
+        self.assertTrue(response.data["image_thumb_path"] is None)  # .bin
         self.assertEqual(response.data["currency"], "EUR")
         self.assertEqual(response.data["price_count"], 0)  # ignored
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
