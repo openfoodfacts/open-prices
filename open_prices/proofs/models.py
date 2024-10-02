@@ -9,6 +9,9 @@ from open_prices.proofs import constants as proof_constants
 
 
 class ProofQuerySet(models.QuerySet):
+    def has_type_single_shop(self):
+        return self.filter(type__in=proof_constants.TYPE_SINGLE_SHOP_LIST)
+
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
@@ -126,6 +129,10 @@ class Proof(models.Model):
         self.full_clean()
         self.set_location()
         super().save(*args, **kwargs)
+
+    @property
+    def is_type_single_shop(self):
+        return self.type in proof_constants.TYPE_SINGLE_SHOP_LIST
 
     def update_price_count(self):
         self.price_count = self.prices.count()
