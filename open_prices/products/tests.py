@@ -161,13 +161,13 @@ class ProductPropertyTest(TestCase):
 
     def test_update_price_count(self):
         self.product.refresh_from_db()
-        self.assertEqual(self.product.price_count, 2)
+        self.assertEqual(self.product.price_count, 2)  # price post_save
         # bulk delete prices to skip signals
         self.product.prices.all().delete()
         self.assertEqual(self.product.price_count, 2)  # should be 0
         # update_price_count() should fix price_count
         self.product.update_price_count()
-        self.assertEqual(self.product.price_count, 0)
+        self.assertEqual(self.product.price_count, 0)  # all deleted
 
     def test_update_location_count(self):
         self.product.refresh_from_db()

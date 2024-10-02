@@ -108,7 +108,7 @@ class Location(models.Model):
         from open_prices.prices.models import Price
 
         self.user_count = (
-            Price.objects.filter(location=self)
+            Price.objects.filter(location=self, owner__isnull=False)
             .values_list("owner", flat=True)
             .distinct()
             .count()
@@ -119,7 +119,7 @@ class Location(models.Model):
         from open_prices.prices.models import Price
 
         self.product_count = (
-            Price.objects.filter(location=self)
+            Price.objects.filter(location=self, product_id__isnull=False)
             .values_list("product_id", flat=True)
             .distinct()
             .count()

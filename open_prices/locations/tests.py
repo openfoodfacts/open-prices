@@ -6,6 +6,7 @@ from django.test import TestCase
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
@@ -116,16 +117,25 @@ class LocationPropertyTest(TestCase):
             price=2.0,
             owner=cls.user_2.user_id,
         )
+        PriceFactory(
+            product_code=None,
+            category_tag="en:tomatoes",
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+            owner=cls.user_2.user_id,
+        )
 
     def test_update_price_count(self):
         self.location.refresh_from_db()
-        self.assertEqual(self.location.price_count, 2)
+        self.assertEqual(self.location.price_count, 3)  # price post_save
         # bulk delete prices to skip signals
         self.location.prices.all().delete()
-        self.assertEqual(self.location.price_count, 2)  # should be 0
+        self.assertEqual(self.location.price_count, 3)  # should be 0
         # update_price_count() should fix price_count
         self.location.update_price_count()
-        self.assertEqual(self.location.price_count, 0)
+        self.assertEqual(self.location.price_count, 0)  # all deleted
 
     def test_update_user_count(self):
         self.location.refresh_from_db()
