@@ -46,7 +46,7 @@ class User(models.Model):
         from open_prices.prices.models import Price
 
         self.location_count = (
-            Price.objects.filter(owner=self.user_id)
+            Price.objects.filter(owner=self.user_id, location_id__isnull=False)
             .values_list("location_id", flat=True)
             .distinct()
             .count()
@@ -57,7 +57,7 @@ class User(models.Model):
         from open_prices.prices.models import Price
 
         self.product_count = (
-            Price.objects.filter(owner=self.user_id)
+            Price.objects.filter(owner=self.user_id, product_id__isnull=False)
             .values_list("product_id", flat=True)
             .distinct()
             .count()
@@ -68,7 +68,7 @@ class User(models.Model):
         from open_prices.prices.models import Price
 
         self.proof_count = (
-            Price.objects.filter(owner=self.user_id)
+            Price.objects.filter(owner=self.user_id, proof_id__isnull=False)
             .values_list("proof_id", flat=True)
             .distinct()
             .count()

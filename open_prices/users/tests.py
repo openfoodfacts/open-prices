@@ -47,7 +47,6 @@ class UserPropertyTest(TestCase):
             product_code="0123456789101",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
-            proof_id=cls.proof.id,
             price=2.0,
             owner=cls.user.user_id,
         )
