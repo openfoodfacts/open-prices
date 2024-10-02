@@ -47,6 +47,7 @@ class Product(models.Model):
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     user_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -101,7 +102,7 @@ class Product(models.Model):
         from open_prices.prices.models import Price
 
         self.location_count = (
-            Price.objects.filter(product=self)
+            Price.objects.filter(product=self, location_id__isnull=False)
             .values_list("location_id", flat=True)
             .distinct()
             .count()
@@ -112,12 +113,23 @@ class Product(models.Model):
         from open_prices.prices.models import Price
 
         self.user_count = (
-            Price.objects.filter(product=self)
+            Price.objects.filter(product=self, owner__isnull=False)
             .values_list("owner", flat=True)
             .distinct()
             .count()
         )
         self.save(update_fields=["user_count"])
+
+    def update_proof_count(self):
+        from open_prices.prices.models import Price
+
+        self.proof_count = (
+            Price.objects.filter(product=self, proof_id__isnull=False)
+            .values_list("proof_id", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["proof_count"])
 
 
 @receiver(signals.post_save, sender=Product)

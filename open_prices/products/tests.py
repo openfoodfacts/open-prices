@@ -8,6 +8,7 @@ from open_prices.prices.factories import PriceFactory
 from open_prices.products import constants as product_constants
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
+from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
 
 PRODUCT_OFF = {
@@ -103,20 +104,26 @@ class ProductPropertyTest(TestCase):
         cls.product = ProductFactory(code="0123456789100", product_quantity=1000)
         cls.user = UserFactory()
         cls.location = LocationFactory(**LOCATION_NODE_652825274)
-        PriceFactory(
-            product_code=cls.product.code,
-            price=1.0,
-            price_is_discounted=True,
-            price_without_discount=1.5,
+        cls.proof = ProofFactory(
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             owner=cls.user.user_id,
         )
         PriceFactory(
             product_code=cls.product.code,
-            price=2.0,
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            proof_id=cls.proof.id,
+            price=1.0,
+            price_is_discounted=True,
+            price_without_discount=1.5,
+            owner=cls.user.user_id,
+        )
+        PriceFactory(
+            product_code=cls.product.code,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            price=2.0,
             owner=cls.user.user_id,
         )
 
@@ -175,3 +182,10 @@ class ProductPropertyTest(TestCase):
         # update_user_count() should fix user_count
         self.product.update_user_count()
         self.assertEqual(self.product.user_count, 1)
+
+    def test_update_proof_count(self):
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.proof_count, 0)
+        # update_proof_count() should fix proof_count
+        self.product.update_proof_count()
+        self.assertEqual(self.product.proof_count, 1)

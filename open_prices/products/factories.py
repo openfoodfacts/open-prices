@@ -16,3 +16,4 @@ class ProductFactory(DjangoModelFactory):
     # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
     # location_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))  # noqa
     # user_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
+    # proof_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
