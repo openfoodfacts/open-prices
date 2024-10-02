@@ -15,7 +15,7 @@ from open_prices.locations.models import Location
 from open_prices.prices.models import Price
 from open_prices.proofs.models import Proof
 from open_prices.stats.models import TotalStats
-from open_prices.users.models import User
+from open_prices.users.models import Product, User
 
 
 def import_off_db_task():
@@ -56,9 +56,18 @@ def update_total_stats_task():
     total_stats.update_user_stats()
 
 
+def update_product_counts_task():
+    """
+    Update all product field counts
+    """
+    for product in Product.objects.filter(price_count__gte=1):
+        for field in Product.COUNT_FIELDS:
+            getattr(product, f"update_{field}")()
+
+
 def update_user_counts_task():
     """
-    Update all user price_counts
+    Update all user field counts
     """
     for user in User.objects.all():
         for field in User.COUNT_FIELDS:
@@ -67,7 +76,7 @@ def update_user_counts_task():
 
 def update_location_counts_task():
     """
-    Update all user price_counts
+    Update all location field counts
     """
     for location in Location.objects.all():
         for field in Location.COUNT_FIELDS:
