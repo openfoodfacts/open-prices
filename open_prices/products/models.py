@@ -19,6 +19,7 @@ class ProductQuerySet(models.QuerySet):
 
 class Product(models.Model):
     ARRAY_FIELDS = ["categories_tags", "brands_tags", "labels_tags"]
+    COUNT_FIELDS = ["price_count", "location_count"]
 
     code = models.CharField(unique=True)
 
@@ -44,6 +45,7 @@ class Product(models.Model):
     unique_scans_n = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -70,10 +72,6 @@ class Product(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-    def update_price_count(self):
-        self.price_count = self.prices.count()
-        self.save(update_fields=["price_count"])
-
     def price__min(self, exclude_discounted=False):
         if exclude_discounted:
             return self.prices.exclude_discounted().calculate_min()
@@ -93,6 +91,21 @@ class Product(models.Model):
         if exclude_discounted:
             return self.prices.exclude_discounted().calculate_stats()
         return self.prices.calculate_stats()
+
+    def update_price_count(self):
+        self.price_count = self.prices.count()
+        self.save(update_fields=["price_count"])
+
+    def update_location_count(self):
+        from open_prices.prices.models import Price
+
+        self.location_count = (
+            Price.objects.filter(product=self)
+            .values_list("location_id", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["location_count"])
 
 
 @receiver(signals.post_save, sender=Product)
