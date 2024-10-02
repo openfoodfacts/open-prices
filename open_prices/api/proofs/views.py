@@ -1,7 +1,8 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
-from rest_framework.decorators import action, parser_classes
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -11,6 +12,7 @@ from open_prices.api.proofs.serializers import (
     ProofCreateSerializer,
     ProofFullSerializer,
     ProofUpdateSerializer,
+    ProofUploadSerializer,
 )
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.proofs.models import Proof
@@ -26,7 +28,6 @@ class ProofViewSet(
 ):
     authentication_classes = [CustomAuthentication]
     permission_classes = [IsAuthenticated]
-    # parser_classes = [FormParser, MultiPartParser]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = Proof.objects.none()
     serializer_class = ProofFullSerializer
@@ -49,8 +50,13 @@ class ProofViewSet(
             return ProofUpdateSerializer
         return self.serializer_class
 
-    @action(detail=False, methods=["POST"], url_path="upload")
-    @parser_classes([FormParser, MultiPartParser])
+    @extend_schema(request=ProofUploadSerializer, responses=ProofFullSerializer)
+    @action(
+        detail=False,
+        methods=["POST"],
+        url_path="upload",
+        parser_classes=[MultiPartParser],
+    )
     def upload(self, request: Request) -> Response:
         # build proof
         if not request.data.get("file"):

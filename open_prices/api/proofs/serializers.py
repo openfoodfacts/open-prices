@@ -24,6 +24,14 @@ class ProofFullSerializer(ProofSerializer):
         exclude = ["source"]  # ProofSerializer.Meta.exclude
 
 
+class ProofUploadSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(required=True, use_url=False)
+
+    class Meta:
+        model = Proof
+        fields = ["file"] + Proof.CREATE_FIELDS
+
+
 class ProofCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proof
