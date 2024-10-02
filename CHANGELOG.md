@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.42.0](https://github.com/openfoodfacts/open-prices/compare/v1.41.0...v1.42.0) (2024-10-02)
+
+
+### Features
+
+* **proofs:** new type SHOP_IMPORT to explicitly link shop-imported prices ([#485](https://github.com/openfoodfacts/open-prices/issues/485)) ([82da2b9](https://github.com/openfoodfacts/open-prices/commit/82da2b96331d08494e78da4457890e7e81ca5899))
+
+
+### Technical
+
+* launch vue.js app on / (instead of /app) ([#483](https://github.com/openfoodfacts/open-prices/issues/483)) ([1088f65](https://github.com/openfoodfacts/open-prices/commit/1088f65d9c3e1a32b8630197a740193d522a2742))
+
 ## [1.41.0](https://github.com/openfoodfacts/open-prices/compare/v1.40.0...v1.41.0) (2024-09-28)
 
 
