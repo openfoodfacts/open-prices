@@ -2,7 +2,7 @@
 
 ## Multiple price mode (shop shelf)
 
-This tutorial is a step-by-step guide to add multiple prices using [the web interface](https://prices.openfoodfacts.org/app/). If you have any questions, please ask us on [Slack](https://openfoodfacts.slack.com), on the #prices channel!
+This tutorial is a step-by-step guide to add multiple prices using [the web interface](https://prices.openfoodfacts.org). If you have any questions, please ask us on [Slack](https://openfoodfacts.slack.com), on the #prices channel!
 
 To add the prices, we need some information, such as a proof photo of the shelf containing the products and their corresponding prices, as well as a location (=store), etc.
 

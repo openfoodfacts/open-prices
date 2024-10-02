@@ -5,7 +5,7 @@ A REST API designed to interact with the Open Food Facts _Open Prices_ database.
 ## Links
 
 - Backend API Swagger: https://prices.openfoodfacts.org/api/docs
-- Frontend app: https://prices.openfoodfacts.org/app/
+- Frontend app: https://prices.openfoodfacts.org
 - Frontend repo: https://github.com/openfoodfacts/open-prices-frontend
 - Documentation: https://openfoodfacts.github.io/open-prices/
 

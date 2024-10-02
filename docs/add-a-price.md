@@ -2,7 +2,7 @@
 
 ## Single price mode
 
-This tutorial is a step-by-step guide to add a price using [the web interface](https://prices.openfoodfacts.org/app/). If you have any questions, please ask us on [Slack](https://openfoodfacts.slack.com), on the #prices channel!
+This tutorial is a step-by-step guide to add a price using [the web interface](https://prices.openfoodfacts.org). If you have any questions, please ask us on [Slack](https://openfoodfacts.slack.com), on the #prices channel!
 
 To add a price, we need some information, such as the product price, the location (=store), a proof photo, etc.
 
