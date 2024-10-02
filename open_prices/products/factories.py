@@ -14,3 +14,4 @@ class ProductFactory(DjangoModelFactory):
     code = factory.Faker("ean13")
     product_name = factory.Faker("name")
     # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
+    # location_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))  # noqa

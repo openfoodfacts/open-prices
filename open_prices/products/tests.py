@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.test import TestCase, TransactionTestCase
 
+from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.products import constants as product_constants
 from open_prices.products.factories import ProductFactory
@@ -40,6 +41,12 @@ PRODUCT_OFF = {
     "ecoscore_grade": "d",
     "nova_group": 4,
     "unique_scans_n": 1051,
+}
+
+LOCATION_NODE_652825274 = {
+    "osm_id": 652825274,
+    "osm_type": "NODE",
+    "osm_name": "Monoprix",
 }
 
 
@@ -93,23 +100,21 @@ class ProductPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.product = ProductFactory(code="0123456789100", product_quantity=1000)
+        cls.location = LocationFactory(**LOCATION_NODE_652825274)
         PriceFactory(
             product_code=cls.product.code,
             price=1.0,
             price_is_discounted=True,
             price_without_discount=1.5,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
         )
-        PriceFactory(product_code=cls.product.code, price=2.0)
-
-    def test_update_price_count(self):
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.price_count, 2)
-        # bulk delete prices to skip signals
-        self.product.prices.all().delete()
-        self.assertEqual(self.product.price_count, 2)  # should be 0
-        # update_price_count() should fix price_count
-        self.product.update_price_count()
-        self.assertEqual(self.product.price_count, 0)
+        PriceFactory(
+            product_code=cls.product.code,
+            price=2.0,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+        )
 
     def test_price__min(self):
         self.assertEqual(self.product.price__min(), 1.0)
@@ -142,3 +147,20 @@ class ProductPropertyTest(TestCase):
                 "price__avg": Decimal("2.00"),
             },
         )
+
+    def test_update_price_count(self):
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.price_count, 2)
+        # bulk delete prices to skip signals
+        self.product.prices.all().delete()
+        self.assertEqual(self.product.price_count, 2)  # should be 0
+        # update_price_count() should fix price_count
+        self.product.update_price_count()
+        self.assertEqual(self.product.price_count, 0)
+
+    def test_update_location_count(self):
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.location_count, 0)
+        # update_location_count() should fix location_count
+        self.product.update_location_count()
+        self.assertEqual(self.product.location_count, 1)
