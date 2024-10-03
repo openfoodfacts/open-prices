@@ -28,7 +28,7 @@ def get_file_extension_and_mimetype(file) -> tuple[str, str]:
     return extension, mimetype
 
 
-def get_full_path(current_dir, file_stem, extension):
+def generate_full_path(current_dir, file_stem, extension):
     """
     Generate the full path of the file.
     Example: /path/to/img/0001/dWQ5Hjm1H6.png
@@ -36,7 +36,7 @@ def get_full_path(current_dir, file_stem, extension):
     return current_dir / f"{file_stem}{extension}"
 
 
-def get_relative_path(current_dir_id_str, file_stem, extension):
+def generate_relative_path(current_dir_id_str, file_stem, extension):
     """
     Generate the relative path of the file.
     Example: 0001/dWQ5Hjm1H6.png
@@ -55,18 +55,18 @@ def generate_thumbnail(
     """Generate a thumbnail for the image at the given path."""
     image_thumb_path = None
     if mimetype.startswith("image"):
-        file_full_path = get_full_path(current_dir, file_stem, extension)
+        file_full_path = generate_full_path(current_dir, file_stem, extension)
         with Image.open(file_full_path) as img:
             img_thumb = img.copy()
             # set any rotation info
             img_thumb = ImageOps.exif_transpose(img)
             # transform into a thumbnail
             img_thumb.thumbnail(thumbnail_size, Image.Resampling.LANCZOS)
-            image_thumb_full_path = get_full_path(
+            image_thumb_full_path = generate_full_path(
                 current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
             )
             img_thumb.save(image_thumb_full_path)  # exif will be stripped
-            image_thumb_path = get_relative_path(
+            image_thumb_path = generate_relative_path(
                 current_dir_id_str,
                 f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}",
                 extension,
@@ -101,7 +101,7 @@ def store_file(file):
         current_dir_id += 1
         current_dir = images_dir / str(current_dir_id)
     current_dir.mkdir(exist_ok=True, parents=True)
-    file_full_path = get_full_path(current_dir, file_stem, extension)
+    file_full_path = generate_full_path(current_dir, file_stem, extension)
     # write the content of the file to the new file
     with file_full_path.open("wb") as f:
         f.write(file.file.read())
@@ -110,5 +110,5 @@ def store_file(file):
         current_dir, current_dir_id_str, file_stem, extension, mimetype
     )
     # Build file_path
-    file_path = get_relative_path(current_dir_id_str, file_stem, extension)
+    file_path = generate_relative_path(current_dir_id_str, file_stem, extension)
     return (file_path, mimetype, image_thumb_path)

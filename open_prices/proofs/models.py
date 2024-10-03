@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import ValidationError
 from django.db import models
 from django.db.models import Count
@@ -131,6 +132,18 @@ class Proof(models.Model):
         self.full_clean()
         self.set_location()
         super().save(*args, **kwargs)
+
+    @property
+    def file_path_full(self):
+        if self.file_path:
+            return str(settings.IMAGES_DIR / self.file_path)
+        return None
+
+    @property
+    def image_thumb_path_full(self):
+        if self.image_thumb_path:
+            return str(settings.IMAGES_DIR / self.image_thumb_path)
+        return None
 
     @property
     def is_type_single_shop(self):
