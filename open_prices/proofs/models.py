@@ -10,6 +10,12 @@ from open_prices.proofs import constants as proof_constants
 
 
 class ProofQuerySet(models.QuerySet):
+    def has_type_price_tag(self):
+        return self.filter(type=proof_constants.TYPE_PRICE_TAG)
+
+    def has_type_receipt(self):
+        return self.filter(type=proof_constants.TYPE_RECEIPT)
+
     def has_type_single_shop(self):
         return self.filter(type__in=proof_constants.TYPE_SINGLE_SHOP_LIST)
 
