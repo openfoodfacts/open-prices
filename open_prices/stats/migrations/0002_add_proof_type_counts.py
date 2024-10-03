@@ -12,12 +12,12 @@ class Migration(migrations.Migration):
         migrations.RenameField(
             model_name="totalstats",
             old_name="price_barcode_count",
-            new_name="price_type_product_count",
+            new_name="price_type_product_code_count",
         ),
         migrations.RenameField(
             model_name="totalstats",
             old_name="price_category_count",
-            new_name="price_type_category_count",
+            new_name="price_type_category_tag_count",
         ),
         migrations.AddField(
             model_name="totalstats",

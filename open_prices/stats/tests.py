@@ -75,13 +75,13 @@ class TotalStatsTest(TestCase):
 
     def test_update_price_stats(self):
         self.assertEqual(self.total_stats.price_count, 0)
-        self.assertEqual(self.total_stats.price_type_product_count, 0)
-        self.assertEqual(self.total_stats.price_type_category_count, 0)
+        self.assertEqual(self.total_stats.price_type_product_code_count, 0)
+        self.assertEqual(self.total_stats.price_type_category_tag_count, 0)
         # update_price_stats() will update price_counts
         self.total_stats.update_price_stats()
         self.assertEqual(self.total_stats.price_count, 3)
-        self.assertEqual(self.total_stats.price_type_product_count, 2)
-        self.assertEqual(self.total_stats.price_type_category_count, 1)
+        self.assertEqual(self.total_stats.price_type_product_code_count, 2)
+        self.assertEqual(self.total_stats.price_type_category_tag_count, 1)
 
     def test_update_product_stats(self):
         self.assertEqual(self.total_stats.product_count, 0)
