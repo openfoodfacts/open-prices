@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.43.1](https://github.com/openfoodfacts/open-prices/compare/v1.43.0...v1.43.1) (2024-10-03)
+
+
+### Bug Fixes
+
+* **Proofs:** fix thumbnail generation for some JPEG images. ref [#486](https://github.com/openfoodfacts/open-prices/issues/486) ([a7f18e9](https://github.com/openfoodfacts/open-prices/commit/a7f18e9c33b2f87a04f47638b10d354899afc3fc))
+
+
+### Technical
+
+* **stats:** new Proof type stats. Rename Price type stats ([#496](https://github.com/openfoodfacts/open-prices/issues/496)) ([6401f80](https://github.com/openfoodfacts/open-prices/commit/6401f80caee1ec6fc1f31a9a4d3a7cc88774b809))
+
 ## [1.43.0](https://github.com/openfoodfacts/open-prices/compare/v1.42.0...v1.43.0) (2024-10-03)
 
 
