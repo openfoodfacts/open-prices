@@ -68,7 +68,7 @@ class ProofViewSet(
         proof_create_data = {
             "file_path": file_path,
             "mimetype": mimetype,
-            # "image_thumb_path": image_thumb_path,
+            "image_thumb_path": image_thumb_path,
             **{key: request.data.get(key) for key in Proof.CREATE_FIELDS},
         }
         # validate
@@ -78,7 +78,6 @@ class ProofViewSet(
         self.source = self.request.GET.get("app_name", "API")
         # save
         proof = serializer.save(
-            image_thumb_path=image_thumb_path,
             owner=self.request.user.user_id,
             source=self.source,
         )

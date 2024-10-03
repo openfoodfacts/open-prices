@@ -20,7 +20,7 @@ class ProofQuerySet(models.QuerySet):
 
 
 class Proof(models.Model):
-    FILE_FIELDS = ["file_path", "mimetype"]
+    FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
     UPDATE_FIELDS = ["type", "currency", "date"]
     CREATE_FIELDS = UPDATE_FIELDS + ["location_osm_id", "location_osm_type"]
     DUPLICATE_PRICE_FIELDS = [

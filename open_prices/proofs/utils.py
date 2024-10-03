@@ -61,7 +61,7 @@ def generate_thumbnail(
             # set any rotation info
             img_thumb = ImageOps.exif_transpose(img)
             # transform into a thumbnail
-            img_thumb.thumbnail(thumbnail_size, Image.ANTIALIAS)
+            img_thumb.thumbnail(thumbnail_size, Image.Resampling.LANCZOS)
             image_thumb_full_path = get_full_path(
                 current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
             )
