@@ -64,6 +64,7 @@ gunicorn = "^22.0.0"
 django-cors-headers = "^4.4.0"
 sentry-sdk = {extras = ["django"], version = "^2.13.0"}
 django-solo = "^2.3.0"
+pillow = "^10.4.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "~23.12.1"

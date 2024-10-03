@@ -64,10 +64,11 @@ class ProofViewSet(
                 {"file": ["This field is required."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        file_path, mimetype = store_file(request.data.get("file"))
+        file_path, mimetype, image_thumb_path = store_file(request.data.get("file"))
         proof_create_data = {
             "file_path": file_path,
             "mimetype": mimetype,
+            "image_thumb_path": image_thumb_path,
             **{key: request.data.get(key) for key in Proof.CREATE_FIELDS},
         }
         # validate
@@ -76,6 +77,9 @@ class ProofViewSet(
         # get source
         self.source = self.request.GET.get("app_name", "API")
         # save
-        proof = serializer.save(owner=self.request.user.user_id, source=self.source)
+        proof = serializer.save(
+            owner=self.request.user.user_id,
+            source=self.source,
+        )
         # return full proof
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)

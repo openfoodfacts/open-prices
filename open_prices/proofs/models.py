@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import ValidationError
 from django.db import models
 from django.db.models import Count
@@ -20,7 +21,7 @@ class ProofQuerySet(models.QuerySet):
 
 
 class Proof(models.Model):
-    FILE_FIELDS = ["file_path", "mimetype"]
+    FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
     UPDATE_FIELDS = ["type", "currency", "date"]
     CREATE_FIELDS = UPDATE_FIELDS + ["location_osm_id", "location_osm_type"]
     DUPLICATE_PRICE_FIELDS = [
@@ -30,9 +31,11 @@ class Proof(models.Model):
         "currency",
     ]  # "owner"
 
-    file_path = models.CharField()
+    file_path = models.CharField(blank=True, null=True)
     mimetype = models.CharField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=proof_constants.TYPE_CHOICES)
+
+    image_thumb_path = models.CharField(blank=True, null=True)
 
     location_osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     location_osm_type = models.CharField(
@@ -129,6 +132,18 @@ class Proof(models.Model):
         self.full_clean()
         self.set_location()
         super().save(*args, **kwargs)
+
+    @property
+    def file_path_full(self):
+        if self.file_path:
+            return str(settings.IMAGES_DIR / self.file_path)
+        return None
+
+    @property
+    def image_thumb_path_full(self):
+        if self.image_thumb_path:
+            return str(settings.IMAGES_DIR / self.image_thumb_path)
+        return None
 
     @property
     def is_type_single_shop(self):
