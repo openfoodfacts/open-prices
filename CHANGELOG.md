@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.43.0](https://github.com/openfoodfacts/open-prices/compare/v1.42.0...v1.43.0) (2024-10-03)
+
+
+### Features
+
+* **products:** New Product.location_count field ([#489](https://github.com/openfoodfacts/open-prices/issues/489)) ([85cd11f](https://github.com/openfoodfacts/open-prices/commit/85cd11f7afcec627bb73d606679c0eca91ec313d))
+* **products:** New Product.proof_count field ([#491](https://github.com/openfoodfacts/open-prices/issues/491)) ([f77ec80](https://github.com/openfoodfacts/open-prices/commit/f77ec803da4319225c13d9d83bdc2e86af63e7a7))
+* **products:** New Product.user_count field ([#490](https://github.com/openfoodfacts/open-prices/issues/490)) ([459c6fc](https://github.com/openfoodfacts/open-prices/commit/459c6fc22febcc2764bbd865a6da1d0eadff2d99))
+* **Proof:** generate image thumbnail (size 400) on create ([#486](https://github.com/openfoodfacts/open-prices/issues/486)) ([9f72de6](https://github.com/openfoodfacts/open-prices/commit/9f72de6349980a794eb15372db9c33a45c95e6a7))
+
+
+### Bug Fixes
+
+* **API:** Proofs: improve API documentation for upload ([#493](https://github.com/openfoodfacts/open-prices/issues/493)) ([0168a0f](https://github.com/openfoodfacts/open-prices/commit/0168a0fec6898c9633625e27a63757d66167281f))
+* **locations:** fix count calculation when FK is null. ref [#420](https://github.com/openfoodfacts/open-prices/issues/420) ([a075918](https://github.com/openfoodfacts/open-prices/commit/a075918f4e9f3f58f28726a0ed25f36c2791cff4))
+* **products:** fix update count CRON setup. ref [#492](https://github.com/openfoodfacts/open-prices/issues/492) ([7e0588b](https://github.com/openfoodfacts/open-prices/commit/7e0588bea0aac7b64b595a58e144d27024192f44))
+* **users:** fix count calculation when FK is null. ref [#419](https://github.com/openfoodfacts/open-prices/issues/419) ([f2f6d9c](https://github.com/openfoodfacts/open-prices/commit/f2f6d9cdd915460517aa944d80ab2ce57483722d))
+
+
+### Technical
+
+* **Documentation:** Remove mention of /app. closes [#482](https://github.com/openfoodfacts/open-prices/issues/482) ([18f7083](https://github.com/openfoodfacts/open-prices/commit/18f7083dd684e20448e7c1f34acdf21ec12f621a))
+* **products:** New weekly CRON to update Product counts ([#492](https://github.com/openfoodfacts/open-prices/issues/492)) ([dd9a239](https://github.com/openfoodfacts/open-prices/commit/dd9a2392ee6ced27f4b3742b415fdf91d859b4df))
+
 ## [1.42.0](https://github.com/openfoodfacts/open-prices/compare/v1.41.0...v1.42.0) (2024-10-02)
 
 
