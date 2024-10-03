@@ -4,10 +4,19 @@ from solo.models import SingletonModel
 
 
 class TotalStats(SingletonModel):
-    PRICE_COUNT_FIELDS = ["price_count", "price_barcode_count", "price_category_count"]
+    PRICE_COUNT_FIELDS = [
+        "price_count",
+        "price_type_product_code_count",
+        "price_type_category_tag_count",
+    ]
     PRODUCT_COUNT_FIELDS = ["product_count", "product_with_price_count"]
     LOCATION_COUNT_FIELDS = ["location_count", "location_with_price_count"]
-    PROOF_COUNT_FIELDS = ["proof_count", "proof_with_price_count"]
+    PROOF_COUNT_FIELDS = [
+        "proof_count",
+        "proof_with_price_count",
+        "proof_type_price_tag_count",
+        "proof_type_receipt_count",
+    ]
     USER_COUNT_FIELDS = ["user_count", "user_with_price_count"]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
@@ -18,14 +27,16 @@ class TotalStats(SingletonModel):
     )
 
     price_count = models.PositiveIntegerField(default=0)
-    price_barcode_count = models.PositiveIntegerField(default=0)
-    price_category_count = models.PositiveIntegerField(default=0)
+    price_type_product_code_count = models.PositiveIntegerField(default=0)
+    price_type_category_tag_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
     product_with_price_count = models.PositiveIntegerField(default=0)
     location_count = models.PositiveIntegerField(default=0)
     location_with_price_count = models.PositiveIntegerField(default=0)
     proof_count = models.PositiveIntegerField(default=0)
     proof_with_price_count = models.PositiveIntegerField(default=0)
+    proof_type_price_tag_count = models.PositiveIntegerField(default=0)
+    proof_type_receipt_count = models.PositiveIntegerField(default=0)
     user_count = models.PositiveIntegerField(default=0)
     user_with_price_count = models.PositiveIntegerField(default=0)
 
@@ -39,18 +50,13 @@ class TotalStats(SingletonModel):
         from open_prices.prices.models import Price
 
         self.price_count = Price.objects.count()
-        self.price_barcode_count = Price.objects.filter(
+        self.price_type_product_code_count = Price.objects.filter(
             product_code__isnull=False
         ).count()
-        self.price_category_count = Price.objects.filter(
+        self.price_type_category_tag_count = Price.objects.filter(
             category_tag__isnull=False
         ).count()
-        self.save(
-            update_fields=self.PRICE_COUNT_FIELDS
-            + [
-                "updated",
-            ]
-        )
+        self.save(update_fields=self.PRICE_COUNT_FIELDS + ["updated"])
 
     def update_product_stats(self):
         from open_prices.products.models import Product
@@ -74,6 +80,8 @@ class TotalStats(SingletonModel):
         self.proof_count = Proof.objects.count()
         self.proof_with_price_count = Proof.objects.has_prices().count()
         # self.proof_with_price_count = User.objects.values_list("proof_id", flat=True).distinct().count()  # noqa
+        self.proof_type_price_tag_count = Proof.objects.has_type_price_tag().count()
+        self.proof_type_receipt_count = Proof.objects.has_type_receipt().count()
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
 
     def update_user_stats(self):

@@ -4,6 +4,7 @@ from django.test import TestCase
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.stats.models import TotalStats
 from open_prices.users.factories import UserFactory
@@ -34,11 +35,13 @@ class TotalStatsTest(TestCase):
         cls.location = LocationFactory(**LOCATION_NODE_652825274)
         cls.location_2 = LocationFactory()
         cls.proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             owner=cls.user.user_id,
         )
         cls.proof_2 = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
             location_osm_id=cls.location_2.osm_id,
             location_osm_type=cls.location_2.osm_type,
             owner=cls.user_2.user_id,
@@ -72,13 +75,13 @@ class TotalStatsTest(TestCase):
 
     def test_update_price_stats(self):
         self.assertEqual(self.total_stats.price_count, 0)
-        self.assertEqual(self.total_stats.price_barcode_count, 0)
-        self.assertEqual(self.total_stats.price_category_count, 0)
+        self.assertEqual(self.total_stats.price_type_product_code_count, 0)
+        self.assertEqual(self.total_stats.price_type_category_tag_count, 0)
         # update_price_stats() will update price_counts
         self.total_stats.update_price_stats()
         self.assertEqual(self.total_stats.price_count, 3)
-        self.assertEqual(self.total_stats.price_barcode_count, 2)
-        self.assertEqual(self.total_stats.price_category_count, 1)
+        self.assertEqual(self.total_stats.price_type_product_code_count, 2)
+        self.assertEqual(self.total_stats.price_type_category_tag_count, 1)
 
     def test_update_product_stats(self):
         self.assertEqual(self.total_stats.product_count, 0)
@@ -99,10 +102,14 @@ class TotalStatsTest(TestCase):
     def test_update_proof_stats(self):
         self.assertEqual(self.total_stats.proof_count, 0)
         self.assertEqual(self.total_stats.proof_with_price_count, 0)
+        self.assertEqual(self.total_stats.proof_type_price_tag_count, 0)
+        self.assertEqual(self.total_stats.proof_type_receipt_count, 0)
         # update_proof_stats() will update proof_counts
         self.total_stats.update_proof_stats()
         self.assertEqual(self.total_stats.proof_count, 2)
         self.assertEqual(self.total_stats.proof_with_price_count, 1)
+        self.assertEqual(self.total_stats.proof_type_price_tag_count, 1)
+        self.assertEqual(self.total_stats.proof_type_receipt_count, 1)
 
     def test_update_user_stats(self):
         self.assertEqual(self.total_stats.user_count, 0)
