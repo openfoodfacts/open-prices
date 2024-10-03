@@ -13,9 +13,10 @@ from open_prices.common.openfoodfacts import import_product_db
 from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
+from open_prices.products.models import Product
 from open_prices.proofs.models import Proof
 from open_prices.stats.models import TotalStats
-from open_prices.users.models import Product, User
+from open_prices.users.models import User
 
 
 def import_off_db_task():
@@ -106,6 +107,7 @@ CRON_SCHEDULES = {
     "update_total_stats_task": "0 1 * * *",  # daily at 01:00
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
     "update_location_counts_task": "10 2 * * 1",  # every start of the week
+    "update_product_counts_task": "20 2 * * 1",  # every start of the week
     "dump_db_task": "0 23 * * *",  # daily at 23:00
 }
 
