@@ -133,6 +133,13 @@ class Price(models.Model):
         related_name="prices",
     )
 
+    receipt_quantity = models.PositiveBigIntegerField(
+        verbose_name="Receipt's price quantity (user input)",
+        validators=[MinValueValidator(1)],
+        blank=True,
+        null=True,
+    )
+
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
 
@@ -328,6 +335,7 @@ class Price(models.Model):
         # proof rules
         # - proof must exist and belong to the price owner
         # - some proof fields should be the same as the price fields
+        # - receipt_quantity can only be set for receipts (default to 1)
         if self.proof_id:
             from open_prices.proofs.models import Proof
 
@@ -361,6 +369,16 @@ class Price(models.Model):
                                     "proof",
                                     f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
                                 )
+                if proof.type == proof_constants.TYPE_RECEIPT:
+                    if not self.receipt_quantity:
+                        self.receipt_quantity = 1
+                else:
+                    if self.receipt_quantity is not None:
+                        validation_errors = utils.add_validation_error(
+                            validation_errors,
+                            "receipt_quantity",
+                            "Can only be set if proof type RECEIPT",
+                        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
