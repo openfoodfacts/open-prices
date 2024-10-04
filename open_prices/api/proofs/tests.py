@@ -1,3 +1,4 @@
+from decimal import Decimal
 from io import BytesIO
 
 from django.test import TestCase
@@ -12,7 +13,13 @@ from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
-PROOF = {"type": proof_constants.TYPE_RECEIPT, "currency": "EUR", "date": "2024-01-01"}
+PROOF = {
+    "type": proof_constants.TYPE_RECEIPT,
+    "currency": "EUR",
+    "date": "2024-01-01",
+    "receipt_price_count": 5,
+    "receipt_price_total": Decimal("45.10"),
+}
 
 
 def create_fake_image() -> bytes:
