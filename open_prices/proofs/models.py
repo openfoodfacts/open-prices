@@ -1,5 +1,7 @@
+import decimal
+
 from django.conf import settings
-from django.core.validators import ValidationError
+from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import Count, signals
 from django.dispatch import receiver
@@ -70,6 +72,18 @@ class Proof(models.Model):
         max_length=3, choices=constants.CURRENCY_CHOICES, blank=True, null=True
     )
 
+    receipt_price_count = models.PositiveIntegerField(
+        verbose_name="Receipt's number of prices (user input)", blank=True, null=True
+    )
+    receipt_price_total = models.DecimalField(
+        verbose_name="Receipt's total amount (user input)",
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(decimal.Decimal(0))],
+        blank=True,
+        null=True,
+    )
+
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     owner = models.CharField(blank=True, null=True)
@@ -126,6 +140,20 @@ class Proof(models.Model):
                     validation_errors,
                     "location_osm_id",
                     "Should not be a boolean or an invalid string",
+                )
+        # receipt-specific rules
+        if not self.type == proof_constants.TYPE_RECEIPT:
+            if self.receipt_price_count is not None:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "receipt_price_count",
+                    "Can only be set if type RECEIPT",
+                )
+            if self.receipt_price_total is not None:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "receipt_price_total",
+                    "Can only be set if type RECEIPT",
                 )
         # return
         if bool(validation_errors):
