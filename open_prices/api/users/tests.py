@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from open_prices.users.factories import UserFactory
+from open_prices.users.factories import SessionFactory, UserFactory
 from open_prices.users.models import User
 
 
@@ -80,3 +80,36 @@ class UserListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
+
+
+class UserDetailApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.url = reverse("api:users-detail", args=[cls.user_session_1.user.user_id])
+
+    def test_user_detail(self):
+        # anonymous
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+        # anonymous, unknown user
+        url = reverse("api:users-detail", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        # authenticated, unknown user
+        response = self.client.get(
+            url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 403)
+        # authenticated, but not owner
+        response = self.client.get(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
+        )
+        self.assertEqual(response.status_code, 403)
+        # authenticated and owner: OK
+        response = self.client.get(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["user_id"], self.user_session_1.user.user_id)
