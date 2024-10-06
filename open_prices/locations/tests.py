@@ -11,7 +11,8 @@ from open_prices.prices.factories import PriceFactory
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
 
-LOCATION_NODE_652825274 = {
+LOCATION_OSM_NODE_652825274 = {
+    "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
     "osm_type": "NODE",
     "osm_name": "Monoprix",
@@ -23,49 +24,98 @@ class LocationModelSaveTest(TestCase):
     def setUpTestData(cls):
         pass
 
-    def test_location_id_type_validation(self):
+    def test_location_osm_id_type_validation(self):
         # both osm_id & osm_type should be set
-        self.assertRaises(ValidationError, LocationFactory, osm_id=None, osm_type=None)
-        # osm_id
-        for LOCATION_OSM_ID_OK in location_constants.OSM_ID_OK_LIST:
-            LocationFactory(
-                osm_id=LOCATION_OSM_ID_OK,
-                osm_type=location_constants.OSM_TYPE_NODE,
-            )
-        for LOCATION_OSM_ID_NOT_OK in location_constants.OSM_ID_NOT_OK_LIST:
-            self.assertRaises(
-                ValidationError,
-                LocationFactory,
-                osm_id=LOCATION_OSM_ID_NOT_OK,
-                osm_type=location_constants.OSM_TYPE_NODE,
-            )
-        # osm_type
-        for LOCATION_OSM_TYPE_OK in location_constants.OSM_TYPE_OK_LIST:
-            LocationFactory(osm_id=6509705997, osm_type=LOCATION_OSM_TYPE_OK)
-        for LOCATION_OSM_TYPE_NOT_OK in location_constants.OSM_TYPE_NOT_OK_LIST:
-            self.assertRaises(
-                ValidationError,
-                LocationFactory,
-                osm_id=6509705997,
-                osm_type=LOCATION_OSM_TYPE_NOT_OK,
-            )
-        # must be unique
         self.assertRaises(
             ValidationError,
             LocationFactory,
+            type=location_constants.TYPE_OSM,
+            osm_id=None,
+            osm_type=None,
+        )
+        # osm_id
+        for LOCATION_OSM_ID_OK in location_constants.OSM_ID_OK_LIST:
+            with self.subTest(osm_id=LOCATION_OSM_ID_OK):
+                LocationFactory(
+                    type=location_constants.TYPE_OSM,
+                    osm_id=LOCATION_OSM_ID_OK,
+                    osm_type=location_constants.OSM_TYPE_NODE,
+                )
+        for LOCATION_OSM_ID_NOT_OK in location_constants.OSM_ID_NOT_OK_LIST:
+            with self.subTest(osm_id=LOCATION_OSM_ID_NOT_OK):
+                self.assertRaises(
+                    ValidationError,
+                    LocationFactory,
+                    type=location_constants.TYPE_OSM,
+                    osm_id=LOCATION_OSM_ID_NOT_OK,
+                    osm_type=location_constants.OSM_TYPE_NODE,
+                )
+        # osm_type
+        for LOCATION_OSM_TYPE_OK in location_constants.OSM_TYPE_OK_LIST:
+            with self.subTest(osm_type=LOCATION_OSM_TYPE_OK):
+                LocationFactory(
+                    type=location_constants.TYPE_OSM,
+                    osm_id=6509705997,
+                    osm_type=LOCATION_OSM_TYPE_OK,
+                )
+        for LOCATION_OSM_TYPE_NOT_OK in location_constants.OSM_TYPE_NOT_OK_LIST:
+            with self.subTest(osm_type=LOCATION_OSM_TYPE_NOT_OK):
+                self.assertRaises(
+                    ValidationError,
+                    LocationFactory,
+                    type=location_constants.TYPE_OSM,
+                    osm_id=6509705997,
+                    osm_type=LOCATION_OSM_TYPE_NOT_OK,
+                )
+        # unique constraint
+        self.assertRaises(
+            ValidationError,
+            LocationFactory,
+            type=location_constants.TYPE_OSM,
             osm_id=6509705997,
-            osm_type=location_constants.OSM_TYPE_NODE,
+            osm_type=location_constants.OSM_TYPE_OK_LIST[0],
         )
 
     def test_location_decimal_truncate_on_create(self):
         location = LocationFactory(
-            **LOCATION_NODE_652825274,
+            **LOCATION_OSM_NODE_652825274,
             osm_lat="45.1805534",
             osm_lon="5.7153387000",  # will be truncated
             price_count=15,
         )
         self.assertEqual(location.osm_lat, Decimal("45.1805534"))
         self.assertEqual(location.osm_lon, Decimal("5.7153387"))
+
+    def test_location_online_validation(self):
+        # website_url should be set
+        self.assertRaises(
+            ValidationError,
+            LocationFactory,
+            type=location_constants.TYPE_ONLINE,
+            website_url=None,
+        )
+        # no osm data should be passed
+        self.assertRaises(
+            ValidationError,
+            LocationFactory,
+            type=location_constants.TYPE_ONLINE,
+            website_url=location_constants.WEBSITE_URL_OK_LIST[0],
+            osm_id=6509705997,
+            osm_type=location_constants.OSM_TYPE_OK_LIST[0],
+        )
+        # ok
+        for WEBSITE_URL in location_constants.WEBSITE_URL_OK_LIST:
+            with self.subTest(website_url=WEBSITE_URL):
+                LocationFactory(
+                    type=location_constants.TYPE_ONLINE, website_url=WEBSITE_URL
+                )
+        # unique constraint
+        self.assertRaises(
+            ValidationError,
+            LocationFactory,
+            type=location_constants.TYPE_ONLINE,
+            website_url=location_constants.WEBSITE_URL_OK_LIST[0],
+        )
 
 
 class LocationQuerySetTest(TestCase):
@@ -96,7 +146,7 @@ class LocationPropertyTest(TestCase):
     def setUpTestData(cls):
         cls.user = UserFactory()
         cls.user_2 = UserFactory()
-        cls.location = LocationFactory(**LOCATION_NODE_652825274)
+        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.proof = ProofFactory(
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,

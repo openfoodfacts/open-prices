@@ -272,6 +272,9 @@ class PriceModelSaveTest(TestCase):
                 location_osm_id=652825274,
                 location_osm_type=LOCATION_OSM_TYPE_NOT_OK,
             )
+        # location online
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        PriceFactory(location_id=location_online.id)
 
     def test_price_proof_validation(self):
         self.user_session = SessionFactory()
