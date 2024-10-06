@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.44.0](https://github.com/openfoodfacts/open-prices/compare/v1.43.1...v1.44.0) (2024-10-06)
+
+
+### Features
+
+* **Locations:** new type & website_url fields to start allowing ONLINE stores ([#446](https://github.com/openfoodfacts/open-prices/issues/446)) ([ce50c74](https://github.com/openfoodfacts/open-prices/commit/ce50c749a34690522c2dba218cba0f0f0dd43d58))
+* **Users:** new /users/:user_id endpoint. Only for self ([#500](https://github.com/openfoodfacts/open-prices/issues/500)) ([665c44f](https://github.com/openfoodfacts/open-prices/commit/665c44fd2b5562efef815e8aaa4d0341e4eb73bb))
+
+
+### Bug Fixes
+
+* **Locations:** fix migration error. ref [#446](https://github.com/openfoodfacts/open-prices/issues/446) ([666c957](https://github.com/openfoodfacts/open-prices/commit/666c95706a32439efbeb8c1dc5d07c514009d362))
+
+
+### Technical
+
+* **Proofs:** Methods to update missing proof fields from prices ([#481](https://github.com/openfoodfacts/open-prices/issues/481)) ([ffe5e5a](https://github.com/openfoodfacts/open-prices/commit/ffe5e5a1889676faf73c48ed3df2189e16309057))
+* **Stats:** simple script for top product stats (via API) ([#398](https://github.com/openfoodfacts/open-prices/issues/398)) ([14c6d39](https://github.com/openfoodfacts/open-prices/commit/14c6d3920583366e3bc122a7d870a1b8d5b5b9a2))
+
 ## [1.43.1](https://github.com/openfoodfacts/open-prices/compare/v1.43.0...v1.43.1) (2024-10-03)
 
 
