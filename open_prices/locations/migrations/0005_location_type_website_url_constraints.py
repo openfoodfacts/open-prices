@@ -39,10 +39,12 @@ class Migration(migrations.Migration):
                 null=True,
             ),
         ),
-        migrations.AlterUniqueTogether(
-            name="location",
-            unique_together=set(),
-        ),
+        # Commented to avoid error
+        # ValueError: Found wrong number (0) of constraints for locations(osm_id, osm_type)  # noqa
+        # migrations.AlterUniqueTogether(
+        #     name="location",
+        #     unique_together=set(),
+        # ),
         migrations.AddConstraint(
             model_name="location",
             constraint=models.UniqueConstraint(
