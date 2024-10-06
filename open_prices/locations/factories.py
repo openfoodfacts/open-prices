@@ -13,7 +13,12 @@ from open_prices.locations.models import Location
 class LocationFactory(DjangoModelFactory):
     class Meta:
         model = Location
-    
+
+    class Params:
+        osm_name_faker = factory.Faker("name")
+        osm_address_country_faker = factory.Faker("country")
+        website_url_faker = factory.Faker("uri")
+
     type = location_constants.TYPE_OSM  # random.choice(location_constants.TYPE_LIST)
 
     osm_id = factory.LazyAttributeSequence(
@@ -27,18 +32,16 @@ class LocationFactory(DjangoModelFactory):
         else None
     )
     osm_name = factory.LazyAttribute(
-        lambda x: factory.Faker("name")
-        if x.type == location_constants.TYPE_OSM
-        else None
+        lambda x: x.osm_name_faker if x.type == location_constants.TYPE_OSM else None
     )
     osm_address_country = factory.LazyAttribute(
-        lambda x: factory.Faker("country")
+        lambda x: x.osm_address_country_faker
         if x.type == location_constants.TYPE_OSM
         else None
     )
 
     website_url = factory.LazyAttribute(
-        lambda x: factory.Faker("uri")
+        lambda x: x.website_url_faker
         if x.type == location_constants.TYPE_ONLINE
         else None
     )

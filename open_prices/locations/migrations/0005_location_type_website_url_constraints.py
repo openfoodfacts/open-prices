@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("locations", "0001_initial"),
+        ("locations", "0004_location_user_count"),
     ]
 
     operations = [

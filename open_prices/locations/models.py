@@ -107,7 +107,7 @@ class Location(models.Model):
     def cleanup_url(self):
         for field_name in self.URL_FIELDS:
             if getattr(self, field_name) is not None:
-                if not getattr(self, field_name).startswith("https://"):
+                if not getattr(self, field_name).startswith(("http://", "https://")):
                     setattr(self, field_name, f"https://{getattr(self, field_name)}")
 
     def clean(self, *args, **kwargs):

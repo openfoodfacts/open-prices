@@ -94,6 +94,15 @@ class LocationModelSaveTest(TestCase):
             type=location_constants.TYPE_ONLINE,
             website_url=None,
         )
+        # no osm data should be passed
+        self.assertRaises(
+            ValidationError,
+            LocationFactory,
+            type=location_constants.TYPE_ONLINE,
+            website_url=location_constants.WEBSITE_URL_OK_LIST[0],
+            osm_id=6509705997,
+            osm_type=location_constants.OSM_TYPE_OK_LIST[0],
+        )
         # ok
         for WEBSITE_URL in location_constants.WEBSITE_URL_OK_LIST:
             with self.subTest(website_url=WEBSITE_URL):
@@ -138,8 +147,7 @@ class LocationPropertyTest(TestCase):
         cls.user = UserFactory()
         cls.user_2 = UserFactory()
         cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
-        cls.proof = ProofFactory()
-        PriceFactory(
+        cls.proof = ProofFactory(
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             owner=cls.user.user_id,
