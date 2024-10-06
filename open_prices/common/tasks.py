@@ -84,6 +84,17 @@ def update_location_counts_task():
             getattr(location, f"update_{field}")()
 
 
+def fix_proof_fields_task():
+    """
+    Proofs uploaded via the (old) mobile app lack location/date/currency fields
+    Fix these fields using the proof's prices
+    """
+    for proof in Proof.objects.filter(price_count__gte=1, location=None):
+        proof.set_missing_location_from_prices()
+        proof.set_missing_date_from_prices()
+        proof.set_missing_currency_from_prices()
+
+
 def dump_db_task():
     """
     Dump the database as JSONL files to the data directory
@@ -105,6 +116,7 @@ CRON_SCHEDULES = {
     "import_opf_db_task": "20 15 * * *",  # daily at 15:20
     "import_off_db_task": "30 15 * * *",  # daily at 15:30
     "update_total_stats_task": "0 1 * * *",  # daily at 01:00
+    "fix_proof_fields_task": "10 1 * * *",  # daily at 01:10
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
     "update_location_counts_task": "10 2 * * 1",  # every start of the week
     "update_product_counts_task": "20 2 * * 1",  # every start of the week
