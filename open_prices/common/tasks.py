@@ -61,7 +61,7 @@ def update_product_counts_task():
     """
     Update all product field counts
     """
-    for product in Product.objects.filter(price_count__gte=1):
+    for product in Product.objects.with_stats().filter(price_count_annotated__gte=1):
         for field in Product.COUNT_FIELDS:
             getattr(product, f"update_{field}")()
 
@@ -89,10 +89,11 @@ def fix_proof_fields_task():
     Proofs uploaded via the (old) mobile app lack location/date/currency fields
     Fix these fields using the proof's prices
     """
-    for proof in Proof.objects.filter(price_count__gte=1, location=None):
-        proof.set_missing_location_from_prices()
-        proof.set_missing_date_from_prices()
-        proof.set_missing_currency_from_prices()
+    for proof in Proof.objects.with_stats().filter(
+        price_count_annotated__gte=1, location=None
+    ):
+        for field in Proof.FIX_PRICE_FIELDS:
+            getattr(proof, f"set_missing_{field}_from_prices")()
 
 
 def dump_db_task():

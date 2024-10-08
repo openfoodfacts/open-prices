@@ -36,6 +36,7 @@ class Proof(models.Model):
         "date",
         "currency",
     ]  # "owner"
+    FIX_PRICE_FIELDS = ["location", "date", "currency"]
 
     file_path = models.CharField(blank=True, null=True)
     mimetype = models.CharField(blank=True, null=True)
