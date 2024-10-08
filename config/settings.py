@@ -215,9 +215,11 @@ SPECTACULAR_SETTINGS = {
 Q_CLUSTER = {
     "name": "DjangORM",
     "workers": 2,
-    "timeout": 2 * 60 * 60,  # 2h
+    # timeout is set to 2h (OFF daily sync is long)
+    "timeout": 2 * 60 * 60,
+    # retry must be less than timeout & less than it takes to finish a task
     "retry": 2 * 60 * 60 + 1,
-    "max_attempts": 1,
+    "max_attempts": 2,
     "queue_limit": 50,
     "bulk": 10,
     "orm": "default",
