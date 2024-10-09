@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.44.1](https://github.com/openfoodfacts/open-prices/compare/v1.44.0...v1.44.1) (2024-10-09)
+
+
+### Bug Fixes
+
+* **Backups:** fix backup location. closes [#407](https://github.com/openfoodfacts/open-prices/issues/407) ([97ed9b2](https://github.com/openfoodfacts/open-prices/commit/97ed9b265bb059d9f0d9aed7cd71dedce29a4c7a))
+* **Queue:** bump max_attempts to 2. ref [#376](https://github.com/openfoodfacts/open-prices/issues/376) ([e83158b](https://github.com/openfoodfacts/open-prices/commit/e83158bd9a0c5999eaa22f85dc99f3025383f5e0))
+* **Stats:** make sure to get all Product & Proof with prices when updating counts. ref [#492](https://github.com/openfoodfacts/open-prices/issues/492) & [#481](https://github.com/openfoodfacts/open-prices/issues/481) ([6f446b9](https://github.com/openfoodfacts/open-prices/commit/6f446b9a420725f1d4326b9ed6e65a64c91a99b1))
+
 ## [1.44.0](https://github.com/openfoodfacts/open-prices/compare/v1.43.1...v1.44.0) (2024-10-06)
 
 
