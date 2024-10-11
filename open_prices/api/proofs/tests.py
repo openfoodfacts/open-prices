@@ -5,6 +5,8 @@ from django.urls import reverse
 from PIL import Image
 
 from open_prices.locations import constants as location_constants
+from open_prices.prices.factories import PriceFactory
+from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
@@ -250,6 +252,12 @@ class ProofDeleteApiTest(TestCase):
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
         )
+        PriceFactory(
+            proof_id=cls.proof.id,
+            currency=cls.proof.currency,
+            date=cls.proof.date,
+            owner=cls.proof.owner,
+        )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
 
     def test_proof_delete(self):
@@ -266,7 +274,13 @@ class ProofDeleteApiTest(TestCase):
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
         self.assertEqual(response.status_code, 404)  # 403 ?
-        # authenticated
+        # has prices
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 403)
+        # authenticated and no prices
+        Price.objects.filter(proof=self.proof).delete()
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
