@@ -97,14 +97,14 @@ class ProofPropertyTest(TestCase):
         )
         PriceFactory(
             proof_id=cls.proof_price_tag.id,
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.proof_price_tag.location.osm_id,
+            location_osm_type=cls.proof_price_tag.location.osm_type,
             price=1.0,
         )
         PriceFactory(
             proof_id=cls.proof_price_tag.id,
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.proof_price_tag.location.osm_id,
+            location_osm_type=cls.proof_price_tag.location.osm_type,
             price=2.0,
         )
         cls.proof_receipt = ProofFactory(type=proof_constants.TYPE_RECEIPT)

@@ -50,6 +50,15 @@ class ProofViewSet(
             return ProofUpdateSerializer
         return self.serializer_class
 
+    def destroy(self, request: Request, *args, **kwargs) -> Response:
+        proof = self.get_object()
+        if proof.prices.count():
+            return Response(
+                {"detail": "Cannot delete proof with associated prices"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().destroy(request, *args, **kwargs)
+
     @extend_schema(request=ProofUploadSerializer, responses=ProofFullSerializer)
     @action(
         detail=False,
