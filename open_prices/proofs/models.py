@@ -238,6 +238,8 @@ def proof_post_delete_remove_images(sender, instance, **kwargs):
     import os
 
     if instance.file_path_full:
-        os.remove(instance.file_path_full)
+        if os.path.exists(instance.file_path_full):
+            os.remove(instance.file_path_full)
     if instance.image_thumb_path_full:
-        os.remove(instance.image_thumb_path_full)
+        if os.path.exists(instance.image_thumb_path_full):
+            os.remove(instance.image_thumb_path_full)
