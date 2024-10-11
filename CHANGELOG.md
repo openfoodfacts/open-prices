@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.44.2](https://github.com/openfoodfacts/open-prices/compare/v1.44.1...v1.44.2) (2024-10-11)
+
+
+### Bug Fixes
+
+* **Proofs:** Deny users to delete a proof with prices ([#517](https://github.com/openfoodfacts/open-prices/issues/517)) ([3b1ed29](https://github.com/openfoodfacts/open-prices/commit/3b1ed29e272afb13647ad14265953b4970f0e0b8))
+
+
+### Technical
+
+* **Proofs:** On proof delete, also remove its images. ref [#514](https://github.com/openfoodfacts/open-prices/issues/514) ([8360a06](https://github.com/openfoodfacts/open-prices/commit/8360a066a2901d30c34b01acbba74619eb1fe748))
+
 ## [1.44.1](https://github.com/openfoodfacts/open-prices/compare/v1.44.0...v1.44.1) (2024-10-09)
 
 
