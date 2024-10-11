@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Count
+from django.db.models import Count, signals
+from django.dispatch import receiver
 from django.utils import timezone
 
 from open_prices.common import constants, utils
@@ -230,3 +231,13 @@ class Proof(models.Model):
                     self.prices.count(),
                     proof_prices_currencies_list,
                 )
+
+
+@receiver(signals.post_delete, sender=Proof)
+def proof_post_delete_remove_images(sender, instance, **kwargs):
+    import os
+
+    if instance.file_path_full:
+        os.remove(instance.file_path_full)
+    if instance.image_thumb_path_full:
+        os.remove(instance.image_thumb_path_full)
