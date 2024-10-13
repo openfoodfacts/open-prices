@@ -45,24 +45,29 @@ def authenticate(username, password):
     return requests.post(f"{settings.OAUTH2_SERVER_URL}", data=data)
 
 
-def normalize_product_fields(product: JSONType) -> JSONType:
-    """Normalize product fields and return a product dict
-    ready to be inserted in the database.
+def build_product_dict(product: JSONType, flavor) -> JSONType:
+    # Step 1: init
+    product_dict = dict()
+    product_dict["source"] = flavor
+    product_dict["source_last_synced"] = timezone.now()
 
-    :param product: the product to normalize
-    :return: the normalized product
-    """
-    product = product.copy()
-    product_quantity = int(product.get("product_quantity") or 0)
+    # Step 2: build the product dict
+    for off_field in OFF_CREATE_FIELDS:
+        if off_field in product:
+            product_dict[off_field] = product[off_field]
+
+    # Step 3: cleanup
+    # fix product_quantity
+    product_quantity = int(product_dict.get("product_quantity") or 0)
     if product_quantity >= 100_000:
         # If the product quantity is too high, it's probably an
         # error, and may cause an OutOfRangeError in the database
-        product["product_quantity"] = None
+        product_dict["product_quantity"] = None
+    # fix unique_scans_n (avoid null value)
+    if not product_dict.get("unique_scans_n"):
+        product_dict["unique_scans_n"] = 0
 
-    # avoid null value in column "unique_scans_n" error
-    if not product.get("unique_scans_n"):
-        product["unique_scans_n"] = 0
-    return product
+    return product_dict
 
 
 def generate_main_image_url(
@@ -112,11 +117,7 @@ def get_product_dict(product, flavor=Flavor.off) -> JSONType | None:
     try:
         response = get_product(code=product.code, flavor=flavor)
         if response:
-            product_dict["source"] = flavor
-            for off_field in OFF_CREATE_FIELDS:
-                if off_field in response:
-                    product_dict[off_field] = response[off_field]
-            product_dict = normalize_product_fields(product_dict)
+            product_dict = build_product_dict(response, flavor)
         return product_dict
     except Exception:
         # logger.exception("Error returned from Open Food Facts")
@@ -198,16 +199,10 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
             continue
 
         # Build product dict to create/update
-        product_dict = dict()
-        product_dict["source"] = flavor
-        product_dict["source_last_synced"] = timezone.now()
-        for off_field in OFF_CREATE_FIELDS:
-            if off_field in product:
-                product_dict[off_field] = product[off_field]
+        product_dict = build_product_dict(product, flavor)
         product_dict["image_url"] = generate_main_image_url(
             product_code, product_images, product_lang, flavor=flavor
         )
-        product_dict = normalize_product_fields(product_dict)
 
         # Case 1: new OFF product (not in OP database)
         if product_code not in existing_product_codes:
