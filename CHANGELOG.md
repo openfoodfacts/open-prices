@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.44.3](https://github.com/openfoodfacts/open-prices/compare/v1.44.2...v1.44.3) (2024-10-13)
+
+
+### Bug Fixes
+
+* **Product sync:** Avoid setting None for missing fields. Use model default values instead ([#519](https://github.com/openfoodfacts/open-prices/issues/519)) ([e3ed44e](https://github.com/openfoodfacts/open-prices/commit/e3ed44e51f65110edfa51fdc740781274d092d6f))
+
+
+### Technical
+
+* **Product sync:** Build product dict identically if from sync or API. ref [#518](https://github.com/openfoodfacts/open-prices/issues/518) ([81766b0](https://github.com/openfoodfacts/open-prices/commit/81766b01cd7f26e66b9e57b10e8ebc661256c8eb))
+
 ## [1.44.2](https://github.com/openfoodfacts/open-prices/compare/v1.44.1...v1.44.2) (2024-10-11)
 
 
