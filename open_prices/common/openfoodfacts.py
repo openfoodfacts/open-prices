@@ -198,14 +198,15 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
             continue
 
         # Build product dict to create/update
-        product_dict = {
-            key: product[key] if (key in product) else None for key in OFF_CREATE_FIELDS
-        }
+        product_dict = dict()
+        product_dict["source"] = flavor
+        product_dict["source_last_synced"] = timezone.now()
+        for off_field in OFF_CREATE_FIELDS:
+            if off_field in product:
+                product_dict[off_field] = product[off_field]
         product_dict["image_url"] = generate_main_image_url(
             product_code, product_images, product_lang, flavor=flavor
         )
-        product_dict["source"] = flavor
-        product_dict["source_last_synced"] = timezone.now()
         product_dict = normalize_product_fields(product_dict)
 
         # Case 1: new OFF product (not in OP database)
