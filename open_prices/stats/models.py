@@ -83,6 +83,8 @@ class TotalStats(SingletonModel):
         self.location_count = Location.objects.count()
         self.location_with_price_count = Location.objects.has_prices().count()
         # self.location_with_price_count = User.objects.values_list("location_id", flat=True).distinct().count()  # noqa
+        self.location_type_osm_count = Location.objects.has_type_osm().count()
+        self.location_type_online_count = Location.objects.has_type_online().count()
         self.save(update_fields=self.LOCATION_COUNT_FIELDS + ["updated"])
 
     def update_proof_stats(self):
@@ -93,6 +95,10 @@ class TotalStats(SingletonModel):
         # self.proof_with_price_count = User.objects.values_list("proof_id", flat=True).distinct().count()  # noqa
         self.proof_type_price_tag_count = Proof.objects.has_type_price_tag().count()
         self.proof_type_receipt_count = Proof.objects.has_type_receipt().count()
+        self.proof_type_gdpr_request_count = (
+            Proof.objects.has_type_gdpr_request().count()
+        )
+        self.proof_type_shop_import_count = Proof.objects.has_type_shop_import().count()
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
 
     def update_user_stats(self):

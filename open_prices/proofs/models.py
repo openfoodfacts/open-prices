@@ -17,6 +17,12 @@ class ProofQuerySet(models.QuerySet):
     def has_type_receipt(self):
         return self.filter(type=proof_constants.TYPE_RECEIPT)
 
+    def has_type_gdpr_request(self):
+        return self.filter(type=proof_constants.TYPE_GDPR_REQUEST)
+
+    def has_type_shop_import(self):
+        return self.filter(type=proof_constants.TYPE_SHOP_IMPORT)
+
     def has_type_single_shop(self):
         return self.filter(type__in=proof_constants.TYPE_SINGLE_SHOP_LIST)
 
