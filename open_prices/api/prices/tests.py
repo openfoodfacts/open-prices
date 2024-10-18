@@ -378,6 +378,7 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["price"], 15.00)
         self.assertEqual(response.data["currency"], "EUR")
         self.assertEqual(response.data["date"], "2024-01-01")
+        self.assertEqual(response.data["receipt_quantity"], 1)  # default
         self.assertTrue("source" not in response.data)
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         # with proof, product & location

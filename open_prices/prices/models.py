@@ -134,7 +134,7 @@ class Price(models.Model):
         related_name="prices",
     )
 
-    receipt_quantity = models.PositiveBigIntegerField(
+    receipt_quantity = models.PositiveIntegerField(
         verbose_name="Receipt's price quantity (user input)",
         validators=[MinValueValidator(1)],
         blank=True,
