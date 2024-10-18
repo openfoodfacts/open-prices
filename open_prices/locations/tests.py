@@ -17,6 +17,10 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_type": "NODE",
     "osm_name": "Monoprix",
 }
+LOCATION_ONLINE_DECATHLON = {
+    "type": location_constants.TYPE_ONLINE,
+    "website_url": "https://www.decathlon.fr/",
+}
 
 
 class LocationModelSaveTest(TestCase):
@@ -121,15 +125,20 @@ class LocationModelSaveTest(TestCase):
 class LocationQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location_without_price = LocationFactory()
-        cls.location_with_price = LocationFactory()
+        cls.location_with_price = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_without_price = LocationFactory(**LOCATION_ONLINE_DECATHLON)
         PriceFactory(
             location_osm_id=cls.location_with_price.osm_id,
             location_osm_type=cls.location_with_price.osm_type,
             price=1.0,
         )
 
+    def test_has_type_osm(self):
+        self.assertEqual(Location.objects.count(), 2)
+        self.assertEqual(Location.objects.has_type_osm().count(), 1)
+
     def test_has_prices(self):
+        self.assertEqual(Location.objects.count(), 2)
         self.assertEqual(Location.objects.has_prices().count(), 1)
 
     def test_with_stats(self):

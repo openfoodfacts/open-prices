@@ -12,6 +12,12 @@ from open_prices.locations import constants as location_constants
 
 
 class LocationQuerySet(models.QuerySet):
+    def has_type_osm(self):
+        return self.filter(type=location_constants.TYPE_OSM)
+
+    def has_type_online(self):
+        return self.filter(type=location_constants.TYPE_ONLINE)
+
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
