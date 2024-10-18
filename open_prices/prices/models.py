@@ -56,6 +56,7 @@ class Price(models.Model):
         "price_per",
         "currency",
         "date",
+        "receipt_quantity",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + [
         "product_code",

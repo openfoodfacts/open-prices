@@ -104,6 +104,7 @@ class PriceListFilterApiTest(TestCase):
         )
         cls.user_price = PriceFactory(
             **PRICE_8001505005707,
+            receipt_quantity=2,
             proof_id=cls.user_proof.id,
             owner=cls.user_session.user.user_id,
         )
