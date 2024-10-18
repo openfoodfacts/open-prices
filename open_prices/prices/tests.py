@@ -287,17 +287,20 @@ class PriceModelSaveTest(TestCase):
             ValidationError,
             PriceFactory,
             location_id=location_osm.id,
-            location_osm_id=LOCATION_OSM_ID_OK,
+            location_osm_id=None,  # needed
+            location_osm_type=None,  # needed
         )
         self.assertRaises(
             ValidationError,
             PriceFactory,
             location_id=location_online.id,
-            location_osm_id=LOCATION_OSM_ID_OK,
+            location_osm_id=LOCATION_OSM_ID_OK,  # should be None
         )
         # location_id ok
         PriceFactory(
-            location_id=location_osm.id, location_osm_id=None, location_osm_type=None
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
         )
         PriceFactory(
             location_id=location_online.id, location_osm_id=None, location_osm_type=None
@@ -440,6 +443,23 @@ class PriceModelSaveTest(TestCase):
         self.assertEqual(Proof.objects.get(id=user_proof_2.id).price_count, 1)
         self.assertEqual(Location.objects.get(id=location.id).price_count, 2)
         self.assertEqual(Product.objects.get(id=product.id).price_count, 2)
+
+
+class PriceModelUpdateTest(TestCase):
+    def test_price_update(self):
+        user_session = SessionFactory()
+        user_proof = ProofFactory(owner=user_session.user.user_id)
+        location = LocationFactory()
+        product = ProductFactory()
+        price = PriceFactory(
+            proof_id=user_proof.id,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            product_code=product.code,
+            owner=user_session.user.user_id,
+        )
+        price.price = 5
+        price.save()
 
 
 class PriceModelDeleteTest(TestCase):
