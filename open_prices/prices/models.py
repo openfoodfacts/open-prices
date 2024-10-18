@@ -369,7 +369,7 @@ class Price(models.Model):
                                     "proof",
                                     f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
                                 )
-                if proof.type == proof_constants.TYPE_RECEIPT:
+                if proof.type in proof_constants.TYPE_SHOPPING_SESSION_LIST:
                     if not self.receipt_quantity:
                         self.receipt_quantity = 1
                 else:
@@ -377,7 +377,7 @@ class Price(models.Model):
                         validation_errors = utils.add_validation_error(
                             validation_errors,
                             "receipt_quantity",
-                            "Can only be set if proof type RECEIPT",
+                            f"Can only be set if proof type in {proof_constants.TYPE_SHOPPING_SESSION_LIST}",
                         )
         # return
         if bool(validation_errors):
