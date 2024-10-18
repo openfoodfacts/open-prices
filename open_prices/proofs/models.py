@@ -48,12 +48,6 @@ class Proof(models.Model):
         "receipt_price_total",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + ["location_osm_id", "location_osm_type"]
-    DUPLICATE_PRICE_FIELDS = [
-        "location_osm_id",
-        "location_osm_type",
-        "date",
-        "currency",
-    ]  # "owner"
     FIX_PRICE_FIELDS = ["location", "date", "currency"]
 
     file_path = models.CharField(blank=True, null=True)
@@ -212,14 +206,15 @@ class Proof(models.Model):
         self.location_osm_id = location_osm_id
         self.location_osm_type = location_osm_type
         self.save()
-        # update proof's prices location
-        for price in self.prices.all():
-            price.location_osm_id = location_osm_id
-            price.location_osm_type = location_osm_type
-            price.save()
-        # update old & new location price counts
         self.refresh_from_db()
         new_location = self.location
+        # update proof's prices location
+        for price in self.prices.all():
+            price.location = self.location
+            price.location_osm_id = self.location_osm_id
+            price.location_osm_type = self.location_osm_type
+            price.save()
+        # update old & new location price counts
         if old_location:
             old_location.update_price_count()
         if new_location:

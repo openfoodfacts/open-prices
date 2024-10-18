@@ -245,6 +245,8 @@ class PriceModelSaveTest(TestCase):
             self.assertRaises(ValidationError, PriceFactory, date=DATE_NOT_OK)
 
     def test_price_location_validation(self):
+        location_osm = LocationFactory()
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         # both location_osm_id & location_osm_type not set
         PriceFactory(location_osm_id=None, location_osm_type=None)
         # location_osm_id
@@ -272,84 +274,116 @@ class PriceModelSaveTest(TestCase):
                 location_osm_id=652825274,
                 location_osm_type=LOCATION_OSM_TYPE_NOT_OK,
             )
-        # location online
-        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
-        PriceFactory(location_id=location_online.id)
+        # location unknown
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            location_id=999,
+            location_osm_id=None,
+            location_osm_type=None,
+        )
+        # cannot mix location_id & location_osm_id/type
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            location_id=location_osm.id,
+            location_osm_id=None,  # needed
+            location_osm_type=None,  # needed
+        )
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            location_id=location_online.id,
+            location_osm_id=LOCATION_OSM_ID_OK,  # should be None
+        )
+        # location_id ok
+        PriceFactory(
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+        )
+        PriceFactory(
+            location_id=location_online.id, location_osm_id=None, location_osm_type=None
+        )
 
     def test_price_proof_validation(self):
-        self.user_session = SessionFactory()
-        self.user_proof_receipt = ProofFactory(
+        user_session = SessionFactory()
+        user_proof_receipt = ProofFactory(
             type=proof_constants.TYPE_RECEIPT,
             location_osm_id=652825274,
             location_osm_type=location_constants.OSM_TYPE_NODE,
             date="2024-06-30",
             currency="EUR",
-            owner=self.user_session.user.user_id,
+            owner=user_session.user.user_id,
         )
-        self.proof_2 = ProofFactory()
+        proof_2 = ProofFactory()
         # proof not set
-        PriceFactory(proof=None, owner=self.user_proof_receipt.owner)
+        PriceFactory(proof_id=None, owner=user_proof_receipt.owner)
+        # proof unknown
+        self.assertRaises(
+            ValidationError, PriceFactory, proof_id=999, owner=user_proof_receipt.owner
+        )
         # same price & proof fields
         PriceFactory(
-            proof=self.user_proof_receipt,
-            location_osm_id=self.user_proof_receipt.location_osm_id,
-            location_osm_type=self.user_proof_receipt.location_osm_type,
-            date=self.user_proof_receipt.date,
-            currency=self.user_proof_receipt.currency,
-            owner=self.user_proof_receipt.owner,
+            proof_id=user_proof_receipt.id,
+            location_osm_id=user_proof_receipt.location_osm_id,
+            location_osm_type=user_proof_receipt.location_osm_type,
+            date=user_proof_receipt.date,
+            currency=user_proof_receipt.currency,
+            owner=user_proof_receipt.owner,
         )
         # different price & proof owner
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            proof=self.proof_2,  # different
-            location_osm_id=self.user_proof_receipt.location_osm_id,
-            location_osm_type=self.user_proof_receipt.location_osm_type,
-            date=self.user_proof_receipt.date,
-            currency=self.user_proof_receipt.currency,
-            owner=self.user_proof_receipt.owner,
+            proof_id=proof_2.id,  # different
+            location_osm_id=user_proof_receipt.location_osm_id,
+            location_osm_type=user_proof_receipt.location_osm_type,
+            date=user_proof_receipt.date,
+            currency=user_proof_receipt.currency,
+            owner=user_proof_receipt.owner,
         )
         # proof location_osm_id & location_osm_type
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            proof=self.user_proof_receipt,
+            proof_id=user_proof_receipt.id,
             location_osm_id=5,  # different location_osm_id
-            location_osm_type=self.user_proof_receipt.location_osm_type,
-            date=self.user_proof_receipt.date,
-            currency=self.user_proof_receipt.currency,
-            owner=self.user_proof_receipt.owner,
+            location_osm_type=user_proof_receipt.location_osm_type,
+            date=user_proof_receipt.date,
+            currency=user_proof_receipt.currency,
+            owner=user_proof_receipt.owner,
         )
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            proof=self.user_proof_receipt,
-            location_osm_id=self.user_proof_receipt.location_osm_id,
+            proof_id=user_proof_receipt.id,
+            location_osm_id=user_proof_receipt.location_osm_id,
             location_osm_type="WAY",  # different location_osm_type
-            date=self.user_proof_receipt.date,
-            currency=self.user_proof_receipt.currency,
-            owner=self.user_proof_receipt.owner,
+            date=user_proof_receipt.date,
+            currency=user_proof_receipt.currency,
+            owner=user_proof_receipt.owner,
         )
         # proof date & currency
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            proof=self.user_proof_receipt,
-            location_osm_id=self.user_proof_receipt.location_osm_id,
-            location_osm_type=self.user_proof_receipt.location_osm_type,
+            proof_id=user_proof_receipt.id,
+            location_osm_id=user_proof_receipt.location_osm_id,
+            location_osm_type=user_proof_receipt.location_osm_type,
             date="2024-07-01",  # different date
-            currency=self.user_proof_receipt.currency,
-            owner=self.user_proof_receipt.owner,
+            currency=user_proof_receipt.currency,
+            owner=user_proof_receipt.owner,
         )
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            proof=self.user_proof_receipt,
-            location_osm_id=self.user_proof_receipt.location_osm_id,
-            location_osm_type=self.user_proof_receipt.location_osm_type,
-            date=self.user_proof_receipt.date,
+            proof_id=user_proof_receipt.id,
+            location_osm_id=user_proof_receipt.location_osm_id,
+            location_osm_type=user_proof_receipt.location_osm_type,
+            date=user_proof_receipt.date,
             currency="USD",  # different currency
-            owner=self.user_proof_receipt.owner,
+            owner=user_proof_receipt.owner,
         )
         # receipt_quantity
         for RECEIPT_QUANTITY_NOT_OK in [-5, 0]:
@@ -357,23 +391,23 @@ class PriceModelSaveTest(TestCase):
                 self.assertRaises(
                     ValidationError,
                     PriceFactory,
-                    proof=self.user_proof_receipt,
-                    location_osm_id=self.user_proof_receipt.location_osm_id,
-                    location_osm_type=self.user_proof_receipt.location_osm_type,
-                    date=self.user_proof_receipt.date,
-                    currency=self.user_proof_receipt.currency,
-                    owner=self.user_proof_receipt.owner,
+                    proof_id=user_proof_receipt.id,
+                    location_osm_id=user_proof_receipt.location_osm_id,
+                    location_osm_type=user_proof_receipt.location_osm_type,
+                    date=user_proof_receipt.date,
+                    currency=user_proof_receipt.currency,
+                    owner=user_proof_receipt.owner,
                     receipt_quantity=RECEIPT_QUANTITY_NOT_OK,
                 )
         for RECEIPT_QUANTITY_OK in [None, 1, 2]:
             with self.subTest(RECEIPT_QUANTITY_OK=RECEIPT_QUANTITY_OK):
                 PriceFactory(
-                    proof=self.user_proof_receipt,
-                    location_osm_id=self.user_proof_receipt.location_osm_id,
-                    location_osm_type=self.user_proof_receipt.location_osm_type,
-                    date=self.user_proof_receipt.date,
-                    currency=self.user_proof_receipt.currency,
-                    owner=self.user_proof_receipt.owner,
+                    proof_id=user_proof_receipt.id,
+                    location_osm_id=user_proof_receipt.location_osm_id,
+                    location_osm_type=user_proof_receipt.location_osm_type,
+                    date=user_proof_receipt.date,
+                    currency=user_proof_receipt.currency,
+                    owner=user_proof_receipt.owner,
                     receipt_quantity=RECEIPT_QUANTITY_OK,
                 )
 
@@ -384,7 +418,7 @@ class PriceModelSaveTest(TestCase):
         location = LocationFactory()
         product = ProductFactory()
         PriceFactory(
-            proof=user_proof_1,
+            proof_id=user_proof_1.id,
             location_osm_id=location.osm_id,
             location_osm_type=location.osm_type,
             product_code=product.code,
@@ -397,7 +431,7 @@ class PriceModelSaveTest(TestCase):
         self.assertEqual(Location.objects.get(id=location.id).price_count, 1)
         self.assertEqual(Product.objects.get(id=product.id).price_count, 1)
         PriceFactory(
-            proof=user_proof_2,
+            proof_id=user_proof_2.id,
             location_osm_id=location.osm_id,
             location_osm_type=location.osm_type,
             product_code=product.code,
@@ -411,6 +445,23 @@ class PriceModelSaveTest(TestCase):
         self.assertEqual(Product.objects.get(id=product.id).price_count, 2)
 
 
+class PriceModelUpdateTest(TestCase):
+    def test_price_update(self):
+        user_session = SessionFactory()
+        user_proof = ProofFactory(owner=user_session.user.user_id)
+        location = LocationFactory()
+        product = ProductFactory()
+        price = PriceFactory(
+            proof_id=user_proof.id,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            product_code=product.code,
+            owner=user_session.user.user_id,
+        )
+        price.price = 5
+        price.save()
+
+
 class PriceModelDeleteTest(TestCase):
     def test_price_count_decrement(self):
         user_session = SessionFactory()
@@ -418,7 +469,7 @@ class PriceModelDeleteTest(TestCase):
         location = LocationFactory()
         product = ProductFactory()
         price = PriceFactory(
-            proof=user_proof,
+            proof_id=user_proof.id,
             location_osm_id=location.osm_id,
             location_osm_type=location.osm_type,
             product_code=product.code,

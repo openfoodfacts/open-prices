@@ -3,6 +3,8 @@ from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 
+from open_prices.locations import constants as location_constants
+from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
@@ -27,6 +29,15 @@ PRICE_APPLES = {
     "price": 1,
     "currency": "EUR",
     "date": "2023-08-30",
+}
+
+LOCATION_OSM_NODE_652825274 = {
+    "type": location_constants.TYPE_OSM,
+    "osm_id": 652825274,
+    "osm_type": "NODE",
+    "osm_name": "Monoprix",
+    "osm_lat": "45.1805534",
+    "osm_lon": "5.7153387",
 }
 
 
@@ -318,7 +329,9 @@ class PriceCreateApiTest(TestCase):
             "source": "test",
         }
 
-    def test_price_create(self):
+    def test_price_create_without_proof(self):
+        data = self.data.copy()
+        del data["proof_id"]
         # anonymous
         response = self.client.post(
             self.url, self.data, content_type="application/json"
@@ -342,6 +355,8 @@ class PriceCreateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_price_create_with_proof(self):
         # empty proof
         response = self.client.post(
             self.url,
@@ -382,16 +397,19 @@ class PriceCreateApiTest(TestCase):
         self.assertTrue("source" not in response.data)
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         # with proof, product & location
+        self.assertTrue("proof_id" in response.data)
         self.assertEqual(response.data["proof"]["id"], self.user_proof.id)
         self.assertEqual(
             response.data["proof"]["price_count"], 0
         )  # not yet incremented
         self.assertEqual(Proof.objects.get(id=self.user_proof.id).price_count, 1)
+        self.assertTrue("product_id" in response.data)
         self.assertEqual(response.data["product"]["code"], "8001505005707")
         self.assertEqual(
             response.data["product"]["price_count"], 0
         )  # not yet incremented
         self.assertEqual(Product.objects.get(code="8001505005707").price_count, 1)
+        self.assertTrue("location_id" in response.data)
         self.assertEqual(response.data["location"]["osm_id"], 652825274)
         self.assertEqual(
             response.data["location"]["price_count"], 0
@@ -401,6 +419,41 @@ class PriceCreateApiTest(TestCase):
         )
         p = Price.objects.last()
         self.assertEqual(p.source, "API")  # default value
+
+    def test_price_create_with_location_id(self):
+        location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        # with location_id, location_osm_id & location_osm_type: OK
+        response = self.client.post(
+            self.url,
+            {**self.data, "location_id": location_osm.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["location"]["id"], location_osm.id)
+        # with just location_id (OSM): NOK
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            {**data, "location_id": location_osm.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        # with just location_id (ONLINE): OK
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            {**data, "location_id": location_online.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
 
     def test_price_create_with_app_name(self):
         for app_name in ["", "test app"]:

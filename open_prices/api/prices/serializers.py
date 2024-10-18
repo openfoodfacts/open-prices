@@ -37,6 +37,9 @@ class PriceFullSerializer(PriceSerializer):
 
 
 class PriceCreateSerializer(serializers.ModelSerializer):
+    location_id = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), source="location", required=False
+    )
     proof_id = serializers.PrimaryKeyRelatedField(
         queryset=Proof.objects.all(), source="proof"
     )
