@@ -311,33 +311,60 @@ class Price(models.Model):
                     "Should not be in the future",
                 )
         # location rules
+        # - allow passing a location_id
         # - location_osm_id should be set if location_osm_type is set
         # - location_osm_type should be set if location_osm_id is set
-        if self.location_osm_id:
-            if not self.location_osm_type:
+        if self.location_id:
+            from open_prices.locations.models import Location
+
+            try:
+                Location.objects.get(id=self.location_id)
+            except Location.DoesNotExist:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "location",
+                    "Location not found",
+                )
+
+            if self.location_osm_id:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "location_osm_id",
+                    "Should not be set if `location_id` is filled",
+                )
+            if self.location_osm_type:
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "location_osm_type",
-                    "Should be set if `location_osm_id` is filled",
+                    "Should not be set if `location_id` is filled",
                 )
-        if self.location_osm_type:
-            if not self.location_osm_id:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "location_osm_id",
-                    "Should be set if `location_osm_type` is filled",
-                )
-            elif self.location_osm_id in [True, "true", "false", "none", "null"]:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "location_osm_id",
-                    "Should not be a boolean or an invalid string",
-                )
+        else:
+            if self.location_osm_id:
+                if not self.location_osm_type:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "location_osm_type",
+                        "Should be set if `location_osm_id` is filled",
+                    )
+            if self.location_osm_type:
+                if not self.location_osm_id:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "location_osm_id",
+                        "Should be set if `location_osm_type` is filled",
+                    )
+                elif self.location_osm_id in [True, "true", "false", "none", "null"]:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "location_osm_id",
+                        "Should not be a boolean or an invalid string",
+                    )
         # proof rules
         # - proof must exist and belong to the price owner
         # - some proof fields should be the same as the price fields
         # - receipt_quantity can only be set for receipts (default to 1)
         if self.proof_id:
+            proof = None
             from open_prices.proofs.models import Proof
 
             try:

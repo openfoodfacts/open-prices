@@ -318,7 +318,9 @@ class PriceCreateApiTest(TestCase):
             "source": "test",
         }
 
-    def test_price_create(self):
+    def test_price_create_without_proof(self):
+        data = self.data.copy()
+        del data["proof_id"]
         # anonymous
         response = self.client.post(
             self.url, self.data, content_type="application/json"
@@ -342,6 +344,8 @@ class PriceCreateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_price_create_with_proof(self):
         # empty proof
         response = self.client.post(
             self.url,
@@ -456,6 +460,7 @@ class PriceUpdateApiTest(TestCase):
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
             content_type="application/json",
         )
+        print(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["currency"], "USD")
         self.assertEqual(
