@@ -98,6 +98,8 @@ class TotalStatsTest(TestCase):
         self.total_stats.update_location_stats()
         self.assertEqual(self.total_stats.location_count, 2)
         self.assertEqual(self.total_stats.location_with_price_count, 1)
+        self.assertEqual(self.total_stats.location_type_osm_count, 2)
+        self.assertEqual(self.total_stats.location_type_online_count, 0)
 
     def test_update_proof_stats(self):
         self.assertEqual(self.total_stats.proof_count, 0)
@@ -110,6 +112,8 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_with_price_count, 1)
         self.assertEqual(self.total_stats.proof_type_price_tag_count, 1)
         self.assertEqual(self.total_stats.proof_type_receipt_count, 1)
+        self.assertEqual(self.total_stats.proof_type_gdpr_request_count, 0)
+        self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
 
     def test_update_user_stats(self):
         self.assertEqual(self.total_stats.user_count, 0)

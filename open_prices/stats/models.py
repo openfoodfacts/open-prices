@@ -10,12 +10,19 @@ class TotalStats(SingletonModel):
         "price_type_category_tag_count",
     ]
     PRODUCT_COUNT_FIELDS = ["product_count", "product_with_price_count"]
-    LOCATION_COUNT_FIELDS = ["location_count", "location_with_price_count"]
+    LOCATION_COUNT_FIELDS = [
+        "location_count",
+        "location_with_price_count",
+        "location_type_osm_count",
+        "location_type_online_count",
+    ]
     PROOF_COUNT_FIELDS = [
         "proof_count",
         "proof_with_price_count",
         "proof_type_price_tag_count",
         "proof_type_receipt_count",
+        "proof_type_gdpr_request_count",
+        "proof_type_shop_import_count",
     ]
     USER_COUNT_FIELDS = ["user_count", "user_with_price_count"]
     COUNT_FIELDS = (
@@ -33,10 +40,14 @@ class TotalStats(SingletonModel):
     product_with_price_count = models.PositiveIntegerField(default=0)
     location_count = models.PositiveIntegerField(default=0)
     location_with_price_count = models.PositiveIntegerField(default=0)
+    location_type_osm_count = models.PositiveIntegerField(default=0)
+    location_type_online_count = models.PositiveIntegerField(default=0)
     proof_count = models.PositiveIntegerField(default=0)
     proof_with_price_count = models.PositiveIntegerField(default=0)
     proof_type_price_tag_count = models.PositiveIntegerField(default=0)
     proof_type_receipt_count = models.PositiveIntegerField(default=0)
+    proof_type_gdpr_request_count = models.PositiveIntegerField(default=0)
+    proof_type_shop_import_count = models.PositiveIntegerField(default=0)
     user_count = models.PositiveIntegerField(default=0)
     user_with_price_count = models.PositiveIntegerField(default=0)
 
@@ -72,6 +83,8 @@ class TotalStats(SingletonModel):
         self.location_count = Location.objects.count()
         self.location_with_price_count = Location.objects.has_prices().count()
         # self.location_with_price_count = User.objects.values_list("location_id", flat=True).distinct().count()  # noqa
+        self.location_type_osm_count = Location.objects.has_type_osm().count()
+        self.location_type_online_count = Location.objects.has_type_online().count()
         self.save(update_fields=self.LOCATION_COUNT_FIELDS + ["updated"])
 
     def update_proof_stats(self):
@@ -82,6 +95,10 @@ class TotalStats(SingletonModel):
         # self.proof_with_price_count = User.objects.values_list("proof_id", flat=True).distinct().count()  # noqa
         self.proof_type_price_tag_count = Proof.objects.has_type_price_tag().count()
         self.proof_type_receipt_count = Proof.objects.has_type_receipt().count()
+        self.proof_type_gdpr_request_count = (
+            Proof.objects.has_type_gdpr_request().count()
+        )
+        self.proof_type_shop_import_count = Proof.objects.has_type_shop_import().count()
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
 
     def update_user_stats(self):
