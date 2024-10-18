@@ -4,6 +4,13 @@ import django.core.validators
 from django.db import migrations, models
 
 
+def init_receipt_quantity(apps, schema_editor):
+    Price = apps.get_model("prices", "Price")
+    Price.objects.filter(
+        proof__type__in=["RECEIPT", "GDPR_REQUEST"], receipt_quantity=None
+    ).update(receipt_quantity=1)
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("prices", "0002_alter_price_currency"),
@@ -20,4 +27,5 @@ class Migration(migrations.Migration):
                 verbose_name="Receipt's price quantity (user input)",
             ),
         ),
+        migrations.RunPython(init_receipt_quantity),
     ]
