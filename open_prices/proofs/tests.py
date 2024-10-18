@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -60,6 +62,50 @@ class ProofModelSaveTest(TestCase):
                 location_osm_id=652825274,
                 location_osm_type=LOCATION_OSM_TYPE_NOT_OK,
             )
+
+    def test_proof_receipt_fields(self):
+        # receipt_price_count
+        for RECEIPT_PRICE_COUNT_NOT_OK in [-5]:  # Decimal("45.10")
+            with self.subTest(RECEIPT_PRICE_COUNT_NOT_OK=RECEIPT_PRICE_COUNT_NOT_OK):
+                self.assertRaises(
+                    ValidationError,
+                    ProofFactory,
+                    receipt_price_count=RECEIPT_PRICE_COUNT_NOT_OK,
+                    type=proof_constants.TYPE_RECEIPT,
+                )
+        for RECEIPT_PRICE_COUNT_OK in [None, 0, 5]:
+            with self.subTest(RECEIPT_PRICE_COUNT_OK=RECEIPT_PRICE_COUNT_OK):
+                ProofFactory(
+                    receipt_price_count=RECEIPT_PRICE_COUNT_OK,
+                    type=proof_constants.TYPE_RECEIPT,
+                )
+        self.assertRaises(
+            ValidationError,
+            ProofFactory,
+            receipt_price_count=5,
+            type=proof_constants.TYPE_PRICE_TAG,
+        )
+        # receipt_price_total
+        for RECEIPT_PRICE_TOTAL_NOT_OK in [-5]:
+            with self.subTest(RECEIPT_PRICE_TOTAL_NOT_OK=RECEIPT_PRICE_TOTAL_NOT_OK):
+                self.assertRaises(
+                    ValidationError,
+                    ProofFactory,
+                    receipt_price_total=RECEIPT_PRICE_TOTAL_NOT_OK,
+                    type=proof_constants.TYPE_RECEIPT,
+                )
+        for RECEIPT_PRICE_TOTAL_OK in [None, 0, 5, Decimal("45.10")]:
+            with self.subTest(RECEIPT_PRICE_TOTAL_OK=RECEIPT_PRICE_TOTAL_OK):
+                ProofFactory(
+                    receipt_price_total=RECEIPT_PRICE_TOTAL_OK,
+                    type=proof_constants.TYPE_RECEIPT,
+                )
+        self.assertRaises(
+            ValidationError,
+            ProofFactory,
+            receipt_price_total=5,
+            type=proof_constants.TYPE_PRICE_TAG,
+        )
 
 
 class ProofQuerySetTest(TestCase):
