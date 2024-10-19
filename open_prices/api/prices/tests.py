@@ -34,7 +34,7 @@ PRICE_APPLES = {
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
     "osm_lat": "45.1805534",
     "osm_lon": "5.7153387",

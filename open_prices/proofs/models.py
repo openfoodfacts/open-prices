@@ -47,7 +47,11 @@ class Proof(models.Model):
         "receipt_price_count",
         "receipt_price_total",
     ]
-    CREATE_FIELDS = UPDATE_FIELDS + ["location_osm_id", "location_osm_type"]
+    CREATE_FIELDS = UPDATE_FIELDS + [
+        "location_osm_id",
+        "location_osm_type",
+        "location_id",  # extra field (optional)
+    ]
     FIX_PRICE_FIELDS = ["location", "date", "currency"]
     DUPLICATE_LOCATION_FIELDS = [
         "location_osm_id",
@@ -162,12 +166,12 @@ class Proof(models.Model):
                             self.location, LOCATION_FIELD.replace("location_", "")
                         )
                         if location_field_value:
-                            price_field_value = getattr(self, LOCATION_FIELD)
-                            if str(location_field_value) != str(price_field_value):
+                            proof_field_value = getattr(self, LOCATION_FIELD)
+                            if str(location_field_value) != str(proof_field_value):
                                 validation_errors = utils.add_validation_error(
                                     validation_errors,
                                     "location",
-                                    f"Location {LOCATION_FIELD} ({location_field_value}) does not match the price {LOCATION_FIELD} ({price_field_value})",
+                                    f"Location {LOCATION_FIELD} ({location_field_value}) does not match the proof {LOCATION_FIELD} ({proof_field_value})",
                                 )
         else:
             if self.location_osm_id:

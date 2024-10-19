@@ -13,12 +13,12 @@ from open_prices.proofs.models import Proof
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
 }
 # LOCATION_OSM_NODE_6509705997 = {
 #     "osm_id": 6509705997,
-#     "osm_type": "NODE",
+#     "osm_type": location_constants.OSM_TYPE_NODE,
 #     "osm_name": "Carrefour",
 # }
 

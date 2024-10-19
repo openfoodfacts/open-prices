@@ -7,7 +7,7 @@ from open_prices.locations.factories import LocationFactory
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
     "osm_lat": "45.1805534",
     "osm_lon": "5.7153387",
@@ -16,7 +16,7 @@ LOCATION_OSM_NODE_652825274 = {
 LOCATION_OSM_NODE_6509705997 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 6509705997,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Carrefour",
     "price_count": 0,
 }

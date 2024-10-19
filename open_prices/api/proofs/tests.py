@@ -6,6 +6,7 @@ from django.urls import reverse
 from PIL import Image
 
 from open_prices.locations import constants as location_constants
+from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
@@ -17,8 +18,19 @@ PROOF = {
     "type": proof_constants.TYPE_RECEIPT,
     "currency": "EUR",
     "date": "2024-01-01",
+    "location_osm_id": 652825274,
+    "location_osm_type": location_constants.OSM_TYPE_NODE,
     "receipt_price_count": 5,
     "receipt_price_total": Decimal("45.10"),
+}
+
+LOCATION_OSM_NODE_652825274 = {
+    "type": location_constants.TYPE_OSM,
+    "osm_id": 652825274,
+    "osm_type": location_constants.OSM_TYPE_NODE,
+    "osm_name": "Monoprix",
+    "osm_lat": "45.1805534",
+    "osm_lon": "5.7153387",
 }
 
 
@@ -157,11 +169,10 @@ class ProofCreateApiTest(TestCase):
         cls.url = reverse("api:proofs-upload")
         cls.user_session = SessionFactory()
         cls.data = {
-            # "file": open("filename.webp", "rb"),
+            "file": create_fake_image(),  # open("filename.webp", "rb"),
             **PROOF,
             "price_count": 15,
             "source": "test",
-            "file": create_fake_image(),
         }
 
     def tearDown(self):
@@ -195,6 +206,38 @@ class ProofCreateApiTest(TestCase):
         self.assertTrue("source" not in response.data)
         p = Proof.objects.last()
         self.assertEqual(p.source, "API")  # default value
+
+    def test_proof_create_with_location_id(self):
+        location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        # with location_id, location_osm_id & location_osm_type: OK
+        response = self.client.post(
+            self.url,
+            {**self.data, "location_id": location_osm.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["location"]["id"], location_osm.id)
+        # with just location_id (OSM): NOK
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            {**data, "location_id": location_osm.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # with just location_id (ONLINE): OK
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            {**data, "location_id": location_online.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
 
     def test_proof_create_with_app_name(self):
         for app_name in ["", "test app"]:
@@ -265,6 +308,9 @@ class ProofDeleteApiTest(TestCase):
         )
         PriceFactory(
             proof_id=cls.proof.id,
+            # location_id=cls.proof.location_id,
+            location_osm_id=cls.proof.location_osm_id,
+            location_osm_type=cls.proof.location_osm_type,
             currency=cls.proof.currency,
             date=cls.proof.date,
             owner=cls.proof.owner,
