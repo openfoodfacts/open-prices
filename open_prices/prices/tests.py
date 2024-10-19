@@ -274,7 +274,7 @@ class PriceModelSaveTest(TestCase):
                 location_osm_id=652825274,
                 location_osm_type=LOCATION_OSM_TYPE_NOT_OK,
             )
-        # location unknown
+        # location_id unknown
         self.assertRaises(
             ValidationError,
             PriceFactory,

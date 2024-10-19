@@ -344,13 +344,13 @@ class Price(models.Model):
                         validation_errors = utils.add_validation_error(
                             validation_errors,
                             "location_osm_id",
-                            "Should not be set if `location_id` is filled",
+                            "Can only be set if location type is OSM",
                         )
                     if self.location_osm_type:
                         validation_errors = utils.add_validation_error(
                             validation_errors,
                             "location_osm_type",
-                            "Should not be set if `location_id` is filled",
+                            "Can only be set if location type is OSM",
                         )
                 elif location.type == location_constants.TYPE_OSM:
                     for LOCATION_FIELD in Price.DUPLICATE_LOCATION_FIELDS:

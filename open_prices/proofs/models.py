@@ -49,6 +49,10 @@ class Proof(models.Model):
     ]
     CREATE_FIELDS = UPDATE_FIELDS + ["location_osm_id", "location_osm_type"]
     FIX_PRICE_FIELDS = ["location", "date", "currency"]
+    DUPLICATE_LOCATION_FIELDS = [
+        "location_osm_id",
+        "location_osm_type",
+    ]
 
     file_path = models.CharField(blank=True, null=True)
     mimetype = models.CharField(blank=True, null=True)
@@ -122,42 +126,84 @@ class Proof(models.Model):
                     "Should not be in the future",
                 )
         # location rules
+        # - allow passing a location_id
         # - location_osm_id should be set if location_osm_type is set
         # - location_osm_type should be set if location_osm_id is set
-        if self.location_osm_id:
-            if not self.location_osm_type:
+        if self.location_id:
+            location = None
+            from open_prices.locations.models import Location
+
+            try:
+                location = Location.objects.get(id=self.location_id)
+            except Location.DoesNotExist:
                 validation_errors = utils.add_validation_error(
                     validation_errors,
-                    "location_osm_type",
-                    "Should be set if `location_osm_id` is filled",
+                    "location",
+                    "Location not found",
                 )
-        if self.location_osm_type:
-            if not self.location_osm_id:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "location_osm_id",
-                    "Should be set if `location_osm_type` is filled",
-                )
-            elif self.location_osm_id in [True, "true", "false", "none", "null"]:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "location_osm_id",
-                    "Should not be a boolean or an invalid string",
-                )
-        # receipt-specific rules
-        if not self.type == proof_constants.TYPE_RECEIPT:
-            if self.receipt_price_count is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "receipt_price_count",
-                    "Can only be set if type RECEIPT",
-                )
-            if self.receipt_price_total is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "receipt_price_total",
-                    "Can only be set if type RECEIPT",
-                )
+
+            if location:
+                if location.type == location_constants.TYPE_ONLINE:
+                    if self.location_osm_id:
+                        validation_errors = utils.add_validation_error(
+                            validation_errors,
+                            "location_osm_id",
+                            "Can only be set if location type is OSM",
+                        )
+                    if self.location_osm_type:
+                        validation_errors = utils.add_validation_error(
+                            validation_errors,
+                            "location_osm_type",
+                            "Can only be set if location type is OSM",
+                        )
+                elif location.type == location_constants.TYPE_OSM:
+                    for LOCATION_FIELD in Proof.DUPLICATE_LOCATION_FIELDS:
+                        location_field_value = getattr(
+                            self.location, LOCATION_FIELD.replace("location_", "")
+                        )
+                        if location_field_value:
+                            price_field_value = getattr(self, LOCATION_FIELD)
+                            if str(location_field_value) != str(price_field_value):
+                                validation_errors = utils.add_validation_error(
+                                    validation_errors,
+                                    "location",
+                                    f"Location {LOCATION_FIELD} ({location_field_value}) does not match the price {LOCATION_FIELD} ({price_field_value})",
+                                )
+        else:
+            if self.location_osm_id:
+                if not self.location_osm_type:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "location_osm_type",
+                        "Should be set if `location_osm_id` is filled",
+                    )
+            if self.location_osm_type:
+                if not self.location_osm_id:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "location_osm_id",
+                        "Should be set if `location_osm_type` is filled",
+                    )
+                elif self.location_osm_id in [True, "true", "false", "none", "null"]:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "location_osm_id",
+                        "Should not be a boolean or an invalid string",
+                    )
+            # receipt-specific rules
+            if not self.type == proof_constants.TYPE_RECEIPT:
+                if self.receipt_price_count is not None:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "receipt_price_count",
+                        "Can only be set if type RECEIPT",
+                    )
+                if self.receipt_price_total is not None:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "receipt_price_total",
+                        "Can only be set if type RECEIPT",
+                    )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
@@ -205,14 +251,15 @@ class Proof(models.Model):
         # update proof location
         self.location_osm_id = location_osm_id
         self.location_osm_type = location_osm_type
+        self.set_location()
         self.save()
         self.refresh_from_db()
         new_location = self.location
         # update proof's prices location
         for price in self.prices.all():
-            price.location = self.location
-            price.location_osm_id = self.location_osm_id
-            price.location_osm_type = self.location_osm_type
+            price.location = new_location
+            price.location_osm_id = new_location.osm_id
+            price.location_osm_type = new_location.osm_type
             price.save()
         # update old & new location price counts
         if old_location:
