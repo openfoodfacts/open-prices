@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.45.0](https://github.com/openfoodfacts/open-prices/compare/v1.44.3...v1.45.0) (2024-10-19)
+
+
+### Features
+
+* **Prices:** Allow adding new prices with a location_id ([#527](https://github.com/openfoodfacts/open-prices/issues/527)) ([99f16df](https://github.com/openfoodfacts/open-prices/commit/99f16dfa1e6d4573d8b7c9243384fdcffad3c194))
+* **Prices:** new field to allow users to input the quantity bought ([#498](https://github.com/openfoodfacts/open-prices/issues/498)) ([857b813](https://github.com/openfoodfacts/open-prices/commit/857b813697e9ac5f7c8aa50cec769369de12b92e))
+* **Proofs:** Allow adding new proofs with a location_id ([#528](https://github.com/openfoodfacts/open-prices/issues/528)) ([38e5599](https://github.com/openfoodfacts/open-prices/commit/38e5599931efe1aa6aa333028fc1b2a948c36b1f))
+* **Proofs:** new fields to allow users to input the number of prices & total sum ([#497](https://github.com/openfoodfacts/open-prices/issues/497)) ([8a9aa50](https://github.com/openfoodfacts/open-prices/commit/8a9aa50d264fa4e792b3512bffa37ec869ed60e0))
+
+
+### Bug Fixes
+
+* **Prices:** init Price.receipt_quantity field in migration. ref [#498](https://github.com/openfoodfacts/open-prices/issues/498) ([1822b8d](https://github.com/openfoodfacts/open-prices/commit/1822b8d2e54a9c07905ff24242f9f93138b38acd))
+* **Tests:** Remove proof images on test tearDown ([#529](https://github.com/openfoodfacts/open-prices/issues/529)) ([5805eea](https://github.com/openfoodfacts/open-prices/commit/5805eeadfd431e2bdc47b677861cbb7123f4cae5))
+
+
+### Technical
+
+* **Stats:** extra Proof type stats. new Location type stats ([#524](https://github.com/openfoodfacts/open-prices/issues/524)) ([411222b](https://github.com/openfoodfacts/open-prices/commit/411222be6d2da05ec3acb7a7948a6268c29b65d5))
+
 ## [1.44.3](https://github.com/openfoodfacts/open-prices/compare/v1.44.2...v1.44.3) (2024-10-13)
 
 
