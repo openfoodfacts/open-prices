@@ -26,6 +26,9 @@ class ProofFullSerializer(ProofSerializer):
 
 class ProofUploadSerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True, use_url=False)
+    location_id = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), source="location", required=False
+    )
 
     class Meta:
         model = Proof
@@ -33,6 +36,10 @@ class ProofUploadSerializer(serializers.ModelSerializer):
 
 
 class ProofCreateSerializer(serializers.ModelSerializer):
+    location_id = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), source="location", required=False
+    )
+
     class Meta:
         model = Proof
         fields = Proof.FILE_FIELDS + Proof.CREATE_FIELDS

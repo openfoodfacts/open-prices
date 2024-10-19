@@ -14,7 +14,7 @@ from open_prices.users.factories import UserFactory
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
 }
 LOCATION_ONLINE_DECATHLON = {

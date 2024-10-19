@@ -13,12 +13,12 @@ from open_prices.proofs.models import Proof
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
 }
 # LOCATION_OSM_NODE_6509705997 = {
 #     "osm_id": 6509705997,
-#     "osm_type": "NODE",
+#     "osm_type": location_constants.OSM_TYPE_NODE,
 #     "osm_name": "Carrefour",
 # }
 
@@ -35,6 +35,8 @@ class ProofModelSaveTest(TestCase):
             self.assertRaises(ValidationError, ProofFactory, date=DATE_NOT_OK)
 
     def test_proof_location_validation(self):
+        location_osm = LocationFactory()
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         # both location_osm_id & location_osm_type not set
         ProofFactory(location_osm_id=None, location_osm_type=None)
         # location_osm_id
@@ -62,6 +64,37 @@ class ProofModelSaveTest(TestCase):
                 location_osm_id=652825274,
                 location_osm_type=LOCATION_OSM_TYPE_NOT_OK,
             )
+        # location_id unknown
+        self.assertRaises(
+            ValidationError,
+            ProofFactory,
+            location_id=999,
+            location_osm_id=None,
+            location_osm_type=None,
+        )
+        # cannot mix location_id & location_osm_id/type
+        self.assertRaises(
+            ValidationError,
+            ProofFactory,
+            location_id=location_osm.id,
+            location_osm_id=None,  # needed
+            location_osm_type=None,  # needed
+        )
+        self.assertRaises(
+            ValidationError,
+            ProofFactory,
+            location_id=location_online.id,
+            location_osm_id=LOCATION_OSM_ID_OK,  # should be None
+        )
+        # location_id ok
+        ProofFactory(
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+        )
+        ProofFactory(
+            location_id=location_online.id, location_osm_id=None, location_osm_type=None
+        )
 
     def test_proof_receipt_fields(self):
         # receipt_price_count
@@ -230,3 +263,16 @@ class ProofPropertyTest(TestCase):
         self.assertEqual(
             self.proof_receipt.currency, self.proof_receipt.prices.first().currency
         )
+
+
+class ProofModelUpdateTest(TestCase):
+    def test_proof_update(self):
+        location = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        proof_price_tag = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            currency="EUR",
+        )
+        proof_price_tag.currency = "USD"
+        proof_price_tag.save()

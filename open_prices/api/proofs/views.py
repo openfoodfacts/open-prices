@@ -78,7 +78,11 @@ class ProofViewSet(
             "file_path": file_path,
             "mimetype": mimetype,
             "image_thumb_path": image_thumb_path,
-            **{key: request.data.get(key) for key in Proof.CREATE_FIELDS},
+            **{
+                key: request.data.get(key)
+                for key in Proof.CREATE_FIELDS
+                if key in request.data
+            },
         }
         # validate
         serializer = ProofCreateSerializer(data=proof_create_data)
