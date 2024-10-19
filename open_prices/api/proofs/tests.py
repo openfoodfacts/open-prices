@@ -161,10 +161,15 @@ class ProofCreateApiTest(TestCase):
             **PROOF,
             "price_count": 15,
             "source": "test",
+            "file": create_fake_image(),
         }
 
+    def tearDown(self):
+        """Clean delete to remove images"""
+        [p.delete() for p in Proof.objects.all()]
+        return super().tearDown()
+
     def test_proof_create(self):
-        self.data["file"] = create_fake_image()
         # anonymous
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, 403)
@@ -192,7 +197,6 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(p.source, "API")  # default value
 
     def test_proof_create_with_app_name(self):
-        self.data["file"] = create_fake_image()
         for app_name in ["", "test app"]:
             # with empty app_name
             response = self.client.post(
