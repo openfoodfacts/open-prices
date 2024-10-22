@@ -18,7 +18,7 @@ PRICE_FIELDS = [
     "product_name",
     "price",
     "discount",  # extra
-    "quantity",  # extra
+    "receipt_quantity",
     "currency",
     "location",  # extra
     "location_osm_id",
@@ -47,7 +47,7 @@ def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
     gdpr_field_value = gdpr_field_value.strip()
 
     # field-specific rules
-    if op_field in ["price", "quantity"]:
+    if op_field in ["price", "receipt_quantity"]:
         if gdpr_field_value:
             gdpr_field_value = float(gdpr_field_value.replace(",", "."))
 
@@ -92,10 +92,12 @@ def gdpr_source_price_cleanup_rules(gdpr_source, gdpr_op_price):
     """
     Rules to cleanup the price object
     """
-    # price must be divided by quantity
-    if "quantity" in gdpr_op_price:
-        if gdpr_op_price["quantity"]:
-            gdpr_op_price["price"] = gdpr_op_price["price"] / gdpr_op_price["quantity"]
+    # price must be divided by receipt_quantity
+    if "receipt_quantity" in gdpr_op_price:
+        if gdpr_op_price["receipt_quantity"]:
+            gdpr_op_price["price"] = str(
+                round(gdpr_op_price["price"] / gdpr_op_price["receipt_quantity"], 2)
+            )
 
     # discount boolean flag
     if "discount" in gdpr_op_price:
@@ -134,7 +136,7 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
                 passes_test = False
             elif op_price["discount"]:
                 passes_test = False
-            elif op_price["quantity"].startswith("-"):
+            elif op_price["receipt_quantity"].startswith("-"):
                 passes_test = False
         elif gdpr_source == "ELECLERC":
             if len(op_price["product_code"]) < 6:
