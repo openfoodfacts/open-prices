@@ -456,17 +456,23 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.status_code, 201)
 
     def test_price_create_with_app_name(self):
-        for app_name in ["", "test app"]:
-            response = self.client.post(
-                self.url + f"?app_name={app_name}",
-                self.data,
-                headers={"Authorization": f"Bearer {self.user_session.token}"},
-                content_type="application/json",
-            )
-            self.assertEqual(response.status_code, 201)
-            self.assertTrue("source" not in response.data)
-            p = Price.objects.last()
-            self.assertEqual(p.source, app_name)
+        for params, result in [
+            ("?", "API"),
+            ("?app_name=", ""),
+            ("?app_name=test app&app_version=", "test app"),
+            ("?app_name=mobile&app_version=1.0", "mobile (1.0)"),
+        ]:
+            with self.subTest(INPUT_OUPUT=(params, result)):
+                response = self.client.post(
+                    self.url + params,
+                    self.data,
+                    headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 201)
+                self.assertTrue("source" not in response.data)
+                p = Price.objects.last()
+                self.assertEqual(p.source, result)
 
 
 class PriceUpdateApiTest(TestCase):

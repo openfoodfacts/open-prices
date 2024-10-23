@@ -13,6 +13,7 @@ from open_prices.api.prices.serializers import (
     PriceStatsSerializer,
     PriceUpdateSerializer,
 )
+from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.prices.models import Price
 
@@ -59,7 +60,7 @@ class PriceViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # get source
-        self.source = self.request.GET.get("app_name", "API")
+        self.source = get_source_from_request(self.request)
         # save
         price = self.perform_create(serializer)
         # return full price

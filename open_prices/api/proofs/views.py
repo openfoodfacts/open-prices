@@ -14,6 +14,7 @@ from open_prices.api.proofs.serializers import (
     ProofUpdateSerializer,
     ProofUploadSerializer,
 )
+from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.proofs.models import Proof
 from open_prices.proofs.utils import store_file
@@ -88,7 +89,7 @@ class ProofViewSet(
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
         # get source
-        self.source = self.request.GET.get("app_name", "API")
+        self.source = get_source_from_request(self.request)
         # save
         proof = serializer.save(
             owner=self.request.user.user_id,
