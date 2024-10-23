@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.45.1](https://github.com/openfoodfacts/open-prices/compare/v1.45.0...v1.45.1) (2024-10-23)
+
+
+### Bug Fixes
+
+* **GDPR:** Use unique location identifier instead of name ([bd681f1](https://github.com/openfoodfacts/open-prices/commit/bd681f17ca4455334571a5fb14318eac94fbe46d))
+
+
+### Technical
+
+* **API:** store app_version in Price & Proof source field ([#533](https://github.com/openfoodfacts/open-prices/issues/533)) ([bbfce93](https://github.com/openfoodfacts/open-prices/commit/bbfce93f6981cc71fb4bac6df7c8a87f417716e3))
+* **GDPR:** Use new Price.receipt_quantity field. ref [#499](https://github.com/openfoodfacts/open-prices/issues/499) ([64fcd80](https://github.com/openfoodfacts/open-prices/commit/64fcd8058ae23cfdfcd26b66c8c92ffcc6cf57ff))
+
 ## [1.45.0](https://github.com/openfoodfacts/open-prices/compare/v1.44.3...v1.45.0) (2024-10-19)
 
 
