@@ -16,11 +16,11 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
 }
-# LOCATION_OSM_NODE_6509705997 = {
-#     "osm_id": 6509705997,
-#     "osm_type": location_constants.OSM_TYPE_NODE,
-#     "osm_name": "Carrefour",
-# }
+LOCATION_OSM_NODE_6509705997 = {
+    "osm_id": 6509705997,
+    "osm_type": location_constants.OSM_TYPE_NODE,
+    "osm_name": "Carrefour",
+}
 
 
 class ProofModelSaveTest(TestCase):
@@ -168,11 +168,12 @@ class ProofQuerySetTest(TestCase):
 class ProofPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_osm_1 = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_osm_2 = LocationFactory(**LOCATION_OSM_NODE_6509705997)
         cls.proof_price_tag = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_osm_1.osm_id,
+            location_osm_type=cls.location_osm_1.osm_type,
         )
         PriceFactory(
             proof_id=cls.proof_price_tag.id,
@@ -189,8 +190,8 @@ class ProofPropertyTest(TestCase):
         cls.proof_receipt = ProofFactory(type=proof_constants.TYPE_RECEIPT)
         PriceFactory(
             proof_id=cls.proof_receipt.id,
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_osm_1.osm_id,
+            location_osm_type=cls.location_osm_1.osm_type,
             price=2.0,
             currency="EUR",
             date="2024-06-30",
@@ -212,32 +213,37 @@ class ProofPropertyTest(TestCase):
     def test_update_location(self):
         # existing
         self.proof_price_tag.refresh_from_db()
-        self.location.refresh_from_db()
+        self.location_osm_1.refresh_from_db()
         self.assertEqual(self.proof_price_tag.price_count, 2)
-        self.assertEqual(self.proof_price_tag.location.id, self.location.id)
-        self.assertEqual(self.location.price_count, 2 + 1)
+        self.assertEqual(self.proof_price_tag.location.id, self.location_osm_1.id)
+        self.assertEqual(self.location_osm_1.price_count, 2 + 1)
         # update location
         self.proof_price_tag.update_location(
-            location_osm_id=6509705997,
-            location_osm_type=location_constants.OSM_TYPE_NODE,
+            location_osm_id=self.location_osm_2.osm_id,
+            location_osm_type=self.location_osm_2.osm_type,
         )
         # check changes
         self.proof_price_tag.refresh_from_db()
-        self.location.refresh_from_db()
-        new_location = self.proof_price_tag.location
-        self.assertNotEqual(self.location, new_location)
-        self.assertEqual(self.proof_price_tag.price_count, 2)
-        self.assertEqual(new_location.price_count, 2)
-        self.assertEqual(self.location.price_count, 3 - 2)
+        self.location_osm_1.refresh_from_db()
+        self.location_osm_2.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.location, self.location_osm_2)
+        self.assertEqual(self.proof_price_tag.price_count, 2)  # same
+        self.assertEqual(self.proof_price_tag.location.price_count, 2)
+        self.assertEqual(self.location_osm_1.price_count, 3 - 2)
+        self.assertEqual(self.location_osm_2.price_count, 2)
         # update again, same location
         self.proof_price_tag.update_location(
-            location_osm_id=6509705997,
-            location_osm_type=location_constants.OSM_TYPE_NODE,
+            location_osm_id=self.location_osm_2.osm_id,
+            location_osm_type=self.location_osm_2.osm_type,
         )
         self.proof_price_tag.refresh_from_db()
-        self.location.refresh_from_db()
+        self.location_osm_1.refresh_from_db()
+        self.location_osm_2.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.location, self.location_osm_2)
         self.assertEqual(self.proof_price_tag.price_count, 2)
         self.assertEqual(self.proof_price_tag.location.price_count, 2)
+        self.assertEqual(self.location_osm_1.price_count, 1)
+        self.assertEqual(self.location_osm_2.price_count, 2)
 
     def test_set_missing_fields_from_prices(self):
         self.proof_receipt.refresh_from_db()
@@ -246,7 +252,7 @@ class ProofPropertyTest(TestCase):
         self.assertTrue(self.proof_receipt.currency is None)
         self.assertEqual(self.proof_receipt.price_count, 1)
         self.proof_receipt.set_missing_fields_from_prices()
-        self.assertEqual(self.proof_receipt.location, self.location)
+        self.assertEqual(self.proof_receipt.location, self.location_osm_1)
         self.assertEqual(
             self.proof_receipt.date, self.proof_receipt.prices.first().date
         )
@@ -258,11 +264,12 @@ class ProofPropertyTest(TestCase):
 class ProofModelUpdateTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_osm_1 = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_osm_2 = LocationFactory(**LOCATION_OSM_NODE_6509705997)
         cls.proof_price_tag = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_osm_1.osm_id,
+            location_osm_type=cls.location_osm_1.osm_type,
             currency="EUR",
             date="2024-06-30",
         )
@@ -276,5 +283,21 @@ class ProofModelUpdateTest(TestCase):
         )
 
     def test_proof_update(self):
+        # currency
+        self.assertEqual(self.proof_price_tag.prices.count(), 1)
         self.proof_price_tag.currency = "USD"
         self.proof_price_tag.save()
+        self.assertEqual(self.proof_price_tag.prices.first().currency, "USD")
+        # date
+        self.proof_price_tag.date = "2024-07-01"
+        self.proof_price_tag.save()
+        self.assertEqual(str(self.proof_price_tag.prices.first().date), "2024-07-01")
+        # location
+        self.proof_price_tag.location_osm_id = self.location_osm_2.osm_id
+        self.proof_price_tag.location_osm_type = self.location_osm_2.osm_type
+        self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.location, self.location_osm_2)
+        self.assertEqual(
+            self.proof_price_tag.prices.first().location, self.location_osm_2
+        )

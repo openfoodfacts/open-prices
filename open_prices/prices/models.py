@@ -74,6 +74,7 @@ class Price(models.Model):
         "location_osm_type",
     ]
     DUPLICATE_PROOF_FIELDS = [
+        # "location_id",
         "location_osm_id",
         "location_osm_type",
         "date",
@@ -325,6 +326,7 @@ class Price(models.Model):
         # - allow passing a location_id
         # - location_osm_id should be set if location_osm_type is set
         # - location_osm_type should be set if location_osm_id is set
+        # - some location fields should match the price fields (on create)
         if self.location_id:
             location = None
             from open_prices.locations.models import Location
@@ -353,18 +355,19 @@ class Price(models.Model):
                             "Can only be set if location type is OSM",
                         )
                 elif location.type == location_constants.TYPE_OSM:
-                    for LOCATION_FIELD in Price.DUPLICATE_LOCATION_FIELDS:
-                        location_field_value = getattr(
-                            self.location, LOCATION_FIELD.replace("location_", "")
-                        )
-                        if location_field_value:
-                            price_field_value = getattr(self, LOCATION_FIELD)
-                            if str(location_field_value) != str(price_field_value):
-                                validation_errors = utils.add_validation_error(
-                                    validation_errors,
-                                    "location",
-                                    f"Location {LOCATION_FIELD} ({location_field_value}) does not match the price {LOCATION_FIELD} ({price_field_value})",
-                                )
+                    if not self.id:  # skip these checks on update
+                        for LOCATION_FIELD in Price.DUPLICATE_LOCATION_FIELDS:
+                            location_field_value = getattr(
+                                self.location, LOCATION_FIELD.replace("location_", "")
+                            )
+                            if location_field_value:
+                                price_field_value = getattr(self, LOCATION_FIELD)
+                                if str(location_field_value) != str(price_field_value):
+                                    validation_errors = utils.add_validation_error(
+                                        validation_errors,
+                                        "location",
+                                        f"Location {LOCATION_FIELD} ({location_field_value}) does not match the price {LOCATION_FIELD} ({price_field_value})",
+                                    )
 
         else:
             if self.location_osm_id:
@@ -389,7 +392,7 @@ class Price(models.Model):
                     )
         # proof rules
         # - proof must exist and belong to the price owner
-        # - some proof fields should be the same as the price fields
+        # - some proof fields should match the price fields (on create)
         # - receipt_quantity can only be set for receipts (default to 1)
         if self.proof_id:
             proof = None
@@ -411,17 +414,18 @@ class Price(models.Model):
                         "proof",
                         "Proof does not belong to the current user",
                     )
-                if proof.type in proof_constants.TYPE_SINGLE_SHOP_LIST:
-                    for PROOF_FIELD in Price.DUPLICATE_PROOF_FIELDS:
-                        proof_field_value = getattr(proof, PROOF_FIELD)
-                        if proof_field_value:
-                            price_field_value = getattr(self, PROOF_FIELD)
-                            if str(proof_field_value) != str(price_field_value):
-                                validation_errors = utils.add_validation_error(
-                                    validation_errors,
-                                    "proof",
-                                    f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
-                                )
+                if not self.id:  # skip these checks on update
+                    if proof.type in proof_constants.TYPE_SINGLE_SHOP_LIST:
+                        for PROOF_FIELD in Price.DUPLICATE_PROOF_FIELDS:
+                            proof_field_value = getattr(proof, PROOF_FIELD)
+                            if proof_field_value:
+                                price_field_value = getattr(self, PROOF_FIELD)
+                                if str(proof_field_value) != str(price_field_value):
+                                    validation_errors = utils.add_validation_error(
+                                        validation_errors,
+                                        "proof",
+                                        f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
+                                    )
                 if proof.type in proof_constants.TYPE_SHOPPING_SESSION_LIST:
                     if not self.receipt_quantity:
                         self.receipt_quantity = 1
