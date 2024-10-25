@@ -41,6 +41,8 @@ class ProofQuerySet(models.QuerySet):
 class Proof(models.Model):
     FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
     UPDATE_FIELDS = [
+        # "location_osm_id",
+        # "location_osm_type",
         "type",
         "currency",
         "date",
@@ -133,6 +135,7 @@ class Proof(models.Model):
         # - allow passing a location_id
         # - location_osm_id should be set if location_osm_type is set
         # - location_osm_type should be set if location_osm_id is set
+        # - some location fields should match the proof fields (on create)
         if self.location_id:
             location = None
             from open_prices.locations.models import Location
@@ -161,18 +164,19 @@ class Proof(models.Model):
                             "Can only be set if location type is OSM",
                         )
                 elif location.type == location_constants.TYPE_OSM:
-                    for LOCATION_FIELD in Proof.DUPLICATE_LOCATION_FIELDS:
-                        location_field_value = getattr(
-                            self.location, LOCATION_FIELD.replace("location_", "")
-                        )
-                        if location_field_value:
-                            proof_field_value = getattr(self, LOCATION_FIELD)
-                            if str(location_field_value) != str(proof_field_value):
-                                validation_errors = utils.add_validation_error(
-                                    validation_errors,
-                                    "location",
-                                    f"Location {LOCATION_FIELD} ({location_field_value}) does not match the proof {LOCATION_FIELD} ({proof_field_value})",
-                                )
+                    if not self.id:  # skip these checks on update
+                        for LOCATION_FIELD in Proof.DUPLICATE_LOCATION_FIELDS:
+                            location_field_value = getattr(
+                                self.location, LOCATION_FIELD.replace("location_", "")
+                            )
+                            if location_field_value:
+                                proof_field_value = getattr(self, LOCATION_FIELD)
+                                if str(location_field_value) != str(proof_field_value):
+                                    validation_errors = utils.add_validation_error(
+                                        validation_errors,
+                                        "location",
+                                        f"Location {LOCATION_FIELD} ({location_field_value}) does not match the proof {LOCATION_FIELD} ({proof_field_value})",
+                                    )
         else:
             if self.location_osm_id:
                 if not self.location_osm_type:
@@ -259,12 +263,8 @@ class Proof(models.Model):
         self.save()
         self.refresh_from_db()
         new_location = self.location
-        # update proof's prices location
-        for price in self.prices.all():
-            price.location = new_location
-            price.location_osm_id = new_location.osm_id
-            price.location_osm_type = new_location.osm_type
-            price.save()
+        # update proof's prices location?
+        # # done in post_save signal
         # update old & new location price counts
         if old_location:
             old_location.update_price_count()
@@ -299,6 +299,18 @@ class Proof(models.Model):
                         )
         if len(fields_to_update):
             self.save()
+
+
+@receiver(signals.post_save, sender=Proof)
+def proof_post_save_update_prices(sender, instance, created, **kwargs):
+    if not created:
+        if instance.is_type_single_shop and instance.prices.exists():
+            from open_prices.prices.models import Price
+
+            for price in instance.prices.all():
+                for field in Price.DUPLICATE_PROOF_FIELDS:
+                    setattr(price, field, getattr(instance, field))
+                    price.save()
 
 
 @receiver(signals.post_delete, sender=Proof)
