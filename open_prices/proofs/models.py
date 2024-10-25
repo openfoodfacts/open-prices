@@ -263,12 +263,8 @@ class Proof(models.Model):
         self.save()
         self.refresh_from_db()
         new_location = self.location
-        # # update proof's prices location
-        # for price in self.prices.all():
-        #     price.location = new_location
-        #     price.location_osm_id = new_location.osm_id
-        #     price.location_osm_type = new_location.osm_type
-        #     price.save()
+        # update proof's prices location?
+        # # done in post_save signal
         # update old & new location price counts
         if old_location:
             old_location.update_price_count()
