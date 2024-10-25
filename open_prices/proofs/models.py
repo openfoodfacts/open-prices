@@ -41,8 +41,8 @@ class ProofQuerySet(models.QuerySet):
 class Proof(models.Model):
     FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
     UPDATE_FIELDS = [
-        # "location_osm_id",
-        # "location_osm_type",
+        "location_osm_id",
+        "location_osm_type",
         "type",
         "currency",
         "date",
@@ -50,8 +50,6 @@ class Proof(models.Model):
         "receipt_price_total",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + [
-        "location_osm_id",
-        "location_osm_type",
         "location_id",  # extra field (optional)
     ]
     FIX_PRICE_FIELDS = ["location", "date", "currency"]

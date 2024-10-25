@@ -17,6 +17,7 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_name": "Monoprix",
 }
 LOCATION_OSM_NODE_6509705997 = {
+    "type": location_constants.TYPE_OSM,
     "osm_id": 6509705997,
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Carrefour",
