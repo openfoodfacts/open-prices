@@ -14,16 +14,6 @@ from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
-PROOF = {
-    "type": proof_constants.TYPE_RECEIPT,
-    "currency": "EUR",
-    "date": "2024-01-01",
-    "location_osm_id": 652825274,
-    "location_osm_type": location_constants.OSM_TYPE_NODE,
-    "receipt_price_count": 5,
-    "receipt_price_total": Decimal("45.10"),
-}
-
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
@@ -31,6 +21,21 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_name": "Monoprix",
     "osm_lat": "45.1805534",
     "osm_lon": "5.7153387",
+}
+LOCATION_OSM_NODE_6509705997 = {
+    "type": location_constants.TYPE_OSM,
+    "osm_id": 6509705997,
+    "osm_type": location_constants.OSM_TYPE_NODE,
+    "osm_name": "Carrefour",
+}
+PROOF = {
+    "type": proof_constants.TYPE_RECEIPT,
+    "currency": "EUR",
+    "date": "2024-01-01",
+    "location_osm_id": LOCATION_OSM_NODE_652825274["osm_id"],
+    "location_osm_type": LOCATION_OSM_NODE_652825274["osm_type"],
+    "receipt_price_count": 5,
+    "receipt_price_total": Decimal("45.10"),
 }
 
 
@@ -268,7 +273,13 @@ class ProofUpdateApiTest(TestCase):
             **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
         )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
-        cls.data = {"currency": "USD", "price_count": 20}
+        cls.data = {
+            "location_osm_id": LOCATION_OSM_NODE_6509705997["osm_id"],
+            "location_osm_type": LOCATION_OSM_NODE_6509705997["osm_type"],
+            "currency": "USD",
+            "receipt_price_count": 4,
+            "price_count": 20,
+        }
 
     def test_proof_update(self):
         # anonymous
@@ -293,6 +304,11 @@ class ProofUpdateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 404)  # 403 ?
         # authenticated
+        self.assertEqual(
+            self.proof.location_osm_id, LOCATION_OSM_NODE_652825274["osm_id"]
+        )
+        self.assertEqual(self.proof.currency, "EUR")
+        self.assertEqual(self.proof.receipt_price_count, 5)
         response = self.client.patch(
             self.url,
             self.data,
@@ -300,7 +316,11 @@ class ProofUpdateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data["location_osm_id"], LOCATION_OSM_NODE_6509705997["osm_id"]
+        )
         self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(response.data["receipt_price_count"], 4)
         self.assertEqual(Proof.objects.get(id=self.proof.id).price_count, 15)  # ignored
 
 
