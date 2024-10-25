@@ -239,40 +239,42 @@ class ProofPropertyTest(TestCase):
         self.assertEqual(self.proof_price_tag.price_count, 2)
         self.assertEqual(self.proof_price_tag.location.price_count, 2)
 
-    def test_set_missing_location_from_prices(self):
+    def test_set_missing_fields_from_prices(self):
         self.proof_receipt.refresh_from_db()
         self.assertTrue(self.proof_receipt.location is None)
-        self.assertEqual(self.proof_receipt.price_count, 1)
-        self.proof_receipt.set_missing_location_from_prices()
-        self.assertEqual(self.proof_receipt.location, self.location)
-
-    def test_set_missing_date_from_prices(self):
-        self.proof_receipt.refresh_from_db()
         self.assertTrue(self.proof_receipt.date is None)
+        self.assertTrue(self.proof_receipt.currency is None)
         self.assertEqual(self.proof_receipt.price_count, 1)
-        self.proof_receipt.set_missing_date_from_prices()
+        self.proof_receipt.set_missing_fields_from_prices()
+        self.assertEqual(self.proof_receipt.location, self.location)
         self.assertEqual(
             self.proof_receipt.date, self.proof_receipt.prices.first().date
         )
-
-    def test_set_missing_currency_from_prices(self):
-        self.proof_receipt.refresh_from_db()
-        self.assertTrue(self.proof_receipt.currency is None)
-        self.assertEqual(self.proof_receipt.price_count, 1)
-        self.proof_receipt.set_missing_currency_from_prices()
         self.assertEqual(
             self.proof_receipt.currency, self.proof_receipt.prices.first().currency
         )
 
 
 class ProofModelUpdateTest(TestCase):
-    def test_proof_update(self):
-        location = LocationFactory(**LOCATION_OSM_NODE_652825274)
-        proof_price_tag = ProofFactory(
+    @classmethod
+    def setUpTestData(cls):
+        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.proof_price_tag = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
-            location_osm_id=location.osm_id,
-            location_osm_type=location.osm_type,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
             currency="EUR",
+            date="2024-06-30",
         )
-        proof_price_tag.currency = "USD"
-        proof_price_tag.save()
+        PriceFactory(
+            proof_id=cls.proof_price_tag.id,
+            location_osm_id=cls.proof_price_tag.location.osm_id,
+            location_osm_type=cls.proof_price_tag.location.osm_type,
+            price=1.0,
+            currency="EUR",
+            date="2024-06-30",
+        )
+
+    def test_proof_update(self):
+        self.proof_price_tag.currency = "USD"
+        self.proof_price_tag.save()

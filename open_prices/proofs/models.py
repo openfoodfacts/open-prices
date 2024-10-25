@@ -29,7 +29,7 @@ class ProofQuerySet(models.QuerySet):
         return self.filter(type__in=proof_constants.TYPE_SINGLE_SHOP_LIST)
 
     def has_type_shopping_session(self):
-        return self.filter(type=proof_constants.TYPE_SHOPPING_SESSION_LIST)
+        return self.filter(type__in=proof_constants.TYPE_SHOPPING_SESSION_LIST)
 
     def has_prices(self):
         return self.filter(price_count__gt=0)
@@ -271,55 +271,34 @@ class Proof(models.Model):
         if new_location:
             new_location.update_price_count()
 
-    def set_missing_location_from_prices(self):
-        if self.is_type_single_shop and not self.location and self.prices.exists():
-            proof_prices_location_list = list(
-                self.prices.values_list("location", flat=True).distinct()
-            )
-            if len(proof_prices_location_list) == 1:
-                location = self.prices.first().location
-                self.location_osm_id = location.osm_id
-                self.location_osm_type = location.osm_type
-                self.save()
-            else:
-                print(
-                    "different locations",
-                    self,
-                    self.prices.count(),
-                    proof_prices_location_list,
-                )
-
-    def set_missing_date_from_prices(self):
-        if self.is_type_single_shop and not self.date and self.prices.exists():
-            proof_prices_dates_list = list(
-                self.prices.values_list("date", flat=True).distinct()
-            )
-            if len(proof_prices_dates_list) == 1:
-                self.date = self.prices.first().date
-                self.save()
-            else:
-                print(
-                    "different dates",
-                    self,
-                    self.prices.count(),
-                    proof_prices_dates_list,
-                )
-
-    def set_missing_currency_from_prices(self):
-        if self.is_type_single_shop and not self.currency and self.prices.exists():
-            proof_prices_currencies_list = list(
-                self.prices.values_list("currency", flat=True).distinct()
-            )
-            if len(proof_prices_currencies_list) == 1:
-                self.currency = self.prices.first().currency
-                self.save()
-            else:
-                print(
-                    "different currencies",
-                    self,
-                    self.prices.count(),
-                    proof_prices_currencies_list,
-                )
+    def set_missing_fields_from_prices(self):
+        fields_to_update = list()
+        if self.is_type_single_shop and self.prices.exists():
+            for field in Proof.FIX_PRICE_FIELDS:
+                if not getattr(self, field):
+                    proof_prices_field_list = list(
+                        self.prices.values_list(field, flat=True).distinct()
+                    )
+                    if len(proof_prices_field_list) == 1:
+                        if field == "location":
+                            location = self.prices.first().location
+                            self.location_osm_id = location.osm_id
+                            self.location_osm_type = location.osm_type
+                            fields_to_update.extend(
+                                ["location_osm_id", "location_osm_type"]
+                            )
+                        else:
+                            setattr(self, field, getattr(self.prices.first(), field))
+                            fields_to_update.append(field)
+                    else:
+                        print(
+                            f"different {field}s",
+                            self,
+                            f"{self.prices.count()} prices",
+                            proof_prices_field_list,
+                        )
+        if len(fields_to_update):
+            self.save()
 
 
 @receiver(signals.post_delete, sender=Proof)

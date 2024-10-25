@@ -87,13 +87,12 @@ def update_location_counts_task():
 def fix_proof_fields_task():
     """
     Proofs uploaded via the (old) mobile app lack location/date/currency fields
-    Fix these fields using the proof's prices
+    Fill these fields using the proof's prices
     """
     for proof in Proof.objects.with_stats().filter(
         price_count_annotated__gte=1, location=None
     ):
-        for field in Proof.FIX_PRICE_FIELDS:
-            getattr(proof, f"set_missing_{field}_from_prices")()
+        proof.set_missing_fields_from_prices()
 
 
 def dump_db_task():
