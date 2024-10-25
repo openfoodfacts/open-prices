@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.46.0](https://github.com/openfoodfacts/open-prices/compare/v1.45.1...v1.46.0) (2024-10-25)
+
+
+### Features
+
+* **API:** Allow updating Proof location fields ([#539](https://github.com/openfoodfacts/open-prices/issues/539)) ([8554eaf](https://github.com/openfoodfacts/open-prices/commit/8554eaf63777b2393c234302b86e8c30ca4fe050))
+* **Proofs:** on update, also update proof prices ([#538](https://github.com/openfoodfacts/open-prices/issues/538)) ([d5481f2](https://github.com/openfoodfacts/open-prices/commit/d5481f2b138e825a087a789477f0b5fc027bb4ae))
+
+
+### Technical
+
+* **Proofs:** refactor method that updates proof fields from prices (1 instead of 3). ref [#481](https://github.com/openfoodfacts/open-prices/issues/481) ([e3b97f5](https://github.com/openfoodfacts/open-prices/commit/e3b97f543a700d93740483753efee1385fbc70a7))
+
 ## [1.45.1](https://github.com/openfoodfacts/open-prices/compare/v1.45.0...v1.45.1) (2024-10-23)
 
 
