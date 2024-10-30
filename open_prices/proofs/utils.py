@@ -1,12 +1,16 @@
 import random
 import string
 from mimetypes import guess_extension
+from pathlib import Path
 
 from django.conf import settings
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 from PIL import Image, ImageOps
 
 
-def get_file_extension_and_mimetype(file) -> tuple[str, str]:
+def get_file_extension_and_mimetype(
+    file: InMemoryUploadedFile | TemporaryUploadedFile,
+) -> tuple[str, str]:
     """Get the extension and mimetype of the file.
 
     Defaults to '.bin', 'application/octet-stream'.
@@ -28,7 +32,7 @@ def get_file_extension_and_mimetype(file) -> tuple[str, str]:
     return extension, mimetype
 
 
-def generate_full_path(current_dir, file_stem, extension):
+def generate_full_path(current_dir: Path, file_stem: str, extension: str) -> Path:
     """
     Generate the full path of the file.
     Example: /path/to/img/0001/dWQ5Hjm1H6.png
@@ -36,7 +40,9 @@ def generate_full_path(current_dir, file_stem, extension):
     return current_dir / f"{file_stem}{extension}"
 
 
-def generate_relative_path(current_dir_id_str, file_stem, extension):
+def generate_relative_path(
+    current_dir_id_str: str, file_stem: str, extension: str
+) -> str:
     """
     Generate the relative path of the file.
     Example: 0001/dWQ5Hjm1H6.png
@@ -45,13 +51,13 @@ def generate_relative_path(current_dir_id_str, file_stem, extension):
 
 
 def generate_thumbnail(
-    current_dir,
-    current_dir_id_str,
-    file_stem,
-    extension,
-    mimetype,
-    thumbnail_size=settings.THUMBNAIL_SIZE,
-):
+    current_dir: Path,
+    current_dir_id_str: str,
+    file_stem: str,
+    extension: str,
+    mimetype: str,
+    thumbnail_size: tuple[int, int] = settings.THUMBNAIL_SIZE,
+) -> str | None:
     """Generate a thumbnail for the image at the given path."""
     image_thumb_path = None
     if mimetype.startswith("image"):
@@ -78,13 +84,15 @@ def generate_thumbnail(
     return image_thumb_path
 
 
-def store_file(file):
+def store_file(
+    file: InMemoryUploadedFile | TemporaryUploadedFile,
+) -> tuple[str, str, str | None]:
     """
     Create a file in the images directory with a random name and the
     correct extension.
 
     :param file: the file to save
-    :return: the file path and the mimetype
+    :return: the file path, the mimetype and the thumbnail path
     """
     # Generate a random name for the file
     # This name will be used to display the image to the client, so it shouldn't be discoverable  # noqa
