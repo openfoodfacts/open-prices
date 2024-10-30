@@ -1,4 +1,9 @@
+import gzip
+import json
+import tempfile
+import unittest
 from decimal import Decimal
+from pathlib import Path
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -9,6 +14,7 @@ from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
+from open_prices.proofs.utils import run_ocr_task
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -302,3 +308,34 @@ class ProofModelUpdateTest(TestCase):
         self.assertEqual(
             self.proof_price_tag.prices.first().location, self.location_osm_2
         )
+
+
+class RunOCRTaskTest(TestCase):
+    def test_run_ocr_task_success(self):
+        response_data = {"responses": [{"textAnnotations": [{"description": "test"}]}]}
+        with self.settings(GOOGLE_CLOUD_VISION_API_KEY="test_api_key"):
+            # mock call to run_ocr_on_image
+            with unittest.mock.patch(
+                "open_prices.proofs.utils.run_ocr_on_image",
+                return_value=response_data,
+            ) as mock_run_ocr_on_image:
+                with tempfile.TemporaryDirectory() as tmpdirname:
+                    image_path = Path(f"{tmpdirname}/test.jpg")
+                    with image_path.open("w") as f:
+                        f.write("test")
+                    run_ocr_task(image_path)
+                    mock_run_ocr_on_image.assert_called_once_with(
+                        image_path, "test_api_key"
+                    )
+                    ocr_path = image_path.with_suffix(".json.gz")
+                    self.assertTrue(ocr_path.is_file())
+
+                    with gzip.open(ocr_path, "rt") as f:
+                        actual_data = json.loads(f.read())
+                        self.assertEqual(
+                            set(actual_data.keys()), {"responses", "created_at"}
+                        )
+                        self.assertIsInstance(actual_data["created_at"], int)
+                        self.assertEqual(
+                            actual_data["responses"], response_data["responses"]
+                        )

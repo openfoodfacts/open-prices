@@ -13,6 +13,7 @@ x-api-common: &api-common
     - OAUTH2_SERVER_URL
     - SENTRY_DSN
     - LOG_LEVEL
+    - GOOGLE_CLOUD_VISION_API_KEY
   networks:
     - default
 
