@@ -152,10 +152,12 @@ class PriceListFilterApiTest(TestCase):
         )
 
     def test_price_list_without_filter(self):
+        self.assertEqual(Price.objects.count(), 5)
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 5)
 
     def test_price_list_filter_by_product(self):
+        self.assertEqual(Price.objects.count(), 5)
         # product_code
         url = self.url + "?product_code=8001505005707"
         response = self.client.get(url)
@@ -178,6 +180,7 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 3)
 
     def test_price_list_filter_by_tags(self):
+        self.assertEqual(Price.objects.count(), 5)
         # labels_tags
         url = self.url + "?labels_tags__contains=en:organic"
         response = self.client.get(url)
@@ -199,6 +202,7 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_price(self):
+        self.assertEqual(Price.objects.count(), 5)
         # exact price
         url = self.url + "?price=15"
         response = self.client.get(url)
@@ -223,11 +227,13 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_currency(self):
+        self.assertEqual(Price.objects.count(), 5)
         url = self.url + "?currency=EUR"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_location(self):
+        self.assertEqual(Price.objects.count(), 5)
         # location_osm_id
         url = self.url + f"?location_osm_id={self.user_price.location_osm_id}"
         response = self.client.get(url)
@@ -245,6 +251,7 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_proof(self):
+        self.assertEqual(Price.objects.count(), 5)
         # proof_id
         url = self.url + f"?proof_id={self.user_price.proof_id}"
         response = self.client.get(url)
@@ -258,6 +265,7 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_date(self):
+        self.assertEqual(Price.objects.count(), 5)
         # exact date
         url = self.url + "?date=2024-01-01"
         response = self.client.get(url)
@@ -276,11 +284,13 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)
 
     def test_price_list_filter_by_owner(self):
+        self.assertEqual(Price.objects.count(), 5)
         url = self.url + f"?owner={self.user_session.user.user_id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_created(self):
+        self.assertEqual(Price.objects.count(), 5)
         url = self.url + "?created__gte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 5)

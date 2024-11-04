@@ -209,8 +209,7 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(response.data["price_count"], 0)  # ignored
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         self.assertTrue("source" not in response.data)
-        p = Proof.objects.last()
-        self.assertEqual(p.source, "API")  # default value
+        self.assertEqual(Proof.objects.last().source, "API")  # default value
 
     def test_proof_create_with_location_id(self):
         location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
@@ -260,8 +259,7 @@ class ProofCreateApiTest(TestCase):
                 )
                 self.assertEqual(response.status_code, 201)
                 self.assertTrue("source" not in response.data)
-                p = Proof.objects.last()
-                self.assertEqual(p.source, result)
+                self.assertEqual(Proof.objects.last().source, result)
 
 
 class ProofUpdateApiTest(TestCase):
