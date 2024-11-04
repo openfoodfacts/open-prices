@@ -275,3 +275,9 @@ SHELL_PLUS_POST_IMPORTS = [
 OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
 SESSION_COOKIE_NAME = "opsession"
 OFF_USER_AGENT = "open-prices/0.1.0"
+
+
+# Google Cloud Vision API
+# ------------------------------------------------------------------------------
+
+GOOGLE_CLOUD_VISION_API_KEY = os.getenv("GOOGLE_CLOUD_VISION_API_KEY")
