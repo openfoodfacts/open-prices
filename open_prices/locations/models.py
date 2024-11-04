@@ -78,6 +78,8 @@ class Location(models.Model):
     product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
+    source = models.CharField(blank=True, null=True)
+
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
