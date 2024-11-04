@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
+from open_prices.locations.models import Location
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -168,6 +169,28 @@ class LocationCreateApiTest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["website_url"], "https://www.decathlon.fr/")
         self.assertEqual(response.data["price_count"], 0)  # ignored
+
+    def test_location_create_with_app_name(self):
+        for index, (params, result) in enumerate(
+            [
+                ("?", "API"),
+                ("?app_name=", ""),
+                ("?app_name=test app&app_version=", "test app"),
+                ("?app_name=mobile&app_version=1.0", "mobile (1.0)"),
+            ]
+        ):
+            with self.subTest(INPUT_OUPUT=(params, result)):
+                data = {
+                    **LOCATION_OSM_NODE_652825274,
+                    "osm_id": LOCATION_OSM_NODE_652825274["osm_id"] + index,
+                }
+                # with empty app_name
+                response = self.client.post(
+                    self.url + params, data, content_type="application/json"
+                )
+                self.assertEqual(response.status_code, 201)
+                self.assertTrue("source" not in response.data)
+                self.assertEqual(Location.objects.last().source, result)
 
 
 class LocationUpdateApiTest(TestCase):

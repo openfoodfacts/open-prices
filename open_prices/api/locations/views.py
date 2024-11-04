@@ -9,7 +9,7 @@ from open_prices.api.locations.serializers import (
     LocationCreateSerializer,
     LocationSerializer,
 )
-from open_prices.api.utils import get_object_or_drf_404
+from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
 from open_prices.locations.models import Location
 
 
@@ -31,15 +31,16 @@ class LocationViewSet(
             return LocationCreateSerializer
         return self.serializer_class
 
-    def perform_create(self, serializer):
-        return serializer.save()
-
     def create(self, request: Request, *args, **kwargs):
         # validate
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # get source
+        self.source = get_source_from_request(self.request)
         # save
-        location = self.perform_create(serializer)
+        location = serializer.save(
+            source=self.source,
+        )
         # return full location
         return Response(
             self.serializer_class(location).data, status=status.HTTP_201_CREATED
