@@ -28,6 +28,11 @@ LOCATION_OSM_NODE_6509705997 = {
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Carrefour",
 }
+LOCATION_ONLINE_DECATHLON = {
+    "type": location_constants.TYPE_ONLINE,
+    "website_url": "https://www.decathlon.fr/",
+    "price_count": 15,
+}
 
 
 class ProofModelSaveTest(TestCase):
@@ -84,21 +89,16 @@ class ProofModelSaveTest(TestCase):
             ValidationError,
             ProofFactory,
             location_id=location_osm.id,
-            location_osm_id=None,  # needed
-            location_osm_type=None,  # needed
+            location_osm_id=652825274,  # should be None
         )
         self.assertRaises(
             ValidationError,
             ProofFactory,
             location_id=location_online.id,
-            location_osm_id=LOCATION_OSM_ID_OK,  # should be None
+            location_osm_id=652825274,  # should be None
+            location_osm_type=LOCATION_OSM_TYPE_OK,  # should be None
         )
         # location_id ok
-        ProofFactory(
-            location_id=location_osm.id,
-            location_osm_id=location_osm.osm_id,
-            location_osm_type=location_osm.osm_type,
-        )
         ProofFactory(
             location_id=location_online.id, location_osm_id=None, location_osm_type=None
         )
@@ -273,6 +273,7 @@ class ProofModelUpdateTest(TestCase):
     def setUpTestData(cls):
         cls.location_osm_1 = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.location_osm_2 = LocationFactory(**LOCATION_OSM_NODE_6509705997)
+        cls.location_osm_3 = LocationFactory(**LOCATION_ONLINE_DECATHLON)
         cls.proof_price_tag = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location_osm_1.osm_id,
@@ -299,14 +300,30 @@ class ProofModelUpdateTest(TestCase):
         self.proof_price_tag.date = "2024-07-01"
         self.proof_price_tag.save()
         self.assertEqual(str(self.proof_price_tag.prices.first().date), "2024-07-01")
-        # location
+        # location: osm_id & osm_type: ignored
         self.proof_price_tag.location_osm_id = self.location_osm_2.osm_id
         self.proof_price_tag.location_osm_type = self.location_osm_2.osm_type
+        self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.location, self.location_osm_1)  # same
+        self.assertEqual(
+            self.proof_price_tag.prices.first().location, self.location_osm_1
+        )  # same
+        # location: id (OSM)
+        self.proof_price_tag.location_id = self.location_osm_2.id
         self.proof_price_tag.save()
         self.proof_price_tag.refresh_from_db()
         self.assertEqual(self.proof_price_tag.location, self.location_osm_2)
         self.assertEqual(
             self.proof_price_tag.prices.first().location, self.location_osm_2
+        )
+        # location: id (ONLINE)
+        self.proof_price_tag.location_id = self.location_osm_3.id
+        self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.location, self.location_osm_3)
+        self.assertEqual(
+            self.proof_price_tag.prices.first().location, self.location_osm_3
         )
 
 

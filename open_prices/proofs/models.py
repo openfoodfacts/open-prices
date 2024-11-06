@@ -130,9 +130,9 @@ class Proof(models.Model):
                     "Should not be in the future",
                 )
         # location rules
-        # - allow passing a location_id
-        # - location_osm_id should be set if location_osm_type is set
-        # - location_osm_type should be set if location_osm_id is set
+        # - allow passing a location_id (should exist)
+        # - on create: cannot pass both location_id and location_osm_id/type
+        # - location_osm_id should be set if location_osm_type is set (and vice-versa)  # noqa
         # - some location fields should match the proof fields (on create)
         if self.location_id:
             location = None
@@ -148,33 +148,43 @@ class Proof(models.Model):
                 )
 
             if location:
-                if location.type == location_constants.TYPE_ONLINE:
+                if not self.id:  # additional rules on create
                     if self.location_osm_id:
                         validation_errors = utils.add_validation_error(
                             validation_errors,
                             "location_osm_id",
-                            "Can only be set if location type is OSM",
+                            "Cannot be set if location_id is filled",
                         )
                     if self.location_osm_type:
                         validation_errors = utils.add_validation_error(
                             validation_errors,
                             "location_osm_type",
-                            "Can only be set if location type is OSM",
+                            "Cannot be set if location_id is filled",
                         )
-                elif location.type == location_constants.TYPE_OSM:
-                    if not self.id:  # skip these checks on update
-                        for LOCATION_FIELD in Proof.DUPLICATE_LOCATION_FIELDS:
-                            location_field_value = getattr(
-                                self.location, LOCATION_FIELD.replace("location_", "")
+                    if location.type == location_constants.TYPE_ONLINE:
+                        if self.location_osm_id:
+                            validation_errors = utils.add_validation_error(
+                                validation_errors,
+                                "location_osm_id",
+                                "Can only be set if location type is OSM",
                             )
-                            if location_field_value:
-                                proof_field_value = getattr(self, LOCATION_FIELD)
-                                if str(location_field_value) != str(proof_field_value):
-                                    validation_errors = utils.add_validation_error(
-                                        validation_errors,
-                                        "location",
-                                        f"Location {LOCATION_FIELD} ({location_field_value}) does not match the proof {LOCATION_FIELD} ({proof_field_value})",
-                                    )
+                        if self.location_osm_type:
+                            validation_errors = utils.add_validation_error(
+                                validation_errors,
+                                "location_osm_type",
+                                "Can only be set if location type is OSM",
+                            )
+                else:  # cleanup: allows update (only by location_id)
+                    self.location_osm_id = (
+                        None
+                        if location.type == location_constants.TYPE_ONLINE
+                        else location.osm_id
+                    )
+                    self.location_osm_type = (
+                        None
+                        if location.type == location_constants.TYPE_ONLINE
+                        else location.osm_type
+                    )
         else:
             if self.location_osm_id:
                 if not self.location_osm_type:
