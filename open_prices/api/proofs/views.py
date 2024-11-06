@@ -1,6 +1,4 @@
-from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
-from django_q.tasks import async_task
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
@@ -77,10 +75,6 @@ class ProofViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
         file_path, mimetype, image_thumb_path = store_file(request.data.get("file"))
-        async_task(
-            "open_prices.proofs.utils.run_ocr_task",
-            f"{settings.IMAGES_DIR}/{file_path}",
-        )
         proof_create_data = {
             "file_path": file_path,
             "mimetype": mimetype,
