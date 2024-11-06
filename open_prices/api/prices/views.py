@@ -52,17 +52,14 @@ class PriceViewSet(
             return PriceUpdateSerializer
         return self.serializer_class
 
-    def perform_create(self, serializer):
-        return serializer.save(owner=self.request.user.user_id, source=self.source)
-
     def create(self, request: Request, *args, **kwargs):
         # validate
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # get source
-        self.source = get_source_from_request(self.request)
+        source = get_source_from_request(self.request)
         # save
-        price = self.perform_create(serializer)
+        price = serializer.save(owner=self.request.user.user_id, source=source)
         # return full price
         return Response(
             self.serializer_class(price).data, status=status.HTTP_201_CREATED

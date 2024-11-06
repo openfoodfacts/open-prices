@@ -36,10 +36,10 @@ class LocationViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # get source
-        self.source = get_source_from_request(self.request)
+        source = get_source_from_request(self.request)
         # save
         location = serializer.save(
-            source=self.source,
+            source=source,
         )
         # return full location
         return Response(
