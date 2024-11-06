@@ -43,7 +43,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "~3.11"
 Babel = "~2.13.1"
-openfoodfacts = "0.2.1"
+openfoodfacts = "^2.2.0"
 psycopg2-binary = "~2.9.9"
 python-multipart = "~0.0.7"
 requests = "~2.31.0"
