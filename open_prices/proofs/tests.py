@@ -14,7 +14,7 @@ from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
-from open_prices.proofs.utils import run_ocr_task
+from open_prices.proofs.utils import fetch_and_save_ocr_data
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -311,7 +311,7 @@ class ProofModelUpdateTest(TestCase):
 
 
 class RunOCRTaskTest(TestCase):
-    def test_run_ocr_task_success(self):
+    def test_fetch_and_save_ocr_data_success(self):
         response_data = {"responses": [{"textAnnotations": [{"description": "test"}]}]}
         with self.settings(GOOGLE_CLOUD_VISION_API_KEY="test_api_key"):
             # mock call to run_ocr_on_image
@@ -323,7 +323,7 @@ class RunOCRTaskTest(TestCase):
                     image_path = Path(f"{tmpdirname}/test.jpg")
                     with image_path.open("w") as f:
                         f.write("test")
-                    run_ocr_task(image_path)
+                    fetch_and_save_ocr_data(image_path)
                     mock_run_ocr_on_image.assert_called_once_with(
                         image_path, "test_api_key"
                     )
