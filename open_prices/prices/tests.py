@@ -108,13 +108,16 @@ class PriceModelSaveTest(TestCase):
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
-        self.assertRaises(
-            ValidationError,
-            PriceFactory,
-            product_code=None,
-            category_tag="test",
-            price=3,
-            price_per=price_constants.PRICE_PER_KILOGRAM,
+        with self.assertRaises(ValidationError) as cm:
+            PriceFactory(
+                product_code=None,
+                category_tag="test",
+                price=3,
+                price_per=price_constants.PRICE_PER_KILOGRAM,
+            )
+        self.assertEqual(
+            cm.exception.messages[0],
+            "Invalid value: 'test', expected value to be in 'lang:tag' format",
         )
         PriceFactory(
             product_code=None,
@@ -173,6 +176,20 @@ class PriceModelSaveTest(TestCase):
         self.assertRaises(
             ValidationError, PriceFactory, product_code="", category_tag=""
         )
+
+    def test_price_category_validation(self):
+        for input_category, expected_category in [
+            ("en: Tomatoes", "en:tomatoes"),
+            ("fr: Pommes", "en:apples"),
+            ("fr: Soupe aux lentilles", "en:lentil-soups"),
+        ]:
+            price = PriceFactory(
+                product_code=None,
+                category_tag=input_category,
+                price=3,
+                price_per=price_constants.PRICE_PER_KILOGRAM,
+            )
+            self.assertEqual(price.category_tag, expected_category)
 
     def test_price_price_validation(self):
         for PRICE_OK in [5, 0]:

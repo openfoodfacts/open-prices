@@ -1,4 +1,5 @@
 import decimal
+import functools
 
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
@@ -6,7 +7,11 @@ from django.db.models import Avg, Count, F, Max, Min, signals
 from django.db.models.functions import Cast
 from django.dispatch import receiver
 from django.utils import timezone
-from openfoodfacts.taxonomy import get_taxonomy
+from openfoodfacts.taxonomy import (
+    create_taxonomy_mapping,
+    get_taxonomy,
+    map_to_canonical_id,
+)
 
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
@@ -16,6 +21,12 @@ from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof
 from open_prices.users.models import User
+
+# Taxonomy mapping generation takes ~200ms, so we cache it to avoid
+# recomputing it for each request.
+_cached_create_taxonomy_mapping = functools.lru_cache(maxsize=1)(
+    create_taxonomy_mapping
+)
 
 
 class PriceQuerySet(models.QuerySet):
@@ -215,18 +226,36 @@ class Price(models.Model):
                     "price_per",
                     "Should not be set if `product_code` is filled",
                 )
-        # category_tag rules
-        # - if category_tag is set, then should be a valid taxonomy string
+        # Tag rules:
+        # - if category_tag is set, it should be language-prefixed
         # - if labels_tags is set, then all labels_tags should be valid taxonomy strings  # noqa
         # - if origins_tags is set, then all origins_tags should be valid taxonomy strings  # noqa
         elif self.category_tag:
             category_taxonomy = get_taxonomy("category")
-            if self.category_tag not in category_taxonomy:
+            # category_tag can be provided by the mobile app in any language,
+            # with language prefix (ex: `fr: Boissons`). We need to map it to
+            # the canonical id (ex: `en:beverages`) to store it in the
+            # database.
+            # The `map_to_canonical_id` function maps the value (ex:
+            # `fr: Boissons`) to the canonical id (ex: `en:beverages`).
+            # We use the cached version of this function to avoid
+            # creating it multiple times.
+            # If the entry does not exist in the taxonomy, category_tag will
+            # be set to the tag version of the value (ex: `fr:boissons`).
+            taxonomy_mapping = _cached_create_taxonomy_mapping(category_taxonomy)
+            try:
+                mapped_tags = map_to_canonical_id(taxonomy_mapping, [self.category_tag])
+            except ValueError as e:
+                # The value is not language-prefixed
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "category_tag",
-                    f"Invalid category tag: category '{self.category_tag}' does not exist in the taxonomy",
+                    str(e),
                 )
+            else:
+                # Set the canonical id (or taggified version) as the
+                # category_tag
+                self.category_tag = mapped_tags[self.category_tag]
             if self.labels_tags:
                 if not isinstance(self.labels_tags, list):
                     validation_errors = utils.add_validation_error(
