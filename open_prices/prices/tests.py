@@ -121,6 +121,12 @@ class PriceModelSaveTest(TestCase):
         )
         PriceFactory(
             product_code=None,
+            category_tag="fr: Grenoble",  # valid (even if not in the taxonomy)
+            price=3,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+        )
+        PriceFactory(
+            product_code=None,
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
             price=3,
@@ -131,7 +137,7 @@ class PriceModelSaveTest(TestCase):
             PriceFactory,
             product_code=None,
             category_tag="en:tomatoes",
-            labels_tags="en:organic",
+            labels_tags="en:organic",  # should be a list
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
@@ -140,7 +146,7 @@ class PriceModelSaveTest(TestCase):
             PriceFactory,
             product_code=None,
             category_tag="en:tomatoes",
-            labels_tags=["en:organic", "test"],
+            labels_tags=["en:organic", "test"],  # not valid
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
@@ -158,7 +164,7 @@ class PriceModelSaveTest(TestCase):
             product_code=None,
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
-            origins_tags="en:france",
+            origins_tags="en:france",  # should be a list
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
@@ -168,7 +174,7 @@ class PriceModelSaveTest(TestCase):
             product_code=None,
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
-            origins_tags=["en:france", "test"],
+            origins_tags=["en:france", "test"],  # not valid
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
