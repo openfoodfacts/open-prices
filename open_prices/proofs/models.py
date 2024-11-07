@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Count, signals
 from django.dispatch import receiver
 from django.utils import timezone
+from django_q.tasks import async_task
 
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
@@ -297,6 +298,16 @@ class Proof(models.Model):
                         )
         if len(fields_to_update):
             self.save()
+
+
+@receiver(signals.post_save, sender=Proof)
+def proof_post_save_run_ocr(sender, instance, created, **kwargs):
+    if not settings.TESTING:
+        if created:
+            async_task(
+                "open_prices.proofs.utils.fetch_and_save_ocr_data",
+                f"{settings.IMAGES_DIR}/{instance.file_path}",
+            )
 
 
 @receiver(signals.post_save, sender=Proof)

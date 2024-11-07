@@ -169,7 +169,7 @@ def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | N
     return r.json()
 
 
-def run_ocr_task(image_path: Path | str, override: bool = False) -> None:
+def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> None:
     """Run OCR on the image stored at the given path and save the result to a
     JSON file.
 
