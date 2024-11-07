@@ -21,6 +21,7 @@ from open_prices.users.models import User
 
 def import_off_db_task():
     import_product_db(flavor=Flavor.off)
+    import_product_db(flavor=Flavor.off, obsolete=True)
 
 
 def import_obf_db_task():
