@@ -124,7 +124,9 @@ def get_product_dict(product, flavor=Flavor.off) -> JSONType | None:
         return None
 
 
-def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> None:
+def import_product_db(
+    flavor: Flavor = Flavor.off, obsolete: bool = False, batch_size: int = 1000
+) -> None:
     """Import from DB JSONL dump to create/update product table.
 
     :param db: the session to use
@@ -133,7 +135,7 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
     """
     from open_prices.products.models import Product
 
-    print((f"Launching import_product_db ({flavor})"))
+    print((f"Launching import_product_db (flavor={flavor}, obsolete={obsolete})"))
     existing_product_codes = set(Product.objects.values_list("code", flat=True))
     existing_product_flavor_codes = set(
         Product.objects.filter(source=flavor).values_list("code", flat=True)
@@ -146,6 +148,7 @@ def import_product_db(flavor: Flavor = Flavor.off, batch_size: int = 1000) -> No
         dataset_type=DatasetType.jsonl,
         force_download=True,
         download_newer=True,
+        obsolete=obsolete,
     )
 
     seen_codes = set()
