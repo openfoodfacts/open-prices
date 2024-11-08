@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.47.0](https://github.com/openfoodfacts/open-prices/compare/v1.46.0...v1.47.0) (2024-11-08)
+
+
+### Features
+
+* allow users to submit category_tag with language prefix ([#548](https://github.com/openfoodfacts/open-prices/issues/548)) ([9aab15d](https://github.com/openfoodfacts/open-prices/commit/9aab15d82cd8146aa383efcef5e57b27558a87b9))
+* **API:** on Location POST, return existing if duplicate ([#554](https://github.com/openfoodfacts/open-prices/issues/554)) ([d1efae6](https://github.com/openfoodfacts/open-prices/commit/d1efae6f6fe979e5118a49b13603c2573697d771))
+* **locations:** new source field to store the app name & version ([#546](https://github.com/openfoodfacts/open-prices/issues/546)) ([a9188c9](https://github.com/openfoodfacts/open-prices/commit/a9188c9307327e4b4b1fa57e1f4ebb97be72a327))
+* run OCR extraction on every new image ([#543](https://github.com/openfoodfacts/open-prices/issues/543)) ([77ed50b](https://github.com/openfoodfacts/open-prices/commit/77ed50bbaa3d4d19d4e67e3e716094af880b5679))
+* **Sync:** fetch OFF obsolete products (25k items) ([#552](https://github.com/openfoodfacts/open-prices/issues/552)) ([badec8b](https://github.com/openfoodfacts/open-prices/commit/badec8b9f21430532987ac4ea1292c2557319f77))
+
+
+### Bug Fixes
+
+* add types to functions and improve docstring in proofs/utils.py ([#540](https://github.com/openfoodfacts/open-prices/issues/540)) ([506bc4a](https://github.com/openfoodfacts/open-prices/commit/506bc4a838347d08ebf0f86d1bda620caa35f88f))
+
+
+### Technical
+
+* add CORS headers to images ([#545](https://github.com/openfoodfacts/open-prices/issues/545)) ([bd3709a](https://github.com/openfoodfacts/open-prices/commit/bd3709ac4251882427d4b6c85914741433e60534))
+* **proofs:** run OCR in post_save signal instead of create ([#549](https://github.com/openfoodfacts/open-prices/issues/549)) ([f3cfa79](https://github.com/openfoodfacts/open-prices/commit/f3cfa7967d7418a8a88a4fcfa6200c142f392b52))
+* remove perform_create to simplify code ([2394940](https://github.com/openfoodfacts/open-prices/commit/2394940390fba31254d0db47bddf1dad81a535f0))
+* update dependency openfoodfacts-python ([#550](https://github.com/openfoodfacts/open-prices/issues/550)) ([2f53957](https://github.com/openfoodfacts/open-prices/commit/2f53957d3b87a01e861a88fa27e6075d01a34f20))
+* Update github-projects.yml ([d8d54d7](https://github.com/openfoodfacts/open-prices/commit/d8d54d74edca117012cf11dba6f3d071ea0ccf8a))
+
 ## [1.46.0](https://github.com/openfoodfacts/open-prices/compare/v1.45.1...v1.46.0) (2024-10-25)
 
 
