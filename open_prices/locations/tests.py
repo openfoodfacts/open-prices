@@ -19,7 +19,7 @@ LOCATION_OSM_NODE_652825274 = {
 }
 LOCATION_ONLINE_DECATHLON = {
     "type": location_constants.TYPE_ONLINE,
-    "website_url": "https://www.decathlon.fr/",
+    "website_url": "https://www.decathlon.fr",
 }
 
 

@@ -91,9 +91,6 @@ class ProofViewSet(
         # get source
         source = get_source_from_request(self.request)
         # save
-        proof = serializer.save(
-            owner=self.request.user.user_id,
-            source=source,
-        )
+        proof = serializer.save(owner=self.request.user.user_id, source=source)
         # return full proof
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)
