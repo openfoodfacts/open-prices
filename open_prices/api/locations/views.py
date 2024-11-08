@@ -37,10 +37,16 @@ class LocationViewSet(
         serializer.is_valid(raise_exception=True)
         # get source
         source = get_source_from_request(self.request)
+        # before save: check if location already exists. If so, return it
+        try:
+            location = Location.objects.get(**serializer.validated_data)
+            return Response(
+                self.serializer_class(location).data, status=status.HTTP_200_OK
+            )
+        except Location.DoesNotExist:
+            pass
         # save
-        location = serializer.save(
-            source=source,
-        )
+        location = serializer.save(source=source)
         # return full location
         return Response(
             self.serializer_class(location).data, status=status.HTTP_201_CREATED

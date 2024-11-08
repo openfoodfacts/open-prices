@@ -30,7 +30,7 @@ LOCATION_OSM_WAY_872934393 = {
 }
 LOCATION_ONLINE_DECATHLON = {
     "type": location_constants.TYPE_ONLINE,
-    "website_url": "https://www.decathlon.fr/",
+    "website_url": "https://www.decathlon.fr",
     "price_count": 15,
 }
 
@@ -167,8 +167,33 @@ class LocationCreateApiTest(TestCase):
             self.url, LOCATION_ONLINE_DECATHLON, content_type="application/json"
         )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["website_url"], "https://www.decathlon.fr/")
+        self.assertEqual(response.data["website_url"], "https://www.decathlon.fr")
         self.assertEqual(response.data["price_count"], 0)  # ignored
+
+    def test_location_create_existing(self):
+        LocationFactory(**LOCATION_OSM_NODE_652825274)
+        LocationFactory(**LOCATION_ONLINE_DECATHLON)
+        for location in [LOCATION_OSM_NODE_652825274, LOCATION_ONLINE_DECATHLON]:
+            with self.subTest(location=location):
+                data = {
+                    **location,
+                    "price_count": 0,
+                }
+                response = self.client.post(
+                    self.url, data, content_type="application/json"
+                )
+                self.assertEqual(response.status_code, 200)  # instead of 201
+                self.assertEqual(
+                    response.data["osm_id"],
+                    location["osm_id"] if "osm_id" in location else None,
+                )
+                self.assertEqual(
+                    response.data["website_url"],
+                    location["website_url"] if "website_url" in location else None,
+                )
+                self.assertEqual(
+                    response.data["price_count"], location["price_count"]
+                )  # unchanged
 
     def test_location_create_with_app_name(self):
         for index, (params, result) in enumerate(

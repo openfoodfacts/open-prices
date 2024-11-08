@@ -14,6 +14,10 @@ class LocationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = Location.CREATE_FIELDS
+        # https://github.com/encode/django-rest-framework/issues/7173
+        # with UniqueConstraints, DRF wrongly validates.
+        # Leave it to the model's save()
+        validators = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,7 +26,4 @@ class LocationCreateSerializer(serializers.ModelSerializer):
             Location.TYPE_OSM_MANDATORY_FIELDS + Location.TYPE_ONLINE_MANDATORY_FIELDS
         ):
             self.fields[field].required = False
-
-    # with UniqueConstraints, DRF wrongly validates.
-    # Leave it to the model's save()
-    validators = []
+            self.fields[field].validators = []
