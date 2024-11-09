@@ -115,8 +115,12 @@ class Location(models.Model):
     def cleanup_url(self):
         for field_name in self.URL_FIELDS:
             if getattr(self, field_name) is not None:
-                if not getattr(self, field_name).startswith(("http://", "https://")):
-                    setattr(self, field_name, f"https://{getattr(self, field_name)}")
+                url = getattr(self, field_name)
+                # add https:// if missing
+                url = utils.url_add_missing_https(url)
+                # keep only the domain
+                url = utils.url_keep_only_domain(url)
+                setattr(self, field_name, url)
 
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors

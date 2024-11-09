@@ -1,6 +1,7 @@
 import gzip
 import json
 import os
+from urllib.parse import urlparse
 
 import tqdm
 from django.core.serializers.json import DjangoJSONEncoder
@@ -46,3 +47,21 @@ def truncate_decimal(value, max_decimal_places=7):
                     decimal_part = decimal_part[:max_decimal_places]
                 value = f"{integer_part}.{decimal_part}"
     return value
+
+
+def url_add_missing_https(url):
+    if not url.startswith(("http://", "https://")):
+        url = f"https://{url}"
+    return url
+
+
+def url_keep_only_domain(url):
+    """
+    - input: http://abc.hostname.com/somethings/anything/
+    - urlparse: ParseResult(scheme='http', netloc='abc.hostname.com', path='/somethings/anything/', params='', query='', fragment='')  # noqa
+    - output: http://abc.hostname.com
+    """
+    if not url.startswith(("http://", "https://")):
+        url = url_add_missing_https(url)
+    url_parsed = urlparse(url)
+    return f"{url_parsed.scheme}://{url_parsed.netloc}"

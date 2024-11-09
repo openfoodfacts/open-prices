@@ -103,22 +103,24 @@ class LocationModelSaveTest(TestCase):
             ValidationError,
             LocationFactory,
             type=location_constants.TYPE_ONLINE,
-            website_url=location_constants.WEBSITE_URL_OK_LIST[0],
+            website_url=location_constants.WEBSITE_URL_OK_TUPLE_LIST[0][0],
             osm_id=6509705997,
             osm_type=location_constants.OSM_TYPE_OK_LIST[0],
         )
         # ok
-        for WEBSITE_URL in location_constants.WEBSITE_URL_OK_LIST:
-            with self.subTest(website_url=WEBSITE_URL):
-                LocationFactory(
-                    type=location_constants.TYPE_ONLINE, website_url=WEBSITE_URL
+        for WEBSITE_URL_TUPLE in location_constants.WEBSITE_URL_OK_TUPLE_LIST:
+            with self.subTest(website_url=WEBSITE_URL_TUPLE):
+                location = LocationFactory(
+                    type=location_constants.TYPE_ONLINE,
+                    website_url=WEBSITE_URL_TUPLE[0],
                 )
+                self.assertEqual(location.website_url, WEBSITE_URL_TUPLE[1])
         # unique constraint
         self.assertRaises(
             ValidationError,
             LocationFactory,
             type=location_constants.TYPE_ONLINE,
-            website_url=location_constants.WEBSITE_URL_OK_LIST[0],
+            website_url=location_constants.WEBSITE_URL_OK_TUPLE_LIST[0][0],
         )
 
 
