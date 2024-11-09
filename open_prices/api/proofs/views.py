@@ -1,3 +1,4 @@
+import PIL.Image
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -11,17 +12,15 @@ from open_prices.api.proofs.filters import ProofFilter
 from open_prices.api.proofs.serializers import (
     ProofCreateSerializer,
     ProofFullSerializer,
+    ProofProcessWithGeminiSerializer,
     ProofUpdateSerializer,
     ProofUploadSerializer,
-    ProofProcessWithGeminiSerializer
 )
 from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.common.gemini import handle_bulk_labels
 from open_prices.proofs.models import Proof
 from open_prices.proofs.utils import store_file
-
-import PIL.Image
 
 
 class ProofViewSet(
@@ -99,7 +98,6 @@ class ProofViewSet(
         # return full proof
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)
 
-
     @extend_schema(request=ProofProcessWithGeminiSerializer)
     @action(
         detail=False,
@@ -113,7 +111,7 @@ class ProofViewSet(
                 {"files": ["This field is required."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        files = request.FILES.getlist('files')
+        files = request.FILES.getlist("files")
         sample_files = [PIL.Image.open(file.file) for file in files]
         res = handle_bulk_labels(sample_files)
         return Response(res, status=status.HTTP_200_OK)

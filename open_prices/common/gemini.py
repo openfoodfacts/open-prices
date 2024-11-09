@@ -1,14 +1,13 @@
-from typing import List, Dict
+import enum
+import json
+
 import google.generativeai as genai
 import typing_extensions as typing
-import json
-import enum
-import os
 from django.conf import settings
-
 
 genai.configure(api_key=settings.GOOGLE_GEMINI_API_KEY)
 model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+
 
 # TODO: what about orther categories ?
 class Products(enum.Enum):
@@ -89,6 +88,7 @@ class Products(enum.Enum):
     WALNUTS = "en:walnuts"
     ZUCCHINI = "en:zucchini"
 
+
 # TODO: what about other origins ?
 class Origin(enum.Enum):
     FRANCE = "en:france"
@@ -104,9 +104,11 @@ class Origin(enum.Enum):
     OTHER = "other"
     UNKNOWN = "unknown"
 
+
 class Unit(enum.Enum):
     KILOGRAM = "KILOGRAM"
     UNIT = "UNIT"
+
 
 class Label(typing.TypedDict):
     product: Products
@@ -116,15 +118,24 @@ class Label(typing.TypedDict):
     organic: bool
     barcode: str
 
+
 class Labels(typing.TypedDict):
     labels: list[Label]
 
+
 def handle_bulk_labels(images):
     response = model.generate_content(
-        ["Here are " + str(len(images)) + " pictures containing a label. For each picture of a label, please extract all the following attributes: the product category matching product name, the origin category matching country of origin, the price, is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode. I expect a list of " + str(len(images)) + " labels in your reply, no more, no less. If you cannot decode an attribute, set it to an empty string"] + images,
+        [
+            "Here are "
+            + str(len(images))
+            + " pictures containing a label. For each picture of a label, please extract all the following attributes: the product category matching product name, the origin category matching country of origin, the price, is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode. I expect a list of "
+            + str(len(images))
+            + " labels in your reply, no more, no less. If you cannot decode an attribute, set it to an empty string"
+        ]
+        + images,
         generation_config=genai.GenerationConfig(
             response_mime_type="application/json", response_schema=Labels
-        )
+        ),
     )
     vals = json.loads(response.text)
     return vals

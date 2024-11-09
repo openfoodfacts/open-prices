@@ -50,10 +50,15 @@ class ProofUpdateSerializer(serializers.ModelSerializer):
         model = Proof
         fields = Proof.UPDATE_FIELDS
 
+
 class ProofProcessWithGeminiSerializer(serializers.ModelSerializer):
-    files = serializers.ListField(child=serializers.FileField(required=True, use_url=False))
-    mode = serializers.CharField() # TODO: this mode param should be used to select the prompt to execute, unimplemented for now
-    
+    files = serializers.ListField(
+        child=serializers.FileField(required=True, use_url=False)
+    )
+    mode = (
+        serializers.CharField()
+    )  # TODO: this mode param should be used to select the prompt to execute, unimplemented for now
+
     class Meta:
-        model = Proof # TODO: this has nothing to do with the Proof model, fixme
+        model = Proof  # TODO: this has nothing to do with the Proof model, fixme
         fields = ["files", "mode"]
