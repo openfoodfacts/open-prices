@@ -1,6 +1,11 @@
 from django.test import TestCase
 
-from open_prices.common.utils import is_float, truncate_decimal
+from open_prices.common.utils import (
+    is_float,
+    truncate_decimal,
+    url_add_missing_https,
+    url_keep_only_domain,
+)
 
 
 class UtilsTest(TestCase):
@@ -19,4 +24,36 @@ class UtilsTest(TestCase):
         self.assertEqual(truncate_decimal("0.123456789"), "0.1234567")
         self.assertEqual(
             truncate_decimal("0.123456789", max_decimal_places=9), "0.123456789"
+        )
+
+    def url_add_missing_https(self):
+        self.assertEqual(
+            url_add_missing_https("http://abc.hostname.com/somethings/anything/"),
+            "http://abc.hostname.com/somethings/anything/",
+        )
+        self.assertEqual(
+            url_add_missing_https("abc.hostname.com/somethings/anything/"),
+            "https://abc.hostname.com/somethings/anything/",
+        )
+
+    def test_url_keep_only_domain(self):
+        self.assertEqual(
+            url_keep_only_domain("http://abc.hostname.com/somethings/anything/"),
+            "http://abc.hostname.com",
+        )
+        self.assertEqual(
+            url_keep_only_domain("https://abc.hostname.com/somethings/anything/"),
+            "https://abc.hostname.com",
+        )
+        self.assertEqual(
+            url_keep_only_domain("abc.hostname.com/somethings/anything/"),
+            "https://abc.hostname.com",
+        )
+        self.assertEqual(
+            url_keep_only_domain("abc.hostname.com/"),
+            "https://abc.hostname.com",
+        )
+        self.assertEqual(
+            url_keep_only_domain("abc.hostname.com"),
+            "https://abc.hostname.com",
         )

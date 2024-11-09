@@ -16,9 +16,10 @@ OSM_ID_NOT_OK_LIST = [-5, 0, "test", None, "None", True, "true", False, "false"]
 OSM_TYPE_OK_LIST = [OSM_TYPE_NODE, OSM_TYPE_WAY]
 OSM_TYPE_NOT_OK_LIST = ["way", "W", "test", None, "None"]
 
-WEBSITE_URL_OK_LIST = [
-    "https://www.decathlon.fr/",
-    "https://www.alltricks.fr",
-    "www.ekosport.fr/",
-    "www.auvieuxcampeur.fr",
+WEBSITE_URL_OK_TUPLE_LIST = [
+    # (input, output)
+    ("https://www.decathlon.fr/", "https://www.decathlon.fr"),
+    ("https://www.alltricks.fr", "https://www.alltricks.fr"),
+    ("www.ekosport.fr/produit/1234", "https://www.ekosport.fr"),
+    ("auvieuxcampeur.fr", "https://auvieuxcampeur.fr"),
 ]
