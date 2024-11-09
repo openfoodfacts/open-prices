@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.1](https://github.com/openfoodfacts/open-prices/compare/v1.47.0...v1.47.1) (2024-11-09)
+
+
+### Technical
+
+* **Locations:** keep only website_url domain ([#555](https://github.com/openfoodfacts/open-prices/issues/555)) ([cc5d589](https://github.com/openfoodfacts/open-prices/commit/cc5d589f2efd0c90727713f33385f6ed83933b9e))
+
 ## [1.47.0](https://github.com/openfoodfacts/open-prices/compare/v1.46.0...v1.47.0) (2024-11-08)
 
 
