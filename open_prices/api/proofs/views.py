@@ -106,11 +106,6 @@ class ProofViewSet(
         parser_classes=[MultiPartParser],
     )
     def process_with_gemini(self, request: Request) -> Response:
-        if not request.data.get("files"):
-            return Response(
-                {"files": ["This field is required."]},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         files = request.FILES.getlist("files")
         sample_files = [PIL.Image.open(file.file) for file in files]
         res = handle_bulk_labels(sample_files)
