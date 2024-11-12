@@ -14,6 +14,7 @@ x-api-common: &api-common
     - SENTRY_DSN
     - LOG_LEVEL
     - GOOGLE_CLOUD_VISION_API_KEY
+    - GOOGLE_GEMINI_API_KEY
   networks:
     - default
 
