@@ -146,7 +146,10 @@ class PriceModelSaveTest(TestCase):
             PriceFactory,
             product_code=None,
             category_tag="en:tomatoes",
-            labels_tags=["en:organic", "test"],  # not valid
+            labels_tags=[
+                "en:organic",
+                "test",
+            ],  # not valid, no lang prefix before 'test'
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
@@ -196,6 +199,22 @@ class PriceModelSaveTest(TestCase):
                 price_per=price_constants.PRICE_PER_KILOGRAM,
             )
             self.assertEqual(price.category_tag, expected_category)
+
+    def test_price_origin_validation(self):
+        for input_origin_tags, expected_origin_tags in [
+            (["en:France"], ["en:france"]),
+            (["fr:Allemagne"], ["en:germany"]),
+            (["de:Deutschland", "es: España"], ["en:germany", "en:spain"]),
+            (["fr: Fairyland"], ["fr:fairyland"]),
+        ]:
+            price = PriceFactory(
+                product_code=None,
+                category_tag="en:tomatoes",
+                origins_tags=input_origin_tags,
+                price=3,
+                price_per=price_constants.PRICE_PER_KILOGRAM,
+            )
+            self.assertEqual(price.origins_tags, expected_origin_tags)
 
     def test_price_price_validation(self):
         for PRICE_OK in [5, 0]:
