@@ -24,9 +24,7 @@ from open_prices.users.models import User
 
 # Taxonomy mapping generation takes ~200ms, so we cache it to avoid
 # recomputing it for each request.
-_cached_create_taxonomy_mapping = functools.lru_cache(maxsize=1)(
-    create_taxonomy_mapping
-)
+_cached_create_taxonomy_mapping = functools.lru_cache()(create_taxonomy_mapping)
 
 
 class PriceQuerySet(models.QuerySet):
@@ -242,9 +240,13 @@ class Price(models.Model):
             # creating it multiple times.
             # If the entry does not exist in the taxonomy, category_tag will
             # be set to the tag version of the value (ex: `fr:boissons`).
-            taxonomy_mapping = _cached_create_taxonomy_mapping(category_taxonomy)
+            category_taxonomy_mapping = _cached_create_taxonomy_mapping(
+                category_taxonomy
+            )
             try:
-                mapped_tags = map_to_canonical_id(taxonomy_mapping, [self.category_tag])
+                category_mapped_tags = map_to_canonical_id(
+                    category_taxonomy_mapping, [self.category_tag]
+                )
             except ValueError as e:
                 # The value is not language-prefixed
                 validation_errors = utils.add_validation_error(
@@ -255,7 +257,7 @@ class Price(models.Model):
             else:
                 # Set the canonical id (or taggified version) as the
                 # category_tag
-                self.category_tag = mapped_tags[self.category_tag]
+                self.category_tag = category_mapped_tags[self.category_tag]
             if self.labels_tags:
                 if not isinstance(self.labels_tags, list):
                     validation_errors = utils.add_validation_error(
@@ -281,13 +283,22 @@ class Price(models.Model):
                     )
                 else:
                     origins_taxonomy = get_taxonomy("origin")
-                    for origin_tag in self.origins_tags:
-                        if origin_tag not in origins_taxonomy:
-                            validation_errors = utils.add_validation_error(
-                                validation_errors,
-                                "origins_tags",
-                                f"Invalid origin tag: origin '{origin_tag}' does not exist in the taxonomy",
-                            )
+                    origins_taxonomy_mapping = _cached_create_taxonomy_mapping(
+                        origins_taxonomy
+                    )
+                    try:
+                        origins_mapped_tags = map_to_canonical_id(
+                            origins_taxonomy_mapping, self.origins_tags
+                        )
+                    except ValueError as e:
+                        # The value is not language-prefixed
+                        validation_errors = utils.add_validation_error(
+                            validation_errors,
+                            "origins_tags",
+                            str(e),
+                        )
+                    else:
+                        self.origins_tags = list(origins_mapped_tags.values())
         else:
             validation_errors = utils.add_validation_error(
                 validation_errors,
