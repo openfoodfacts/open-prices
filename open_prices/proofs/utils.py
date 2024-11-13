@@ -141,6 +141,9 @@ def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | N
     :param image_path: the path to the image
     :param api_key: the Google Cloud Vision API key
     :return: the OCR data as a dict or None if an error occurred
+
+    This is similar to the run_ocr.py script in openfoodfacts-server:
+    https://github.com/openfoodfacts/openfoodfacts-server/blob/main/scripts/run_ocr.py
     """
     with open(image_path, "rb") as f:
         image_bytes = f.read()
@@ -152,7 +155,13 @@ def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | N
         json={
             "requests": [
                 {
-                    "features": [{"type": "TEXT_DETECTION"}],
+                    "features": [
+                        {"type": "TEXT_DETECTION"},
+                        {"type": "LOGO_DETECTION"},
+                        {"type": "LABEL_DETECTION"},
+                        {"type": "SAFE_SEARCH_DETECTION"},
+                        {"type": "FACE_DETECTION"},
+                    ],
                     "image": {"content": base64_content},
                 }
             ]
