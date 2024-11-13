@@ -281,3 +281,8 @@ OFF_USER_AGENT = "open-prices/0.1.0"
 # ------------------------------------------------------------------------------
 
 GOOGLE_CLOUD_VISION_API_KEY = os.getenv("GOOGLE_CLOUD_VISION_API_KEY")
+
+# Google Gemini API
+# ------------------------------------------------------------------------------
+
+GOOGLE_GEMINI_API_KEY = os.getenv("GOOGLE_GEMINI_API_KEY")
