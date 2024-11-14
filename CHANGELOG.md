@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.48.0](https://github.com/openfoodfacts/open-prices/compare/v1.47.1...v1.48.0) (2024-11-13)
+
+
+### Features
+
+* allow users to submit origin tags in their language ([#561](https://github.com/openfoodfacts/open-prices/issues/561)) ([2b867db](https://github.com/openfoodfacts/open-prices/commit/2b867dbdf78f49298cf339e981bd5bb8fcdc2378))
+* **proofs:** New endpoint to extract price data from images (with Gemini) ([#557](https://github.com/openfoodfacts/open-prices/issues/557)) ([fa54a36](https://github.com/openfoodfacts/open-prices/commit/fa54a36f4276efc9b4539dd37b670e9a18a0b02d))
+
+
+### Technical
+
+* add CORS headers to data ([#564](https://github.com/openfoodfacts/open-prices/issues/564)) ([f145215](https://github.com/openfoodfacts/open-prices/commit/f145215b8fc595195c3fd3c2b618cac1c8aa3de2))
+
 ## [1.47.1](https://github.com/openfoodfacts/open-prices/compare/v1.47.0...v1.47.1) (2024-11-09)
 
 
