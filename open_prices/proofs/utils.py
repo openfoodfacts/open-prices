@@ -178,7 +178,7 @@ def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | N
     return r.json()
 
 
-def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> None:
+def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> bool:
     """Run OCR on the image stored at the given path and save the result to a
     JSON file.
 
@@ -187,24 +187,30 @@ def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> N
 
     :param image_path: the path to the image
     :param override: whether to override existing OCR data, default to False
+    :return: True if the OCR data was saved, False otherwise
     """
     image_path = Path(image_path)
+
+    if image_path.suffix not in (".jpg", ".jpeg", ".png", ".webp"):
+        logger.debug("Skipping %s, not a supported image type", image_path)
+        return False
+
     api_key = settings.GOOGLE_CLOUD_VISION_API_KEY
 
-    if api_key is None:
+    if not api_key:
         logger.error("No Google Cloud Vision API key found")
-        return
+        return False
 
     ocr_json_path = image_path.with_suffix(".json.gz")
 
     if ocr_json_path.exists() and not override:
         logger.info("OCR data already exists for %s", image_path)
-        return
+        return False
 
     data = run_ocr_on_image(image_path, api_key)
 
     if data is None:
-        return
+        return False
 
     data["created_at"] = int(time.time())
 
@@ -212,3 +218,4 @@ def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> N
         f.write(json.dumps(data))
 
     logger.debug("OCR data saved to %s", ocr_json_path)
+    return True

@@ -323,7 +323,8 @@ class RunOCRTaskTest(TestCase):
                     image_path = Path(f"{tmpdirname}/test.jpg")
                     with image_path.open("w") as f:
                         f.write("test")
-                    fetch_and_save_ocr_data(image_path)
+                    output = fetch_and_save_ocr_data(image_path)
+                    self.assertTrue(output)
                     mock_run_ocr_on_image.assert_called_once_with(
                         image_path, "test_api_key"
                     )
@@ -339,3 +340,12 @@ class RunOCRTaskTest(TestCase):
                         self.assertEqual(
                             actual_data["responses"], response_data["responses"]
                         )
+
+    def test_fetch_and_save_ocr_data_invalid_extension(self):
+        with self.settings(GOOGLE_CLOUD_VISION_API_KEY="test_api_key"):
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                image_path = Path(f"{tmpdirname}/test.bin")
+                with image_path.open("w") as f:
+                    f.write("test")
+                output = fetch_and_save_ocr_data(image_path)
+                self.assertFalse(output)
