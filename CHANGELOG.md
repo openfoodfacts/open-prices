@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.49.0](https://github.com/openfoodfacts/open-prices/compare/v1.48.0...v1.49.0) (2024-11-21)
+
+
+### Features
+
+* add CLI command to run OCR on past images ([#572](https://github.com/openfoodfacts/open-prices/issues/572)) ([2f6a94e](https://github.com/openfoodfacts/open-prices/commit/2f6a94e86c4d8c829ed35f0c1581e79b9e44f06e))
+
+
+### Technical
+
+* **proofs:** more features to OCR extraction ([#566](https://github.com/openfoodfacts/open-prices/issues/566)) ([b2e55be](https://github.com/openfoodfacts/open-prices/commit/b2e55bed1b73ba9d92b7d1551f0ba57fb4c9d062))
+
 ## [1.48.0](https://github.com/openfoodfacts/open-prices/compare/v1.47.1...v1.48.0) (2024-11-13)
 
 
