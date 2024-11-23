@@ -68,7 +68,9 @@ if __name__ == "__main__":
     pivot_field_name_str = os.environ.get("PIVOT_FIELD_NAME_LIST")
     pivot_field_name_list = pivot_field_name_str.split(",")
     exclude_field_name_str = os.environ.get("EXCLUDE_FIELD_NAME_LIST")
-    exclude_field_name_list = exclude_field_name_str.split(",")
+    exclude_field_name_list = (
+        exclude_field_name_str.split(",") if exclude_field_name_str else []
+    )
     output_filepath = filepath_1.split(".csv")[0] + "_merged.csv"
 
     print(f"Step 1: reading {filepath_1}")

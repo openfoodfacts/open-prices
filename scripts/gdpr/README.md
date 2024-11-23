@@ -8,12 +8,12 @@ See https://wiki.openfoodfacts.org/GDPR_request
 
 ## List of supermarkets
 
-|Supermarket|Data              |Preprocessing|
-|-----------|------------------|---|
-|Auchan     |1 single file     ||
-|Carrefour  |1 file with 2 tabs|- merge files<br/>- skip discounts|
-|E.Leclerc  |2 files           |- merge files|
-|Intermarché|1 single file     ||
+|Supermarket|Data                       |Preprocessing|
+|-----------|---------------------------|---|
+|Auchan     |1 single file              ||
+|Carrefour  |1 file with 2 tabs         |- merge files<br/>- skip discounts|
+|E.Leclerc  |2 files                    |- merge files|
+|Intermarché|1 single file              ||
 |Picard     |1 file with multiple tables|- create seperate files<br>- merge files|
 
 ## Usage
@@ -62,9 +62,9 @@ Goal: merge and enrich data from the second csv file into the first csv file.
 
 #### E.Leclerc
 
-E.Leclerc returns 2 different files, one containing a list of receipts (with dates & locations), and the other a list of products with their receipt id. So we need to first merge the 2 files into 1.
+E.Leclerc returns 2 different files, one containing a list of receipts (with dates & locations - `liste_ticket.csv`), and the other a list of products with their receipt id (`_detail_ticket.csv`). So we need to first merge the 2 files into 1.
 ```
-(TODO)
+FILEPATH_1=liste_ticket.csv FILEPATH_2=detail_ticket.csv PIVOT_FIELD_NAME=ticket poetry run python scripts/gdpr/merge_two_csv_files.py
 ```
 
 #### Carrefour
