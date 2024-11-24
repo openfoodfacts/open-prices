@@ -38,10 +38,12 @@ REQUIRED_ENV_PARAMS = [
     # DRY_MODE
 ]
 
+SOURCE_LIST = ["AUCHAN", "CARREFOUR", "ELECLERC", "INTERMARCHE", "PICARD", "LAFOURCHE"]
+
 
 def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
     """
-    Rules to help build the price fields
+    Rules to help build the price fields (date, price...)
     """
     # remove any whitespace
     gdpr_field_value = gdpr_field_value.strip()
@@ -84,6 +86,8 @@ def gdpr_source_field_cleanup_rules(gdpr_source, op_field, gdpr_field_value):
             gdpr_field_value = datetime.datetime.strptime(
                 gdpr_field_value, "%d/%m/%Y"
             ).strftime("%Y-%m-%d")
+    elif gdpr_source == "LAFOURCHE":
+        pass
 
     return gdpr_field_value
 
@@ -156,6 +160,8 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
                 op_price["product_code"] = full_product_code
             else:
                 passes_test = False
+        elif gdpr_source == "LAFOURCHE":
+            pass
 
         if passes_test:
             op_price_list_filtered.append(op_price)
@@ -262,6 +268,9 @@ if __name__ == "__main__":
     for env_param in REQUIRED_ENV_PARAMS:
         if not os.environ.get(env_param):
             sys.exit(f"Error: missing {env_param} env")
+        if env_param == "SOURCE":
+            if os.environ.get(env_param) not in SOURCE_LIST:
+                sys.exit(f"Error: invalid SOURCE, must be one of {SOURCE_LIST}")
     print("All good :)")
 
     # Step 3: transform input into OP format
