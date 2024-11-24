@@ -1,14 +1,11 @@
-import csv
 import datetime
 import os
 import sys
 import time
 
-import requests
-from utils import get_picard_product_from_subcode
+import utils as gdpr_utils
 
-OPEN_PRICES_CREATE_PRICE_ENDPOINT = f'{os.environ.get("API_ENDPOINT")}/prices'
-OPEN_PRICES_TOKEN = os.environ.get("API_TOKEN")
+from scripts.utils import create_price, read_csv
 
 GDPR_FIELD_MAPPING_FILEPATH = "scripts/gdpr/gdpr_field_mapping.csv"
 
@@ -35,7 +32,7 @@ REQUIRED_ENV_PARAMS = [
     "PROOF_ID",
     "API_ENDPOINT",
     "API_TOKEN",
-    # DRY_MODE
+    # DRY_RUN
 ]
 
 
@@ -151,7 +148,7 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
         elif gdpr_source == "INTERMARCHE":
             pass
         elif gdpr_source == "PICARD":
-            full_product_code = get_picard_product_from_subcode(op_price)
+            full_product_code = gdpr_utils.get_picard_product_from_subcode(op_price)
             if full_product_code:
                 op_price["product_code"] = full_product_code
             else:
@@ -182,26 +179,9 @@ def gdpr_source_location_rules(op_price_list):
     return op_price_list_filtered
 
 
-def read_gdpr_field_mapping_csv():
-    with open(GDPR_FIELD_MAPPING_FILEPATH, newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        return list(reader)
-
-
-def read_gdpr_csv(filepath):
-    price_list = list()
-
-    with open(filepath, newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            price_list.append(row)
-
-    return price_list
-
-
 def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_data={}):
     # get mapping file
-    gdpr_field_mapping = read_gdpr_field_mapping_csv()
+    gdpr_field_mapping = read_csv(GDPR_FIELD_MAPPING_FILEPATH)
 
     # map source fields to op fields
     open_prices_price_list_1 = list()
@@ -230,16 +210,6 @@ def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_da
     return open_prices_price_list_2
 
 
-def create_price(price):
-    headers = {"Authorization": f"Bearer {OPEN_PRICES_TOKEN}"}
-    response = requests.post(
-        OPEN_PRICES_CREATE_PRICE_ENDPOINT, json=price, headers=headers
-    )
-    if not response.status_code == 201:
-        print(response.json())
-        print(price)
-
-
 if __name__ == "__main__":
     """
     How-to run:
@@ -251,7 +221,7 @@ if __name__ == "__main__":
         sys.exit("Error: missing FILEPATH env")
     filepath = os.environ.get("FILEPATH")
     print(f"===== Reading {filepath}")
-    gdpr_price_list = read_gdpr_csv(filepath)
+    gdpr_price_list = read_csv(filepath)
     print(len(gdpr_price_list))
 
     print("===== Input example:")
@@ -271,9 +241,8 @@ if __name__ == "__main__":
         "currency": DEFAULT_PRICE_CURRENCY,
         "location_osm_id": int(os.environ.get("LOCATION_OSM_ID")),
         "location_osm_type": os.environ.get("LOCATION_OSM_TYPE"),
-        "proof_id": int(
-            os.environ.get("PROOF_ID")
-        ),  # must be of type "GDPR_REQUEST" :)
+        # proof_id must be of type "GDPR_REQUEST" :)
+        "proof_id": int(os.environ.get("PROOF_ID")),
     }
     open_prices_price_list = map_gdpr_price_list_to_open_prices(
         gdpr_price_list, gdpr_source=source, extra_data=extra_data
@@ -299,10 +268,12 @@ if __name__ == "__main__":
 
     # Step 5: send prices to backend via API
     if os.environ.get("DRY_RUN") == "False":
-        print(f"===== Uploading data to {OPEN_PRICES_CREATE_PRICE_ENDPOINT}")
+        print(f"===== Uploading data to {os.environ.get('API_ENDPOINT')}")
         progress = 0
         for index, price in enumerate(open_prices_price_list_filtered_2):
-            create_price(price)
+            create_price(
+                price, os.environ.get("API_ENDPOINT"), os.environ.get("API_TOKEN")
+            )
             # some pauses to be safe
             progress += 1
             if (progress % 10) == 0:
