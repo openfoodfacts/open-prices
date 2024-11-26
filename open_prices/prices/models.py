@@ -186,6 +186,12 @@ class Price(models.Model):
         # - if product_code is set, then category_tag/labels_tags/origins_tags should not be set  # noqa
         # - if product_code is set, then price_per should not be set
         if self.product_code:
+            if self.type != price_constants.TYPE_PRODUCT:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "type",
+                    "Should be set to 'PRODUCT' if `product_code` is filled",
+                )
             if not isinstance(self.product_code, str):
                 validation_errors = utils.add_validation_error(
                     validation_errors, "product_code", "Should be a string"
@@ -231,6 +237,12 @@ class Price(models.Model):
         # - if labels_tags is set, then all labels_tags should be valid taxonomy strings  # noqa
         # - if origins_tags is set, then all origins_tags should be valid taxonomy strings  # noqa
         elif self.category_tag:
+            if self.type != price_constants.TYPE_CATEGORY:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "type",
+                    "Should be set to 'CATEGORY' if `category_tag` is filled",
+                )
             category_taxonomy = get_taxonomy("category")
             # category_tag can be provided by the mobile app in any language,
             # with language prefix (ex: `fr: Boissons`). We need to map it to
