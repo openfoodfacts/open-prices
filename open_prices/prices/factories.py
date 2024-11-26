@@ -7,12 +7,15 @@ from factory.django import DjangoModelFactory
 
 from open_prices.common import constants
 from open_prices.locations import constants as location_constants
+from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 
 
 class PriceFactory(DjangoModelFactory):
     class Meta:
         model = Price
+
+    type = price_constants.TYPE_PRODUCT  # random.choice(price_constants.TYPE_LIST)
 
     product_code = factory.Faker("ean13")
     price = factory.LazyAttribute(lambda x: random.randrange(0, 100))

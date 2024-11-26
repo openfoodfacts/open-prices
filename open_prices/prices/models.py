@@ -90,6 +90,8 @@ class Price(models.Model):
         "currency",
     ]  # "owner"
 
+    type = models.CharField(max_length=20, choices=price_constants.TYPE_CHOICES)
+
     product_code = models.CharField(blank=True, null=True)
     product_name = models.CharField(blank=True, null=True)
     category_tag = models.CharField(blank=True, null=True)
