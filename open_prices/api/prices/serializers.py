@@ -46,7 +46,7 @@ class PriceCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Price
-        fields = Price.CREATE_FIELDS
+        fields = Price.CREATE_FIELDS  # + ["type"]
 
 
 class PriceUpdateSerializer(serializers.ModelSerializer):
