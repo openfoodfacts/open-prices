@@ -465,6 +465,27 @@ class PriceCreateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
+    def test_price_create_with_type(self):
+        data = self.data.copy()
+        # without type? see other tests
+        # correct type
+        response = self.client.post(
+            self.url,
+            {**data, "type": price_constants.TYPE_PRODUCT},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["type"], price_constants.TYPE_PRODUCT)
+        # wrong type
+        response = self.client.post(
+            self.url,
+            {**data, "type": price_constants.TYPE_CATEGORY},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_price_create_with_app_name(self):
         for params, result in [
             ("?", "API"),

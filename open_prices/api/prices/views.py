@@ -58,7 +58,7 @@ class PriceViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # get type
-        type = (
+        type = serializer.validated_data.get("type") or (
             price_constants.TYPE_PRODUCT
             if serializer.validated_data.get("product_code")
             else price_constants.TYPE_CATEGORY

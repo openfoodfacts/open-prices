@@ -68,6 +68,7 @@ class Price(models.Model):
         "receipt_quantity",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + [
+        "type",  # optional in the serializer
         "product_code",
         "product_name",
         "category_tag",

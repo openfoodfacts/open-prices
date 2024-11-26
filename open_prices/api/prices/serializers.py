@@ -46,7 +46,11 @@ class PriceCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Price
-        fields = Price.CREATE_FIELDS  # + ["type"]
+        fields = Price.CREATE_FIELDS
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["type"].required = False
 
 
 class PriceUpdateSerializer(serializers.ModelSerializer):
