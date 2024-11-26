@@ -15,6 +15,7 @@ from open_prices.api.prices.serializers import (
 )
 from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
+from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 
 
@@ -56,10 +57,18 @@ class PriceViewSet(
         # validate
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # get type
+        type = serializer.validated_data.get("type") or (
+            price_constants.TYPE_PRODUCT
+            if serializer.validated_data.get("product_code")
+            else price_constants.TYPE_CATEGORY
+        )
         # get source
         source = get_source_from_request(self.request)
         # save
-        price = serializer.save(owner=self.request.user.user_id, source=source)
+        price = serializer.save(
+            owner=self.request.user.user_id, type=type, source=source
+        )
         # return full price
         return Response(
             self.serializer_class(price).data, status=status.HTTP_201_CREATED

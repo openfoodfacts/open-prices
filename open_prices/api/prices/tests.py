@@ -120,21 +120,21 @@ class PriceListFilterApiTest(TestCase):
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=[],
             origins_tags=["en:spain"],
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:unknown"],
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
@@ -465,6 +465,27 @@ class PriceCreateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
+    def test_price_create_with_type(self):
+        data = self.data.copy()
+        # without type? see other tests
+        # correct type
+        response = self.client.post(
+            self.url,
+            {**data, "type": price_constants.TYPE_PRODUCT},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["type"], price_constants.TYPE_PRODUCT)
+        # wrong type
+        response = self.client.post(
+            self.url,
+            {**data, "type": price_constants.TYPE_CATEGORY},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_price_create_with_app_name(self):
         for params, result in [
             ("?", "API"),
@@ -581,7 +602,7 @@ class PriceStatsApiTest(TestCase):
         PriceFactory(product_code=cls.product.code, price=25)
         PriceFactory(product_code=cls.product.code, price=30)
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:apples",
             price=2,
             price_per=price_constants.PRICE_PER_KILOGRAM,

@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
             name="type",
             field=models.CharField(
                 choices=[("OSM", "OSM"), ("ONLINE", "ONLINE")],
-                default="OSM",
+                default="OSM",  # used only for the migration
                 max_length=20,
             ),
             preserve_default=False,

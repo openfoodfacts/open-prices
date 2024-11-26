@@ -7,6 +7,7 @@ from factory.django import DjangoModelFactory
 
 from open_prices.common import constants
 from open_prices.locations import constants as location_constants
+from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 
 
@@ -14,7 +15,23 @@ class PriceFactory(DjangoModelFactory):
     class Meta:
         model = Price
 
-    product_code = factory.Faker("ean13")
+    class Params:
+        product_code_faker = factory.Faker("ean13")
+        category_tag_faker = "en:mandarines"
+
+    type = price_constants.TYPE_PRODUCT  # random.choice(price_constants.TYPE_LIST)
+
+    product_code = factory.LazyAttribute(
+        lambda x: x.product_code_faker
+        if x.type == price_constants.TYPE_PRODUCT
+        else None
+    )
+    category_tag = factory.LazyAttribute(
+        lambda x: x.category_tag_faker
+        if x.type == price_constants.TYPE_CATEGORY
+        else None
+    )
+
     price = factory.LazyAttribute(lambda x: random.randrange(0, 100))
     # currency = factory.Faker("currency_symbol")
     currency = factory.fuzzy.FuzzyChoice(constants.CURRENCY_LIST)
