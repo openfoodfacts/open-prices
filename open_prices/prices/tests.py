@@ -103,14 +103,14 @@ class PriceModelSaveTest(TestCase):
         )
         # product_code not set
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         with self.assertRaises(ValidationError) as cm:
             PriceFactory(
-                product_code=None,
+                type=price_constants.TYPE_CATEGORY,
                 category_tag="test",
                 price=3,
                 price_per=price_constants.PRICE_PER_KILOGRAM,
@@ -120,13 +120,13 @@ class PriceModelSaveTest(TestCase):
             "Invalid value: 'test', expected value to be in 'lang:tag' format",
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="fr: Grenoble",  # valid (even if not in the taxonomy)
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
             price=3,
@@ -135,7 +135,7 @@ class PriceModelSaveTest(TestCase):
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             labels_tags="en:organic",  # should be a list
             price=3,
@@ -144,7 +144,7 @@ class PriceModelSaveTest(TestCase):
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             labels_tags=[
                 "en:organic",
@@ -154,7 +154,7 @@ class PriceModelSaveTest(TestCase):
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
@@ -164,7 +164,7 @@ class PriceModelSaveTest(TestCase):
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
             origins_tags="en:france",  # should be a list
@@ -174,7 +174,7 @@ class PriceModelSaveTest(TestCase):
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             labels_tags=["en:organic"],
             origins_tags=["en:france", "test"],  # not valid
@@ -193,7 +193,7 @@ class PriceModelSaveTest(TestCase):
             ("fr: Soupe aux lentilles", "en:lentil-soups"),
         ]:
             price = PriceFactory(
-                product_code=None,
+                type=price_constants.TYPE_CATEGORY,
                 category_tag=input_category,
                 price=3,
                 price_per=price_constants.PRICE_PER_KILOGRAM,
@@ -208,7 +208,7 @@ class PriceModelSaveTest(TestCase):
             (["fr: Fairyland"], ["fr:fairyland"]),
         ]:
             price = PriceFactory(
-                product_code=None,
+                type=price_constants.TYPE_CATEGORY,
                 category_tag="en:tomatoes",
                 origins_tags=input_origin_tags,
                 price=3,
@@ -223,7 +223,7 @@ class PriceModelSaveTest(TestCase):
             self.assertRaises(ValidationError, PriceFactory, price=PRICE_NOT_OK)
         # price_per
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
@@ -231,7 +231,7 @@ class PriceModelSaveTest(TestCase):
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             price=3,
             price_per=None,
@@ -239,7 +239,7 @@ class PriceModelSaveTest(TestCase):
         self.assertRaises(
             ValidationError,
             PriceFactory,
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             price=3,
             price_per="test",

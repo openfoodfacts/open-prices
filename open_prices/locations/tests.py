@@ -179,7 +179,7 @@ class LocationPropertyTest(TestCase):
             owner=cls.user_2.user_id,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,

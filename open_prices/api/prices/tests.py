@@ -120,21 +120,21 @@ class PriceListFilterApiTest(TestCase):
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=[],
             origins_tags=["en:spain"],
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:unknown"],
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
@@ -581,7 +581,7 @@ class PriceStatsApiTest(TestCase):
         PriceFactory(product_code=cls.product.code, price=25)
         PriceFactory(product_code=cls.product.code, price=30)
         PriceFactory(
-            product_code=None,
+            type=price_constants.TYPE_CATEGORY,
             category_tag="en:apples",
             price=2,
             price_per=price_constants.PRICE_PER_KILOGRAM,
