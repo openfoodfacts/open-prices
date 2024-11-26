@@ -6,16 +6,17 @@ from open_prices.locations.models import Location
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
+        "type",
         "osm_id",
         "osm_type",
         "osm_name",
-        "osm_tag_key",
-        "osm_tag_value",
+        "website_url",
         "price_count",
         "user_count",
         "product_count",
         "proof_count",
         "created",
     )
-    list_filter = ("osm_type",)
+    list_filter = ("type", "osm_type")
     search_fields = ("osm_id",)
