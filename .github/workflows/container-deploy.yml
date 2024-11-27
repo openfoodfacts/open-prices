@@ -120,6 +120,8 @@ jobs:
           echo "DEBUG=False" >> .env
           echo 'ALLOWED_HOSTS=openfoodfacts-explorer.vercel.app,prices.openfoodfacts.net,prices.openfoodfacts.org' >> .env
           echo "CSRF_TRUSTED_ORIGINS=${{ env.CSRF_TRUSTED_ORIGINS }}" >> .env
+          # Number of gunicorn workers able to handle requests
+          echo "GUNICORN_WORKERS=4" >> .env
           echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
           echo "SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
