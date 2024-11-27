@@ -10,6 +10,7 @@ x-api-common: &api-common
     - SECRET_KEY
     - DEBUG
     - ALLOWED_HOSTS
+    - CSRF_TRUSTED_ORIGINS
     - OAUTH2_SERVER_URL
     - SENTRY_DSN
     - LOG_LEVEL
