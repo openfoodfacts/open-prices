@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.50.0](https://github.com/openfoodfacts/open-prices/compare/v1.49.0...v1.50.0) (2024-11-27)
+
+
+### Features
+
+* **Price:** new type field ([#578](https://github.com/openfoodfacts/open-prices/issues/578)) ([f6d189b](https://github.com/openfoodfacts/open-prices/commit/f6d189b85d1a69705d93fc136407ff7a9e56d282))
+
+
+### Bug Fixes
+
+* fix CSRF configuration ([#581](https://github.com/openfoodfacts/open-prices/issues/581)) ([5887073](https://github.com/openfoodfacts/open-prices/commit/5887073b79cfee91be928302b6ab22058a3c01d5))
+
+
+### Technical
+
+* **Admin:** add Price view. improve Location & Proof views. ([#580](https://github.com/openfoodfacts/open-prices/issues/580)) ([1a59b1e](https://github.com/openfoodfacts/open-prices/commit/1a59b1ebf80d230e22710ecb40bacfcccbfd054c))
+* **GDPR:** improve Leclerc merge and price upload. ref [#213](https://github.com/openfoodfacts/open-prices/issues/213) ([978a401](https://github.com/openfoodfacts/open-prices/commit/978a401b99038417ba487dfbafe76eda4a40c867))
+
 ## [1.49.0](https://github.com/openfoodfacts/open-prices/compare/v1.48.0...v1.49.0) (2024-11-21)
 
 
