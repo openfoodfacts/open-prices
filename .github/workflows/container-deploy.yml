@@ -37,11 +37,13 @@ jobs:
       run: |
         echo "SSH_HOST=10.1.0.200" >> $GITHUB_ENV
         echo "ENVIRONMENT=net" >> $GITHUB_ENV
+        echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.net" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
         echo "SSH_HOST=10.1.0.201" >> $GITHUB_ENV
         echo "ENVIRONMENT=org" >> $GITHUB_ENV
+        echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.org" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
@@ -117,6 +119,7 @@ jobs:
           echo "API_PORT=8190" >> .env
           echo "DEBUG=False" >> .env
           echo 'ALLOWED_HOSTS=openfoodfacts-explorer.vercel.app,prices.openfoodfacts.net,prices.openfoodfacts.org' >> .env
+          echo "CSRF_TRUSTED_ORIGINS=${{ env.CSRF_TRUSTED_ORIGINS }}" >> .env
           echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
           echo "SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env

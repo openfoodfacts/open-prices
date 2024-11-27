@@ -20,6 +20,9 @@ TESTING = "test" in sys.argv
 
 ALLOWED_HOSTS = [x.strip() for x in os.getenv("ALLOWED_HOSTS", "").split(",")]
 
+# CSRF trusted origins is only used for admin interface, as the rest of
+# front-end is using Vue.js and Django REST Framework
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
 
 # App config
 # ------------------------------------------------------------------------------

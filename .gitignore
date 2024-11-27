@@ -141,4 +141,7 @@ dmypy.json
 
 www/app
 www/img/*/*
+www/static/admin
+www/static/django_extensions
+www/static/rest_framework
 gh_pages
