@@ -28,6 +28,7 @@ services:
       - home_cache:/home/off/.cache
     depends_on:
       - postgres
+    command: ["gunicorn", "config.wsgi", "--bind",  "0.0.0.0:8000", "--workers", "${GUNICORN_WORKERS:-4}"]
 
   scheduler:
     <<: *api-common
