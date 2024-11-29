@@ -160,9 +160,8 @@ cli: guard-args
 	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py ${args}
 
 
-# TODO: migrate to Django
-add-db-revision: guard-message
-	${DOCKER_COMPOSE} run --rm --no-deps api alembic revision --autogenerate -m "${message}"
+makemigrations: guard-args
+	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py makemigrations ${args}
 
 #---------#
 # Cleanup #

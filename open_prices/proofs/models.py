@@ -332,3 +332,70 @@ def proof_post_delete_remove_images(sender, instance, **kwargs):
     if instance.image_thumb_path_full:
         if os.path.exists(instance.image_thumb_path_full):
             os.remove(instance.image_thumb_path_full)
+
+
+class ProofPrediction(models.Model):
+    """A machine learning prediction for a proof."""
+
+    proof = models.ForeignKey(
+        Proof,
+        on_delete=models.CASCADE,
+        related_name="predictions",
+        verbose_name="The proof this prediction belongs to",
+    )
+    type = models.CharField(
+        max_length=20,
+        choices=proof_constants.PROOF_TYPE_CHOICES,
+        verbose_name="The type of the prediction",
+    )
+    model_name = models.CharField(
+        max_length=30,
+        verbose_name="The name of the model that generated the prediction",
+    )
+    model_version = models.CharField(
+        max_length=30,
+        verbose_name="The specific version of the model that generated the prediction",
+    )
+    created = models.DateTimeField(
+        default=timezone.now, verbose_name="When the prediction was created in DB"
+    )
+    data = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name="a dict representing the data of the prediction. This field is model-specific.",
+    )
+    value = models.CharField(
+        null=True,
+        blank=True,
+        max_length=30,
+        verbose_name="The predicted value, only for classification models, null otherwise.",
+    )
+    max_confidence = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name="The maximum confidence of the prediction, may be null for some models."
+        "For object detection models, this is the confidence of the most confident object."
+        "For classification models, this is the confidence of the predicted class.",
+    )
+
+    class Meta:
+        db_table = "proof_predictions"
+        verbose_name = "Proof Prediction"
+        verbose_name_plural = "Proof Predictions"
+
+    def __str__(self):
+        return f"{self.model_name} - {self.model_version} - {self.proof}"
+
+
+@receiver(signals.post_save, sender=Proof)
+def proof_post_save_run_ml_models(sender, instance, created, **kwargs):
+    """After saving a proof in DB, run ML models on it.
+
+    Currently, only the proof classification model is run.
+    """
+    if not settings.TESTING and settings.ENABLE_ML_PREDICTIONS:
+        if created:
+            async_task(
+                "open_prices.proofs.ml.image_classifier.run_and_save_proof_prediction",
+                instance.id,
+            )

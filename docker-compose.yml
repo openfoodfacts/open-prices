@@ -16,6 +16,8 @@ x-api-common: &api-common
     - LOG_LEVEL
     - GOOGLE_CLOUD_VISION_API_KEY
     - GOOGLE_GEMINI_API_KEY
+    - TRITON_URI
+    - ENABLE_ML_PREDICTIONS
   networks:
     - default
 
