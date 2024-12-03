@@ -1,4 +1,4 @@
-from OSMPythonTools.api import Api
+from OSMPythonTools.api import Api, ApiResult
 from OSMPythonTools.nominatim import Nominatim
 
 OSM_FIELDS_FROM_NOMINATIM = ["name", "display_name", "lat", "lon"]
@@ -32,7 +32,32 @@ def get_location_from_openstreetmap(osm_id: int, osm_type: str) -> dict:
         "lat": response.lat(),
         "lon": response.lon(),
         "version": response.version(),
+        "tags": response.tags(),
     }
+
+
+def get_location_with_history_from_openstreetmap(
+    osm_id: int, osm_type: str
+) -> ApiResult:
+    api = Api()
+    response = api.query(f"{osm_type.lower()}/{osm_id}", history=True)
+    return response
+
+
+def get_historical_location_from_openstreetmap(
+    osm_id: int, osm_type: str, historical_datetime: str
+) -> ApiResult:
+    """
+    Loop until we find a version that is more recent than the historical_datetime  # noqa
+    And return the previous version
+    """
+    response = get_location_with_history_from_openstreetmap(osm_id, osm_type)
+    if len(response.history()) == 1:
+        return response.history()[0]
+    for index, location_version in enumerate(response.history()):
+        if historical_datetime < location_version.timestamp():
+            return response.history()[index - 1]
+    return response.history()[-1]
 
 
 def get_location_dict(location):
