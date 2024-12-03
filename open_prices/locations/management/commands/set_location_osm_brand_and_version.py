@@ -17,14 +17,21 @@ class Command(BaseCommand):
             f"Of which {qs.count()} have their osm_version field empty..."
         )
 
-        for location in qs.all():
-            response = common_openstreetmap.get_historical_location_from_openstreetmap(
-                location.osm_id, location.osm_type, location.created
-            )
-            if response:
-                location.osm_brand = response.tag("brand")
-                location.osm_version = response.version()
-                location.save(update_fields=["osm_brand", "osm_version"])
-            else:
-                self.stdout.write(f"Could not find historical data for {location}")
-            time.sleep(1)  # be nice to the OSM API
+        for index, location in enumerate(qs.all()):
+            try:
+                response = (
+                    common_openstreetmap.get_historical_location_from_openstreetmap(
+                        location.osm_id, location.osm_type, location.created
+                    )
+                )
+                if response:
+                    location.osm_brand = response.tag("brand")
+                    location.osm_version = response.version()
+                    location.save(update_fields=["osm_brand", "osm_version"])
+                else:
+                    self.stdout.write(f"Could not find historical data for {location}")
+                if index % 100 == 0:
+                    print(index)
+                time.sleep(1)  # be nice to the OSM API
+            except Exception as e:
+                self.stdout.write(f"Error with {location}: {e}")
