@@ -36,12 +36,14 @@ class Location(models.Model):
         "osm_display_name",
         "osm_tag_key",
         "osm_tag_value",
+        "osm_brand",
         "osm_address_postcode",
         "osm_address_city",
         "osm_address_country",
         "osm_address_country_code",
         "osm_lat",
         "osm_lon",
+        "osm_version",
     ]
     TYPE_ONLINE_MANDATORY_FIELDS = ["website_url"]
 
@@ -59,6 +61,7 @@ class Location(models.Model):
     osm_display_name = models.CharField(blank=True, null=True)
     osm_tag_key = models.CharField(blank=True, null=True)
     osm_tag_value = models.CharField(blank=True, null=True)
+    osm_brand = models.CharField(blank=True, null=True)
     osm_address_postcode = models.CharField(blank=True, null=True)
     osm_address_city = models.CharField(blank=True, null=True)
     osm_address_country = models.CharField(blank=True, null=True)
@@ -69,6 +72,7 @@ class Location(models.Model):
     osm_lon = models.DecimalField(
         max_digits=11, decimal_places=7, blank=True, null=True
     )
+    osm_version = models.PositiveIntegerField(blank=True, null=True)
 
     # type: ONLINE
     website_url = models.URLField(blank=True, null=True)
