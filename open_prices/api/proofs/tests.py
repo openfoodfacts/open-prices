@@ -214,15 +214,14 @@ class ProofCreateApiTest(TestCase):
     def test_proof_create_with_location_id(self):
         location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
         location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
-        # with location_id, location_osm_id & location_osm_type: OK
+        # with location_id, location_osm_id & location_osm_type: NOK
         response = self.client.post(
             self.url,
             {**self.data, "location_id": location_osm.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["location"]["id"], location_osm.id)
-        # with just location_id (OSM): NOK
+        self.assertEqual(response.status_code, 400)
+        # with just location_id (OSM): OK
         data = self.data.copy()
         del data["location_osm_id"]
         del data["location_osm_type"]
@@ -232,6 +231,7 @@ class ProofCreateApiTest(TestCase):
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["location"]["id"], location_osm.id)
         # with just location_id (ONLINE): OK
         data = self.data.copy()
         del data["location_osm_id"]
@@ -242,6 +242,7 @@ class ProofCreateApiTest(TestCase):
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["location"]["id"], location_online.id)
 
     def test_proof_create_with_app_name(self):
         for params, result in [
