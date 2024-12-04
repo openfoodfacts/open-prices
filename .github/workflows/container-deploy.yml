@@ -38,12 +38,17 @@ jobs:
         echo "SSH_HOST=10.1.0.200" >> $GITHUB_ENV
         echo "ENVIRONMENT=net" >> $GITHUB_ENV
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.net" >> $GITHUB_ENV
+        # Triton server is on the same datacenter as the staging server, so we use the internal IP
+        echo "TRITON_URI=10.1.0.200:5504" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
         echo "SSH_HOST=10.1.0.201" >> $GITHUB_ENV
         echo "ENVIRONMENT=org" >> $GITHUB_ENV
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.org" >> $GITHUB_ENV
+        # Triton server is on Moji datacenter, so we use the stunnel client running
+        # on the OVH datacenter to access it
+        echo "TRITON_URI=10.1.0.101:5504" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
@@ -133,6 +138,7 @@ jobs:
           echo "ENVIRONMENT=${{ env.ENVIRONMENT }}" >> .env
           echo "GOOGLE_CLOUD_VISION_API_KEY=${{ secrets.GOOGLE_CLOUD_VISION_API_KEY }}" >> .env
           echo "GOOGLE_GEMINI_API_KEY=${{ secrets.GOOGLE_GEMINI_API_KEY }}" >> .env
+          echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
 
     - name: Create Docker volumes
       uses: appleboy/ssh-action@master

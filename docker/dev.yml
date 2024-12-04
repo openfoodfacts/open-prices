@@ -22,6 +22,9 @@ x-api-base: &api-base
     # mount tests
     - ./tests:/opt/open-prices/tests
     - ./manage.py:/opt/open-prices/manage.py
+  # Allow the container to access the host's network, for Triton server to be accessible
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
 
 services:
   api:
