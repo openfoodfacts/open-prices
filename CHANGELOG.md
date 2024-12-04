@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.51.0](https://github.com/openfoodfacts/open-prices/compare/v1.50.0...v1.51.0) (2024-12-03)
+
+
+### Features
+
+* **Location:** new brand & version fields (fetch & store from OSM) ([#591](https://github.com/openfoodfacts/open-prices/issues/591)) ([63dc620](https://github.com/openfoodfacts/open-prices/commit/63dc620710f86c6c03d582f6eee60cd1a71ba681))
+* **Location:** script to fill in OSM brand & version ([#592](https://github.com/openfoodfacts/open-prices/issues/592)) ([ea29002](https://github.com/openfoodfacts/open-prices/commit/ea2900279d14ad36ae2f6759ef2ae65cf36bcece))
+
+
+### Bug Fixes
+
+* **Location:** add try/catch & progress in OSM script. ref [#592](https://github.com/openfoodfacts/open-prices/issues/592) ([887b508](https://github.com/openfoodfacts/open-prices/commit/887b508dcd7e467d95b66739a1469f07bb70519a))
+
+
+### Technical
+
+* increase the number of gunicorn workers in production ([#582](https://github.com/openfoodfacts/open-prices/issues/582)) ([a922030](https://github.com/openfoodfacts/open-prices/commit/a9220306794ff584f9d886d9f3566dd8380bcc2b))
+
 ## [1.50.0](https://github.com/openfoodfacts/open-prices/compare/v1.49.0...v1.50.0) (2024-11-27)
 
 
