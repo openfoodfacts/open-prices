@@ -137,6 +137,10 @@ django-tests:
 	${DOCKER_COMPOSE_TEST} run --rm api poetry run python3 manage.py test
 
 
+django-tests-single: guard-args
+	@echo "🥫 Running specific tests …"
+	${DOCKER_COMPOSE_TEST} run --rm api poetry run python3 manage.py test -v 2 ${args}
+
 #------------#
 # Production #
 #------------#

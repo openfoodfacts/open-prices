@@ -355,11 +355,31 @@ class RunOCRTaskTest(TestCase):
 
 class ImageClassifierTest(TestCase):
     def test_run_and_save_proof_prediction_proof_does_not_exist(self):
-        self.assertIsNone(run_and_save_proof_prediction(1))
+        # check that we emit an error log
+        with self.assertLogs(
+            "open_prices.proofs.ml.image_classifier", level="ERROR"
+        ) as cm:
+            self.assertIsNone(run_and_save_proof_prediction(1))
+            self.assertEqual(
+                cm.output,
+                [
+                    "ERROR:open_prices.proofs.ml.image_classifier:Proof with id 1 not found"
+                ],
+            )
 
     def test_run_and_save_proof_prediction_proof_file_not_found(self):
         proof = ProofFactory()
-        self.assertIsNone(run_and_save_proof_prediction(proof.id))
+        # check that we emit an error log
+        with self.assertLogs(
+            "open_prices.proofs.ml.image_classifier", level="ERROR"
+        ) as cm:
+            self.assertIsNone(run_and_save_proof_prediction(proof.id))
+            self.assertEqual(
+                cm.output,
+                [
+                    f"ERROR:open_prices.proofs.ml.image_classifier:Proof file not found: {proof.file_path_full}"
+                ],
+            )
 
     def test_run_and_save_proof_prediction_proof(self):
         # Create a white blank image with Pillow
