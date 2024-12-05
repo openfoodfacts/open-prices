@@ -45,7 +45,13 @@ class ProofViewSet(
         if self.request.user.is_authenticated:
             queryset = Proof.objects.filter(owner=self.request.user.user_id)
             if self.request.method in ["GET"]:
-                return queryset.select_related("location")
+                # Select all proofs along with their locations using a select
+                # related query (1 single query)
+                # Then prefetch all the predictions related to the proof using
+                # a prefetch related query (only 1 query for all proofs)
+                return queryset.select_related("location").prefetch_related(
+                    "predictions"
+                )
             return queryset
         return self.queryset
 
