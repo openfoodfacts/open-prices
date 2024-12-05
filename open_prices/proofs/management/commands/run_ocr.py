@@ -25,6 +25,9 @@ class Command(BaseCommand):
             glob.iglob("**/*", root_dir=settings.IMAGES_DIR), desc="images"
         ):
             image_path = settings.IMAGES_DIR / image_path_str
+            if ".400." in image_path.name:
+                # Skip thumbnails
+                continue
             result = fetch_and_save_ocr_data(image_path, override=override)
             processed += int(result)
 
