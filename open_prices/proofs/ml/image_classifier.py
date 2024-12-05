@@ -212,6 +212,10 @@ def run_and_save_proof_prediction(proof_id: int) -> None:
         logger.error("Proof file not found: %s", file_path_full)
         return
 
+    if Path(file_path_full).suffix not in (".jpg", ".jpeg", ".png", ".webp"):
+        logger.debug("Skipping %s, not a supported image type", file_path_full)
+        return None
+
     image = Image.open(file_path_full)
     prediction = predict_proof_type(image)
 
