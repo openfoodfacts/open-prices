@@ -12,6 +12,7 @@ from open_prices.api.proofs.filters import ProofFilter
 from open_prices.api.proofs.serializers import (
     ProofCreateSerializer,
     ProofFullSerializer,
+    ProofHalfFullSerializer,
     ProofProcessWithGeminiSerializer,
     ProofUpdateSerializer,
     ProofUploadSerializer,
@@ -41,23 +42,22 @@ class ProofViewSet(
     ordering = ["created"]
 
     def get_queryset(self):
+        queryset = self.queryset
         if self.request.method in ["GET"]:
-            # Select all proofs along with their locations using a select
-            # related query (1 single query)
-            # Then prefetch all the predictions related to the proof using
-            # a prefetch related query (only 1 query for all proofs)
-            return self.queryset.select_related("location").prefetch_related(
-                "predictions"
-            )
+            queryset = queryset.select_related("location")
+            if self.action == "retrieve":
+                queryset = queryset.prefetch_related("predictions")
         elif self.request.method in ["PATCH", "DELETE"]:
             # only return proofs owned by the current user
             if self.request.user.is_authenticated:
-                return self.queryset.filter(owner=self.request.user.user_id)
-        return self.queryset
+                queryset = queryset.filter(owner=self.request.user.user_id)
+        return queryset
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
             return ProofUpdateSerializer
+        elif self.action == "list":
+            return ProofHalfFullSerializer
         return self.serializer_class
 
     def destroy(self, request: Request, *args, **kwargs) -> Response:

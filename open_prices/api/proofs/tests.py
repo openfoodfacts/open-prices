@@ -69,12 +69,10 @@ class ProofListApiTest(TestCase):
 
     def test_proof_list(self):
         # anonymous
-        # thanks to select_related and prefetch_related, we only have 3
-        # queries:
+        # thanks to select_related, we only have 2 queries:
         # - 1 to count the number of proofs of the user
         # - 1 to get the proofs and their associated locations (select_related)
-        # - 1 to get the associated proof predictions (prefetch_related)
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(2):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
             data = response.data
@@ -82,14 +80,7 @@ class ProofListApiTest(TestCase):
             self.assertEqual(len(data["items"]), 3)
             item = data["items"][0]
             self.assertEqual(item["id"], self.proof.id)  # default order
-            self.assertIn("predictions", item)
-            self.assertEqual(len(item["predictions"]), 1)
-            prediction = item["predictions"][0]
-            self.assertEqual(prediction["type"], self.proof_prediction.type)
-            self.assertEqual(prediction["model_name"], self.proof_prediction.model_name)
-            self.assertEqual(
-                prediction["model_version"], self.proof_prediction.model_version
-            )
+            self.assertNotIn("predictions", item)  # not returned in "list"
 
 
 class ProofListOrderApiTest(TestCase):
@@ -100,7 +91,7 @@ class ProofListOrderApiTest(TestCase):
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session.user.user_id
         )
-        ProofFactory(price_count=0)
+        ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             price_count=50,
@@ -122,7 +113,7 @@ class ProofListFilterApiTest(TestCase):
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session.user.user_id
         )
-        ProofFactory(price_count=0)
+        ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             price_count=50,
@@ -150,6 +141,9 @@ class ProofDetailApiTest(TestCase):
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
         )
+        cls.proof_prediction = ProofPredictionFactory(
+            proof=cls.proof, type="CLASSIFICATION"
+        )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
 
     def test_proof_detail(self):
@@ -162,6 +156,14 @@ class ProofDetailApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.proof.id)
+        self.assertIn("predictions", response.data)  # returned in "detail"
+        self.assertEqual(len(response.data["predictions"]), 1)
+        prediction = response.data["predictions"][0]
+        self.assertEqual(prediction["type"], self.proof_prediction.type)
+        self.assertEqual(prediction["model_name"], self.proof_prediction.model_name)
+        self.assertEqual(
+            prediction["model_version"], self.proof_prediction.model_version
+        )
 
 
 class ProofCreateApiTest(TestCase):
