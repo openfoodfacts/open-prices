@@ -10,7 +10,7 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.factories import ProofFactory, ProofPredictionFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
@@ -55,6 +55,9 @@ class ProofListApiTest(TestCase):
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session.user.user_id
         )
+        cls.proof_prediction = ProofPredictionFactory(
+            proof=cls.proof, type="CLASSIFICATION"
+        )
         ProofFactory(price_count=0)
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
@@ -74,16 +77,32 @@ class ProofListApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
         # authenticated
-        with self.assertNumQueries(4 + 1):  # thanks to select_related
+        # thanks to select_related and prefetch_related, we only have 6
+        # queries:
+        # - 1 to get the fetch the user session
+        # - 1 to update the session
+        # - 1 to get the user
+        # - 1 to count the number of proofs of the user
+        # - 1 to get the proofs and their associated locations (select_related)
+        # - 1 to get the associated proof predictions (prefetch_related)
+        with self.assertNumQueries(6):
             response = self.client.get(
                 self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
             )
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.data["total"], 2)  # only user's proofs
-            self.assertEqual(len(response.data["items"]), 2)
+            data = response.data
+            self.assertEqual(data["total"], 2)  # only user's proofs
+            self.assertEqual(len(data["items"]), 2)
+            item = data["items"][0]
+            self.assertEqual(item["id"], self.proof.id)  # default order
+            self.assertIn("predictions", item)
+            self.assertEqual(len(item["predictions"]), 1)
+            prediction = item["predictions"][0]
+            self.assertEqual(prediction["type"], self.proof_prediction.type)
+            self.assertEqual(prediction["model_name"], self.proof_prediction.model_name)
             self.assertEqual(
-                response.data["items"][0]["id"], self.proof.id
-            )  # default order
+                prediction["model_version"], self.proof_prediction.model_version
+            )
 
 
 class ProofListOrderApiTest(TestCase):

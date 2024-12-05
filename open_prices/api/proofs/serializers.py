@@ -2,7 +2,21 @@ from rest_framework import serializers
 
 from open_prices.api.locations.serializers import LocationSerializer
 from open_prices.locations.models import Location
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models import Proof, ProofPrediction
+
+
+class ProofPredictionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProofPrediction
+        fields = [
+            "type",
+            "model_name",
+            "model_version",
+            "created",
+            "data",
+            "value",
+            "max_confidence",
+        ]
 
 
 class ProofSerializer(serializers.ModelSerializer):
@@ -18,6 +32,7 @@ class ProofSerializer(serializers.ModelSerializer):
 
 class ProofFullSerializer(ProofSerializer):
     location = LocationSerializer()
+    predictions = ProofPredictionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Proof
