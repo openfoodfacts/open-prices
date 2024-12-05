@@ -139,6 +139,7 @@ jobs:
           echo "GOOGLE_CLOUD_VISION_API_KEY=${{ secrets.GOOGLE_CLOUD_VISION_API_KEY }}" >> .env
           echo "GOOGLE_GEMINI_API_KEY=${{ secrets.GOOGLE_GEMINI_API_KEY }}" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
+          ECHO "ENABLE_ML_PREDICTIONS=True" >> .env
 
     - name: Create Docker volumes
       uses: appleboy/ssh-action@master
