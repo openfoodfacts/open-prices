@@ -7,12 +7,14 @@ from pathlib import Path
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from PIL import Image
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.ml.image_classifier import run_and_save_proof_prediction
 from open_prices.proofs.models import Proof
 from open_prices.proofs.utils import fetch_and_save_ocr_data
 
@@ -349,3 +351,64 @@ class RunOCRTaskTest(TestCase):
                     f.write("test")
                 output = fetch_and_save_ocr_data(image_path)
                 self.assertFalse(output)
+
+
+class ImageClassifierTest(TestCase):
+    def test_run_and_save_proof_prediction_proof_does_not_exist(self):
+        self.assertIsNone(run_and_save_proof_prediction(1))
+
+    def test_run_and_save_proof_prediction_proof_file_not_found(self):
+        proof = ProofFactory()
+        self.assertIsNone(run_and_save_proof_prediction(proof.id))
+
+    def test_run_and_save_proof_prediction_proof(self):
+        # Create a white blank image with Pillow
+        image = Image.new("RGB", (100, 100), "white")
+        predict_proof_type_response = [
+            ("SHELF", 0.9786477088928223),
+            ("PRICE_TAG", 0.021345501765608788),
+        ]
+
+        # We save the image to a temporary file
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            image.save(file_path)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(file_path=file_path)
+
+                # Patch predict_proof_type to return a fixed response
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.image_classifier.predict_proof_type",
+                    return_value=predict_proof_type_response,
+                ) as mock_predict_proof_type:
+                    run_and_save_proof_prediction(proof.id)
+                    mock_predict_proof_type.assert_called_once()
+                proof_prediction = proof.predictions.first()
+                self.assertIsNotNone(proof_prediction)
+                self.assertEqual(
+                    proof_prediction.type,
+                    proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
+                )
+
+                self.assertEqual(
+                    proof_prediction.model_name, "price_proof_classification"
+                )
+                self.assertEqual(
+                    proof_prediction.model_version, "price_proof_classification-1.0"
+                )
+                self.assertEqual(proof_prediction.value, "SHELF")
+                self.assertEqual(proof_prediction.max_confidence, 0.9786477088928223)
+                self.assertEqual(
+                    proof_prediction.data,
+                    {
+                        "prediction": [
+                            {"label": "SHELF", "score": 0.9786477088928223},
+                            {"label": "PRICE_TAG", "score": 0.021345501765608788},
+                        ]
+                    },
+                )
+                proof_prediction.delete()
+                proof.delete()
