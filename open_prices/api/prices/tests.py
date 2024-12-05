@@ -338,6 +338,9 @@ class PriceCreateApiTest(TestCase):
             "proof_id": cls.user_proof.id,
             "source": "test",
         }
+        cls.data_2 = cls.data.copy()
+        cls.data_2["product_code"] = "1402506209800"
+        cls.data_2["location_osm_id"] = 169424088
 
     def test_price_create_without_proof(self):
         data = self.data.copy()
@@ -383,14 +386,15 @@ class PriceCreateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        # not proof owner
+        # Users are allowed to add price on proofs they don't own
         response = self.client.post(
             self.url,
-            {**self.data, "proof_id": self.proof_2.id},
+            {**self.data_2, "proof_id": self.proof_2.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["product_code"], "1402506209800")
         # authenticated
         response = self.client.post(
             self.url,

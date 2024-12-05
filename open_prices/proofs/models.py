@@ -99,6 +99,7 @@ class Proof(models.Model):
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     owner = models.CharField(blank=True, null=True)
+    anonymous = models.BooleanField(default=False)
     source = models.CharField(blank=True, null=True)
 
     created = models.DateTimeField(default=timezone.now)

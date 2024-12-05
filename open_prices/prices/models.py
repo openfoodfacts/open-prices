@@ -463,12 +463,6 @@ class Price(models.Model):
                 )
 
             if proof:
-                if proof.owner != self.owner:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "proof",
-                        "Proof does not belong to the current user",
-                    )
                 if not self.id:  # skip these checks on update
                     if proof.type in proof_constants.TYPE_SINGLE_SHOP_LIST:
                         for PROOF_FIELD in Price.DUPLICATE_PROOF_FIELDS:

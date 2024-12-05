@@ -12,6 +12,7 @@ class ProofFactory(DjangoModelFactory):
     class Meta:
         model = Proof
 
+    owner = factory.Faker("user_name")
     file_path = factory.Faker("file_path")
     mimetype = "image/jpeg"
     type = factory.fuzzy.FuzzyChoice(proof_constants.TYPE_LIST)

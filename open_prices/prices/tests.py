@@ -374,10 +374,8 @@ class PriceModelSaveTest(TestCase):
             currency=user_proof_receipt.currency,
             owner=user_proof_receipt.owner,
         )
-        # different price & proof owner
-        self.assertRaises(
-            ValidationError,
-            PriceFactory,
+        # different price & proof owner should not raise a ValidationError
+        PriceFactory(
             proof_id=proof_2.id,  # different
             location_osm_id=user_proof_receipt.location_osm_id,
             location_osm_type=user_proof_receipt.location_osm_type,
