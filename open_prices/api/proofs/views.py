@@ -4,7 +4,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -31,9 +31,9 @@ class ProofViewSet(
     viewsets.GenericViewSet,
 ):
     authentication_classes = [CustomAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
-    queryset = Proof.objects.none()
+    queryset = Proof.objects.all()
     serializer_class = ProofFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
@@ -41,18 +41,18 @@ class ProofViewSet(
     ordering = ["created"]
 
     def get_queryset(self):
-        # only return proofs owned by the current user
-        if self.request.user.is_authenticated:
-            queryset = Proof.objects.filter(owner=self.request.user.user_id)
-            if self.request.method in ["GET"]:
-                # Select all proofs along with their locations using a select
-                # related query (1 single query)
-                # Then prefetch all the predictions related to the proof using
-                # a prefetch related query (only 1 query for all proofs)
-                return queryset.select_related("location").prefetch_related(
-                    "predictions"
-                )
-            return queryset
+        if self.request.method in ["GET"]:
+            # Select all proofs along with their locations using a select
+            # related query (1 single query)
+            # Then prefetch all the predictions related to the proof using
+            # a prefetch related query (only 1 query for all proofs)
+            return self.queryset.select_related("location").prefetch_related(
+                "predictions"
+            )
+        elif self.request.method in ["PATCH", "DELETE"]:
+            # only return proofs owned by the current user
+            if self.request.user.is_authenticated:
+                return self.queryset.filter(owner=self.request.user.user_id)
         return self.queryset
 
     def get_serializer_class(self):

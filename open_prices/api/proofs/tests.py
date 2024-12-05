@@ -69,30 +69,17 @@ class ProofListApiTest(TestCase):
 
     def test_proof_list(self):
         # anonymous
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
-        # wrong token
-        response = self.client.get(
-            self.url, headers={"Authorization": f"Bearer {self.user_session.token}X"}
-        )
-        self.assertEqual(response.status_code, 403)
-        # authenticated
-        # thanks to select_related and prefetch_related, we only have 6
+        # thanks to select_related and prefetch_related, we only have 3
         # queries:
-        # - 1 to get the fetch the user session
-        # - 1 to update the session
-        # - 1 to get the user
         # - 1 to count the number of proofs of the user
         # - 1 to get the proofs and their associated locations (select_related)
         # - 1 to get the associated proof predictions (prefetch_related)
-        with self.assertNumQueries(6):
-            response = self.client.get(
-                self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
-            )
+        with self.assertNumQueries(3):
+            response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
             data = response.data
-            self.assertEqual(data["total"], 2)  # only user's proofs
-            self.assertEqual(len(data["items"]), 2)
+            self.assertEqual(data["total"], 3)
+            self.assertEqual(len(data["items"]), 3)
             item = data["items"][0]
             self.assertEqual(item["id"], self.proof.id)  # default order
             self.assertIn("predictions", item)
@@ -122,10 +109,8 @@ class ProofListOrderApiTest(TestCase):
 
     def test_proof_list_order_by(self):
         url = self.url + "?order_by=-price_count"
-        response = self.client.get(
-            url, headers={"Authorization": f"Bearer {self.user_session.token}"}
-        )
-        self.assertEqual(response.data["total"], 2)
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
         self.assertEqual(response.data["items"][0]["price_count"], 50)
 
 
@@ -146,10 +131,14 @@ class ProofListFilterApiTest(TestCase):
 
     def test_proof_list_filter_by_type(self):
         url = self.url + "?type=RECEIPT"
-        response = self.client.get(
-            url, headers={"Authorization": f"Bearer {self.user_session.token}"}
-        )
+        response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["price_count"], 15)
+
+    def test_proof_list_filter_by_owner(self):
+        url = self.url + f"?owner={self.user_session.user.user_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
 
 
@@ -166,23 +155,11 @@ class ProofDetailApiTest(TestCase):
     def test_proof_detail(self):
         # 404
         url = reverse("api:proofs-detail", args=[999])
-        response = self.client.get(
-            url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
-        )
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Proof matches the given query.")
         # anonymous
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
-        # wrong token
-        response = self.client.get(
-            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}X"}
-        )
-        self.assertEqual(response.status_code, 403)
-        # authenticated
-        response = self.client.get(
-            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
-        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.proof.id)
 
