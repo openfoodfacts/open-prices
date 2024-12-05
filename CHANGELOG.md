@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.52.0](https://github.com/openfoodfacts/open-prices/compare/v1.51.0...v1.52.0) (2024-12-05)
+
+
+### Features
+
+* save proof prediction for all proofs in a new table ([#588](https://github.com/openfoodfacts/open-prices/issues/588)) ([cb1fb7a](https://github.com/openfoodfacts/open-prices/commit/cb1fb7ad6b97a08fafce77a53c6ad74488049f80))
+
+
+### Bug Fixes
+
+* fix run_ocr.py script ([#600](https://github.com/openfoodfacts/open-prices/issues/600)) ([4a98976](https://github.com/openfoodfacts/open-prices/commit/4a98976db7773372bf955505148e2806c84b7e48))
+
+
+### Technical
+
+* add command to run ML models on proofs without predictions ([#599](https://github.com/openfoodfacts/open-prices/issues/599)) ([32de49b](https://github.com/openfoodfacts/open-prices/commit/32de49b8c3ec556276eb36133e2ac9a88923a2f4))
+* Add unit test for proof type detection ([#597](https://github.com/openfoodfacts/open-prices/issues/597)) ([0386cff](https://github.com/openfoodfacts/open-prices/commit/0386cff9d6a121bc8dd95b164e53cecba1dcdd13))
+* enable ML predictions on prod & staging ([#596](https://github.com/openfoodfacts/open-prices/issues/596)) ([8d049aa](https://github.com/openfoodfacts/open-prices/commit/8d049aa0b2a842782ba5dcd3b6f12bdcbbbb7280))
+* remove deprecated command for ssh-action ([#598](https://github.com/openfoodfacts/open-prices/issues/598)) ([28afbe7](https://github.com/openfoodfacts/open-prices/commit/28afbe7c79e94da58b5bc1c674ca8f6c751f5eb0))
+
 ## [1.51.0](https://github.com/openfoodfacts/open-prices/compare/v1.50.0...v1.51.0) (2024-12-03)
 
 
