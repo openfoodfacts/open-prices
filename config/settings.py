@@ -293,5 +293,5 @@ GOOGLE_GEMINI_API_KEY = os.getenv("GOOGLE_GEMINI_API_KEY")
 # Triton Inference Server (ML)
 # ------------------------------------------------------------------------------
 
-TRITON_URI = os.getenv("TRITON_URI", "localhost:5004")
+TRITON_URI = os.getenv("TRITON_URI", "localhost:5504")
 ENABLE_ML_PREDICTIONS = os.getenv("ENABLE_ML_PREDICTIONS") == "True"
