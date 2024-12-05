@@ -80,7 +80,6 @@ jobs:
         proxy_host: ${{ env.SSH_PROXY_HOST }}
         proxy_username: ${{ env.SSH_USERNAME }}
         proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script_stop: false
         script: |
           # Clone Git repository if not already there
           [ ! -d '${{ matrix.env }}' ] && git clone --depth 1 https://github.com/${{ github.repository }} ${{ matrix.env }} --no-single-branch 2>&1
@@ -103,7 +102,6 @@ jobs:
         proxy_host: ${{ env.SSH_PROXY_HOST }}
         proxy_username: ${{ env.SSH_USERNAME }}
         proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script_stop: false
         script: |
           # Go to repository directory
           cd ${{ matrix.env }}
@@ -150,7 +148,6 @@ jobs:
         proxy_host: ${{ env.SSH_PROXY_HOST }}
         proxy_username: ${{ env.SSH_USERNAME }}
         proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script_stop: false
         script: |
           cd ${{ matrix.env }}
           make create_external_volumes
@@ -164,7 +161,6 @@ jobs:
         proxy_host: ${{ env.SSH_PROXY_HOST }}
         proxy_username: ${{ env.SSH_USERNAME }}
         proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script_stop: false
         script: |
           cd ${{ matrix.env }}
           # Get the latest version (to apply migration next)
@@ -187,7 +183,6 @@ jobs:
         proxy_host: ${{ env.SSH_PROXY_HOST }}
         proxy_username: ${{ env.SSH_USERNAME }}
         proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script_stop: false
         script: |
           cd ${{ matrix.env }}
           # Let 10s to the API to be up
@@ -204,7 +199,6 @@ jobs:
         proxy_host: ${{ env.SSH_PROXY_HOST }}
         proxy_username: ${{ env.SSH_USERNAME }}
         proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script_stop: false
         script: |
           cd ${{ matrix.env }}
           make prune
