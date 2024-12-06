@@ -463,11 +463,16 @@ class Price(models.Model):
                 )
 
             if proof:
-                if proof.owner != self.owner:
+                if (
+                    proof.owner != self.owner
+                    and proof.type != proof_constants.TYPE_PRICE_TAG
+                ):
                     validation_errors = utils.add_validation_error(
                         validation_errors,
                         "proof",
-                        "Proof does not belong to the current user",
+                        "Proof does not belong to the current user. "
+                        "Adding price to proof a user does not own is "
+                        "only allowed for PRICE_TAG proofs",
                     )
                 if not self.id:  # skip these checks on update
                     if proof.type in proof_constants.TYPE_SINGLE_SHOP_LIST:

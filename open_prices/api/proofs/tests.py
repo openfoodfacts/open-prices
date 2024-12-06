@@ -72,7 +72,8 @@ class ProofListApiTest(TestCase):
         # thanks to select_related, we only have 2 queries:
         # - 1 to count the number of proofs of the user
         # - 1 to get the proofs and their associated locations (select_related)
-        with self.assertNumQueries(2):
+        # - 1 to get the proof predictions (prefetch_related)
+        with self.assertNumQueries(3):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
             data = response.data
@@ -110,10 +111,12 @@ class ProofListFilterApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:proofs-list")
         cls.user_session = SessionFactory()
+        # type RECEIPT
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session.user.user_id
         )
-        ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
+        # type RECEIPT, but not owned by the user
+        ProofFactory(type=proof_constants.TYPE_RECEIPT, price_count=15)
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             price_count=50,
@@ -122,8 +125,10 @@ class ProofListFilterApiTest(TestCase):
 
     def test_proof_list_filter_by_type(self):
         url = self.url + "?type=RECEIPT"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
+        response = self.client.get(
+            url, headers={"Authorization": f"Bearer {self.user_session.token}"}
+        )
+        self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
 
     def test_proof_list_filter_by_owner(self):
@@ -156,6 +161,12 @@ class ProofDetailApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.proof.id)
+        # authenticated
+        response = self.client.get(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], self.proof.id)
         self.assertIn("predictions", response.data)  # returned in "detail"
         self.assertEqual(len(response.data["predictions"]), 1)
         prediction = response.data["predictions"][0]
@@ -186,14 +197,11 @@ class ProofCreateApiTest(TestCase):
     def test_proof_create(self):
         # anonymous
         response = self.client.post(self.url, self.data)
-        self.assertEqual(response.status_code, 403)
-        # wrong token
-        response = self.client.post(
-            self.url,
-            self.data,
-            headers={"Authorization": f"Bearer {self.user_session.token}X"},
-        )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.data["file_path"] is not None)
+        self.assertEqual(response.data["owner"], None)
+        self.assertEqual(response.data["anonymous"], True)
+
         # authenticated
         response = self.client.post(
             self.url,
@@ -325,6 +333,8 @@ class ProofDeleteApiTest(TestCase):
     def setUpTestData(cls):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
+        cls.user_session_3 = SessionFactory()
+        cls.moderator = SessionFactory(user__is_moderator=True)
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
         )
@@ -336,6 +346,11 @@ class ProofDeleteApiTest(TestCase):
             currency=cls.proof.currency,
             date=cls.proof.date,
             owner=cls.proof.owner,
+        )
+        proof_2_data = PROOF.copy()
+        proof_2_data["date"] = "2024-06-06"
+        cls.proof_2 = ProofFactory(
+            **proof_2_data, price_count=0, owner=cls.user_session_3.user.user_id
         )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
 
@@ -368,3 +383,14 @@ class ProofDeleteApiTest(TestCase):
         self.assertEqual(
             Proof.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
         )
+
+        # Delete request from a moderator, should work
+        # Proof 1 was deleted, let's delete proof 2
+        url_proof_2 = reverse("api:proofs-detail", args=[self.proof_2.id])
+        response = self.client.delete(
+            url_proof_2,
+            headers={"Authorization": f"Bearer {self.moderator.token}"},
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(Proof.objects.filter(id=self.proof_2.id).count(), 0)

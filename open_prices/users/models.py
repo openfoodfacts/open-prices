@@ -33,8 +33,13 @@ class User(models.Model):
         verbose_name = "User"
         verbose_name_plural = "Users"
 
+    @property
     def is_authenticated(self):
         return True
+
+    @property
+    def is_anonymous(self):
+        return False
 
     def update_price_count(self):
         from open_prices.prices.models import Price
