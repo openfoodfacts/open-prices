@@ -40,3 +40,4 @@ class PriceFactory(DjangoModelFactory):
     )
     location_osm_type = factory.fuzzy.FuzzyChoice(location_constants.OSM_TYPE_LIST)
     date = date.fromisoformat("2023-10-30")
+    # owner = factory.Faker("user_name")
