@@ -155,7 +155,11 @@ class ProofQuerySetTest(TestCase):
     def setUpTestData(cls):
         cls.proof_without_price = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
         cls.proof_with_price = ProofFactory(type=proof_constants.TYPE_GDPR_REQUEST)
-        PriceFactory(proof_id=cls.proof_with_price.id, price=1.0)
+        PriceFactory(
+            proof_id=cls.proof_with_price.id,
+            price=1.0,
+            owner=cls.proof_with_price.owner,
+        )
 
     def test_has_type_single_shop(self):
         self.assertEqual(Proof.objects.count(), 2)
@@ -204,6 +208,7 @@ class ProofPropertyTest(TestCase):
             price=2.0,
             currency="EUR",
             date="2024-06-30",
+            owner=cls.proof_receipt.owner,
         )
 
     def test_is_type_single_shop(self):

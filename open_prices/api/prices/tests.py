@@ -330,7 +330,7 @@ class PriceCreateApiTest(TestCase):
         cls.user_proof = ProofFactory(
             type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
         )
-        cls.proof_2 = ProofFactory()
+        cls.proof_2 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
         cls.data = {
             **PRICE_8001505005707,
             "location_osm_id": 652825274,

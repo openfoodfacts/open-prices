@@ -358,7 +358,14 @@ class PriceModelSaveTest(TestCase):
             currency="EUR",
             owner=user_session.user.user_id,
         )
-        proof_2 = ProofFactory()
+        proof_gdpr = ProofFactory(
+            type=proof_constants.TYPE_GDPR_REQUEST,
+            location_osm_id=169450062,
+            location_osm_type=location_constants.OSM_TYPE_NODE,
+            date="2024-10-01",
+            currency="EUR",
+        )
+        proof_price_tag = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
         # proof not set
         PriceFactory(proof_id=None, owner=user_proof_receipt.owner)
         # proof unknown
@@ -374,14 +381,27 @@ class PriceModelSaveTest(TestCase):
             currency=user_proof_receipt.currency,
             owner=user_proof_receipt.owner,
         )
+        # difference price and proof owner should raise a ValidationError
+        # if the proof type is different than PRICE_TAG
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            proof_id=proof_gdpr.id,  # gdpr proof
+            location_osm_id=proof_gdpr.location_osm_id,
+            location_osm_type=proof_gdpr.location_osm_type,
+            date=proof_gdpr.date,
+            currency=proof_gdpr.currency,
+            owner=user_proof_receipt.owner,  # different owner
+        )
         # different price & proof owner should not raise a ValidationError
+        # for PRICE_TAG proofs
         PriceFactory(
-            proof_id=proof_2.id,  # different
+            proof_id=proof_price_tag.id,
             location_osm_id=user_proof_receipt.location_osm_id,
             location_osm_type=user_proof_receipt.location_osm_type,
             date=user_proof_receipt.date,
             currency=user_proof_receipt.currency,
-            owner=user_proof_receipt.owner,
+            owner=user_proof_receipt.owner,  # different owner
         )
         # proof location_osm_id & location_osm_type
         self.assertRaises(
