@@ -30,6 +30,14 @@ class ProofSerializer(serializers.ModelSerializer):
         exclude = ["location", "source"]
 
 
+class ProofHalfFullSerializer(ProofSerializer):
+    location = LocationSerializer()
+
+    class Meta:
+        model = Proof
+        exclude = ["source"]  # ProofSerializer.Meta.exclude
+
+
 class ProofFullSerializer(ProofSerializer):
     location = LocationSerializer()
     predictions = ProofPredictionSerializer(many=True, read_only=True)

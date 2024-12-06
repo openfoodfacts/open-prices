@@ -68,37 +68,19 @@ class ProofListApiTest(TestCase):
         )
 
     def test_proof_list(self):
-        # all proofs are read-accessible to anyone
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["total"], 3)  # All proofs are returned
-        # authenticated
-        # thanks to select_related and prefetch_related, we only have 6
-        # queries:
-        # - 1 to get the fetch the user session
-        # - 1 to update the session
-        # - 1 to get the user
+        # anonymous
+        # thanks to select_related, we only have 2 queries:
         # - 1 to count the number of proofs of the user
         # - 1 to get the proofs and their associated locations (select_related)
-        # - 1 to get the associated proof predictions (prefetch_related)
-        with self.assertNumQueries(6):
-            response = self.client.get(
-                self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
-            )
+        with self.assertNumQueries(2):
+            response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
             data = response.data
-            self.assertEqual(data["total"], 3)  # only user's proofs
+            self.assertEqual(data["total"], 3)
             self.assertEqual(len(data["items"]), 3)
             item = data["items"][0]
             self.assertEqual(item["id"], self.proof.id)  # default order
-            self.assertIn("predictions", item)
-            self.assertEqual(len(item["predictions"]), 1)
-            prediction = item["predictions"][0]
-            self.assertEqual(prediction["type"], self.proof_prediction.type)
-            self.assertEqual(prediction["model_name"], self.proof_prediction.model_name)
-            self.assertEqual(
-                prediction["model_version"], self.proof_prediction.model_version
-            )
+            self.assertNotIn("predictions", item)  # not returned in "list"
 
 
 class ProofListOrderApiTest(TestCase):
@@ -109,7 +91,7 @@ class ProofListOrderApiTest(TestCase):
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session.user.user_id
         )
-        ProofFactory(price_count=0)
+        ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             price_count=50,
@@ -118,9 +100,7 @@ class ProofListOrderApiTest(TestCase):
 
     def test_proof_list_order_by(self):
         url = self.url + "?order_by=-price_count"
-        response = self.client.get(
-            url, headers={"Authorization": f"Bearer {self.user_session.token}"}
-        )
+        response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(response.data["items"][0]["price_count"], 50)
 
@@ -150,6 +130,12 @@ class ProofListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
 
+    def test_proof_list_filter_by_owner(self):
+        url = self.url + f"?owner={self.user_session.user.user_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["items"][0]["price_count"], 15)
+
 
 class ProofDetailApiTest(TestCase):
     @classmethod
@@ -159,14 +145,15 @@ class ProofDetailApiTest(TestCase):
         cls.proof = ProofFactory(
             **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
         )
+        cls.proof_prediction = ProofPredictionFactory(
+            proof=cls.proof, type="CLASSIFICATION"
+        )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
 
     def test_proof_detail(self):
         # 404
         url = reverse("api:proofs-detail", args=[999])
-        response = self.client.get(
-            url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
-        )
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Proof matches the given query.")
         # anonymous
@@ -179,6 +166,14 @@ class ProofDetailApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.proof.id)
+        self.assertIn("predictions", response.data)  # returned in "detail"
+        self.assertEqual(len(response.data["predictions"]), 1)
+        prediction = response.data["predictions"][0]
+        self.assertEqual(prediction["type"], self.proof_prediction.type)
+        self.assertEqual(prediction["model_name"], self.proof_prediction.model_name)
+        self.assertEqual(
+            prediction["model_version"], self.proof_prediction.model_version
+        )
 
 
 class ProofCreateApiTest(TestCase):

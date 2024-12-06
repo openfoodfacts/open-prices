@@ -12,6 +12,7 @@ from open_prices.api.proofs.filters import ProofFilter
 from open_prices.api.proofs.serializers import (
     ProofCreateSerializer,
     ProofFullSerializer,
+    ProofHalfFullSerializer,
     ProofProcessWithGeminiSerializer,
     ProofUpdateSerializer,
     ProofUploadSerializer,
@@ -77,6 +78,8 @@ class ProofViewSet(
     def get_serializer_class(self):
         if self.request.method == "PATCH":
             return ProofUpdateSerializer
+        elif self.action == "list":
+            return ProofHalfFullSerializer
         return self.serializer_class
 
     def destroy(self, request: Request, *args, **kwargs) -> Response:
