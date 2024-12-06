@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.53.0](https://github.com/openfoodfacts/open-prices/compare/v1.52.0...v1.53.0) (2024-12-06)
+
+
+### Features
+
+* **API:** allow adding prices on proofs not owned (only PRICE_TAG proofs) ([#609](https://github.com/openfoodfacts/open-prices/issues/609)) ([071fad0](https://github.com/openfoodfacts/open-prices/commit/071fad0b25093659dfa4e8977403ea3d04cdd1cd))
+* **API:** Allow anonymous users to upload proofs ([#607](https://github.com/openfoodfacts/open-prices/issues/607)) ([0c68bf8](https://github.com/openfoodfacts/open-prices/commit/0c68bf877266c3e328189e276ba19498c764e46a))
+* return proof predictions in `GET /api/v1/proof` route ([#601](https://github.com/openfoodfacts/open-prices/issues/601)) ([42f1c5e](https://github.com/openfoodfacts/open-prices/commit/42f1c5ee5b7460d41b5083455f82d6ea5e4ca2dc))
+
+
+### Bug Fixes
+
+* don't try to classify with the image classifier .bin files ([#604](https://github.com/openfoodfacts/open-prices/issues/604)) ([0ecca7b](https://github.com/openfoodfacts/open-prices/commit/0ecca7beb6be10e7556057d884a2b8ce63776e75))
+
+
+### Technical
+
+* **API:** allow anyone to access proof data ([#606](https://github.com/openfoodfacts/open-prices/issues/606)) ([1b4dcb5](https://github.com/openfoodfacts/open-prices/commit/1b4dcb5659262cd7c8f18c1fa68a5f3b29238272))
+* **API:** only return proof.predictions in detail endpoint ([#605](https://github.com/openfoodfacts/open-prices/issues/605)) ([81f7f0f](https://github.com/openfoodfacts/open-prices/commit/81f7f0f3e1a218330b8ae3d3761c53eafd51b1b5))
+* Update github-projects.yml ([e4bfe68](https://github.com/openfoodfacts/open-prices/commit/e4bfe683705ff3ed410d6d97000cbd86cd2d7dda))
+
 ## [1.52.0](https://github.com/openfoodfacts/open-prices/compare/v1.51.0...v1.52.0) (2024-12-05)
 
 
