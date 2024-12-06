@@ -19,13 +19,13 @@ on:
       - unlocked
       - milestoned
       - demilestoned
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - edited
 jobs:
-  add-to-design-project:
-    name: Add issues to the 🎨 openfoodfacts-design or 📚 documentation project
+  add-to-projects:
+    name: Ventilate issues to the right GitHub projects
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@main
