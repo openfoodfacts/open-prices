@@ -1,4 +1,5 @@
 import PIL.Image
+from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -75,6 +76,7 @@ class ProofViewSet(
         methods=["POST"],
         url_path="upload",
         parser_classes=[MultiPartParser],
+        permission_classes=[],  # allow anonymous upload
     )
     def upload(self, request: Request) -> Response:
         # build proof
@@ -97,11 +99,16 @@ class ProofViewSet(
         # validate
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
-        # get source
+        # get owner & source
+        owner = (
+            self.request.user.user_id
+            if self.request.user.is_authenticated
+            else settings.ANONYMOUS_USER_ID
+        )
         source = get_source_from_request(self.request)
         # save
-        proof = serializer.save(owner=self.request.user.user_id, source=source)
-        # return full proof
+        proof = serializer.save(owner=owner, source=source)
+        # return the full proof
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(request=ProofProcessWithGeminiSerializer)
