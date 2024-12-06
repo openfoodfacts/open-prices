@@ -1,6 +1,7 @@
 from decimal import Decimal
 from io import BytesIO
 
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from PIL import Image
@@ -183,17 +184,37 @@ class ProofCreateApiTest(TestCase):
         [p.delete() for p in Proof.objects.all()]
         return super().tearDown()
 
-    def test_proof_create(self):
+    def test_proof_create_anonymous(self):
+        # wrong endpoint
+        response = self.client.post(reverse("api:proofs-list"), self.data)
+        self.assertEqual(response.status_code, 403)  # 405 ?
         # anonymous
         response = self.client.post(self.url, self.data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.data["file_path"] is not None)
+        self.assertTrue(response.data["image_thumb_path"] is None)  # .bin
+        self.assertEqual(response.data["currency"], "EUR")
+        self.assertEqual(response.data["price_count"], 0)  # ignored
+        self.assertEqual(response.data["owner"], settings.ANONYMOUS_USER_ID)
+        self.assertTrue("source" not in response.data)
+        self.assertEqual(Proof.objects.last().source, "API")  # default value
         # wrong token
         response = self.client.post(
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 201)  # 403 ?
+        self.assertEqual(response.data["owner"], settings.ANONYMOUS_USER_ID)
+
+    def test_proof_create_authenticated(self):
+        # wrong endpoint
+        response = self.client.post(
+            reverse("api:proofs-list"),
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 405)
         # authenticated
         response = self.client.post(
             self.url,
