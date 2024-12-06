@@ -72,7 +72,8 @@ class ProofListApiTest(TestCase):
         # thanks to select_related, we only have 2 queries:
         # - 1 to count the number of proofs of the user
         # - 1 to get the proofs and their associated locations (select_related)
-        with self.assertNumQueries(2):
+        # - 1 to get the proof predictions (prefetch_related)
+        with self.assertNumQueries(3):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
             data = response.data
