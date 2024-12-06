@@ -18,6 +18,7 @@ class ProofFactory(DjangoModelFactory):
     # date = factory.Faker("date")
     # currency = factory.Faker("currency_symbol")
     # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
+    # owner = factory.Faker("user_name")
 
 
 class ProofPredictionFactory(DjangoModelFactory):
