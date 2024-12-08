@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.0](https://github.com/openfoodfacts/open-prices/compare/v1.53.0...v1.54.0) (2024-12-08)
+
+
+### Features
+
+* **Shop import:** new script to upload prices from a shop csv ([#574](https://github.com/openfoodfacts/open-prices/issues/574)) ([7ec2eda](https://github.com/openfoodfacts/open-prices/commit/7ec2edac6039b32d0cc2cfbbd4bc9c6e29fca4f0))
+
 ## [1.53.0](https://github.com/openfoodfacts/open-prices/compare/v1.52.0...v1.53.0) (2024-12-06)
 
 
