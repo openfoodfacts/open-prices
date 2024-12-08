@@ -3,9 +3,9 @@ import csv
 import requests
 
 
-def read_csv(filepath):
+def read_csv(filepath, delimiter=","):
     with open(filepath, newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
+        reader = csv.DictReader(csvfile, delimiter=delimiter)
         return list(reader)
 
 

@@ -2,6 +2,8 @@ import os
 import sys
 import time
 
+import openfoodfacts
+
 from scripts.utils import create_price, read_csv
 
 OPEN_PRICES_CREATE_PRICE_ENDPOINT = f'{os.environ.get("API_ENDPOINT")}/prices'
@@ -9,6 +11,7 @@ OPEN_PRICES_TOKEN = os.environ.get("API_TOKEN")
 
 REQUIRED_ENV_PARAMS = [
     # "FILEPATH"
+    # "DELIMITER" (optional)
     "PRODUCT_CODE_FIELD",
     "PRODUCT_NAME_FIELD",
     "PRICE_FIELD",
@@ -59,6 +62,12 @@ def filter_rules(op_price_list):
 
         if not op_price["product_code"]:
             passes_test = False
+        elif not op_price["product_code"].isnumeric():
+            passes_test = False
+        elif len(op_price["product_code"]) < 6:
+            passes_test = False
+        elif not openfoodfacts.barcode.has_valid_check_digit(op_price["product_code"]):
+            passes_test = False
 
         if not op_price["price"]:
             passes_test = False
@@ -80,7 +89,10 @@ if __name__ == "__main__":
         sys.exit("Error: missing FILEPATH env")
     filepath = os.environ.get("FILEPATH")
     print(f"===== Reading {filepath}")
-    price_list = read_csv(filepath)
+    if os.environ.get("DELIMITER"):
+        price_list = read_csv(filepath, delimiter=os.environ.get("DELIMITER"))
+    else:
+        price_list = read_csv(filepath)
     print(len(price_list))
 
     print("===== Input example:")
@@ -132,4 +144,4 @@ if __name__ == "__main__":
             if (progress % 50) == 0:
                 print(f"{progress}/{len(open_prices_price_list_filtered)}...")
     else:
-        sys.exit("No prices uploaded (DRY_RUN env missing or set to 'True')")
+        sys.exit("===== No prices uploaded (DRY_RUN env missing or set to 'True')")

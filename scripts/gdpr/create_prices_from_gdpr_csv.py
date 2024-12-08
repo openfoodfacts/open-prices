@@ -25,6 +25,7 @@ PRICE_FIELDS = [
 
 REQUIRED_ENV_PARAMS = [
     # "FILEPATH"
+    # "DELIMITER" (optional)
     "SOURCE",
     "LOCATION",
     "LOCATION_OSM_ID",
@@ -221,7 +222,10 @@ if __name__ == "__main__":
         sys.exit("Error: missing FILEPATH env")
     filepath = os.environ.get("FILEPATH")
     print(f"===== Reading {filepath}")
-    gdpr_price_list = read_csv(filepath)
+    if os.environ.get("DELIMITER"):
+        gdpr_price_list = read_csv(filepath, delimiter=os.environ.get("DELIMITER"))
+    else:
+        gdpr_price_list = read_csv(filepath)
     print(len(gdpr_price_list))
 
     print("===== Input example:")
@@ -281,4 +285,4 @@ if __name__ == "__main__":
             if (progress % 50) == 0:
                 print(f"{progress}/{len(open_prices_price_list_filtered_2)}...")
     else:
-        sys.exit("No prices uploaded (DRY_RUN env missing or set to 'True')")
+        sys.exit("===== No prices uploaded (DRY_RUN env missing or set to 'True')")
