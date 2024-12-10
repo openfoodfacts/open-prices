@@ -64,3 +64,23 @@ class PriceStatsSerializer(serializers.Serializer):
     price__min = serializers.DecimalField(max_digits=10, decimal_places=2)
     price__max = serializers.DecimalField(max_digits=10, decimal_places=2)
     price__avg = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price__sum = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+
+class GroupedPriceStatsQuerySerializer(serializers.Serializer):
+    group_by = serializers.CharField(
+        required=True, help_text="Field by which to group the statistics"
+    )
+
+
+class GroupedPriceStatsSerializer(PriceStatsSerializer):
+    # Override representation to dynamically include the group field
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        # Add the grouping field dynamically
+        for key in instance:
+            if key not in representation:  # It's likely the group field
+                representation[key] = instance[key]
+
+        return representation

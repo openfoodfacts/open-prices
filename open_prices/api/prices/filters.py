@@ -7,6 +7,12 @@ class PriceFilter(django_filters.FilterSet):
     product_id__isnull = django_filters.BooleanFilter(
         field_name="product_id", lookup_expr="isnull"
     )
+    product_labels_tags__contains = django_filters.CharFilter(
+        field_name="product__labels_tags", lookup_expr="icontains"
+    )
+    product_categories_tags__contains = django_filters.CharFilter(
+        field_name="product__categories_tags", lookup_expr="icontains"
+    )
     labels_tags__contains = django_filters.CharFilter(
         field_name="labels_tags", lookup_expr="icontains"
     )
@@ -52,4 +58,5 @@ class PriceFilter(django_filters.FilterSet):
             "date",
             "proof_id",
             "owner",
+            "proof__type",
         ]
