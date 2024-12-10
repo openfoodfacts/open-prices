@@ -43,7 +43,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "~3.11"
 Babel = "~2.13.1"
-openfoodfacts = "^2.2.0"
+openfoodfacts = { version = "~2.3.2", extras = ["ml"] }
 psycopg2-binary = "~2.9.9"
 python-multipart = "~0.0.7"
 requests = "~2.31.0"
@@ -66,7 +66,6 @@ sentry-sdk = {extras = ["django"], version = "^2.13.0"}
 django-solo = "^2.3.0"
 pillow = "^10.4.0"
 google-generativeai = "^0.8.3"
-tritonclient = {extras = ["grpc"], version = "^2.52.0"}
 
 [tool.poetry.group.dev.dependencies]
 black = "~23.12.1"
