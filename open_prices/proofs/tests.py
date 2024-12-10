@@ -5,6 +5,7 @@ import unittest
 from decimal import Decimal
 from pathlib import Path
 
+import numpy as np
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from PIL import Image
@@ -14,7 +15,10 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
-from open_prices.proofs.ml.image_classifier import run_and_save_proof_prediction
+from open_prices.proofs.ml import (
+    ObjectDetectionRawResult,
+    run_and_save_proof_prediction,
+)
 from open_prices.proofs.models import Proof
 from open_prices.proofs.utils import fetch_and_save_ocr_data
 
@@ -353,31 +357,25 @@ class RunOCRTaskTest(TestCase):
                 self.assertFalse(output)
 
 
-class ImageClassifierTest(TestCase):
+class MLModelTest(TestCase):
     def test_run_and_save_proof_prediction_proof_does_not_exist(self):
         # check that we emit an error log
-        with self.assertLogs(
-            "open_prices.proofs.ml.image_classifier", level="ERROR"
-        ) as cm:
+        with self.assertLogs("open_prices.proofs.ml", level="ERROR") as cm:
             self.assertIsNone(run_and_save_proof_prediction(1))
             self.assertEqual(
                 cm.output,
-                [
-                    "ERROR:open_prices.proofs.ml.image_classifier:Proof with id 1 not found"
-                ],
+                ["ERROR:open_prices.proofs.ml:Proof with id 1 not found"],
             )
 
     def test_run_and_save_proof_prediction_proof_file_not_found(self):
         proof = ProofFactory()
         # check that we emit an error log
-        with self.assertLogs(
-            "open_prices.proofs.ml.image_classifier", level="ERROR"
-        ) as cm:
+        with self.assertLogs("open_prices.proofs.ml", level="ERROR") as cm:
             self.assertIsNone(run_and_save_proof_prediction(proof.id))
             self.assertEqual(
                 cm.output,
                 [
-                    f"ERROR:open_prices.proofs.ml.image_classifier:Proof file not found: {proof.file_path_full}"
+                    f"ERROR:open_prices.proofs.ml:Proof file not found: {proof.file_path_full}"
                 ],
             )
 
@@ -388,6 +386,13 @@ class ImageClassifierTest(TestCase):
             ("SHELF", 0.9786477088928223),
             ("PRICE_TAG", 0.021345501765608788),
         ]
+        detect_price_tags_response = ObjectDetectionRawResult(
+            num_detections=1,
+            detection_boxes=np.array([[0.5, 0.5, 1.0, 1.0]]),
+            detection_classes=np.array([0], dtype=int),
+            detection_scores=np.array([0.98], dtype=np.float32),
+            label_names=["price-tag"],
+        )
 
         # We save the image to a temporary file
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -400,29 +405,42 @@ class ImageClassifierTest(TestCase):
                 proof = ProofFactory(file_path=file_path)
 
                 # Patch predict_proof_type to return a fixed response
-                with unittest.mock.patch(
-                    "open_prices.proofs.ml.image_classifier.predict_proof_type",
-                    return_value=predict_proof_type_response,
-                ) as mock_predict_proof_type:
+                with (
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.predict_proof_type",
+                        return_value=predict_proof_type_response,
+                    ) as mock_predict_proof_type,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.detect_price_tags",
+                        return_value=detect_price_tags_response,
+                    ) as mock_detect_price_tags,
+                ):
                     run_and_save_proof_prediction(proof.id)
                     mock_predict_proof_type.assert_called_once()
-                proof_prediction = proof.predictions.first()
-                self.assertIsNotNone(proof_prediction)
+                    mock_detect_price_tags.assert_called_once()
+
+                proof_type_prediction = proof.predictions.filter(
+                    type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
+                ).first()
+                self.assertIsNotNone(proof_type_prediction)
                 self.assertEqual(
-                    proof_prediction.type,
+                    proof_type_prediction.type,
                     proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
                 )
 
                 self.assertEqual(
-                    proof_prediction.model_name, "price_proof_classification"
+                    proof_type_prediction.model_name, "price_proof_classification"
                 )
                 self.assertEqual(
-                    proof_prediction.model_version, "price_proof_classification-1.0"
+                    proof_type_prediction.model_version,
+                    "price_proof_classification-1.0",
                 )
-                self.assertEqual(proof_prediction.value, "SHELF")
-                self.assertEqual(proof_prediction.max_confidence, 0.9786477088928223)
+                self.assertEqual(proof_type_prediction.value, "SHELF")
                 self.assertEqual(
-                    proof_prediction.data,
+                    proof_type_prediction.max_confidence, 0.9786477088928223
+                )
+                self.assertEqual(
+                    proof_type_prediction.data,
                     {
                         "prediction": [
                             {"label": "SHELF", "score": 0.9786477088928223},
@@ -430,5 +448,28 @@ class ImageClassifierTest(TestCase):
                         ]
                     },
                 )
-                proof_prediction.delete()
+
+                price_tag_prediction = proof.predictions.filter(
+                    type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE
+                ).first()
+                self.assertIsNotNone(price_tag_prediction)
+                self.assertEqual(
+                    price_tag_prediction.type,
+                    proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+                )
+                self.assertEqual(price_tag_prediction.model_name, "price_tag_detection")
+                self.assertEqual(
+                    price_tag_prediction.model_version, "price_tag_detection-1.0"
+                )
+                self.assertIsNone(price_tag_prediction.value)
+                self.assertAlmostEqual(price_tag_prediction.max_confidence, 0.98)
+                self.assertIn("objects", price_tag_prediction.data)
+                objects = price_tag_prediction.data["objects"]
+                self.assertEqual(len(objects), 1)
+                self.assertEqual(objects[0]["label"], "price-tag")
+                self.assertAlmostEqual(objects[0]["score"], 0.98)
+                self.assertEqual(objects[0]["bounding_box"], [0.5, 0.5, 1.0, 1.0])
+
+                proof_type_prediction.delete()
+                price_tag_prediction.delete()
                 proof.delete()

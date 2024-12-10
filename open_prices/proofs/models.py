@@ -396,6 +396,6 @@ def proof_post_save_run_ml_models(sender, instance, created, **kwargs):
     if not settings.TESTING and settings.ENABLE_ML_PREDICTIONS:
         if created:
             async_task(
-                "open_prices.proofs.ml.image_classifier.run_and_save_proof_prediction",
+                "open_prices.proofs.ml.run_and_save_proof_prediction",
                 instance.id,
             )
