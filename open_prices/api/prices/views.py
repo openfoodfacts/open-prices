@@ -1,5 +1,6 @@
+from django.core.exceptions import FieldError
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -8,6 +9,8 @@ from rest_framework.response import Response
 
 from open_prices.api.prices.filters import PriceFilter
 from open_prices.api.prices.serializers import (
+    GroupedPriceStatsQuerySerializer,
+    GroupedPriceStatsSerializer,
     PriceCreateSerializer,
     PriceFullSerializer,
     PriceStatsSerializer,
@@ -79,3 +82,40 @@ class PriceViewSet(
     def stats(self, request: Request) -> Response:
         qs = self.filter_queryset(self.get_queryset())
         return Response(qs.calculate_stats(), status=200)
+
+    @extend_schema(
+        request=GroupedPriceStatsQuerySerializer,
+        responses=GroupedPriceStatsSerializer(many=True),
+        filters=True,
+        parameters=[
+            OpenApiParameter(
+                name="group_by",
+                description="Field by which to group the statistics",
+                required=True,
+                type=str,
+                location=OpenApiParameter.QUERY,
+            )
+        ],
+    )
+    @action(detail=False, methods=["GET"])
+    def grouped_stats(self, request: Request) -> Response:
+        qs = self.filter_queryset(self.get_queryset())
+
+        # Validate and parse query parameters using the serializer
+        serializer = GroupedPriceStatsQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        group_by = serializer.validated_data["group_by"]
+
+        try:
+            data = qs.calculate_grouped_stats(group_by)
+        except FieldError:
+            return Response(
+                {"detail": f"Invalid group_by field: {group_by}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Apply pagination
+        paginator = self.paginator  # Use the default pagination class
+        paginated_data = paginator.paginate_queryset(data, request, view=self)
+
+        return paginator.get_paginated_response(paginated_data)

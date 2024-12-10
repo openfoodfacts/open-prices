@@ -3,8 +3,8 @@ import functools
 
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import Avg, Count, F, Max, Min, signals
-from django.db.models.functions import Cast
+from django.db.models import Avg, Count, F, Max, Min, Sum, signals
+from django.db.models.functions import Cast, TruncMonth, TruncWeek, TruncYear
 from django.dispatch import receiver
 from django.utils import timezone
 from openfoodfacts.taxonomy import (
@@ -54,6 +54,34 @@ class PriceQuerySet(models.QuerySet):
                 Avg("price"),
                 output_field=models.DecimalField(max_digits=10, decimal_places=2),
             ),
+            price__sum=Sum("price"),
+        )
+
+    def calculate_grouped_stats(self, group_by):
+        group_by_list = group_by.split(",")
+        if (
+            "month" in group_by_list
+            or "year" in group_by_list
+            or "week" in group_by_list
+        ):
+            queryset = self.annotate(
+                month=TruncMonth("date"), year=TruncYear("date"), week=TruncWeek("date")
+            )
+        else:
+            queryset = self
+        return (
+            queryset.values(*group_by_list)
+            .annotate(
+                price__count=Count("pk"),
+                price__min=Min("price"),
+                price__max=Max("price"),
+                price__avg=Cast(
+                    Avg("price"),
+                    output_field=models.DecimalField(max_digits=10, decimal_places=2),
+                ),
+                price__sum=Sum("price"),
+            )
+            .order_by(*group_by_list)
         )
 
 
