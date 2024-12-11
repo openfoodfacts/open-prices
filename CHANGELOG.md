@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.54.0](https://github.com/openfoodfacts/open-prices/compare/v1.53.0...v1.54.0) (2024-12-11)
+
+
+### Features
+
+* run and save price tag detections in `proof_predictions` table ([#614](https://github.com/openfoodfacts/open-prices/issues/614)) ([62ecaab](https://github.com/openfoodfacts/open-prices/commit/62ecaab061dfff3ba82ee1885b7565db0966dbcc))
+* **Shop import:** new script to upload prices from a shop csv ([#574](https://github.com/openfoodfacts/open-prices/issues/574)) ([7ec2eda](https://github.com/openfoodfacts/open-prices/commit/7ec2edac6039b32d0cc2cfbbd4bc9c6e29fca4f0))
+
+
+### Bug Fixes
+
+* fix bug in directory selection for proof image ([#616](https://github.com/openfoodfacts/open-prices/issues/616)) ([b32b5cf](https://github.com/openfoodfacts/open-prices/commit/b32b5cf65c6c2228b6517768c813a5e4c2dee5d4))
+* use openfoodfacts.ml module for proof classification ([#613](https://github.com/openfoodfacts/open-prices/issues/613)) ([8eb37e6](https://github.com/openfoodfacts/open-prices/commit/8eb37e64b24cdd37599bad41bd20d87f07d22218))
+
 ## [1.53.0](https://github.com/openfoodfacts/open-prices/compare/v1.52.0...v1.53.0) (2024-12-06)
 
 
