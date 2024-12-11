@@ -110,17 +110,7 @@ def store_file(
     # We store the images in directories containing up to 1000 images
     # Once we reach 1000 images, we create a new directory by increasing the directory ID  # noqa
     # This is used to prevent the base image directory from containing too many files  # noqa
-    images_dir = settings.IMAGES_DIR
-    current_dir_id = max(
-        (int(p.name) for p in images_dir.iterdir() if p.is_dir() and p.name.isdigit()),
-        default=1,
-    )
-    current_dir_id_str = f"{current_dir_id:04d}"
-    current_dir = images_dir / current_dir_id_str
-    if current_dir.exists() and len(list(current_dir.iterdir())) >= 1_000:
-        # if the current directory contains 1000 images, we create a new one
-        current_dir_id += 1
-        current_dir = images_dir / str(current_dir_id)
+    current_dir = select_proof_image_dir(settings.IMAGES_DIR)
     current_dir.mkdir(exist_ok=True, parents=True)
     file_full_path = generate_full_path(current_dir, file_stem, extension)
     # write the content of the file to the new file
@@ -128,11 +118,35 @@ def store_file(
         f.write(file.file.read())
     # create a thumbnail
     image_thumb_path = generate_thumbnail(
-        current_dir, current_dir_id_str, file_stem, extension, mimetype
+        current_dir, current_dir.name, file_stem, extension, mimetype
     )
     # Build file_path
-    file_path = generate_relative_path(current_dir_id_str, file_stem, extension)
+    file_path = generate_relative_path(current_dir.name, file_stem, extension)
     return (file_path, mimetype, image_thumb_path)
+
+
+def select_proof_image_dir(images_dir: Path, max_images_per_dir: int = 1_000) -> Path:
+    """ "Select the directory where to store the image.
+
+    We create a new directory when the current one contains more than 1000
+    images. The directories are named with a 4-digit number, starting at 0001.
+
+    :param images_dir: the directory where the images are stored
+    :param max_images_per_dir: the maximum number of images per directory
+    :return: the selected directory
+    """
+    current_dir_id = max(
+        (int(p.name) for p in images_dir.iterdir() if p.is_dir() and p.name.isdigit()),
+        default=1,
+    )
+    current_dir_id_str = f"{current_dir_id:04d}"
+    current_dir = images_dir / current_dir_id_str
+    if current_dir.exists() and len(list(current_dir.iterdir())) >= max_images_per_dir:
+        # if the current directory contains 1000 images, we create a new one
+        current_dir_id += 1
+        current_dir_id_str = f"{current_dir_id:04d}"
+        current_dir = images_dir / current_dir_id_str
+    return current_dir
 
 
 def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | None:

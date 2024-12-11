@@ -20,7 +20,7 @@ from open_prices.proofs.ml import (
     run_and_save_proof_prediction,
 )
 from open_prices.proofs.models import Proof
-from open_prices.proofs.utils import fetch_and_save_ocr_data
+from open_prices.proofs.utils import fetch_and_save_ocr_data, select_proof_image_dir
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -473,3 +473,38 @@ class MLModelTest(TestCase):
                 proof_type_prediction.delete()
                 price_tag_prediction.delete()
                 proof.delete()
+
+
+class TestSelectProofImageDir(TestCase):
+    def test_select_proof_image_dir_no_dir(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            images_dir = Path(tmpdir) / "images"
+            images_dir.mkdir()
+            selected_dir = select_proof_image_dir(images_dir)
+            self.assertEqual(selected_dir, images_dir / "0001")
+
+    def test_select_proof_image_dir_existing_dir(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            images_dir = Path(tmpdir) / "images"
+            images_dir.mkdir()
+            (images_dir / "0001").mkdir()
+            selected_dir = select_proof_image_dir(images_dir)
+            self.assertEqual(selected_dir, images_dir / "0001")
+
+    def test_select_proof_image_dir_existing_dir_second_dir(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            images_dir = Path(tmpdir) / "images"
+            images_dir.mkdir()
+            (images_dir / "0001").mkdir()
+            (images_dir / "0002").mkdir()
+            selected_dir = select_proof_image_dir(images_dir)
+            self.assertEqual(selected_dir, images_dir / "0002")
+
+    def test_select_proof_image_dir_existing_dir_create_new_dir(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            images_dir = Path(tmpdir) / "images"
+            images_dir.mkdir()
+            (images_dir / "0001").mkdir()
+            (images_dir / "0001" / "0001.jpg").touch()
+            selected_dir = select_proof_image_dir(images_dir, max_images_per_dir=1)
+            self.assertEqual(selected_dir, images_dir / "0002")
