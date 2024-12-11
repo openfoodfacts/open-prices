@@ -112,10 +112,10 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
     return client.product.get(code)
 
 
-def get_product_dict(product, flavor=Flavor.off) -> JSONType | None:
+def get_product_dict(code: str, flavor=Flavor.off) -> JSONType | None:
     product_dict = dict()
     try:
-        response = get_product(code=product.code, flavor=flavor)
+        response = get_product(code=code, flavor=flavor)
         if response:
             product_dict = build_product_dict(response, flavor)
         return product_dict

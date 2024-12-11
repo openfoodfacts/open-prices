@@ -93,7 +93,7 @@ status:
 
 log:
 	@echo "🥫 Reading logs (docker compose) …"
-	${DOCKER_COMPOSE} logs -f api
+	${DOCKER_COMPOSE} logs -f api update-listener
 
 
 #------------#

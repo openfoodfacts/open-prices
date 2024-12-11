@@ -18,6 +18,11 @@ x-api-common: &api-common
     - GOOGLE_GEMINI_API_KEY
     - TRITON_URI
     - ENABLE_ML_PREDICTIONS
+    - ENABLE_REDIS_UPDATES
+    - REDIS_HOST
+    - REDIS_PORT
+    - REDIS_STREAM_NAME
+    - REDIS_LATEST_ID_KEY
   networks:
     - default
 
@@ -39,6 +44,12 @@ services:
       - images:/opt/open-prices/img
       - data-dump:/opt/open-prices/data
       - home_cache:/home/off/.cache
+    depends_on:
+      - postgres
+
+  update-listener:
+    <<: *api-common
+    command: ["python", "manage.py", "run_update_listener"]
     depends_on:
       - postgres
 

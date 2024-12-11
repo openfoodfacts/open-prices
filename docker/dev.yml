@@ -35,3 +35,20 @@ services:
   scheduler:
     <<: *api-base
     command: ["python", "manage.py", "qcluster"]
+
+  update-listener:
+    <<: *api-base
+    command: ["python", "manage.py", "run_update_listener"]
+
+  redis:
+      restart: $RESTART_POLICY
+      image: redis:7.0.5-alpine
+      volumes:
+        - redis-data:/data
+      environment:
+        REDIS_ARGS: --save 60 1000 --appendonly yes
+      mem_limit: 4g
+
+volumes:
+  redis-data:
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_redis-data
