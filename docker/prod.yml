@@ -11,3 +11,9 @@ volumes:
   data-dump:
     external: true
     name: ${COMPOSE_PROJECT_NAME:-open_prices}_data-dump
+
+
+networks:
+  common_net:
+    name: ${COMMON_NET_NAME}
+    external: true

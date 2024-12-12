@@ -40,6 +40,8 @@ jobs:
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.net" >> $GITHUB_ENV
         # Triton server is on the same datacenter as the staging server, so we use the internal IP
         echo "TRITON_URI=10.1.0.200:5504" >> $GITHUB_ENV
+        echo "REDIS_HOST=redis.po_webnet" >> $GITHUB_ENV
+        echo "REDIS_PORT=6379" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
@@ -49,6 +51,8 @@ jobs:
         # Triton server is on Moji datacenter, so we use the stunnel client running
         # on the OVH datacenter to access it
         echo "TRITON_URI=10.1.0.101:5504" >> $GITHUB_ENV
+        echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
+        echo "REDIS_PORT=6379" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
@@ -115,6 +119,10 @@ jobs:
           echo "COMPOSE_PROJECT_NAME=open_prices" >> .env
           echo "COMPOSE_PATH_SEPARATOR=;" >> .env
           echo "COMPOSE_FILE=docker-compose.yml;docker/prod.yml" >> .env
+          # This is the network shared with Product Opener.
+          # In staging, Product Opener is deployed on the same VM.
+          # In production Product Opener is deployed on a separate server and is not dockerized.
+          echo "COMMON_NET_NAME=po_webnet" >> .env
           # Set docker variables
           echo "TAG=sha-${{ github.sha }}" >> .env
           echo "RESTART_POLICY=always" >> .env
@@ -138,6 +146,9 @@ jobs:
           echo "GOOGLE_GEMINI_API_KEY=${{ secrets.GOOGLE_GEMINI_API_KEY }}" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
           echo "ENABLE_ML_PREDICTIONS=True" >> .env
+          echo "REDIS_HOST=${{ env.REDIS_HOST }}" >> .env
+          echo "REDIS_PORT=${{ env.REDIS_PORT }}" >> .env
+          echo "ENABLE_REDIS_UPDATES=True" >> .env
 
     - name: Create Docker volumes
       uses: appleboy/ssh-action@master
