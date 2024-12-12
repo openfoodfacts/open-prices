@@ -150,6 +150,7 @@ jobs:
           echo "ENABLE_ML_PREDICTIONS=True" >> .env
           echo "REDIS_HOST=${{ env.REDIS_HOST }}" >> .env
           echo "REDIS_PORT=${{ env.REDIS_PORT }}" >> .env
+          echo "REDIS_STREAM_NAME=product_updates" >> .env
           echo "ENABLE_REDIS_UPDATES=True" >> .env
 
     - name: Create Docker volumes

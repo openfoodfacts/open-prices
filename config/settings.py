@@ -310,7 +310,7 @@ ANONYMOUS_USER_ID = "openfoodfacts-contributors"
 # ------------------------------------------------------------------------------
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
-REDIS_STREAM_NAME = os.getenv("REDIS_STREAM_NAME", "product_updates_off")
+REDIS_STREAM_NAME = os.getenv("REDIS_STREAM_NAME", "product_updates")
 REDIS_LATEST_ID_KEY = os.getenv(
     "REDIS_LATEST_ID_KEY", "open-prices:product_updates:latest_id"
 )
