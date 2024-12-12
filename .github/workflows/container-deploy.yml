@@ -40,7 +40,9 @@ jobs:
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.net" >> $GITHUB_ENV
         # Triton server is on the same datacenter as the staging server, so we use the internal IP
         echo "TRITON_URI=10.1.0.200:5504" >> $GITHUB_ENV
-        echo "REDIS_HOST=redis.po_webnet" >> $GITHUB_ENV
+        # Open Prices fetches fetch data from Production Product Opener,
+        # so we use the production redis server
+        echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'

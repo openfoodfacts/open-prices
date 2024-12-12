@@ -1,13 +1,17 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase, TransactionTestCase
+from django.utils import timezone
+from openfoodfacts import Flavor
 
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.products import constants as product_constants
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
+from open_prices.products.tasks import process_update
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
 
@@ -189,3 +193,79 @@ class ProductPropertyTest(TestCase):
         # update_proof_count() should fix proof_count
         self.product.update_proof_count()
         self.assertEqual(self.product.proof_count, 1)
+
+
+class TestProcessUpdate(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product = ProductFactory(code="0123456789100")
+
+    @classmethod
+    def tearDownClass(cls):
+        Product.objects.all().delete()
+        super().tearDownClass()
+
+    @patch("open_prices.common.openfoodfacts.get_product")
+    def test_process_update_product_exists(self, mock_get_product):
+        product_details = {
+            "product_name": "Test Product",
+            "code": self.product.code,
+            "image_url": "https://images.openfoodfacts.org/images/products/123/1.jpg",
+            "product_quantity": 1000,
+            "product_quantity_unit": "g",
+            "categories_tags": ["en:apples"],
+            "unique_scans_n": 42,
+            "owner": "test",
+        }
+        fields_to_ignore = ["owner"]
+        mock_get_product.return_value = product_details
+
+        before = timezone.now()
+        process_update(self.product.code, Flavor.obf)
+        after = timezone.now()
+
+        updated_product = Product.objects.get(code=self.product.code)
+        for key, value in product_details.items():
+            if key in fields_to_ignore:
+                self.assertNotIn(key, updated_product.__dict__)
+            else:
+                self.assertEqual(getattr(updated_product, key), value)
+
+        self.assertEqual(updated_product.source, Flavor.obf)
+        self.assertGreater(updated_product.source_last_synced, before)
+        self.assertLess(updated_product.source_last_synced, after)
+
+    @patch("open_prices.common.openfoodfacts.get_product")
+    def test_process_update_new_product(self, mock_get_product):
+        # create a new product
+        code = "1234567891011"
+        product_details = {
+            "product_name": "Test Product",
+            "code": code,
+            "image_url": "https://images.openfoodfacts.org/images/products/123/1.jpg",
+            "product_quantity": 1000,
+            "product_quantity_unit": "g",
+            "categories_tags": ["en:apples"],
+            "unique_scans_n": 42,
+            "owner": "test",
+        }
+        fields_to_ignore = ["owner"]
+        mock_get_product.return_value = product_details
+
+        before = timezone.now()
+        process_update(code, Flavor.opff)
+        after = timezone.now()
+
+        results = Product.objects.filter(code=code)
+        self.assertEqual(results.count(), 1)
+        create_product = results.first()
+
+        for key, value in product_details.items():
+            if key in fields_to_ignore:
+                self.assertNotIn(key, create_product.__dict__)
+            else:
+                self.assertEqual(getattr(create_product, key), value)
+
+        self.assertEqual(create_product.source, Flavor.opff)
+        self.assertGreater(create_product.source_last_synced, before)
+        self.assertLess(create_product.source_last_synced, after)
