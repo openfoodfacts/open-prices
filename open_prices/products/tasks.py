@@ -32,10 +32,6 @@ def process_update(code: str, flavor: Flavor) -> None:
         try:
             product = Product.objects.get(code=code)
         except Product.DoesNotExist:
-            logger.info(
-                "Product %s does not exist in the database, cannot update product table",
-                code,
-            )
             does_not_exist = True
 
         if does_not_exist:
