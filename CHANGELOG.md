@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.55.0](https://github.com/openfoodfacts/open-prices/compare/v1.54.0...v1.55.0) (2024-12-12)
+
+
+### Features
+
+* listen to updates from Product Opener using Redis ([#618](https://github.com/openfoodfacts/open-prices/issues/618)) ([9e4d326](https://github.com/openfoodfacts/open-prices/commit/9e4d326b023c6bb1445b8735490c7920b6c8fd89))
+
+
+### Technical
+
+* enable fetching product updates from Redis ([#621](https://github.com/openfoodfacts/open-prices/issues/621)) ([3a81968](https://github.com/openfoodfacts/open-prices/commit/3a81968979841cb72ce4acbe4d3a7833d3648f0a))
+
 ## [1.54.0](https://github.com/openfoodfacts/open-prices/compare/v1.53.0...v1.54.0) (2024-12-11)
 
 
