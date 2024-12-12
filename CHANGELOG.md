@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.55.1](https://github.com/openfoodfacts/open-prices/compare/v1.55.0...v1.55.1) (2024-12-12)
+
+
+### Bug Fixes
+
+* create a product if needed after a redis update event ([#622](https://github.com/openfoodfacts/open-prices/issues/622)) ([66010fe](https://github.com/openfoodfacts/open-prices/commit/66010fe64d88943d5729fdd17cf430d828ec2cab))
+* remove legacy log message ([267568e](https://github.com/openfoodfacts/open-prices/commit/267568ebe870db409f1092b1011ba13502deb6e2))
+
 ## [1.55.0](https://github.com/openfoodfacts/open-prices/compare/v1.54.0...v1.55.0) (2024-12-12)
 
 
