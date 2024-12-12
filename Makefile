@@ -17,7 +17,7 @@ export USER_UID:=${UID}
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 DOCKER_COMPOSE=docker compose --env-file=${ENV_FILE}
-DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=open_prices_test docker compose --env-file=${ENV_FILE}
+DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=open_prices_test COMMON_NET_NAME=po_test docker compose --env-file=${ENV_FILE}
 
 # avoid target corresponding to file names, to depends on them
 .PHONY: *
@@ -151,6 +151,12 @@ create_external_volumes:
 	docker volume create open_prices_postgres-data
 	docker volume create open_prices_images
 	docker volume create open_prices_data-dump
+
+create_external_networks:
+	@echo "🥫 Creating external networks if needed … (dev only)"
+	( docker network create ${COMMON_NET_NAME} || true )
+# for tests
+	( docker network create po_test || true )
 
 cp-static-files:
 	@echo "🥫 Copying static files from api container to the host …"

@@ -25,6 +25,7 @@ x-api-common: &api-common
     - REDIS_LATEST_ID_KEY
   networks:
     - default
+    - common_net
 
 services:
   api:
@@ -97,3 +98,13 @@ volumes:
     name: ${COMPOSE_PROJECT_NAME:-open_prices}_home_cache
   static:
     name: ${COMPOSE_PROJECT_NAME:-open_prices}_static
+
+
+networks:
+  default:
+    name: ${COMPOSE_PROJECT_NAME:-open_prices}_default
+
+  # this is the network shared with product opener, it's only used in staging (and locally)
+  common_net:
+    name: ${COMMON_NET_NAME}
+    external: true
