@@ -2,6 +2,7 @@ x-api-common: &api-common
   image: ghcr.io/openfoodfacts/open-prices/api:${TAG:-dev}
   restart: $RESTART_POLICY
   environment:
+    - ENVIRONMENT
     - POSTGRES_DB
     - POSTGRES_USER
     - POSTGRES_PASSWORD
