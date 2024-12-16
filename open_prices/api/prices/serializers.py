@@ -6,7 +6,7 @@ from open_prices.api.proofs.serializers import ProofSerializer
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
 from open_prices.products.models import Product
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models.proof import Proof
 
 
 class PriceSerializer(serializers.ModelSerializer):

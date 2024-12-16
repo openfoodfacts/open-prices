@@ -6,13 +6,19 @@ from django.test import TestCase
 from django.urls import reverse
 from PIL import Image
 
+from open_prices.common.constants import PriceTagStatus
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.factories import ProofFactory, ProofPredictionFactory
-from open_prices.proofs.models import Proof
+from open_prices.proofs.factories import (
+    PriceTagFactory,
+    ProofFactory,
+    ProofPredictionFactory,
+)
+from open_prices.proofs.models.price_tag import PriceTag
+from open_prices.proofs.models.proof import Proof
 from open_prices.users.factories import SessionFactory
 
 LOCATION_OSM_NODE_652825274 = {
@@ -388,4 +394,333 @@ class ProofDeleteApiTest(TestCase):
         self.assertEqual(response.data, None)
         self.assertEqual(
             Proof.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )
+
+
+class PriceTagListApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:price-tags-list")
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.proof_2 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price = PriceFactory(proof=cls.proof)
+        cls.price_tag_1 = PriceTagFactory(
+            proof=cls.proof,
+            price=cls.price,
+            status=PriceTagStatus.linked_to_price.value,
+        )
+        cls.price_tag_2 = PriceTagFactory(proof=cls.proof)
+        cls.price_tag_3 = PriceTagFactory(
+            proof=cls.proof_2, status=PriceTagStatus.deleted
+        )
+
+    def test_price_tag_list(self):
+        # Check that we can access price tags anonymously
+        # We only have 2 queries:
+        # - 1 to count the number of price tags
+        # - 1 to get the price tags and their associated proof
+        with self.assertNumQueries(2):
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 200)
+            data = response.data
+
+        self.assertEqual(data["total"], 3)
+        self.assertEqual(len(data["items"]), 3)
+        item = data["items"][0]
+        self.assertEqual(item["id"], self.price_tag_1.id)  # default order: created
+        self.assertNotIn("price", item)  # not returned in "list"
+        self.assertEqual(item["price_id"], self.price.id)
+        item_2 = data["items"][1]
+        self.assertEqual(item_2["id"], self.price_tag_2.id)
+        self.assertIsNone(item_2["price_id"])
+
+    def test_price_tag_list_filter_with_status(self):
+        url = self.url + "?status=0"  # deleted
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["items"][0]["id"], self.price_tag_3.id)
+
+    def test_price_tag_list_filter_with_status_is_null(self):
+        url = self.url + "?status__isnull=True"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(len(response.data["items"]), 1)
+        # Price tag 1 is linked to price, price tag 3 is deleted, so only
+        # price tag 2 is returned
+        self.assertEqual(response.data["items"][0]["id"], self.price_tag_2.id)
+
+
+class PriceTagDetailApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price = PriceFactory(proof=cls.proof)
+        cls.price_tag_1 = PriceTagFactory(proof=cls.proof)
+        cls.price_tag_2 = PriceTagFactory(proof=cls.proof, price=cls.price)
+        cls.url = reverse("api:price-tags-detail", args=[cls.price_tag_2.id])
+
+    def test_price_tag_detail(self):
+        # Check that we can retrieve a single price tags anonymously
+        # We only have 1 query to get the price tags and their associated proof
+        with self.assertNumQueries(1):
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 200)
+        data = response.data
+        self.assertEqual(data["id"], self.price_tag_2.id)
+        self.assertIn("proof", data.keys())
+        proof = data["proof"]
+        self.assertEquals(proof["id"], self.proof.id)
+        self.assertEqual(proof["type"], proof_constants.TYPE_PRICE_TAG)
+        self.assertNotIn("price", data)  # not returned in "detail"
+        self.assertEqual(data["price_id"], self.price.id)
+
+
+class PriceTagCreateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:price-tags-list")
+        cls.user_session = SessionFactory()
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price = PriceFactory(proof=cls.proof)
+        cls.default_bounding_box = [0.1, 0.2, 0.3, 0.4]
+
+    def test_price_tag_create_unauthenticated(self):
+        response = self.client.post(
+            self.url,
+            data={"bounding_box": self.default_bounding_box, "proof_id": self.proof.id},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data, {"detail": "Authentication credentials were not provided."}
+        )
+
+    def test_price_tag_create_missing_proof_id(self):
+        response = self.client.post(
+            self.url,
+            data={"bounding_box": self.default_bounding_box},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(response.data, {"proof_id": ["This field is required."]})
+
+    def test_price_tag_create_proof_not_found(self):
+        response = self.client.post(
+            self.url,
+            data={"bounding_box": self.default_bounding_box, "proof_id": 999},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            response.data, {"proof_id": ['Invalid pk "999" - object does not exist.']}
+        )
+
+    def test_price_tag_create_price_not_found(self):
+        response = self.client.post(
+            self.url,
+            data={
+                "bounding_box": self.default_bounding_box,
+                "proof_id": self.proof.id,
+                "price_id": 998,
+            },
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            response.data, {"price_id": ['Invalid pk "998" - object does not exist.']}
+        )
+
+    def test_price_tag_create(self):
+        response = self.client.post(
+            self.url,
+            data={"bounding_box": self.default_bounding_box, "proof_id": self.proof.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["created_by"], self.user_session.user.user_id)
+        self.assertEqual(response.data["updated_by"], self.user_session.user.user_id)
+        self.assertEqual(response.data["status"], None)
+        self.assertEqual(response.data["bounding_box"], self.default_bounding_box)
+        self.assertEqual(response.data["price_id"], None)
+
+    def test_price_tag_create_with_price(self):
+        response = self.client.post(
+            self.url,
+            data={
+                "bounding_box": self.default_bounding_box,
+                "proof_id": self.proof.id,
+                "price_id": self.price.id,
+            },
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["created_by"], self.user_session.user.user_id)
+        self.assertEqual(response.data["updated_by"], self.user_session.user.user_id)
+        self.assertEqual(response.data["price_id"], self.price.id)
+        self.assertEqual(response.data["status"], PriceTagStatus.linked_to_price.value)
+
+
+class PriceTagUpdateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.proof_2 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price = PriceFactory(proof=cls.proof)
+        cls.price_2 = PriceFactory(proof=cls.proof_2)
+        cls.price_tag = PriceTagFactory(
+            proof=cls.proof, model_version="object-detector"
+        )
+        cls.url = reverse("api:price-tags-detail", args=[cls.price_tag.id])
+        cls.new_bounding_box = [0.2, 0.3, 0.4, 0.5]
+
+    def test_price_tag_create_unauthenticated(self):
+        response = self.client.patch(
+            self.url, data={"bounding_box": self.new_bounding_box}
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data, {"detail": "Authentication credentials were not provided."}
+        )
+
+    def test_price_tag_create_update_read_only_fields(self):
+        self.assertEqual(self.price_tag.model_version, "object-detector")
+        self.assertNotEqual(self.price_tag.bounding_box, self.new_bounding_box)
+        response = self.client.patch(
+            self.url,
+            content_type="application/json",
+            data={
+                "bounding_box": self.new_bounding_box,
+                "proof_id": self.proof_2.id,
+                "model_version": "test",
+            },
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        # Proof ID didn't change
+        self.assertEqual(response.data["proof"]["id"], self.proof.id)
+        # Model version didn't change
+        self.assertEqual(response.data["model_version"], "object-detector")
+        # New bounding box was set
+        self.assertEqual(response.data["bounding_box"], self.new_bounding_box)
+
+    def test_price_tag_set_price_id(self):
+        self.assertEqual(self.price_tag.price_id, None)
+        self.assertEqual(self.price_tag.status, None)
+        response = self.client.patch(
+            self.url,
+            content_type="application/json",
+            data={"price_id": self.price.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        # Price ID was set to the new value
+        self.assertEqual(response.data["price_id"], self.price.id)
+        # Status was automatically set to linked_to_price
+        self.assertEqual(response.data["status"], PriceTagStatus.linked_to_price.value)
+
+    def test_price_tag_set_invalid_price_id(self):
+        self.assertEqual(self.price_tag.price_id, None)
+        response = self.client.patch(
+            self.url,
+            content_type="application/json",
+            # Price associated with another proof
+            data={"price_id": self.price_2.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data, {"price": ["Price should belong to the same proof."]}
+        )
+
+    def test_price_tag_set_status(self):
+        self.assertEqual(self.price_tag.status, None)
+        response = self.client.patch(
+            self.url,
+            content_type="application/json",
+            # Price associated with another proof
+            data={"status": PriceTagStatus.not_readable.value},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["status"], PriceTagStatus.not_readable.value)
+
+    def test_price_tag_invalid_status(self):
+        self.assertEqual(self.price_tag.status, None)
+        response = self.client.patch(
+            self.url,
+            content_type="application/json",
+            # Invalid status value
+            data={"status": 999},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {"status": ['"999" is not a valid choice.']})
+
+    def test_price_tag_set_new_bounding_box(self):
+        self.assertNotEqual(self.price_tag.bounding_box, self.new_bounding_box)
+        response = self.client.patch(
+            self.url,
+            content_type="application/json",
+            data={"bounding_box": self.new_bounding_box},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["bounding_box"], self.new_bounding_box)
+
+    def test_price_tag_invalid_bounding_box(self):
+        response = self.client.patch(
+            self.url,
+            content_type="application/json",
+            data={"bounding_box": [0.1, 0.2, 0.3]},  # only 3 values
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data, {"bounding_box": ["Bounding box should have 4 values."]}
+        )
+
+
+class PriceTagDeleteApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price = PriceFactory(proof=cls.proof)
+        cls.price_tag = PriceTagFactory(proof=cls.proof)
+        cls.price_tag_with_associated_price = PriceTagFactory(
+            proof=cls.proof, price=cls.price
+        )
+        cls.url = reverse("api:price-tags-detail", args=[cls.price_tag.id])
+        cls.url_with_associated_price = reverse(
+            "api:price-tags-detail", args=[cls.price_tag_with_associated_price.id]
+        )
+
+    def test_price_tag_delete_unauthenticated(self):
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data, {"detail": "Authentication credentials were not provided."}
+        )
+
+    def test_price_tag_delete_with_associated_price(self):
+        response = self.client.delete(
+            self.url_with_associated_price,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data, {"detail": "Cannot delete price tag with associated prices."}
+        )
+
+    def test_price_tag_delete(self):
+        response = self.client.delete(
+            self.url,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(PriceTag.objects.filter(id=self.price_tag.id).count(), 1)
+        self.assertEqual(
+            PriceTag.objects.get(id=self.price_tag.id).status, PriceTagStatus.deleted
         )

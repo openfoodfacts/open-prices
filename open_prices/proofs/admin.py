@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models.proof import Proof
 
 
 @admin.register(Proof)

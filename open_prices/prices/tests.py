@@ -13,7 +13,7 @@ from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models.proof import Proof
 from open_prices.users.factories import SessionFactory
 from open_prices.users.models import User
 

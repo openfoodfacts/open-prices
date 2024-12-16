@@ -7,7 +7,7 @@ from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDe
 from PIL import Image
 
 from . import constants
-from .models import Proof, ProofPrediction
+from .models.proof import Proof, ProofPrediction
 
 logger = logging.getLogger(__name__)
 

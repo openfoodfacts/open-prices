@@ -1,6 +1,6 @@
 import django_filters
 
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models.proof import Proof
 
 
 class ProofFilter(django_filters.FilterSet):
@@ -38,3 +38,10 @@ class ProofFilter(django_filters.FilterSet):
             "owner",
             "price_count",
         ]
+
+
+class PriceTagFilter(django_filters.FilterSet):
+    status__isnull = django_filters.BooleanFilter(
+        field_name="status", lookup_expr="isnull"
+    )
+    status = django_filters.CharFilter(field_name="status", lookup_expr="exact")

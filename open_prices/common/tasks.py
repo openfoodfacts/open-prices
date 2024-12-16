@@ -14,7 +14,7 @@ from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
 from open_prices.products.models import Product
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models.proof import Proof
 from open_prices.stats.models import TotalStats
 from open_prices.users.models import User
 

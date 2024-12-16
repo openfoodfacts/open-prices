@@ -19,7 +19,7 @@ from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models.proof import Proof
 from open_prices.users.models import User
 
 # Taxonomy mapping generation takes ~200ms, so we cache it to avoid
@@ -451,7 +451,7 @@ class Price(models.Model):
         # - receipt_quantity can only be set for receipts (default to 1)
         if self.proof_id:
             proof = None
-            from open_prices.proofs.models import Proof
+            from open_prices.proofs.models.proof import Proof
 
             try:
                 proof = Proof.objects.get(id=self.proof_id)

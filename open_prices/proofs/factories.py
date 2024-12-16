@@ -5,7 +5,8 @@ import factory.fuzzy
 from factory.django import DjangoModelFactory
 
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.models import Proof, ProofPrediction
+from open_prices.proofs.models.price_tag import PriceTag
+from open_prices.proofs.models.proof import Proof, ProofPrediction
 
 
 class ProofFactory(DjangoModelFactory):
@@ -44,3 +45,21 @@ class ProofPredictionFactory(DjangoModelFactory):
     }
     value = "SHELF"
     max_confidence = 0.98
+
+
+class PriceTagFactory(DjangoModelFactory):
+    class Meta:
+        model = PriceTag
+
+    proof = factory.SubFactory(ProofFactory)
+    model_version = "price_tag_detection-1.0"
+    created = factory.LazyFunction(
+        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
+    )
+    updated = factory.LazyFunction(
+        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
+    )
+    bounding_box = [0.1, 0.2, 0.3, 0.4]
+    status = None
+    created_by = None
+    updated_by = None
