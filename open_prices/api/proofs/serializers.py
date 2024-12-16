@@ -3,8 +3,7 @@ from rest_framework import serializers
 from open_prices.api.locations.serializers import LocationSerializer
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
-from open_prices.proofs.models.price_tag import PriceTag
-from open_prices.proofs.models.proof import Proof, ProofPrediction
+from open_prices.proofs.models import PriceTag, Proof, ProofPrediction
 
 
 class ProofPredictionSerializer(serializers.ModelSerializer):

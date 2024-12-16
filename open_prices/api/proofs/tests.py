@@ -17,8 +17,7 @@ from open_prices.proofs.factories import (
     ProofFactory,
     ProofPredictionFactory,
 )
-from open_prices.proofs.models.price_tag import PriceTag
-from open_prices.proofs.models.proof import Proof
+from open_prices.proofs.models import PriceTag, Proof
 from open_prices.users.factories import SessionFactory
 
 LOCATION_OSM_NODE_652825274 = {

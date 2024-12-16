@@ -25,8 +25,7 @@ from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.common.constants import PriceTagStatus
 from open_prices.common.gemini import handle_bulk_labels
-from open_prices.proofs.models.price_tag import PriceTag
-from open_prices.proofs.models.proof import Proof
+from open_prices.proofs.models import PriceTag, Proof
 from open_prices.proofs.utils import store_file
 
 

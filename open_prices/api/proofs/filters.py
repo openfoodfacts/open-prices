@@ -1,6 +1,6 @@
 import django_filters
 
-from open_prices.proofs.models.proof import Proof
+from open_prices.proofs.models import Proof
 
 
 class ProofFilter(django_filters.FilterSet):

@@ -29,7 +29,7 @@ from open_prices.proofs.ml import (
     run_and_save_proof_prediction,
     run_and_save_proof_type_prediction,
 )
-from open_prices.proofs.models.proof import Proof
+from open_prices.proofs.models import Proof
 from open_prices.proofs.utils import fetch_and_save_ocr_data, select_proof_image_dir
 
 LOCATION_OSM_NODE_652825274 = {

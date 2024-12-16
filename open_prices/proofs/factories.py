@@ -5,8 +5,7 @@ import factory.fuzzy
 from factory.django import DjangoModelFactory
 
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.models.price_tag import PriceTag
-from open_prices.proofs.models.proof import Proof, ProofPrediction
+from open_prices.proofs.models import PriceTag, Proof, ProofPrediction
 
 
 class ProofFactory(DjangoModelFactory):

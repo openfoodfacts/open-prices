@@ -10,7 +10,7 @@ from open_prices.proofs.ml import (
     PROOF_CLASSIFICATION_MODEL_NAME,
     run_and_save_proof_prediction,
 )
-from open_prices.proofs.models.proof import Proof
+from open_prices.proofs.models import Proof
 
 # Initializing root logger
 get_logger()

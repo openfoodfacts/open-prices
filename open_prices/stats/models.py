@@ -88,7 +88,7 @@ class TotalStats(SingletonModel):
         self.save(update_fields=self.LOCATION_COUNT_FIELDS + ["updated"])
 
     def update_proof_stats(self):
-        from open_prices.proofs.models.proof import Proof
+        from open_prices.proofs.models import Proof
 
         self.proof_count = Proof.objects.count()
         self.proof_with_price_count = Proof.objects.has_prices().count()
