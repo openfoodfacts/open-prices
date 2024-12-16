@@ -14,10 +14,16 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.factories import ProofFactory, ProofPredictionFactory
 from open_prices.proofs.ml import (
+    PRICE_TAG_DETECTOR_MODEL_NAME,
+    PRICE_TAG_DETECTOR_MODEL_VERSION,
+    PROOF_CLASSIFICATION_MODEL_NAME,
+    PROOF_CLASSIFICATION_MODEL_VERSION,
     ObjectDetectionRawResult,
+    run_and_save_price_tag_detection,
     run_and_save_proof_prediction,
+    run_and_save_proof_type_prediction,
 )
 from open_prices.proofs.models import Proof
 from open_prices.proofs.utils import fetch_and_save_ocr_data, select_proof_image_dir
@@ -473,6 +479,31 @@ class MLModelTest(TestCase):
                 proof_type_prediction.delete()
                 price_tag_prediction.delete()
                 proof.delete()
+
+    def test_run_and_save_proof_type_prediction_already_exists(self):
+        image = Image.new("RGB", (100, 100), "white")
+
+        proof = ProofFactory()
+        ProofPredictionFactory(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
+            model_name=PROOF_CLASSIFICATION_MODEL_NAME,
+            model_version=PROOF_CLASSIFICATION_MODEL_VERSION,
+        )
+        result = run_and_save_proof_type_prediction(image, proof)
+        self.assertIsNone(result)
+
+    def test_run_and_save_price_tag_detection_already_exists(self):
+        image = Image.new("RGB", (100, 100), "white")
+        proof = ProofFactory()
+        ProofPredictionFactory(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+            model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
+            model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
+        )
+        result = run_and_save_price_tag_detection(image, proof)
+        self.assertIsNone(result)
 
 
 class TestSelectProofImageDir(TestCase):

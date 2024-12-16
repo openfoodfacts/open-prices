@@ -86,13 +86,38 @@ def detect_price_tags(
     )
 
 
-def run_and_save_price_tag_detection(image: Image, proof: Proof) -> None:
+def run_and_save_price_tag_detection(
+    image: Image, proof: Proof, overwrite: bool = False
+) -> ProofPrediction | None:
     """Run the price tag object detection model and save the prediction
     in ProofPrediction table.
 
     :param image: the image to run the model on
     :param proof: the Proof instance to associate the ProofPrediction with
+    :param overwrite: whether to overwrite existing prediction, defaults to
+        False
+    :return: the ProofPrediction instance created, or None if the prediction
+        already exists and overwrite is False
     """
+
+    if ProofPrediction.objects.filter(
+        proof=proof, model_name=PRICE_TAG_DETECTOR_MODEL_NAME
+    ).exists():
+        if overwrite:
+            logger.info(
+                "Overwriting existing price tag detection for proof %s", proof.id
+            )
+            ProofPrediction.objects.filter(
+                proof=proof, model_name=PRICE_TAG_DETECTOR_MODEL_NAME
+            ).delete()
+        else:
+            logger.debug(
+                "Proof %s already has a prediction for model %s",
+                proof.id,
+                PRICE_TAG_DETECTOR_MODEL_NAME,
+            )
+            return None
+
     result = detect_price_tags(image)
     detections = result.to_list()
     if detections:
@@ -100,7 +125,7 @@ def run_and_save_price_tag_detection(image: Image, proof: Proof) -> None:
     else:
         max_confidence = None
 
-    ProofPrediction.objects.create(
+    return ProofPrediction.objects.create(
         proof=proof,
         type=constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
         model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
@@ -111,18 +136,40 @@ def run_and_save_price_tag_detection(image: Image, proof: Proof) -> None:
     )
 
 
-def run_and_save_proof_type_prediction(image: Image, proof: Proof) -> None:
+def run_and_save_proof_type_prediction(
+    image: Image, proof: Proof, overwrite: bool = False
+) -> ProofPrediction | None:
     """Run the proof type classifier model and save the prediction in
     ProofPrediction table.
 
     :param image: the image to run the model on
     :param proof: the Proof instance to associate the ProofPrediction with
+    :param overwrite: whether to overwrite existing prediction, defaults to
+        False
+    :return: the ProofPrediction instance created, or None if the prediction
+        already exists and overwrite is False
     """
+    if ProofPrediction.objects.filter(
+        proof=proof, model_name=PROOF_CLASSIFICATION_MODEL_NAME
+    ).exists():
+        if overwrite:
+            logger.info("Overwriting existing type prediction for proof %s", proof.id)
+            ProofPrediction.objects.filter(
+                proof=proof, model_name=PROOF_CLASSIFICATION_MODEL_NAME
+            ).delete()
+        else:
+            logger.debug(
+                "Proof %s already has a prediction for model %s",
+                proof.id,
+                PROOF_CLASSIFICATION_MODEL_NAME,
+            )
+            return None
+
     prediction = predict_proof_type(image)
 
     max_confidence = max(prediction, key=lambda x: x[1])[1]
     proof_type = max(prediction, key=lambda x: x[1])[0]
-    ProofPrediction.objects.create(
+    return ProofPrediction.objects.create(
         proof=proof,
         type=constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
         model_name=PROOF_CLASSIFICATION_MODEL_NAME,
