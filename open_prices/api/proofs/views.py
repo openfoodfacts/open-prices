@@ -140,7 +140,9 @@ class PriceTagViewSet(
     authentication_classes = [CustomAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
-    queryset = PriceTag.objects.select_related("proof").all()
+    queryset = (
+        PriceTag.objects.select_related("proof").prefetch_related("predictions").all()
+    )
     serializer_class = PriceTagFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = PriceTagFilter
@@ -190,7 +192,7 @@ class PriceTagViewSet(
                 price_tag.id,
             )
 
-        # return full price
+        # return full price tag
         return Response(
             self.serializer_class(price_tag).data, status=status.HTTP_201_CREATED
         )
@@ -214,5 +216,5 @@ class PriceTagViewSet(
                 "open_prices.proofs.ml.update_price_tag_extraction", price_tag.id
             )
 
-        # return full price
+        # return full price tag
         return Response(self.serializer_class(price_tag).data)

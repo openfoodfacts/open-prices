@@ -3,7 +3,12 @@ from rest_framework import serializers
 from open_prices.api.locations.serializers import LocationSerializer
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
-from open_prices.proofs.models import PriceTag, Proof, ProofPrediction
+from open_prices.proofs.models import (
+    PriceTag,
+    PriceTagPrediction,
+    Proof,
+    ProofPrediction,
+)
 
 
 class ProofPredictionSerializer(serializers.ModelSerializer):
@@ -84,15 +89,15 @@ class ProofProcessWithGeminiSerializer(serializers.Serializer):
     )  # TODO: this mode param should be used to select the prompt to execute, unimplemented for now
 
 
-class PriceTagSerializer(serializers.ModelSerializer):
-    price_id = serializers.PrimaryKeyRelatedField(read_only=True)
-
+class PriceTagPredictionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PriceTag
-        exclude = ["price", "proof"]
+        model = PriceTagPrediction
+        fields = ["type", "model_name", "model_version", "created", "data"]
 
 
-class PriceTagFullSerializer(PriceTagSerializer):
+class PriceTagFullSerializer(serializers.ModelSerializer):
+    price_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    predictions = PriceTagPredictionSerializer(many=True, read_only=True)
     proof = ProofSerializer()
 
     class Meta:
