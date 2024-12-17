@@ -7,7 +7,7 @@ from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDe
 from PIL import Image
 
 from . import constants
-from .models import Proof, ProofPrediction
+from .models import PriceTag, Proof, ProofPrediction
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,41 @@ def detect_price_tags(
     )
 
 
+def create_price_tags_from_proof_prediction(
+    proof: Proof, proof_prediction: ProofPrediction, threshold: float = 0.5
+) -> list[PriceTag]:
+    """Create price tags from a proof prediction containing price tag object
+    detections.
+
+    :param proof: the Proof instance to associate the PriceTag instances with
+    :param proof_prediction: the ProofPrediction instance containing the
+        price tag detections
+    :param threshold: the minimum confidence threshold for a detection to be
+        considered valid, defaults to 0.5
+    :return: the list of PriceTag instances created
+    """
+    if proof_prediction.model_name != PRICE_TAG_DETECTOR_MODEL_NAME:
+        logger.error(
+            "Proof prediction model %s is not a price tag detector",
+            proof_prediction.model_name,
+        )
+        return []
+
+    created = []
+    for detected_object in proof_prediction.data["objects"]:
+        if detected_object["score"] >= threshold:
+            price_tag = PriceTag.objects.create(
+                proof=proof,
+                bounding_box=detected_object["bounding_box"],
+                model_version=proof_prediction.model_version,
+                status=None,
+                created_by=None,
+                updated_by=None,
+            )
+            created.append(price_tag)
+    return created
+
+
 def run_and_save_price_tag_detection(
     image: Image, proof: Proof, overwrite: bool = False
 ) -> ProofPrediction | None:
@@ -100,22 +135,28 @@ def run_and_save_price_tag_detection(
         already exists and overwrite is False
     """
 
-    if ProofPrediction.objects.filter(
+    proof_prediction = ProofPrediction.objects.filter(
         proof=proof, model_name=PRICE_TAG_DETECTOR_MODEL_NAME
-    ).exists():
+    ).first()
+
+    if proof_prediction:
         if overwrite:
             logger.info(
                 "Overwriting existing price tag detection for proof %s", proof.id
             )
-            ProofPrediction.objects.filter(
-                proof=proof, model_name=PRICE_TAG_DETECTOR_MODEL_NAME
-            ).delete()
+            proof_prediction.delete()
         else:
             logger.debug(
                 "Proof %s already has a prediction for model %s",
                 proof.id,
                 PRICE_TAG_DETECTOR_MODEL_NAME,
             )
+            if not PriceTag.objects.filter(proof=proof).exists():
+                logger.debug(
+                    "Creating price tags from existing prediction for proof %s",
+                    proof.id,
+                )
+                create_price_tags_from_proof_prediction(proof, proof_prediction)
             return None
 
     result = detect_price_tags(image)
@@ -125,7 +166,7 @@ def run_and_save_price_tag_detection(
     else:
         max_confidence = None
 
-    return ProofPrediction.objects.create(
+    proof_prediction = ProofPrediction.objects.create(
         proof=proof,
         type=constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
         model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
@@ -134,6 +175,8 @@ def run_and_save_price_tag_detection(
         value=None,
         max_confidence=max_confidence,
     )
+    create_price_tags_from_proof_prediction(proof, proof_prediction)
+    return proof_prediction
 
 
 def run_and_save_proof_type_prediction(

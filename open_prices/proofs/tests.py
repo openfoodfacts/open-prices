@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 from PIL import Image
 
 from open_prices.locations import constants as location_constants
@@ -25,11 +26,12 @@ from open_prices.proofs.ml import (
     PROOF_CLASSIFICATION_MODEL_NAME,
     PROOF_CLASSIFICATION_MODEL_VERSION,
     ObjectDetectionRawResult,
+    create_price_tags_from_proof_prediction,
     run_and_save_price_tag_detection,
     run_and_save_proof_prediction,
     run_and_save_proof_type_prediction,
 )
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models import PriceTag, Proof
 from open_prices.proofs.utils import fetch_and_save_ocr_data, select_proof_image_dir
 
 LOCATION_OSM_NODE_652825274 = {
@@ -412,7 +414,9 @@ class MLModelTest(TestCase):
 
             # change temporarily settings.IMAGE_DIR
             with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
-                proof = ProofFactory(file_path=file_path)
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
 
                 # Patch predict_proof_type to return a fixed response
                 with (
@@ -499,15 +503,80 @@ class MLModelTest(TestCase):
 
     def test_run_and_save_price_tag_detection_already_exists(self):
         image = Image.new("RGB", (100, 100), "white")
-        proof = ProofFactory()
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
         ProofPredictionFactory(
             proof=proof,
             type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
             model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
             model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
+            data={
+                "objects": [
+                    {
+                        "label": "price_tag",
+                        "score": 0.98,
+                        "bounding_box": [0.5, 0.5, 1.0, 1.0],
+                    },
+                    {
+                        "label": "price_tag",
+                        "score": 0.8,
+                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                    },
+                ]
+            },
         )
         result = run_and_save_price_tag_detection(image, proof)
         self.assertIsNone(result)
+        price_tags = PriceTag.objects.filter(proof=proof).all()
+        self.assertEqual(len(price_tags), 2)
+        self.assertEqual(price_tags[0].bounding_box, [0.5, 0.5, 1.0, 1.0])
+        self.assertEqual(price_tags[1].bounding_box, [0.1, 0.1, 0.2, 0.2])
+
+    def create_price_tags_from_proof_prediction(self):
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        proof_prediction = ProofPredictionFactory(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+            model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
+            model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
+            data={
+                "objects": [
+                    {
+                        "label": "price_tag",
+                        "score": 0.98,
+                        "bounding_box": [0.5, 0.5, 1.0, 1.0],
+                    },
+                    {
+                        "label": "price_tag",
+                        "score": 0.45,
+                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                    },
+                    {
+                        "label": "price_tag",
+                        "score": 0.4,
+                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                    },
+                ]
+            },
+        )
+        before = timezone.now()
+        results = create_price_tags_from_proof_prediction(
+            proof, proof_prediction, threshold=0.4
+        )
+        after = timezone.now()
+        self.assertEqual(len(results), 2)
+        price_tags = PriceTag.objects.filter(proof=proof).all()
+        self.assertEqual(len(price_tags), 2)
+
+        price_tag_1 = results[0]
+        self.assertEqual(price_tag_1.bounding_box, [0.5, 0.5, 1.0, 1.0])
+        self.assertGreater(price_tag_1.created, before)
+        self.assertLess(price_tag_1.created, after)
+        self.assertGreater(price_tag_1.updated, before)
+        self.assertLess(price_tag_1.updated, after)
+        self.assertEqual(price_tag_1.status, None)
+        self.assertEqual(price_tag_1.created_by, None)
+        self.assertEqual(price_tag_1.updated_by, None)
+        self.assertEqual(price_tag_1.model_version, PRICE_TAG_DETECTOR_MODEL_VERSION)
 
 
 class TestSelectProofImageDir(TestCase):
