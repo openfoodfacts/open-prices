@@ -14,7 +14,11 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.factories import ProofFactory, ProofPredictionFactory
+from open_prices.proofs.factories import (
+    PriceTagFactory,
+    ProofFactory,
+    ProofPredictionFactory,
+)
 from open_prices.proofs.ml import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
     PRICE_TAG_DETECTOR_MODEL_VERSION,
@@ -539,3 +543,66 @@ class TestSelectProofImageDir(TestCase):
             (images_dir / "0001" / "0001.jpg").touch()
             selected_dir = select_proof_image_dir(images_dir, max_images_per_dir=1)
             self.assertEqual(selected_dir, images_dir / "0002")
+
+
+class TestPriceTagCreation(TestCase):
+    def test_create_price_tag_invalid_bounding_box_length(self):
+        with self.assertRaises(ValidationError) as cm:
+            PriceTagFactory(
+                bounding_box=[0.1, 0.2], proof__type=proof_constants.TYPE_PRICE_TAG
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "{'bounding_box': ['Bounding box should have 4 values.']}",
+        )
+
+    def test_create_price_tag_invalid_bounding_box_value(self):
+        with self.assertRaises(ValidationError) as cm:
+            PriceTagFactory(
+                bounding_box=None, proof__type=proof_constants.TYPE_PRICE_TAG
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "{'bounding_box': ['This field cannot be null.']}",
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            PriceTagFactory(
+                bounding_box=["st", 0.2, 0.3, 0.4],
+                proof__type=proof_constants.TYPE_PRICE_TAG,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "{'bounding_box': ['Bounding box values should be floats.']}",
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            PriceTagFactory(
+                bounding_box=[0.1, 1.2, 0.3, 0.4],
+                proof__type=proof_constants.TYPE_PRICE_TAG,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "{'bounding_box': ['Bounding box values should be between 0 and 1.']}",
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            PriceTagFactory(
+                bounding_box=[0.5, 0.1, 0.4, 0.4],
+                proof__type=proof_constants.TYPE_PRICE_TAG,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "{'bounding_box': ['Bounding box values should be in the format [y_min, x_min, y_max, x_max].']}",
+        )
+
+    def test_create_price_tag_invalid_proof_type(self):
+        with self.assertRaises(ValidationError) as cm:
+            PriceTagFactory(
+                bounding_box=[0.1, 0.1, 0.2, 0.2],
+                proof__type=proof_constants.TYPE_RECEIPT,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "{'proof': ['Proof should have type PRICE_TAG.']}",
+        )

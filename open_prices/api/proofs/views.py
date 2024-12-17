@@ -9,8 +9,11 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from open_prices.api.proofs.filters import ProofFilter
+from open_prices.api.proofs.filters import PriceTagFilter, ProofFilter
 from open_prices.api.proofs.serializers import (
+    PriceTagCreateSerializer,
+    PriceTagFullSerializer,
+    PriceTagUpdateSerializer,
     ProofCreateSerializer,
     ProofFullSerializer,
     ProofHalfFullSerializer,
@@ -20,8 +23,9 @@ from open_prices.api.proofs.serializers import (
 )
 from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
+from open_prices.common.constants import PriceTagStatus
 from open_prices.common.gemini import handle_bulk_labels
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models import PriceTag, Proof
 from open_prices.proofs.utils import store_file
 
 
@@ -123,3 +127,73 @@ class ProofViewSet(
         sample_files = [PIL.Image.open(file.file) for file in files]
         res = handle_bulk_labels(sample_files)
         return Response(res, status=status.HTTP_200_OK)
+
+
+class PriceTagViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
+    queryset = PriceTag.objects.select_related("proof").all()
+    serializer_class = PriceTagFullSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = PriceTagFilter
+    ordering_fields = ["created"]
+    ordering = ["created"]
+
+    def get_queryset(self):
+        if self.action in ("create", "update"):
+            # We need to prefetch the price object if it exists to validate the
+            # price_id field, and the proof object to validate the proof_id
+            # field
+            return (
+                PriceTag.objects.select_related("proof").select_related("price").all()
+            )
+        return super().get_queryset()
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return PriceTagCreateSerializer
+        elif self.request.method == "PATCH":
+            return PriceTagUpdateSerializer
+        return self.serializer_class
+
+    def destroy(self, request: Request, *args, **kwargs) -> Response:
+        price_tag = self.get_object()
+        if price_tag.price_id is not None:
+            return Response(
+                {"detail": "Cannot delete price tag with associated prices."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        price_tag.status = PriceTagStatus.deleted
+        price_tag.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def create(self, request: Request, *args, **kwargs):
+        # validate
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # save
+
+        user_id = self.request.user.user_id
+        price = serializer.save(updated_by=user_id, created_by=user_id)
+        # return full price
+        return Response(
+            self.serializer_class(price).data, status=status.HTTP_201_CREATED
+        )
+
+    def update(self, request: Request, *args, **kwargs):
+        # validate
+        serializer = self.get_serializer(
+            self.get_object(), data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        # save
+        price = serializer.save(updated_by=self.request.user.user_id)
+        # return full price
+        return Response(self.serializer_class(price).data)
