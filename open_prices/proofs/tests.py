@@ -429,7 +429,9 @@ class MLModelTest(TestCase):
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
                 ):
-                    run_and_save_proof_prediction(proof.id)
+                    run_and_save_proof_prediction(
+                        proof.id, run_price_tag_extraction=False
+                    )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_called_once()
 
@@ -524,7 +526,7 @@ class MLModelTest(TestCase):
                 ]
             },
         )
-        result = run_and_save_price_tag_detection(image, proof)
+        result = run_and_save_price_tag_detection(image, proof, run_extraction=False)
         self.assertIsNone(result)
         price_tags = PriceTag.objects.filter(proof=proof).all()
         self.assertEqual(len(price_tags), 2)
@@ -560,7 +562,7 @@ class MLModelTest(TestCase):
         )
         before = timezone.now()
         results = create_price_tags_from_proof_prediction(
-            proof, proof_prediction, threshold=0.4
+            proof, proof_prediction, threshold=0.4, run_extraction=False
         )
         after = timezone.now()
         self.assertEqual(len(results), 2)

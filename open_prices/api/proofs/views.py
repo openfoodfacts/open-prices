@@ -24,7 +24,7 @@ from open_prices.api.proofs.serializers import (
 from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.common.constants import PriceTagStatus
-from open_prices.common.gemini import handle_bulk_labels
+from open_prices.proofs.ml import extract_from_price_tags
 from open_prices.proofs.models import PriceTag, Proof
 from open_prices.proofs.utils import store_file
 
@@ -125,7 +125,7 @@ class ProofViewSet(
     def process_with_gemini(self, request: Request) -> Response:
         files = request.FILES.getlist("files")
         sample_files = [PIL.Image.open(file.file) for file in files]
-        res = handle_bulk_labels(sample_files)
+        res = extract_from_price_tags(sample_files)
         return Response(res, status=status.HTTP_200_OK)
 
 
