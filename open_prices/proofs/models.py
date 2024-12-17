@@ -413,7 +413,7 @@ class PriceTag(models.Model):
         Proof,
         on_delete=models.CASCADE,
         related_name="price_tags",
-        verbose_name="The proof this price tag belongs to",
+        help_text="The proof this price tag belongs to",
     )
     price = models.ForeignKey(
         "prices.Price",
@@ -421,45 +421,40 @@ class PriceTag(models.Model):
         related_name="price_tags",
         null=True,
         blank=True,
-        verbose_name="The price linked to this tag",
+        help_text="The price linked to this tag",
     )
     created = models.DateTimeField(
-        default=timezone.now, verbose_name="When the tag was created in DB"
+        default=timezone.now, help_text="When the tag was created in DB"
     )
     updated = models.DateTimeField(
-        auto_now=True, verbose_name="When the tag was last updated"
+        auto_now=True, help_text="When the tag was last updated"
     )
     bounding_box = ArrayField(
         base_field=models.FloatField(),
-        verbose_name="Coordinates of the bounding box, in the format [y_min, x_min, y_max, x_max]",
+        help_text="Coordinates of the bounding box, in the format [y_min, x_min, y_max, x_max]",
     )
     status = models.IntegerField(
         choices=constants.PRICE_TAG_STATUS_CHOICES,
         null=True,
         blank=True,
-        verbose_name="The annotation status. Possible values are: "
-        "- null: not annotated yet"
-        "- 0 (the price tag was deleted by a user)"
-        "- 1 (the price tag is linked to a price)"
-        "- 2 (the price tag barcode or price cannot be read)"
-        "- 3 (the object is not a price tag)",
+        help_text="The annotation status",
     )
     model_version = models.CharField(
         max_length=30,
-        verbose_name="The version of the object detector model that generated the prediction",
+        help_text="The version of the object detector model that generated the prediction",
         blank=True,
         null=True,
     )
     created_by = models.CharField(
         max_length=100,
-        verbose_name="The name of the user who created this price tag. This field is null if "
+        help_text="The name of the user who created this price tag. This field is null if "
         "the tag was created by a model.",
         null=True,
         blank=True,
     )
     updated_by = models.CharField(
         max_length=100,
-        verbose_name="The name of the user who last updated this price tag bounding boxes. "
+        help_text="The name of the user who last updated this price tag bounding boxes. "
         "If the price tag bounding boxes were never updated, this field is null.",
         null=True,
         blank=True,

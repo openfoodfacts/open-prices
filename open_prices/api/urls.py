@@ -23,7 +23,7 @@ router.register(r"v1/locations", LocationViewSet, basename="locations")
 router.register(r"v1/products", ProductViewSet, basename="products")
 router.register(r"v1/proofs", ProofViewSet, basename="proofs")
 router.register(r"v1/prices", PriceViewSet, basename="prices")
-router.register(r"v1/price_tags", PriceTagViewSet, basename="price-tags")
+router.register(r"v1/price-tags", PriceTagViewSet, basename="price-tags")
 
 urlpatterns = [
     # auth urls

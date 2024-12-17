@@ -29,13 +29,13 @@ class Migration(migrations.Migration):
                     "created",
                     models.DateTimeField(
                         default=django.utils.timezone.now,
-                        verbose_name="When the tag was created in DB",
+                        help_text="When the tag was created in DB",
                     ),
                 ),
                 (
                     "updated",
                     models.DateTimeField(
-                        auto_now=True, verbose_name="When the tag was last updated"
+                        auto_now=True, help_text="When the tag was last updated"
                     ),
                 ),
                 (
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
                     django.contrib.postgres.fields.ArrayField(
                         base_field=models.FloatField(),
                         size=None,
-                        verbose_name="Coordinates of the bounding box, in the format [y_min, x_min, y_max, x_max]",
+                        help_text="Coordinates of the bounding box, in the format [y_min, x_min, y_max, x_max]",
                     ),
                 ),
                 (
@@ -57,14 +57,14 @@ class Migration(migrations.Migration):
                             (3, "not_price_tag"),
                         ],
                         null=True,
-                        verbose_name="The annotation status. Possible values are: - null: not annotated yet- 0 (the price tag was deleted by a user)- 1 (the price tag is linked to a price)- 2 (the price tag barcode or price cannot be read)- 3 (the object is not a price tag)",
+                        help_text="The annotation status",
                     ),
                 ),
                 (
                     "model_version",
                     models.CharField(
                         max_length=30,
-                        verbose_name="The version of the object detector model that generated the prediction",
+                        help_text="The version of the object detector model that generated the prediction",
                         null=True,
                         blank=True,
                     ),
@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         max_length=100,
                         null=True,
-                        verbose_name="The name of the user who created this price tag. This field is null if the tag was created by a model.",
+                        help_text="The name of the user who created this price tag. This field is null if the tag was created by a model.",
                     ),
                 ),
                 (
@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         max_length=100,
                         null=True,
-                        verbose_name="The name of the user who last updated this price tag bounding boxes. If the price tag bounding boxes were never updated, this field is null.",
+                        help_text="The name of the user who last updated this price tag bounding boxes. If the price tag bounding boxes were never updated, this field is null.",
                     ),
                 ),
                 (
@@ -95,7 +95,7 @@ class Migration(migrations.Migration):
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="price_tags",
                         to="prices.price",
-                        verbose_name="The price linked to this tag",
+                        help_text="The price linked to this tag",
                     ),
                 ),
                 (
@@ -104,7 +104,7 @@ class Migration(migrations.Migration):
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="price_tags",
                         to="proofs.proof",
-                        verbose_name="The proof this price tag belongs to",
+                        help_text="The proof this price tag belongs to",
                     ),
                 ),
             ],
