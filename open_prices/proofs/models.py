@@ -536,3 +536,44 @@ class PriceTag(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class PriceTagPrediction(models.Model):
+    """A machine learning prediction for a price tag."""
+
+    price_tag = models.ForeignKey(
+        PriceTag,
+        on_delete=models.CASCADE,
+        related_name="predictions",
+        help_text="The price tag this prediction belongs to",
+    )
+    type = models.CharField(
+        max_length=20,
+        choices=proof_constants.PRICE_TAG_PREDICTION_TYPE_CHOICES,
+        help_text="The type of the prediction",
+    )
+    model_name = models.CharField(
+        max_length=30,
+        help_text="The name of the model that generated the prediction",
+    )
+    model_version = models.CharField(
+        max_length=30,
+        help_text="The specific version of the model that generated the prediction",
+    )
+    created = models.DateTimeField(
+        default=timezone.now, help_text="When the prediction was created in DB"
+    )
+    data = models.JSONField(
+        null=False,
+        blank=False,
+        help_text="a dict representing the data of the prediction. This field is model-specific.",
+        default=dict,
+    )
+
+    class Meta:
+        db_table = "price_tag_predictions"
+        verbose_name = "Price Tag Prediction"
+        verbose_name_plural = "Price Tag Predictions"
+
+    def __str__(self):
+        return f"{self.model_name} - {self.model_version} - {self.price_tag}"
