@@ -39,6 +39,7 @@ class PriceFilter(django_filters.FilterSet):
     class Meta:
         model = Price
         fields = [
+            "type",
             "product_code",
             "product_id",
             "category_tag",
