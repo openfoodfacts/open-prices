@@ -1,6 +1,7 @@
 import PIL.Image
 from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
+from django_q.tasks import async_task
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
@@ -139,7 +140,9 @@ class PriceTagViewSet(
     authentication_classes = [CustomAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
-    queryset = PriceTag.objects.select_related("proof").all()
+    queryset = (
+        PriceTag.objects.select_related("proof").prefetch_related("predictions").all()
+    )
     serializer_class = PriceTagFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = PriceTagFilter
@@ -181,19 +184,37 @@ class PriceTagViewSet(
         # save
 
         user_id = self.request.user.user_id
-        price = serializer.save(updated_by=user_id, created_by=user_id)
-        # return full price
+        price_tag = serializer.save(updated_by=user_id, created_by=user_id)
+
+        if not settings.TESTING:
+            async_task(
+                "open_prices.proofs.ml.run_and_save_price_tag_extraction_from_id",
+                price_tag.id,
+            )
+
+        # return full price tag
         return Response(
-            self.serializer_class(price).data, status=status.HTTP_201_CREATED
+            self.serializer_class(price_tag).data, status=status.HTTP_201_CREATED
         )
 
     def update(self, request: Request, *args, **kwargs):
         # validate
+        previous_price_tag: PriceTag = self.get_object()
+        previous_bounding_box = previous_price_tag.bounding_box
         serializer = self.get_serializer(
-            self.get_object(), data=request.data, partial=True
+            previous_price_tag, data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
         # save
-        price = serializer.save(updated_by=self.request.user.user_id)
-        # return full price
-        return Response(self.serializer_class(price).data)
+        price_tag = serializer.save(updated_by=self.request.user.user_id)
+        if (
+            not settings.TESTING
+            # Only run the extraction if the bounding box has changed
+            and previous_bounding_box != price_tag.bounding_box
+        ):
+            async_task(
+                "open_prices.proofs.ml.update_price_tag_extraction", price_tag.id
+            )
+
+        # return full price tag
+        return Response(self.serializer_class(price_tag).data)

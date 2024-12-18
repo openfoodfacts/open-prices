@@ -418,7 +418,8 @@ class PriceTagListApiTest(TestCase):
         # We only have 2 queries:
         # - 1 to count the number of price tags
         # - 1 to get the price tags and their associated proof
-        with self.assertNumQueries(2):
+        # - 1 to get the price tag predictions (prefetch related)
+        with self.assertNumQueries(3):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
             data = response.data
@@ -461,8 +462,7 @@ class PriceTagDetailApiTest(TestCase):
 
     def test_price_tag_detail(self):
         # Check that we can retrieve a single price tags anonymously
-        # We only have 1 query to get the price tags and their associated proof
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(2):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
         data = response.data

@@ -227,6 +227,24 @@ def detect_price_tags(
     )
 
 
+def run_and_save_price_tag_extraction_from_id(price_tag_id: int) -> None:
+    """Extract information from a single price tag using the Gemini model and
+    save the predictions in the database.
+
+    This function is meant to be called asynchronously using django background
+    tasks.
+
+    :param price_tag_id the ID of the PriceTag instance to extract information
+    """
+    price_tag = PriceTag.objects.filter(id=price_tag_id).select_related("proof").first()
+
+    if not price_tag:
+        logger.error("Price tag with id %s not found", price_tag_id)
+        return None
+
+    run_and_save_price_tag_extraction([price_tag], price_tag.proof)
+
+
 def run_and_save_price_tag_extraction(
     price_tags: list[PriceTag], proof: Proof
 ) -> list[PriceTagPrediction]:
@@ -269,6 +287,51 @@ def run_and_save_price_tag_extraction(
         predictions.append(prediction)
 
     return predictions
+
+
+def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction:
+    """Update the price tag extraction prediction using the Gemini model.
+
+    :param price_tag: the PriceTag instance associated with the prediction
+    :return: the updated PriceTagPrediction instance
+    """
+    price_tag = PriceTag.objects.filter(id=price_tag_id).select_related("proof").first()
+
+    if not price_tag:
+        logger.error("Price tag with id %s not found", price_tag_id)
+        return None
+
+    proof = price_tag.proof
+    if proof.file_path_full is None or not Path(proof.file_path_full).exists():
+        logger.error("Proof file not found: %s", proof.file_path_full)
+        return []
+
+    price_tag_prediction = PriceTagPrediction.objects.filter(
+        price_tag=price_tag, type=constants.PRICE_TAG_EXTRACTION_TYPE
+    ).first()
+
+    if not price_tag_prediction:
+        logger.info(
+            "Price tag %s does not have a price tag extraction prediction",
+            price_tag.id,
+        )
+        return None
+
+    y_min, x_min, y_max, x_max = price_tag.bounding_box
+    image = Image.open(proof.file_path_full)
+    (left, right, top, bottom) = (
+        x_min * image.width,
+        x_max * image.width,
+        y_min * image.height,
+        y_max * image.height,
+    )
+    cropped_image = image.crop((left, top, right, bottom))
+    gemini_output = extract_from_price_tags([cropped_image])
+    price_tag_prediction.data = gemini_output["labels"][0]
+    price_tag_prediction.model_name = GEMINI_MODEL_NAME
+    price_tag_prediction.model_version = GEMINI_MODEL_VERSION
+    price_tag_prediction.save()
+    return price_tag_prediction
 
 
 def create_price_tags_from_proof_prediction(
