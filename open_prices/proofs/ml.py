@@ -410,7 +410,10 @@ def run_and_save_price_tag_detection(
                 proof.id,
                 PRICE_TAG_DETECTOR_MODEL_NAME,
             )
-            if not PriceTag.objects.filter(proof=proof).exists():
+            if (
+                proof.type == constants.TYPE_PRICE_TAG
+                and not PriceTag.objects.filter(proof=proof).exists()
+            ):
                 logger.debug(
                     "Creating price tags from existing prediction for proof %s",
                     proof.id,
@@ -436,9 +439,10 @@ def run_and_save_price_tag_detection(
         value=None,
         max_confidence=max_confidence,
     )
-    create_price_tags_from_proof_prediction(
-        proof, proof_prediction, run_extraction=run_extraction
-    )
+    if proof.type == constants.TYPE_PRICE_TAG:
+        create_price_tags_from_proof_prediction(
+            proof, proof_prediction, run_extraction=run_extraction
+        )
     return proof_prediction
 
 
