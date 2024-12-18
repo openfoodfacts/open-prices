@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.56.0](https://github.com/openfoodfacts/open-prices/compare/v1.55.1...v1.56.0) (2024-12-18)
+
+
+### Features
+
+* add `price_tag` table and routes ([#628](https://github.com/openfoodfacts/open-prices/issues/628)) ([fe3f745](https://github.com/openfoodfacts/open-prices/commit/fe3f74529f902ec5b74608469098f3e916f0d06a))
+* create price tags from the object detector model ([#629](https://github.com/openfoodfacts/open-prices/issues/629)) ([a0c4741](https://github.com/openfoodfacts/open-prices/commit/a0c4741ab5b50a557c71e01d9fb3f5dbc14ecdbf))
+* improve gemini processing ([#631](https://github.com/openfoodfacts/open-prices/issues/631)) ([8263e00](https://github.com/openfoodfacts/open-prices/commit/8263e00def466242b80004ae454b55ad16e7c0a0))
+* save Gemini prediction in `price_tag_predictions` table ([#630](https://github.com/openfoodfacts/open-prices/issues/630)) ([39d3c25](https://github.com/openfoodfacts/open-prices/commit/39d3c259ac62f2f3f0e681d0ded864dc22b5b3de))
+
+
+### Bug Fixes
+
+* fix script that runs ML models for proofs without predictions ([#627](https://github.com/openfoodfacts/open-prices/issues/627)) ([c825d2c](https://github.com/openfoodfacts/open-prices/commit/c825d2c23aed60dc180861df0130b4f325bb3463))
+
+
+### Technical
+
+* pass ENVIRONMENT envvar to services ([#625](https://github.com/openfoodfacts/open-prices/issues/625)) ([59f9cd6](https://github.com/openfoodfacts/open-prices/commit/59f9cd606b2d16fb5c0613f2d35194e066b901ed))
+* update redis default stream name ([824a389](https://github.com/openfoodfacts/open-prices/commit/824a3895ecd058b6539ef8e5d99f016a1de8bbbb))
+
 ## [1.55.1](https://github.com/openfoodfacts/open-prices/compare/v1.55.0...v1.55.1) (2024-12-12)
 
 
