@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.56.1](https://github.com/openfoodfacts/open-prices/compare/v1.56.0...v1.56.1) (2024-12-18)
+
+
+### Bug Fixes
+
+* don't create price tags for proofs.type != PRICE_TAG ([#632](https://github.com/openfoodfacts/open-prices/issues/632)) ([c40f9ae](https://github.com/openfoodfacts/open-prices/commit/c40f9ae25aa58fa6ee4da4e79abfa929dfbcb354))
+
 ## [1.56.0](https://github.com/openfoodfacts/open-prices/compare/v1.55.1...v1.56.0) (2024-12-18)
 
 
