@@ -358,9 +358,6 @@ class ProofPrediction(models.Model):
         max_length=30,
         verbose_name="The specific version of the model that generated the prediction",
     )
-    created = models.DateTimeField(
-        default=timezone.now, verbose_name="When the prediction was created in DB"
-    )
     data = models.JSONField(
         null=True,
         blank=True,
@@ -380,13 +377,17 @@ class ProofPrediction(models.Model):
         "For classification models, this is the confidence of the predicted class.",
     )
 
+    created = models.DateTimeField(
+        default=timezone.now, verbose_name="When the prediction was created in DB"
+    )
+
     class Meta:
         db_table = "proof_predictions"
         verbose_name = "Proof Prediction"
         verbose_name_plural = "Proof Predictions"
 
     def __str__(self):
-        return f"{self.model_name} - {self.model_version} - {self.proof}"
+        return f"{self.proof} - {self.model_name} - {self.model_version}"
 
 
 @receiver(signals.post_save, sender=Proof)
@@ -423,12 +424,6 @@ class PriceTag(models.Model):
         blank=True,
         help_text="The price linked to this tag",
     )
-    created = models.DateTimeField(
-        default=timezone.now, help_text="When the tag was created in DB"
-    )
-    updated = models.DateTimeField(
-        auto_now=True, help_text="When the tag was last updated"
-    )
     bounding_box = ArrayField(
         base_field=models.FloatField(),
         help_text="Coordinates of the bounding box, in the format [y_min, x_min, y_max, x_max]",
@@ -445,6 +440,7 @@ class PriceTag(models.Model):
         blank=True,
         null=True,
     )
+
     created_by = models.CharField(
         max_length=100,
         help_text="The name of the user who created this price tag. This field is null if "
@@ -460,13 +456,20 @@ class PriceTag(models.Model):
         blank=True,
     )
 
+    created = models.DateTimeField(
+        default=timezone.now, help_text="When the tag was created in DB"
+    )
+    updated = models.DateTimeField(
+        auto_now=True, help_text="When the tag was last updated"
+    )
+
     class Meta:
         db_table = "price_tags"
         verbose_name = "Price Tag"
         verbose_name_plural = "Price Tags"
 
     def __str__(self):
-        return f"{self.proof} - {self.status}"
+        return f"{self.proof} - {self.id} - {self.status}"
 
     def clean(self, *args, **kwargs):
         validation_errors = dict()
@@ -560,14 +563,15 @@ class PriceTagPrediction(models.Model):
         max_length=30,
         help_text="The specific version of the model that generated the prediction",
     )
-    created = models.DateTimeField(
-        default=timezone.now, help_text="When the prediction was created in DB"
-    )
     data = models.JSONField(
         null=False,
         blank=False,
         help_text="a dict representing the data of the prediction. This field is model-specific.",
         default=dict,
+    )
+
+    created = models.DateTimeField(
+        default=timezone.now, help_text="When the prediction was created in DB"
     )
 
     class Meta:
@@ -576,4 +580,4 @@ class PriceTagPrediction(models.Model):
         verbose_name_plural = "Price Tag Predictions"
 
     def __str__(self):
-        return f"{self.model_name} - {self.model_version} - {self.price_tag}"
+        return f"{self.price_tag} - {self.model_name} - {self.model_version}"

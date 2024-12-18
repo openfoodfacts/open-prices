@@ -1,6 +1,6 @@
 import django_filters
 
-from open_prices.proofs.models import Proof
+from open_prices.proofs.models import PriceTag, Proof
 
 
 class ProofFilter(django_filters.FilterSet):
@@ -44,4 +44,11 @@ class PriceTagFilter(django_filters.FilterSet):
     status__isnull = django_filters.BooleanFilter(
         field_name="status", lookup_expr="isnull"
     )
-    status = django_filters.CharFilter(field_name="status", lookup_expr="exact")
+
+    class Meta:
+        model = PriceTag
+        fields = [
+            "proof_id",
+            "proof__owner",
+            "status",
+        ]
