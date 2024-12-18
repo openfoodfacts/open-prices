@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.56.2](https://github.com/openfoodfacts/open-prices/compare/v1.56.1...v1.56.2) (2024-12-18)
+
+
+### Technical
+
+* **Prices:** API: add filtering by type ([fed3214](https://github.com/openfoodfacts/open-prices/commit/fed321494536caf4fa40715497b3b8c4de3d168a))
+
 ## [1.56.1](https://github.com/openfoodfacts/open-prices/compare/v1.56.0...v1.56.1) (2024-12-18)
 
 
