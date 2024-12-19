@@ -98,7 +98,7 @@ class PriceTagPredictionSerializer(serializers.ModelSerializer):
 class PriceTagFullSerializer(serializers.ModelSerializer):
     price_id = serializers.PrimaryKeyRelatedField(read_only=True)
     predictions = PriceTagPredictionSerializer(many=True, read_only=True)
-    proof = ProofSerializer()
+    proof = ProofHalfFullSerializer()
 
     class Meta:
         model = PriceTag

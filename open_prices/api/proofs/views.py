@@ -141,7 +141,9 @@ class PriceTagViewSet(
     permission_classes = [IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = (
-        PriceTag.objects.select_related("proof").prefetch_related("predictions").all()
+        PriceTag.objects.select_related("proof", "proof__location")
+        .prefetch_related("predictions")
+        .all()
     )
     serializer_class = PriceTagFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
