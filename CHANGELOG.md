@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.56.3](https://github.com/openfoodfacts/open-prices/compare/v1.56.2...v1.56.3) (2024-12-19)
+
+
+### Technical
+
+* **Price tags:** API: add filter by proof__owner. ref [#628](https://github.com/openfoodfacts/open-prices/issues/628) ([5fd45df](https://github.com/openfoodfacts/open-prices/commit/5fd45dfda6a911bec5d39eed24d96f52deb55292))
+* **Price tags:** API: send proof location for context. ref [#628](https://github.com/openfoodfacts/open-prices/issues/628) ([b1cb613](https://github.com/openfoodfacts/open-prices/commit/b1cb6135878263a895860d66236fecd4c4dd7bfc))
+
 ## [1.56.2](https://github.com/openfoodfacts/open-prices/compare/v1.56.1...v1.56.2) (2024-12-18)
 
 
