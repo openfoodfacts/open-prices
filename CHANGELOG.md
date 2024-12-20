@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.56.4](https://github.com/openfoodfacts/open-prices/compare/v1.56.3...v1.56.4) (2024-12-20)
+
+
+### Bug Fixes
+
+* add more raw categories to gemini ([#638](https://github.com/openfoodfacts/open-prices/issues/638)) ([07266f8](https://github.com/openfoodfacts/open-prices/commit/07266f8ea858513b989f7bd62d79ef9316800716))
+* Improve gemini processing ([#641](https://github.com/openfoodfacts/open-prices/issues/641)) ([df5ce6e](https://github.com/openfoodfacts/open-prices/commit/df5ce6efb00c17da21de018c6aee4ae572183a34))
+
 ## [1.56.3](https://github.com/openfoodfacts/open-prices/compare/v1.56.2...v1.56.3) (2024-12-19)
 
 
