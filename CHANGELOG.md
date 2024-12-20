@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.56.5](https://github.com/openfoodfacts/open-prices/compare/v1.56.4...v1.56.5) (2024-12-20)
+
+
+### Bug Fixes
+
+* fix bug in image.thumbnail call ([#642](https://github.com/openfoodfacts/open-prices/issues/642)) ([1566464](https://github.com/openfoodfacts/open-prices/commit/15664640b57d78f2fb2f3757a2f2daf0056c2556))
+
 ## [1.56.4](https://github.com/openfoodfacts/open-prices/compare/v1.56.3...v1.56.4) (2024-12-20)
 
 
