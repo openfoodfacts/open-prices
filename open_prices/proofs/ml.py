@@ -170,7 +170,8 @@ def extract_from_price_tags(images: Image.Image) -> Labels:
     max_size = 1024
     for image in images:
         if image.width > max_size or image.height > max_size:
-            resized_image = image.copy().thumbnail((max_size, max_size))
+            resized_image = image.copy()
+            resized_image.thumbnail((max_size, max_size))
             resized_images.append(resized_image)
         else:
             resized_images.append(image)
