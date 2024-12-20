@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.56.6](https://github.com/openfoodfacts/open-prices/compare/v1.56.5...v1.56.6) (2024-12-20)
+
+
+### Bug Fixes
+
+* add a command to extract from Gemini from price tag without prediction ([#644](https://github.com/openfoodfacts/open-prices/issues/644)) ([06216c5](https://github.com/openfoodfacts/open-prices/commit/06216c5ccee44533efd5c5dd3460879c36512e95))
+
 ## [1.56.5](https://github.com/openfoodfacts/open-prices/compare/v1.56.4...v1.56.5) (2024-12-20)
 
 
