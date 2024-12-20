@@ -67,9 +67,13 @@ class Command(BaseCommand):
         # one of the model by performing an
         # outer join on the Proof and Prediction tables.
         proofs = (
-            Proof.objects.filter(predictions__model_name__isnull=True)
-            | Proof.objects.exclude(exclusion_filter)
-        ).distinct()
+            (
+                Proof.objects.filter(predictions__model_name__isnull=True)
+                | Proof.objects.exclude(exclusion_filter)
+            ).distinct()
+            # Order by -id to process the most recent proofs first
+            .order_by("-id")
+        )
 
         if limit:
             proofs = proofs[:limit]
