@@ -162,15 +162,31 @@ class Labels(typing.TypedDict):
 
 def extract_from_price_tags(images: Image.Image) -> Labels:
     """Extract price tag information from a list of images."""
+
+    # Gemini model max payload size is 20MB
+    # To prevent the payload from being too large, we resize the images before
+    # upload
+    resized_images = []
+    max_size = 1024
+    for image in images:
+        if image.width > max_size or image.height > max_size:
+            resized_image = image.copy().thumbnail((max_size, max_size))
+            resized_images.append(resized_image)
+        else:
+            resized_images.append(image)
+
     response = model.generate_content(
         [
-            "Here are "
-            + str(len(images))
-            + " pictures containing a label. For each picture of a label, please extract all the following attributes: the product category matching product name, the origin category matching country of origin, the price, is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode. I expect a list of "
-            + str(len(images))
-            + " labels in your reply, no more, no less. If you cannot decode an attribute, set it to an empty string"
+            (
+                f"Here are {len(resized_images)} pictures containing a label. "
+                "For each picture of a label, please extract all the following attributes: "
+                "the product category matching product name, the origin category matching country of origin, the price, "
+                "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode. "
+                f"I expect a list of {len(resized_images)} labels in your reply, no more, no less. "
+                "If you cannot decode an attribute, set it to an empty string"
+            )
         ]
-        + images,
+        + resized_images,
         generation_config=genai.GenerationConfig(
             response_mime_type="application/json", response_schema=Labels
         ),
