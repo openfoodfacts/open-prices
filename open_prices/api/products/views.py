@@ -17,7 +17,7 @@ class ProductViewSet(
     serializer_class = ProductFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProductFilter
-    ordering_fields = ["price_count", "created"]
+    ordering_fields = Product.COUNT_FIELDS + ["created"]
     ordering = ["created"]
 
     @action(detail=False, methods=["GET"], url_path=r"code/(?P<code>\d+)")
