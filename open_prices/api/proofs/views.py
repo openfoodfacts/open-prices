@@ -148,7 +148,7 @@ class PriceTagViewSet(
     serializer_class = PriceTagFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = PriceTagFilter
-    ordering_fields = ["created"]
+    ordering_fields = ["proof_id", "created"]
     ordering = ["created"]
 
     def get_queryset(self):
