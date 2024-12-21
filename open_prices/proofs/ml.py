@@ -154,6 +154,7 @@ class Label(typing.TypedDict):
     unit: Unit
     organic: bool
     barcode: str
+    product_name: str
 
 
 class Labels(typing.TypedDict):
@@ -182,7 +183,7 @@ def extract_from_price_tags(images: Image.Image) -> Labels:
                 f"Here are {len(resized_images)} pictures containing a label. "
                 "For each picture of a label, please extract all the following attributes: "
                 "the product category matching product name, the origin category matching country of origin, the price, "
-                "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode. "
+                "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode (valid EAN-13 usually). "
                 f"I expect a list of {len(resized_images)} labels in your reply, no more, no less. "
                 "If you cannot decode an attribute, set it to an empty string"
             )
