@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.57.0](https://github.com/openfoodfacts/open-prices/compare/v1.56.6...v1.57.0) (2024-12-21)
+
+
+### Features
+
+* **ProofMl:** extract product_name and suggest ean-13 barcodes ([#646](https://github.com/openfoodfacts/open-prices/issues/646)) ([f3b670f](https://github.com/openfoodfacts/open-prices/commit/f3b670f5cc6a4065f35513e7a2dede7c3133dedb))
+
+
+### Technical
+
+* **Price tags:** API: allow ordering by proof_id. ref [#628](https://github.com/openfoodfacts/open-prices/issues/628) ([c68f680](https://github.com/openfoodfacts/open-prices/commit/c68f68091ff268d8bd6f9687ecfc5f2d270f4613))
+* **Products:** API: allow ordering by all count fields. ref [#445](https://github.com/openfoodfacts/open-prices/issues/445) ([ca7bb76](https://github.com/openfoodfacts/open-prices/commit/ca7bb76710478d58e34f13fefdaf41287afc5f02))
+
 ## [1.56.6](https://github.com/openfoodfacts/open-prices/compare/v1.56.5...v1.56.6) (2024-12-20)
 
 
