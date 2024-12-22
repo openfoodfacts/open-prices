@@ -120,7 +120,7 @@ class ProofViewSet(
     @action(
         detail=False,
         methods=["POST"],
-        url_path="process_with_gemini",
+        url_path="process-with-gemini",
         parser_classes=[MultiPartParser],
     )
     def process_with_gemini(self, request: Request) -> Response:
