@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.58.0](https://github.com/openfoodfacts/open-prices/compare/v1.57.0...v1.58.0) (2024-12-22)
+
+
+### Features
+
+* **Price tags:** script to match historical PriceTag with their prices ([#650](https://github.com/openfoodfacts/open-prices/issues/650)) ([44fbf2e](https://github.com/openfoodfacts/open-prices/commit/44fbf2e4759ef585df6ab0ca9deb71fdbe53b3c9))
+
+
+### Bug Fixes
+
+* **Gemini:** rename url to use hyphens instead of underscores. ref [#569](https://github.com/openfoodfacts/open-prices/issues/569) ([433011d](https://github.com/openfoodfacts/open-prices/commit/433011d17371c90c577d0f9b3ec46690a0064d5a))
+* process one image at a time with Gemini ([#648](https://github.com/openfoodfacts/open-prices/issues/648)) ([e0c251b](https://github.com/openfoodfacts/open-prices/commit/e0c251b4f60c51f1cd63c84c1adc5648a872f37d))
+
 ## [1.57.0](https://github.com/openfoodfacts/open-prices/compare/v1.56.6...v1.57.0) (2024-12-21)
 
 
