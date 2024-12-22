@@ -1,22 +1,38 @@
-import sys
 from collections import Counter
 
 from django.core.management.base import BaseCommand
 
 from open_prices.prices.constants import TYPE_CATEGORY, TYPE_PRODUCT
+from open_prices.prices.models import Price
 from open_prices.proofs.models import PriceTag, Proof
 
 
 def stats():
-    sys.stdout.write("PriceTag", PriceTag.objects.count())
-    sys.stdout.write("Proof PRICE_TAG", Proof.objects.filter(type="PRICE_TAG").count())
-    sys.stdout.write(
-        "PriceTag per status",
+    print("PriceTag:", PriceTag.objects.count())
+    print("Proof PRICE_TAG:", Proof.objects.has_type_price_tag().count())
+    print(
+        "PriceTag per status:",
         Counter(PriceTag.objects.all().values_list("status", flat=True)),
     )
-    sys.stdout.write(
-        "PriceTag without a price_id",
-        PriceTag.objects.filter(price_id__isnull=False).count(),
+    print(
+        "PriceTag without a price_id:",
+        PriceTag.objects.filter(price_id__isnull=True).count(),
+    )
+
+
+def match_price_tag_with_product_price(price: Price, price_tag: PriceTag) -> bool:
+    return (
+        price.type == TYPE_PRODUCT
+        and (price.product_code == price_tag.predictions.first().data["barcode"])
+        and (str(price.price) == str(price_tag.predictions.first().data["price"]))
+    )
+
+
+def match_price_tag_with_category_price(price: Price, price_tag: PriceTag) -> bool:
+    return (
+        price.type == TYPE_CATEGORY
+        and (price.product_code == price_tag.predictions.first().data["product"])
+        and (str(price.price) == str(price_tag.predictions.first().data["price"]))
     )
 
 
@@ -35,7 +51,7 @@ class Command(BaseCommand):
         self.stdout.write("Stats before...")
         stats()
 
-        self.stdout.write("Running...")
+        self.stdout.write("Running matching script...")
         for proof in Proof.objects.has_type_price_tag().prefetch_related(
             "prices", "price_tags", "price_tags__predictions"
         ):
@@ -50,36 +66,17 @@ class Command(BaseCommand):
                     elif price_tag.predictions.count() == 0:
                         continue
                     else:
-                        price_tag_prediction_data = price_tag.predictions.first().data
                         for price in proof.prices.all():
                             if price.price_tags.count() > 0:
                                 continue
-                            elif (
-                                price.type == TYPE_PRODUCT
-                                and (
-                                    price.product_code
-                                    == price_tag_prediction_data["barcode"]
-                                )
-                                and (
-                                    str(price.price)
-                                    == str(price_tag_prediction_data["price"])
-                                )
-                            ):
+                            # match product price
+                            elif match_price_tag_with_product_price(price, price_tag):
                                 price_tag.price_id = price.id
                                 price_tag.status = 1
                                 price_tag.save()
                                 break
-                            elif (
-                                price.type == TYPE_CATEGORY
-                                and (
-                                    price.category_tag
-                                    == price_tag_prediction_data["product"]
-                                )
-                                and (
-                                    str(price.price)
-                                    == str(price_tag_prediction_data["price"])
-                                )
-                            ):
+                            # match category price
+                            elif match_price_tag_with_category_price(price, price_tag):
                                 price_tag.price_id = price.id
                                 price_tag.status = 1
                                 price_tag.save()
