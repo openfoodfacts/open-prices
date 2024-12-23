@@ -2,8 +2,6 @@ from django.db import models
 from django.utils import timezone
 from solo.models import SingletonModel
 
-from open_prices.proofs import constants as proof_constants
-
 
 class TotalStats(SingletonModel):
     PRICE_COUNT_FIELDS = [
@@ -37,6 +35,7 @@ class TotalStats(SingletonModel):
         + PRODUCT_COUNT_FIELDS
         + LOCATION_COUNT_FIELDS
         + PROOF_COUNT_FIELDS
+        + PRICE_TAG_COUNT_FIELDS
         + USER_COUNT_FIELDS
     )
 
@@ -115,12 +114,10 @@ class TotalStats(SingletonModel):
         from open_prices.proofs.models import PriceTag
 
         self.price_tag_count = PriceTag.objects.count()
-        self.price_tag_status_unknown_count = PriceTag.objects.filter(
-            status=None
-        ).count()
-        self.price_tag_status_linked_to_price_count = PriceTag.objects.filter(
-            status=proof_constants.PriceTagStatus.linked_to_price.value
-        ).count()
+        self.price_tag_status_unknown_count = PriceTag.objects.status_unknown().count()
+        self.price_tag_status_linked_to_price_count = (
+            PriceTag.objects.status_linked_to_price().count()
+        )
         self.save(update_fields=self.PRICE_TAG_COUNT_FIELDS + ["updated"])
 
     def update_user_stats(self):
