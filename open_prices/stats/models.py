@@ -48,6 +48,8 @@ class TotalStats(SingletonModel):
     proof_type_receipt_count = models.PositiveIntegerField(default=0)
     proof_type_gdpr_request_count = models.PositiveIntegerField(default=0)
     proof_type_shop_import_count = models.PositiveIntegerField(default=0)
+    price_tag_count = models.PositiveIntegerField(default=0)
+    price_tag_linked_to_price_count = models.PositiveIntegerField(default=0)
     user_count = models.PositiveIntegerField(default=0)
     user_with_price_count = models.PositiveIntegerField(default=0)
 
