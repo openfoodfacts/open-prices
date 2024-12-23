@@ -1,7 +1,6 @@
 from django.db import IntegrityError
 from django.test import TestCase
 
-from open_prices.common.constants import PriceTagStatus
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
@@ -77,7 +76,7 @@ class TotalStatsTest(TestCase):
         PriceTagFactory(
             proof=cls.proof_price_tag,
             price=cls.price,
-            status=PriceTagStatus.linked_to_price.value,
+            status=proof_constants.PriceTagStatus.linked_to_price.value,
         )
 
     def test_update_price_stats(self):
@@ -124,13 +123,13 @@ class TotalStatsTest(TestCase):
 
     def test_update_price_tag_stats(self):
         self.assertEqual(self.total_stats.price_tag_count, 0)
-        self.assertEqual(self.total_stats.price_tag_unknown_count, 0)
-        self.assertEqual(self.total_stats.price_tag_linked_to_price_count, 0)
+        self.assertEqual(self.total_stats.price_tag_status_unknown_count, 0)
+        self.assertEqual(self.total_stats.price_tag_status_linked_to_price_count, 0)
         # update_price_tag_stats() will update price_tag_counts
         self.total_stats.update_price_tag_stats()
         self.assertEqual(self.total_stats.price_tag_count, 2)
-        self.assertEqual(self.total_stats.price_tag_unknown_count, 1)
-        self.assertEqual(self.total_stats.price_tag_linked_to_price_count, 1)
+        self.assertEqual(self.total_stats.price_tag_status_unknown_count, 1)
+        self.assertEqual(self.total_stats.price_tag_status_linked_to_price_count, 1)
 
     def test_update_user_stats(self):
         self.assertEqual(self.total_stats.user_count, 0)

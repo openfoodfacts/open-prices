@@ -616,7 +616,7 @@ class TestSelectProofImageDir(TestCase):
             self.assertEqual(selected_dir, images_dir / "0002")
 
 
-class TestPriceTagCreation(TestCase):
+class PriceTagCreationTest(TestCase):
     def test_create_price_tag_invalid_bounding_box_length(self):
         with self.assertRaises(ValidationError) as cm:
             PriceTagFactory(

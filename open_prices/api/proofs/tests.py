@@ -6,7 +6,6 @@ from django.test import TestCase
 from django.urls import reverse
 from PIL import Image
 
-from open_prices.common.constants import PriceTagStatus
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
@@ -406,11 +405,11 @@ class PriceTagListApiTest(TestCase):
         cls.price_tag_1 = PriceTagFactory(
             proof=cls.proof,
             price=cls.price,
-            status=PriceTagStatus.linked_to_price.value,
+            status=proof_constants.PriceTagStatus.linked_to_price.value,
         )
         cls.price_tag_2 = PriceTagFactory(proof=cls.proof)
         cls.price_tag_3 = PriceTagFactory(
-            proof=cls.proof_2, status=PriceTagStatus.deleted
+            proof=cls.proof_2, status=proof_constants.PriceTagStatus.deleted
         )
 
     def test_price_tag_list(self):
@@ -556,7 +555,10 @@ class PriceTagCreateApiTest(TestCase):
         self.assertEqual(response.data["created_by"], self.user_session.user.user_id)
         self.assertEqual(response.data["updated_by"], self.user_session.user.user_id)
         self.assertEqual(response.data["price_id"], self.price.id)
-        self.assertEqual(response.data["status"], PriceTagStatus.linked_to_price.value)
+        self.assertEqual(
+            response.data["status"],
+            proof_constants.PriceTagStatus.linked_to_price.value,
+        )
 
 
 class PriceTagUpdateApiTest(TestCase):
@@ -616,7 +618,10 @@ class PriceTagUpdateApiTest(TestCase):
         # Price ID was set to the new value
         self.assertEqual(response.data["price_id"], self.price.id)
         # Status was automatically set to linked_to_price
-        self.assertEqual(response.data["status"], PriceTagStatus.linked_to_price.value)
+        self.assertEqual(
+            response.data["status"],
+            proof_constants.PriceTagStatus.linked_to_price.value,
+        )
 
     def test_price_tag_set_invalid_price_id(self):
         self.assertEqual(self.price_tag.price_id, None)
@@ -638,11 +643,13 @@ class PriceTagUpdateApiTest(TestCase):
             self.url,
             content_type="application/json",
             # Price associated with another proof
-            data={"status": PriceTagStatus.not_readable.value},
+            data={"status": proof_constants.PriceTagStatus.not_readable.value},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["status"], PriceTagStatus.not_readable.value)
+        self.assertEqual(
+            response.data["status"], proof_constants.PriceTagStatus.not_readable.value
+        )
 
     def test_price_tag_invalid_status(self):
         self.assertEqual(self.price_tag.status, None)
@@ -721,5 +728,6 @@ class PriceTagDeleteApiTest(TestCase):
         self.assertEqual(response.data, None)
         self.assertEqual(PriceTag.objects.filter(id=self.price_tag.id).count(), 1)
         self.assertEqual(
-            PriceTag.objects.get(id=self.price_tag.id).status, PriceTagStatus.deleted
+            PriceTag.objects.get(id=self.price_tag.id).status,
+            proof_constants.PriceTagStatus.deleted,
         )
