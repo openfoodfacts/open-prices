@@ -409,7 +409,7 @@ class PriceTagQuerySet(models.QuerySet):
         return self.filter(status=None)
 
     def status_linked_to_price(self):
-        return self.filter(status=constants.PriceTagStatus.linked_to_price.value)
+        return self.filter(status=proof_constants.PriceTagStatus.linked_to_price.value)
 
 
 class PriceTag(models.Model):
@@ -437,7 +437,7 @@ class PriceTag(models.Model):
         help_text="Coordinates of the bounding box, in the format [y_min, x_min, y_max, x_max]",
     )
     status = models.IntegerField(
-        choices=constants.PRICE_TAG_STATUS_CHOICES,
+        choices=proof_constants.PRICE_TAG_STATUS_CHOICES,
         null=True,
         blank=True,
         help_text="The annotation status",
@@ -533,8 +533,8 @@ class PriceTag(models.Model):
                 )
 
             if self.status is None:
-                self.status = constants.PriceTagStatus.linked_to_price.value
-            elif self.status != constants.PriceTagStatus.linked_to_price.value:
+                self.status = proof_constants.PriceTagStatus.linked_to_price.value
+            elif self.status != proof_constants.PriceTagStatus.linked_to_price.value:
                 utils.add_validation_error(
                     validation_errors,
                     "status",

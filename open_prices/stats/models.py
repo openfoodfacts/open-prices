@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 from solo.models import SingletonModel
 
-from open_prices.common.constants import PriceTagStatus
+from open_prices.proofs import constants as proof_constants
 
 
 class TotalStats(SingletonModel):
@@ -119,7 +119,7 @@ class TotalStats(SingletonModel):
             status=None
         ).count()
         self.price_tag_status_linked_to_price_count = PriceTag.objects.filter(
-            status=PriceTagStatus.linked_to_price.value
+            status=proof_constants.PriceTagStatus.linked_to_price.value
         ).count()
         self.save(update_fields=self.PRICE_TAG_COUNT_FIELDS + ["updated"])
 

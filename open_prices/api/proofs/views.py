@@ -24,7 +24,7 @@ from open_prices.api.proofs.serializers import (
 )
 from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
-from open_prices.common.constants import PriceTagStatus
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof
 from open_prices.proofs.utils import store_file
@@ -175,7 +175,7 @@ class PriceTagViewSet(
                 {"detail": "Cannot delete price tag with associated prices."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        price_tag.status = PriceTagStatus.deleted
+        price_tag.status = proof_constants.PriceTagStatus.deleted
         price_tag.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
