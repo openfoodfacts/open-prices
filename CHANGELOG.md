@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.58.1](https://github.com/openfoodfacts/open-prices/compare/v1.58.0...v1.58.1) (2024-12-23)
+
+
+### Technical
+
+* **Price tags:** fix stats. move constants. cleanup ([#653](https://github.com/openfoodfacts/open-prices/issues/653)) ([08d148f](https://github.com/openfoodfacts/open-prices/commit/08d148f84ea8039d869fca680d59b2c722943d25))
+* **Price tags:** improve matching script (better manage decimal/float). ref [#650](https://github.com/openfoodfacts/open-prices/issues/650) ([e0e64b3](https://github.com/openfoodfacts/open-prices/commit/e0e64b3af6260766e0cb5d0b78d449f98488d841))
+* **Products:** API: send source_last_synced field as well. ref [#551](https://github.com/openfoodfacts/open-prices/issues/551) ([a2bb472](https://github.com/openfoodfacts/open-prices/commit/a2bb472d4ec15d539daa6f88a22de47f028a84f3))
+* **Stats:** new PriceTag stats ([#652](https://github.com/openfoodfacts/open-prices/issues/652)) ([4643706](https://github.com/openfoodfacts/open-prices/commit/46437066f0682bff9ef19df92d6e055f9445c594))
+
 ## [1.58.0](https://github.com/openfoodfacts/open-prices/compare/v1.57.0...v1.58.0) (2024-12-22)
 
 
