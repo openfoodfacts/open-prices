@@ -1,4 +1,5 @@
 from collections import Counter
+from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 
@@ -20,25 +21,31 @@ def stats():
     )
 
 
+def match_decimal_with_float(price_decimal: Decimal, price_float: float) -> bool:
+    return float(price_decimal) == price_float
+
+
 def match_price_tag_with_product_price(price: Price, price_tag: PriceTag) -> bool:
+    price_tag_prediction_data = price_tag.predictions.first().data
     return (
         price.type == TYPE_PRODUCT
-        and (price.product_code == price_tag.predictions.first().data["barcode"])
-        and (str(price.price) == str(price_tag.predictions.first().data["price"]))
+        and (price.product_code == price_tag_prediction_data["barcode"])
+        and match_decimal_with_float(price.price, price_tag_prediction_data["price"])
     )
 
 
 def match_price_tag_with_category_price(price: Price, price_tag: PriceTag) -> bool:
+    price_tag_prediction_data = price_tag.predictions.first().data
     return (
         price.type == TYPE_CATEGORY
         and (price.product_code == price_tag.predictions.first().data["product"])
-        and (str(price.price) == str(price_tag.predictions.first().data["price"]))
+        and match_decimal_with_float(price.price, price_tag_prediction_data["price"])
     )
 
 
 class Command(BaseCommand):
     """
-    for each proof
+    For each proof...
     try to match generated price_tags with existing prices
     - skip proofs without price_tags or without prices
     - skip price_tags that already have a price_id or that have no predictions
@@ -48,10 +55,10 @@ class Command(BaseCommand):
     help = "Match price tags with existing prices."
 
     def handle(self, *args, **options) -> None:  # type: ignore
-        self.stdout.write("Stats before...")
+        self.stdout.write("=== Stats before...")
         stats()
 
-        self.stdout.write("Running matching script...")
+        self.stdout.write("=== Running matching script...")
         for proof in Proof.objects.has_type_price_tag().prefetch_related(
             "prices", "price_tags", "price_tags__predictions"
         ):
@@ -67,6 +74,7 @@ class Command(BaseCommand):
                         continue
                     else:
                         for price in proof.prices.all():
+                            # skip if price already has a price_tag match
                             if price.price_tags.count() > 0:
                                 continue
                             # match product price
@@ -84,5 +92,5 @@ class Command(BaseCommand):
                             else:
                                 continue
 
-        self.stdout.write("Stats after...")
+        self.stdout.write("=== Stats after...")
         stats()
