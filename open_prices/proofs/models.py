@@ -404,6 +404,14 @@ def proof_post_save_run_ml_models(sender, instance, created, **kwargs):
             )
 
 
+class PriceTagQuerySet(models.QuerySet):
+    def status_unknown(self):
+        return self.filter(status=None)
+
+    def status_linked_to_price(self):
+        return self.filter(status=constants.PriceTagStatus.linked_to_price.value)
+
+
 class PriceTag(models.Model):
     """A single price tag in a proof."""
 
@@ -462,6 +470,8 @@ class PriceTag(models.Model):
     updated = models.DateTimeField(
         auto_now=True, help_text="When the tag was last updated"
     )
+
+    objects = models.Manager.from_queryset(PriceTagQuerySet)()
 
     class Meta:
         db_table = "price_tags"

@@ -16,12 +16,12 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="price_tag_linked_to_price_count",
+            name="price_tag_status_linked_to_price_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="price_tag_unknown_count",
+            name="price_tag_status_unknown_count",
             field=models.PositiveIntegerField(default=0),
         ),
     ]
