@@ -1,11 +1,12 @@
 from django.db import IntegrityError
 from django.test import TestCase
 
+from open_prices.common.constants import PriceTagStatus
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.factories import PriceTagFactory, ProofFactory
 from open_prices.stats.models import TotalStats
 from open_prices.users.factories import UserFactory
 
@@ -34,23 +35,23 @@ class TotalStatsTest(TestCase):
         cls.user_2 = UserFactory()
         cls.location = LocationFactory(**LOCATION_NODE_652825274)
         cls.location_2 = LocationFactory()
-        cls.proof = ProofFactory(
+        cls.proof_price_tag = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             owner=cls.user.user_id,
         )
-        cls.proof_2 = ProofFactory(
+        cls.proof_receipt = ProofFactory(
             type=proof_constants.TYPE_RECEIPT,
             location_osm_id=cls.location_2.osm_id,
             location_osm_type=cls.location_2.osm_type,
             owner=cls.user_2.user_id,
         )
-        PriceFactory(
+        cls.price = PriceFactory(
             product_code="0123456789100",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
-            proof_id=cls.proof.id,
+            proof_id=cls.proof_price_tag.id,
             price=1.0,
             owner=cls.user.user_id,
         )
@@ -71,6 +72,12 @@ class TotalStatsTest(TestCase):
             location_osm_type=cls.location.osm_type,
             price=2.0,
             owner=cls.user_2.user_id,
+        )
+        PriceTagFactory(proof=cls.proof_price_tag, status=None)
+        PriceTagFactory(
+            proof=cls.proof_price_tag,
+            price=cls.price,
+            status=PriceTagStatus.linked_to_price.value,
         )
 
     def test_update_price_stats(self):
@@ -114,6 +121,16 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_type_receipt_count, 1)
         self.assertEqual(self.total_stats.proof_type_gdpr_request_count, 0)
         self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
+
+    def test_update_price_tag_stats(self):
+        self.assertEqual(self.total_stats.price_tag_count, 0)
+        self.assertEqual(self.total_stats.price_tag_unknown_count, 0)
+        self.assertEqual(self.total_stats.price_tag_linked_to_price_count, 0)
+        # update_price_tag_stats() will update price_tag_counts
+        self.total_stats.update_price_tag_stats()
+        self.assertEqual(self.total_stats.price_tag_count, 2)
+        self.assertEqual(self.total_stats.price_tag_unknown_count, 1)
+        self.assertEqual(self.total_stats.price_tag_linked_to_price_count, 1)
 
     def test_update_user_stats(self):
         self.assertEqual(self.total_stats.user_count, 0)

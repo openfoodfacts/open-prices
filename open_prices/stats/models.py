@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from solo.models import SingletonModel
 
+from open_prices.common.constants import PriceTagStatus
+
 
 class TotalStats(SingletonModel):
     PRICE_COUNT_FIELDS = [
@@ -23,6 +25,11 @@ class TotalStats(SingletonModel):
         "proof_type_receipt_count",
         "proof_type_gdpr_request_count",
         "proof_type_shop_import_count",
+    ]
+    PRICE_TAG_COUNT_FIELDS = [
+        "price_tag_count",
+        "price_tag_unknown_count",
+        "price_tag_linked_to_price_count",
     ]
     USER_COUNT_FIELDS = ["user_count", "user_with_price_count"]
     COUNT_FIELDS = (
@@ -49,6 +56,7 @@ class TotalStats(SingletonModel):
     proof_type_gdpr_request_count = models.PositiveIntegerField(default=0)
     proof_type_shop_import_count = models.PositiveIntegerField(default=0)
     price_tag_count = models.PositiveIntegerField(default=0)
+    price_tag_unknown_count = models.PositiveIntegerField(default=0)
     price_tag_linked_to_price_count = models.PositiveIntegerField(default=0)
     user_count = models.PositiveIntegerField(default=0)
     user_with_price_count = models.PositiveIntegerField(default=0)
@@ -102,6 +110,16 @@ class TotalStats(SingletonModel):
         )
         self.proof_type_shop_import_count = Proof.objects.has_type_shop_import().count()
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
+
+    def update_price_tag_stats(self):
+        from open_prices.proofs.models import PriceTag
+
+        self.price_tag_count = PriceTag.objects.count()
+        self.price_tag_unknown_count = PriceTag.objects.filter(status=None).count()
+        self.price_tag_linked_to_price_count = PriceTag.objects.filter(
+            status=PriceTagStatus.linked_to_price.value
+        ).count()
+        self.save(update_fields=self.PRICE_TAG_COUNT_FIELDS + ["updated"])
 
     def update_user_stats(self):
         from open_prices.users.models import User

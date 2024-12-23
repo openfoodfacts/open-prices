@@ -55,6 +55,7 @@ def update_total_stats_task():
     total_stats.update_product_stats()
     total_stats.update_location_stats()
     total_stats.update_proof_stats()
+    total_stats.update_price_tag_stats()
     total_stats.update_user_stats()
 
 
