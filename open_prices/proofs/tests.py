@@ -165,6 +165,13 @@ class ProofModelSaveTest(TestCase):
             type=proof_constants.TYPE_PRICE_TAG,
         )
 
+    def test_proof_ready_for_price_tag_validation_field(self):
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG, source="/proofs/add/")
+        self.assertFalse(proof.ready_for_price_tag_validation)
+        proof.source = "/proofs/add/multiple"
+        proof.save()
+        self.assertTrue(proof.ready_for_price_tag_validation)
+
 
 class ProofQuerySetTest(TestCase):
     @classmethod

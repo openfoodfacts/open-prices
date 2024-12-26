@@ -34,6 +34,11 @@ PRICE_TAG_PREDICTION_TYPE_CHOICES = [
     (PRICE_TAG_EXTRACTION_TYPE, PRICE_TAG_EXTRACTION_TYPE)
 ]
 
+PROOF_READY_FOR_PRICE_TAG_VALIDATION_SOURCES = [
+    "/proofs/add/single",
+    "/proofs/add/multiple",
+]
+
 
 class PriceTagStatus(enum.IntEnum):
     deleted = 0
