@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.59.0](https://github.com/openfoodfacts/open-prices/compare/v1.58.1...v1.59.0) (2024-12-26)
+
+
+### Features
+
+* **Price tags:** new Proof.ready_for_price_tag_validation field to help filter the frontend UI ([#656](https://github.com/openfoodfacts/open-prices/issues/656)) ([67b4912](https://github.com/openfoodfacts/open-prices/commit/67b4912e1ef4bdbab8ce1185d3094bf723cc83f8))
+
 ## [1.58.1](https://github.com/openfoodfacts/open-prices/compare/v1.58.0...v1.58.1) (2024-12-23)
 
 
