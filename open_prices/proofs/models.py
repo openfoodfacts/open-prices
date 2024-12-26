@@ -98,6 +98,8 @@ class Proof(models.Model):
         null=True,
     )
 
+    ready_for_price_tag_validation = models.BooleanField(default=False)
+
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     owner = models.CharField(blank=True, null=True)
@@ -230,9 +232,21 @@ class Proof(models.Model):
             )
             self.location = location
 
+    def set_ready_for_price_tag_validation(self):
+        if (
+            self.type == proof_constants.TYPE_PRICE_TAG
+            and self.source
+            and any(
+                source in self.source
+                for source in proof_constants.PROOF_READY_FOR_PRICE_TAG_VALIDATION_SOURCES
+            )
+        ):
+            self.ready_for_price_tag_validation = True
+
     def save(self, *args, **kwargs):
         self.full_clean()
         self.set_location()
+        self.set_ready_for_price_tag_validation()
         super().save(*args, **kwargs)
 
     @property
