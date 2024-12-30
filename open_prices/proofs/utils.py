@@ -244,14 +244,26 @@ def match_decimal_with_float(price_decimal: Decimal, price_float: float) -> bool
     return float(price_decimal) == price_float
 
 
+def cleanup_price_tag_prediction_barcode(barcode: str) -> str:
+    # Carrefour price_tag barcodes: 214626/5410769800530/051
+    if barcode.count("/") == 2:
+        return barcode.split("/")[1]
+    return barcode
+
+
 def match_product_price_tag_with_product_price(
     price_tag: PriceTag, price: Price
 ) -> bool:
     price_tag_prediction_data = price_tag.predictions.first().data
+    price_tag_prediction_barcode = price_tag_prediction_data.get("barcode")
+    price_tag_prediction_barcode = cleanup_price_tag_prediction_barcode(
+        price_tag_prediction_barcode
+    )
+    price_tag_prediction_price = price_tag_prediction_data.get("price")
     return (
         price.type == TYPE_PRODUCT
-        and (price.product_code == price_tag_prediction_data["barcode"])
-        and match_decimal_with_float(price.price, price_tag_prediction_data["price"])
+        and (price.product_code == price_tag_prediction_barcode)
+        and match_decimal_with_float(price.price, price_tag_prediction_price)
     )
 
 
@@ -259,8 +271,10 @@ def match_category_price_tag_with_category_price(
     price_tag: PriceTag, price: Price
 ) -> bool:
     price_tag_prediction_data = price_tag.predictions.first().data
+    price_tag_prediction_product = price_tag_prediction_data.get("product")
+    price_tag_prediction_price = price_tag_prediction_data.get("price")
     return (
         price.type == TYPE_CATEGORY
-        and (price.product_code == price_tag.predictions.first().data["product"])
-        and match_decimal_with_float(price.price, price_tag_prediction_data["price"])
+        and (price.product_code == price_tag_prediction_product)
+        and match_decimal_with_float(price.price, price_tag_prediction_price)
     )
