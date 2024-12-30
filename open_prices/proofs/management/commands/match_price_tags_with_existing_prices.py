@@ -1,11 +1,12 @@
 from collections import Counter
-from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 
-from open_prices.prices.constants import TYPE_CATEGORY, TYPE_PRODUCT
-from open_prices.prices.models import Price
 from open_prices.proofs.models import PriceTag, Proof
+from open_prices.proofs.utils import (
+    match_category_price_tag_with_category_price,
+    match_product_price_tag_with_product_price,
+)
 
 
 def stats():
@@ -18,28 +19,6 @@ def stats():
     print(
         "PriceTag without a price_id:",
         PriceTag.objects.filter(price_id__isnull=True).count(),
-    )
-
-
-def match_decimal_with_float(price_decimal: Decimal, price_float: float) -> bool:
-    return float(price_decimal) == price_float
-
-
-def match_price_tag_with_product_price(price: Price, price_tag: PriceTag) -> bool:
-    price_tag_prediction_data = price_tag.predictions.first().data
-    return (
-        price.type == TYPE_PRODUCT
-        and (price.product_code == price_tag_prediction_data["barcode"])
-        and match_decimal_with_float(price.price, price_tag_prediction_data["price"])
-    )
-
-
-def match_price_tag_with_category_price(price: Price, price_tag: PriceTag) -> bool:
-    price_tag_prediction_data = price_tag.predictions.first().data
-    return (
-        price.type == TYPE_CATEGORY
-        and (price.product_code == price_tag.predictions.first().data["product"])
-        and match_decimal_with_float(price.price, price_tag_prediction_data["price"])
     )
 
 
@@ -78,19 +57,21 @@ class Command(BaseCommand):
                             if price.price_tags.count() > 0:
                                 continue
                             # match product price
-                            elif match_price_tag_with_product_price(price, price_tag):
+                            elif match_product_price_tag_with_product_price(
+                                price_tag, price
+                            ):
                                 price_tag.price_id = price.id
                                 price_tag.status = 1
                                 price_tag.save()
                                 break
                             # match category price
-                            elif match_price_tag_with_category_price(price, price_tag):
+                            elif match_category_price_tag_with_category_price(
+                                price_tag, price
+                            ):
                                 price_tag.price_id = price.id
                                 price_tag.status = 1
                                 price_tag.save()
                                 break
-                            else:
-                                continue
 
         self.stdout.write("=== Stats after...")
         stats()

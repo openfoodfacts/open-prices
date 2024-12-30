@@ -5,6 +5,7 @@ import logging
 import random
 import string
 import time
+from decimal import Decimal
 from mimetypes import guess_extension
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,10 @@ from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 from openfoodfacts.utils import http_session
 from PIL import Image, ImageOps
+
+from open_prices.prices.constants import TYPE_CATEGORY, TYPE_PRODUCT
+from open_prices.prices.models import Price
+from open_prices.proofs.models import PriceTag
 
 logger = logging.getLogger(__name__)
 
@@ -233,3 +238,29 @@ def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> b
 
     logger.debug("OCR data saved to %s", ocr_json_path)
     return True
+
+
+def match_decimal_with_float(price_decimal: Decimal, price_float: float) -> bool:
+    return float(price_decimal) == price_float
+
+
+def match_product_price_tag_with_product_price(
+    price_tag: PriceTag, price: Price
+) -> bool:
+    price_tag_prediction_data = price_tag.predictions.first().data
+    return (
+        price.type == TYPE_PRODUCT
+        and (price.product_code == price_tag_prediction_data["barcode"])
+        and match_decimal_with_float(price.price, price_tag_prediction_data["price"])
+    )
+
+
+def match_category_price_tag_with_category_price(
+    price_tag: PriceTag, price: Price
+) -> bool:
+    price_tag_prediction_data = price_tag.predictions.first().data
+    return (
+        price.type == TYPE_CATEGORY
+        and (price.product_code == price_tag.predictions.first().data["product"])
+        and match_decimal_with_float(price.price, price_tag_prediction_data["price"])
+    )
