@@ -265,6 +265,8 @@ if DEBUG:
 
 SHELL_PLUS = "ipython"
 SHELL_PLUS_POST_IMPORTS = [
+    "from datetime import datetime, date",
+    "from collections import Counter",
     "import openfoodfacts",
     "from open_prices.common import openfoodfacts as common_openfoodfacts",
     "from open_prices.common import openstreetmap as common_openstreetmap",
