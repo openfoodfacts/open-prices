@@ -36,6 +36,7 @@ class ProofFilter(django_filters.FilterSet):
             "currency",
             "date",
             "owner",
+            "ready_for_price_tag_validation",
             "price_count",
         ]
 
