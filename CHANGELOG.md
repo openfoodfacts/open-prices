@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.59.1](https://github.com/openfoodfacts/open-prices/compare/v1.59.0...v1.59.1) (2024-12-30)
+
+
+### Technical
+
+* **API:** store query params app_platform & app_page in source field ([#658](https://github.com/openfoodfacts/open-prices/issues/658)) ([96215f4](https://github.com/openfoodfacts/open-prices/commit/96215f4460214e2d647bd7ab82039bdf3003f564))
+* **Proofs:** API: allow filtering by ready_for_price_tag_validation field. ref [#656](https://github.com/openfoodfacts/open-prices/issues/656) ([0936ffb](https://github.com/openfoodfacts/open-prices/commit/0936ffbeb589218e65d474795ce136c48d80aa4b))
+
 ## [1.59.0](https://github.com/openfoodfacts/open-prices/compare/v1.58.1...v1.59.0) (2024-12-26)
 
 
