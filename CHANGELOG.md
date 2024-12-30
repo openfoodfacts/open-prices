@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.59.2](https://github.com/openfoodfacts/open-prices/compare/v1.59.1...v1.59.2) (2024-12-30)
+
+
+### Technical
+
+* **Price tags:** improve matching script: manage Carrefour barcodes ([#660](https://github.com/openfoodfacts/open-prices/issues/660)) ([c2f5717](https://github.com/openfoodfacts/open-prices/commit/c2f57176f241e961afa8cc39f2e664d652a85d3b))
+
 ## [1.59.1](https://github.com/openfoodfacts/open-prices/compare/v1.59.0...v1.59.1) (2024-12-30)
 
 
