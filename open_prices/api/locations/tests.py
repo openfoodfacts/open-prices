@@ -202,6 +202,10 @@ class LocationCreateApiTest(TestCase):
                 ("?app_name=", ""),
                 ("?app_name=test app&app_version=", "test app"),
                 ("?app_name=mobile&app_version=1.0", "mobile (1.0)"),
+                (
+                    "?app_name=web&app_version=&app_page=/prices/add/multiple",
+                    "web - /prices/add/multiple",
+                ),
             ]
         ):
             with self.subTest(INPUT_OUPUT=(params, result)):
