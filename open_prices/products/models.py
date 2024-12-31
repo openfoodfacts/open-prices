@@ -19,6 +19,12 @@ class ProductQuerySet(models.QuerySet):
 
 class Product(models.Model):
     ARRAY_FIELDS = ["categories_tags", "brands_tags", "labels_tags"]
+    OFF_SCORE_FIELDS = [
+        "nutriscore_grade",
+        "ecoscore_grade",
+        "nova_group",
+        "unique_scans_n",
+    ]
     COUNT_FIELDS = ["price_count", "location_count", "user_count", "proof_count"]
 
     code = models.CharField(unique=True)
