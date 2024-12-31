@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.59.3](https://github.com/openfoodfacts/open-prices/compare/v1.59.2...v1.59.3) (2024-12-31)
+
+
+### Technical
+
+* **Price tags:** matching script: try to match on price only ([#664](https://github.com/openfoodfacts/open-prices/issues/664)) ([76637dc](https://github.com/openfoodfacts/open-prices/commit/76637dcb4e5ab25b3728307cae5ed3326d45435a))
+* **Products:** API: fix re-add ordering via unique_scans_n. Also add other scores. closes [#662](https://github.com/openfoodfacts/open-prices/issues/662) ([9f6e9b8](https://github.com/openfoodfacts/open-prices/commit/9f6e9b8ce446522e734f2070889c562b1721c224))
+
 ## [1.59.2](https://github.com/openfoodfacts/open-prices/compare/v1.59.1...v1.59.2) (2024-12-30)
 
 
