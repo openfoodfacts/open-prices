@@ -39,9 +39,10 @@ class Command(BaseCommand):
         stats()
 
         self.stdout.write("=== Running matching script...")
-        for proof in Proof.objects.has_type_price_tag().prefetch_related(
+        proof_qs = Proof.objects.has_type_price_tag().prefetch_related(
             "prices", "price_tags", "price_tags__predictions"
-        ):
+        )
+        for index, proof in enumerate(proof_qs):
             if proof.price_tags.count() == 0:
                 continue
             elif proof.prices.count() == 0:
@@ -78,6 +79,8 @@ class Command(BaseCommand):
                                 price_tag.status = 1
                                 price_tag.save()
                                 break
+            if index % 500 == 0:
+                self.stdout.write(f"Processed {index} proofs")
 
         self.stdout.write("=== Stats after...")
         stats()

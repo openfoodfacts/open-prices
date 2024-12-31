@@ -289,18 +289,20 @@ def match_category_price_tag_with_category_price(
 def match_price_tag_with_price(price_tag: PriceTag, price: Price) -> bool:
     """
     Match only on price.
-    We make sure this price is unique.
+    We make sure this price is unique in the proof to avoid errors.
     """
     price_tag_prediction_data = price_tag.predictions.first().data
     price_tag_prediction_price = price_tag_prediction_data.get("price")
-    proof = price_tag.proof
-    proof_prices = list(proof.prices.values_list("price", flat=True))
+    proof_prices = list(
+        Price.objects.filter(proof_id=price_tag.proof_id).values_list(
+            "price", flat=True
+        )
+    )
     proof_price_tag_prices = [
         price_tag.predictions.first().data.get("price")
-        for price_tag in proof.price_tags.all()
+        for price_tag in PriceTag.objects.filter(proof_id=price_tag.proof_id)
     ]
     return (
-        # (price_tag_prediction_data["product"] == "other")
         match_decimal_with_float(price.price, price_tag_prediction_price)
         and proof_prices.count(price.price) == 1
         and proof_price_tag_prices.count(price_tag_prediction_price) == 1
