@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand
 from open_prices.proofs.models import PriceTag, Proof
 from open_prices.proofs.utils import (
     match_category_price_tag_with_category_price,
+    match_price_tag_with_price,
     match_product_price_tag_with_product_price,
 )
 
@@ -38,9 +39,10 @@ class Command(BaseCommand):
         stats()
 
         self.stdout.write("=== Running matching script...")
-        for proof in Proof.objects.has_type_price_tag().prefetch_related(
+        proof_qs = Proof.objects.has_type_price_tag().prefetch_related(
             "prices", "price_tags", "price_tags__predictions"
-        ):
+        )
+        for index, proof in enumerate(proof_qs):
             if proof.price_tags.count() == 0:
                 continue
             elif proof.prices.count() == 0:
@@ -72,6 +74,13 @@ class Command(BaseCommand):
                                 price_tag.status = 1
                                 price_tag.save()
                                 break
+                            elif match_price_tag_with_price(price_tag, price):
+                                price_tag.price_id = price.id
+                                price_tag.status = 1
+                                price_tag.save()
+                                break
+            if index % 500 == 0:
+                self.stdout.write(f"Processed {index} proofs")
 
         self.stdout.write("=== Stats after...")
         stats()
