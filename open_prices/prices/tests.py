@@ -217,7 +217,7 @@ class PriceModelSaveTest(TestCase):
             self.assertEqual(price.origins_tags, expected_origin_tags)
 
     def test_price_price_validation(self):
-        for PRICE_OK in [5, 0]:
+        for PRICE_OK in [0, 5, Decimal("1.5")]:
             PriceFactory(price=PRICE_OK)
         for PRICE_NOT_OK in [-5, "test", None, "None"]:  # True
             self.assertRaises(ValidationError, PriceFactory, price=PRICE_NOT_OK)
@@ -256,7 +256,7 @@ class PriceModelSaveTest(TestCase):
                 price_is_discounted=True,
                 price_without_discount=PRICE_WITHOUT_DISCOUNT_OK,
             )
-        for PRICE_WITHOUT_DISCOUNT_NOT_OK in [-5, "test"]:
+        for PRICE_WITHOUT_DISCOUNT_NOT_OK in [-5, "test", "None"]:
             self.assertRaises(
                 ValidationError,
                 PriceFactory,
@@ -445,7 +445,7 @@ class PriceModelSaveTest(TestCase):
             owner=user_proof_receipt.owner,
         )
         # receipt_quantity
-        for RECEIPT_QUANTITY_NOT_OK in [-5, 0]:
+        for RECEIPT_QUANTITY_NOT_OK in [-5, "test"]:
             with self.subTest(RECEIPT_QUANTITY_NOT_OK=RECEIPT_QUANTITY_NOT_OK):
                 self.assertRaises(
                     ValidationError,
@@ -458,7 +458,7 @@ class PriceModelSaveTest(TestCase):
                     owner=user_proof_receipt.owner,
                     receipt_quantity=RECEIPT_QUANTITY_NOT_OK,
                 )
-        for RECEIPT_QUANTITY_OK in [None, 1, 2]:
+        for RECEIPT_QUANTITY_OK in [None, 0, 1, 2, Decimal("1.5")]:
             with self.subTest(RECEIPT_QUANTITY_OK=RECEIPT_QUANTITY_OK):
                 PriceFactory(
                     proof_id=user_proof_receipt.id,
