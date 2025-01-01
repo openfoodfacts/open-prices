@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.59.4](https://github.com/openfoodfacts/open-prices/compare/v1.59.3...v1.59.4) (2025-01-01)
+
+
+### Technical
+
+* **Prices:** transform receipt_quantity field to Decimal ([#666](https://github.com/openfoodfacts/open-prices/issues/666)) ([c807dee](https://github.com/openfoodfacts/open-prices/commit/c807dee2ec8ce393d12880abcb837e0aec1f7c58))
+
 ## [1.59.3](https://github.com/openfoodfacts/open-prices/compare/v1.59.2...v1.59.3) (2024-12-31)
 
 
