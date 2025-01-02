@@ -473,7 +473,7 @@ class Price(models.Model):
                     validation_errors = utils.add_validation_error(
                         validation_errors,
                         "proof",
-                        "Proof does not belong to the current user. Adding a price to a proof a user does not own is only allowed for {proof_constants.TYPE_ALLOW_ANY_USER_PRICE_ADD_LIST} proofs",
+                        f"Proof does not belong to the current user. Adding a price to a proof a user does not own is only allowed for {proof_constants.TYPE_ALLOW_ANY_USER_PRICE_ADD_LIST} proofs",
                     )
                 if not self.id:  # skip these checks on update
                     if proof.type in proof_constants.TYPE_SINGLE_SHOP_LIST:
