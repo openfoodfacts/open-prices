@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.59.5](https://github.com/openfoodfacts/open-prices/compare/v1.59.4...v1.59.5) (2025-01-02)
+
+
+### Bug Fixes
+
+* **Prices:** fix validation error formatting when user is not allowed to add price on proof. ref [#568](https://github.com/openfoodfacts/open-prices/issues/568) ([79407c3](https://github.com/openfoodfacts/open-prices/commit/79407c3fe9c9c94d991391f39eaaa21a5b016049))
+* **Stats:** fix User & Location stats after allowing any user to add prices on PRICE_TAG proofs ([#668](https://github.com/openfoodfacts/open-prices/issues/668)) ([2481f14](https://github.com/openfoodfacts/open-prices/commit/2481f1465b0988410b58782f8fe8ebe23aacc484))
+
 ## [1.59.4](https://github.com/openfoodfacts/open-prices/compare/v1.59.3...v1.59.4) (2025-01-01)
 
 
