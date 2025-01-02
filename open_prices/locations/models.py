@@ -198,10 +198,10 @@ class Location(models.Model):
         self.save(update_fields=["price_count"])
 
     def update_user_count(self):
-        from open_prices.prices.models import Price
+        from open_prices.proofs.models import Proof
 
         self.user_count = (
-            Price.objects.filter(location=self, owner__isnull=False)
+            Proof.objects.filter(location=self, owner__isnull=False)
             .values_list("owner", flat=True)
             .distinct()
             .count()
