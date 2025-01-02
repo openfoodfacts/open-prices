@@ -65,14 +65,9 @@ class User(models.Model):
         self.save(update_fields=["product_count"])
 
     def update_proof_count(self):
-        from open_prices.prices.models import Price
+        from open_prices.proofs.models import Proof
 
-        self.proof_count = (
-            Price.objects.filter(owner=self.user_id, proof_id__isnull=False)
-            .values_list("proof_id", flat=True)
-            .distinct()
-            .count()
-        )
+        self.proof_count = Proof.objects.filter(owner=self.user_id).count()
         self.save(update_fields=["proof_count"])
 
 
