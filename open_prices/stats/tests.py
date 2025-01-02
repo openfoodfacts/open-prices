@@ -1,6 +1,7 @@
 from django.db import IntegrityError
 from django.test import TestCase
 
+from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
@@ -9,10 +10,14 @@ from open_prices.proofs.factories import PriceTagFactory, ProofFactory
 from open_prices.stats.models import TotalStats
 from open_prices.users.factories import UserFactory
 
-LOCATION_NODE_652825274 = {
+LOCATION_OSM_NODE_652825274 = {
+    "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
+    "osm_lat": "45.1805534",
+    "osm_lon": "5.7153387",
+    "price_count": 15,
 }
 
 
@@ -32,7 +37,7 @@ class TotalStatsTest(TestCase):
         cls.total_stats = TotalStats.get_solo()
         cls.user = UserFactory()
         cls.user_2 = UserFactory()
-        cls.location = LocationFactory(**LOCATION_NODE_652825274)
+        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.location_2 = LocationFactory()
         cls.proof_price_tag = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,

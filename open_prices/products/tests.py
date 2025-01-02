@@ -6,6 +6,7 @@ from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from openfoodfacts import Flavor
 
+from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.products import constants as product_constants
@@ -49,10 +50,14 @@ PRODUCT_OFF = {
     "unique_scans_n": 1051,
 }
 
-LOCATION_NODE_652825274 = {
+LOCATION_OSM_NODE_652825274 = {
+    "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
+    "osm_lat": "45.1805534",
+    "osm_lon": "5.7153387",
+    "price_count": 15,
 }
 
 
@@ -107,7 +112,7 @@ class ProductPropertyTest(TestCase):
     def setUpTestData(cls):
         cls.product = ProductFactory(code="0123456789100", product_quantity=1000)
         cls.user = UserFactory()
-        cls.location = LocationFactory(**LOCATION_NODE_652825274)
+        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.proof = ProofFactory(
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
