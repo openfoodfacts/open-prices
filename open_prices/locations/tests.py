@@ -8,6 +8,7 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
 
@@ -158,7 +159,14 @@ class LocationPropertyTest(TestCase):
         cls.user = UserFactory()
         cls.user_2 = UserFactory()
         cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
-        cls.proof = ProofFactory(
+        cls.proof_1 = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            owner=cls.user.user_id,
+        )
+        cls.proof_2 = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             owner=cls.user.user_id,
@@ -167,7 +175,7 @@ class LocationPropertyTest(TestCase):
             product_code="0123456789100",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
-            proof_id=cls.proof.id,
+            proof_id=cls.proof_1.id,
             price=1.0,
             owner=cls.user.user_id,
         )
@@ -175,6 +183,7 @@ class LocationPropertyTest(TestCase):
             product_code="0123456789101",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            proof_id=cls.proof_2.id,
             price=2.0,
             owner=cls.user_2.user_id,
         )
@@ -183,6 +192,7 @@ class LocationPropertyTest(TestCase):
             category_tag="en:tomatoes",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            proof_id=cls.proof_2.id,
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
             owner=cls.user_2.user_id,
@@ -203,7 +213,7 @@ class LocationPropertyTest(TestCase):
         self.assertEqual(self.location.user_count, 0)
         # update_user_count() should fix user_count
         self.location.update_user_count()
-        self.assertEqual(self.location.user_count, 2)
+        self.assertEqual(self.location.user_count, 1)  # proof owners
 
     def test_update_product_count(self):
         self.location.refresh_from_db()
@@ -217,4 +227,4 @@ class LocationPropertyTest(TestCase):
         self.assertEqual(self.location.proof_count, 0)
         # update_proof_count() should fix location_count
         self.location.update_proof_count()
-        self.assertEqual(self.location.proof_count, 1)
+        self.assertEqual(self.location.proof_count, 2)

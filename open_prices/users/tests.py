@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
@@ -7,10 +8,19 @@ from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
 from open_prices.users.models import User
 
-LOCATION_NODE_652825274 = {
+LOCATION_OSM_NODE_652825274 = {
+    "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
-    "osm_type": "NODE",
+    "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
+    "osm_lat": "45.1805534",
+    "osm_lon": "5.7153387",
+    "price_count": 15,
+}
+LOCATION_ONLINE_DECATHLON = {
+    "type": location_constants.TYPE_ONLINE,
+    "website_url": "https://www.decathlon.fr",
+    "price_count": 15,
 }
 
 
@@ -29,24 +39,25 @@ class UserPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = UserFactory()
-        cls.location = LocationFactory(**LOCATION_NODE_652825274)
+        cls.location_1 = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_2 = LocationFactory(**LOCATION_ONLINE_DECATHLON)
         cls.proof = ProofFactory(
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_1.osm_id,
+            location_osm_type=cls.location_1.osm_type,
             owner=cls.user.user_id,
         )
         PriceFactory(
             product_code="0123456789100",
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_1.osm_id,
+            location_osm_type=cls.location_1.osm_type,
             proof_id=cls.proof.id,
             price=1.0,
             owner=cls.user.user_id,
         )
         PriceFactory(
             product_code="0123456789101",
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_2.osm_id,
+            location_osm_type=cls.location_2.osm_type,
             price=2.0,
             owner=cls.user.user_id,
         )
@@ -66,7 +77,7 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user.location_count, 0)
         # update_location_count() should fix location_count
         self.user.update_location_count()
-        self.assertEqual(self.user.location_count, 1)
+        self.assertEqual(self.user.location_count, 1)  # proof locations
 
     def test_update_product_count(self):
         self.user.refresh_from_db()
