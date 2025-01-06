@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.59.6](https://github.com/openfoodfacts/open-prices/compare/v1.59.5...v1.59.6) (2025-01-06)
+
+
+### Technical
+
+* **Price tags:** allow filter by created gte & lte. ref [#656](https://github.com/openfoodfacts/open-prices/issues/656) ([d26e39c](https://github.com/openfoodfacts/open-prices/commit/d26e39c85f8cd01d26c8a905397e1af0d208540a))
+
 ## [1.59.5](https://github.com/openfoodfacts/open-prices/compare/v1.59.4...v1.59.5) (2025-01-02)
 
 
