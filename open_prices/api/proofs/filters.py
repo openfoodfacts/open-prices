@@ -45,6 +45,12 @@ class PriceTagFilter(django_filters.FilterSet):
     status__isnull = django_filters.BooleanFilter(
         field_name="status", lookup_expr="isnull"
     )
+    created__gte = django_filters.DateTimeFilter(
+        field_name="created", lookup_expr="gte"
+    )
+    created__lte = django_filters.DateTimeFilter(
+        field_name="created", lookup_expr="lte"
+    )
 
     class Meta:
         model = PriceTag
