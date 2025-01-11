@@ -41,9 +41,6 @@ class PriceFilter(django_filters.FilterSet):
     created__lte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="lte"
     )
-    product__categories_tags__contains = django_filters.CharFilter(
-        field_name="product__categories_tags", lookup_expr="icontains"
-    )
 
     class Meta:
         model = Price
