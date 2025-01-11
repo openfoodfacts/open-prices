@@ -71,6 +71,9 @@ class GroupedPriceStatsQuerySerializer(serializers.Serializer):
     group_by = serializers.CharField(
         required=True, help_text="Field by which to group the statistics"
     )
+    order_by = serializers.CharField(
+        required=False, help_text="Field by which to order the results"
+    )
 
 
 class GroupedPriceStatsSerializer(PriceStatsSerializer):

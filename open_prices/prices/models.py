@@ -57,7 +57,7 @@ class PriceQuerySet(models.QuerySet):
             price__sum=Sum("price"),
         )
 
-    def calculate_grouped_stats(self, group_by):
+    def calculate_grouped_stats(self, group_by, order_by):
         group_by_list = group_by.split(",")
         if (
             "month" in group_by_list
@@ -69,6 +69,10 @@ class PriceQuerySet(models.QuerySet):
             )
         else:
             queryset = self
+        if order_by:
+            order_by_list = [order_by]
+        else:
+            order_by_list = group_by_list
         return (
             queryset.values(*group_by_list)
             .annotate(
@@ -81,7 +85,7 @@ class PriceQuerySet(models.QuerySet):
                 ),
                 price__sum=Sum("price"),
             )
-            .order_by(*group_by_list)
+            .order_by(*order_by_list)
         )
 
 

@@ -104,10 +104,11 @@ class PriceViewSet(
         # Validate and parse query parameters using the serializer
         serializer = GroupedPriceStatsQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
-        group_by = serializer.validated_data["group_by"]
+        group_by = serializer.validated_data.get("group_by")
+        order_by = serializer.validated_data.get("order_by", None)
 
         try:
-            data = qs.calculate_grouped_stats(group_by)
+            data = qs.calculate_grouped_stats(group_by, order_by)
         except FieldError:
             return Response(
                 {"detail": f"Invalid group_by field: {group_by}"},
