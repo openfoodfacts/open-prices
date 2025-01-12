@@ -59,6 +59,9 @@ class PriceQuerySet(models.QuerySet):
 
 class Price(models.Model):
     UPDATE_FIELDS = [
+        "category_tag",
+        "labels_tags",
+        "origins_tags",
         "price",
         "price_is_discounted",
         "price_without_discount",
