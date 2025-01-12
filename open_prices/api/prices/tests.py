@@ -40,6 +40,15 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_lon": "5.7153387",
 }
 
+PRODUCT_8001505005707 = {
+    "code": "8001505005707",
+    "product_name": "Nocciolata",
+    "categories_tags": ["en:breakfasts", "en:spreads"],
+    "labels_tags": ["en:no-gluten", "en:organic"],
+    "brands_tags": ["rigoni-di-asiago"],
+    "price_count": 15,
+}
+
 
 class PriceListApiTest(TestCase):
     @classmethod
@@ -113,11 +122,13 @@ class PriceListFilterApiTest(TestCase):
         cls.user_proof_receipt = ProofFactory(
             type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
         )
+        cls.product = ProductFactory(**PRODUCT_8001505005707)
         cls.user_price = PriceFactory(
             **PRICE_8001505005707,
             receipt_quantity=2,
             proof_id=cls.user_proof_receipt.id,
             owner=cls.user_session.user.user_id,
+            product=cls.product,
         )
         PriceFactory(
             type=price_constants.TYPE_CATEGORY,
@@ -297,6 +308,13 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?created__lte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)
+
+    def test_price_list_filter_by_product_categories_tags(self):
+        self.assertEqual(Price.objects.count(), 5)
+        url = self.url + "?product__categories_tags__contains=en:breakfasts"
+        with self.assertNumQueries(1 + 1):
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 1)
 
 
 class PriceDetailApiTest(TestCase):
