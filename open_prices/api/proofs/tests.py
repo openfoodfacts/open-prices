@@ -76,7 +76,7 @@ class ProofListApiTest(TestCase):
         # anonymous
         # thanks to select_related, we only have 2 queries:
         # - 1 to count the number of proofs of the user
-        # - 1 to get the proofs and their associated locations (select_related)
+        # - 1 to get the proofs and their associated location
         with self.assertNumQueries(2):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
@@ -418,7 +418,7 @@ class PriceTagListApiTest(TestCase):
 
     def test_price_tag_list(self):
         # Check that we can access price tags anonymously
-        # We only have 2 queries:
+        # We only have 3 queries:
         # - 1 to count the number of price tags
         # - 1 to get the price tags and their associated proof
         # - 1 to get the price tag predictions (prefetch related)
