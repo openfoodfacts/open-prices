@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.60.0](https://github.com/openfoodfacts/open-prices/compare/v1.59.6...v1.60.0) (2025-01-12)
+
+
+### Features
+
+* **Prices:** API: allow editing category-related fields ([#677](https://github.com/openfoodfacts/open-prices/issues/677)) ([fc157a6](https://github.com/openfoodfacts/open-prices/commit/fc157a61241886001ffcb9aa713c0215be4b89b4))
+* **Prices:** API: new filter on product category_tags ([#676](https://github.com/openfoodfacts/open-prices/issues/676)) ([458089e](https://github.com/openfoodfacts/open-prices/commit/458089ec8c85648e4b08a91a3d6b64b6e209a584))
+
 ## [1.59.6](https://github.com/openfoodfacts/open-prices/compare/v1.59.5...v1.59.6) (2025-01-06)
 
 
