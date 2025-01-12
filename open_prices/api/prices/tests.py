@@ -24,6 +24,7 @@ PRICE_8001505005707 = {
 }
 
 PRICE_APPLES = {
+    "type": price_constants.TYPE_CATEGORY,
     "category_tag": "en:apples",
     "price_per": price_constants.PRICE_PER_UNIT,
     "price": 1,
@@ -120,21 +121,18 @@ class PriceListFilterApiTest(TestCase):
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=[],
             origins_tags=["en:spain"],
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:unknown"],
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
-            type=price_constants.TYPE_CATEGORY,
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
@@ -527,21 +525,29 @@ class PriceUpdateApiTest(TestCase):
     def setUpTestData(cls):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
-        cls.price = PriceFactory(
+        cls.price_product = PriceFactory(
             **PRICE_8001505005707, owner=cls.user_session_1.user.user_id
         )
-        cls.url = reverse("api:prices-detail", args=[cls.price.id])
+        cls.price_category = PriceFactory(
+            **PRICE_APPLES, owner=cls.user_session_1.user.user_id
+        )
+        cls.url_price_product = reverse(
+            "api:prices-detail", args=[cls.price_product.id]
+        )
+        cls.url_price_category = reverse(
+            "api:prices-detail", args=[cls.price_category.id]
+        )
         cls.data = {"currency": "USD", "product_code": "123"}
 
-    def test_price_update(self):
+    def test_price_update_authentication_errors(self):
         # anonymous
         response = self.client.patch(
-            self.url, self.data, content_type="application/json"
+            self.url_price_product, self.data, content_type="application/json"
         )
         self.assertEqual(response.status_code, 403)
         # wrong token
         response = self.client.patch(
-            self.url,
+            self.url_price_product,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
             content_type="application/json",
@@ -549,15 +555,17 @@ class PriceUpdateApiTest(TestCase):
         self.assertEqual(response.status_code, 403)
         # not price owner
         response = self.client.patch(
-            self.url,
+            self.url_price_product,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session_2.token}"},
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 404)  # 403 ?
+
+    def test_price_update_ok(self):
         # authenticated
         response = self.client.patch(
-            self.url,
+            self.url_price_product,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
             content_type="application/json",
@@ -565,8 +573,27 @@ class PriceUpdateApiTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["currency"], "USD")
         self.assertEqual(
-            Price.objects.get(id=self.price.id).product_code, "8001505005707"
+            Price.objects.get(id=self.price_product.id).product_code, "8001505005707"
         )  # ignored
+        # update price category
+        response = self.client.patch(
+            self.url_price_category,
+            {"category_tag": "en:tomatoes"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["category_tag"], "en:tomatoes")
+
+    def test_price_update_type_mismatch(self):
+        # cannot add 'category' fields to a 'product' price
+        response = self.client.patch(
+            self.url_price_product,
+            {"category_tag": "en:tomatoes"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
 
 
 class PriceDeleteApiTest(TestCase):
@@ -579,7 +606,7 @@ class PriceDeleteApiTest(TestCase):
         )
         cls.url = reverse("api:prices-detail", args=[cls.price.id])
 
-    def test_price_delete(self):
+    def test_price_delete_authentication_errors(self):
         # anonymous
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, 403)
@@ -593,6 +620,8 @@ class PriceDeleteApiTest(TestCase):
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
         self.assertEqual(response.status_code, 404)  # 403 ?
+
+    def test_price_delete_ok(self):
         # authenticated
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}

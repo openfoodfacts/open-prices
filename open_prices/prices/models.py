@@ -59,6 +59,9 @@ class PriceQuerySet(models.QuerySet):
 
 class Price(models.Model):
     UPDATE_FIELDS = [
+        "category_tag",
+        "labels_tags",
+        "origins_tags",
         "price",
         "price_is_discounted",
         "price_without_discount",
@@ -187,7 +190,6 @@ class Price(models.Model):
         # product rules
         # - if product_code is set, then should be a valid string
         # - if product_code is set, then category_tag/labels_tags/origins_tags should not be set  # noqa
-        # - if product_code is set, then price_per should not be set
         if self.product_code:
             if self.type != price_constants.TYPE_PRODUCT:
                 validation_errors = utils.add_validation_error(
@@ -227,12 +229,6 @@ class Price(models.Model):
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "origins_tags",
-                    "Should not be set if `product_code` is filled",
-                )
-            if self.price_per:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "price_per",
                     "Should not be set if `product_code` is filled",
                 )
         # Tag rules:
