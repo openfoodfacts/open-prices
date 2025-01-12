@@ -54,18 +54,31 @@ class PriceListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
-        PriceFactory(price=15)
+        location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        proof = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        PriceFactory(
+            price=15,
+            proof_id=proof.id,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+        )
         PriceFactory(price=0)
         PriceFactory(price=50)
 
     def test_price_list(self):
         # anonymous
-        with self.assertNumQueries(1 + 1):  # thanks to select_related
+        # thanks to select_related, we only have 2 queries:
+        # - 1 to count the number of prices
+        # - 1 to get the prices and their associated proof/location/product
+        with self.assertNumQueries(1 + 1):
             response = self.client.get(self.url)
             self.assertEqual(response.data["total"], 3)
             self.assertEqual(len(response.data["items"]), 3)
             self.assertTrue("id" in response.data["items"][0])
             self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
+            self.assertTrue("proof" in response.data["items"][0])
+            self.assertTrue("location" in response.data["items"][0])
 
 
 class PriceListPaginationApiTest(TestCase):
@@ -312,9 +325,13 @@ class PriceListFilterApiTest(TestCase):
     def test_price_list_filter_by_product_categories_tags(self):
         self.assertEqual(Price.objects.count(), 5)
         url = self.url + "?product__categories_tags__contains=en:breakfasts"
+        # thanks to select_related, we only have 2 queries:
+        # - 1 to count the number of prices
+        # - 1 to get the prices (even when filtering on product fields)
         with self.assertNumQueries(1 + 1):
             response = self.client.get(url)
             self.assertEqual(response.data["total"], 1)
+            self.assertTrue("product" in response.data["items"][0])
 
 
 class PriceDetailApiTest(TestCase):
