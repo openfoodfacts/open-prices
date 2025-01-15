@@ -337,7 +337,7 @@ def proof_post_save_run_ml_models(sender, instance, created, **kwargs):
         if created:
             async_task(
                 "open_prices.proofs.ml.run_and_save_proof_prediction",
-                instance.id,
+                instance,
             )
 
 

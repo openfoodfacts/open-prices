@@ -378,20 +378,11 @@ class RunOCRTaskTest(TestCase):
 
 
 class MLModelTest(TestCase):
-    def test_run_and_save_proof_prediction_proof_does_not_exist(self):
-        # check that we emit an error log
-        with self.assertLogs("open_prices.proofs.ml", level="ERROR") as cm:
-            self.assertIsNone(run_and_save_proof_prediction(1))
-            self.assertEqual(
-                cm.output,
-                ["ERROR:open_prices.proofs.ml:Proof with id 1 not found"],
-            )
-
     def test_run_and_save_proof_prediction_proof_file_not_found(self):
         proof = ProofFactory()
         # check that we emit an error log
         with self.assertLogs("open_prices.proofs.ml", level="ERROR") as cm:
-            self.assertIsNone(run_and_save_proof_prediction(proof.id))
+            self.assertIsNone(run_and_save_proof_prediction(proof))
             self.assertEqual(
                 cm.output,
                 [
@@ -437,9 +428,7 @@ class MLModelTest(TestCase):
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
                 ):
-                    run_and_save_proof_prediction(
-                        proof.id, run_price_tag_extraction=False
-                    )
+                    run_and_save_proof_prediction(proof, run_price_tag_extraction=False)
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_called_once()
 

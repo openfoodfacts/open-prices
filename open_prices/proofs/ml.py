@@ -656,7 +656,7 @@ def run_and_save_proof_type_prediction(
 
 
 def run_and_save_proof_prediction(
-    proof_id: int, run_price_tag_extraction: bool = True
+    proof: Proof, run_price_tag_extraction: bool = True
 ) -> None:
     """Run all ML models on a specific proof, and save the predictions in DB.
 
@@ -669,11 +669,6 @@ def run_and_save_proof_prediction(
     :param run_price_tag_extraction: whether to run the price tag extraction
         model on the detected price tags, defaults to True
     """
-    proof = Proof.objects.filter(id=proof_id).first()
-    if not proof:
-        logger.error("Proof with id %s not found", proof_id)
-        return
-
     file_path_full = proof.file_path_full
 
     if file_path_full is None or not Path(file_path_full).exists():

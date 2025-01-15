@@ -93,7 +93,7 @@ class Command(BaseCommand):
 
         for proof in tqdm.tqdm(proofs):
             self.stdout.write(f"Processing proof {proof.id}...")
-            run_and_save_proof_prediction(proof.id)
+            run_and_save_proof_prediction(proof)
             self.stdout.write("Done.")
 
     def handle_price_tag_extraction_job(self, limit: int) -> None:
