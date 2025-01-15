@@ -321,7 +321,7 @@ def proof_post_save_run_ocr(sender, instance, created, **kwargs):
     if not settings.TESTING:
         if created:
             async_task(
-                "open_prices.proofs.utils.fetch_and_save_ocr_data",
+                "open_prices.proofs.ml.fetch_and_save_ocr_data",
                 f"{settings.IMAGES_DIR}/{instance.file_path}",
             )
 

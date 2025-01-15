@@ -5,7 +5,7 @@ import tqdm
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from open_prices.proofs.utils import fetch_and_save_ocr_data
+from open_prices.proofs.ml import fetch_and_save_ocr_data
 
 
 class Command(BaseCommand):

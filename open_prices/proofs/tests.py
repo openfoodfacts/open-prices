@@ -27,12 +27,13 @@ from open_prices.proofs.ml import (
     PROOF_CLASSIFICATION_MODEL_VERSION,
     ObjectDetectionRawResult,
     create_price_tags_from_proof_prediction,
+    fetch_and_save_ocr_data,
     run_and_save_price_tag_detection,
     run_and_save_proof_prediction,
     run_and_save_proof_type_prediction,
 )
 from open_prices.proofs.models import PriceTag, Proof
-from open_prices.proofs.utils import fetch_and_save_ocr_data, select_proof_image_dir
+from open_prices.proofs.utils import select_proof_image_dir
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -341,7 +342,7 @@ class RunOCRTaskTest(TestCase):
         with self.settings(GOOGLE_CLOUD_VISION_API_KEY="test_api_key"):
             # mock call to run_ocr_on_image
             with unittest.mock.patch(
-                "open_prices.proofs.utils.run_ocr_on_image",
+                "open_prices.proofs.ml.run_ocr_on_image",
                 return_value=response_data,
             ) as mock_run_ocr_on_image:
                 with tempfile.TemporaryDirectory() as tmpdirname:
