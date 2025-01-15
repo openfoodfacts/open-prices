@@ -22,7 +22,7 @@ from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDe
 from openfoodfacts.utils import http_session
 from PIL import Image
 
-from . import constants
+from . import constants as proof_constants
 from .models import PriceTag, PriceTagPrediction, Proof, ProofPrediction
 
 logger = logging.getLogger(__name__)
@@ -439,7 +439,7 @@ def run_and_save_price_tag_extraction(
         label = extract_from_price_tag(cropped_image)
         prediction = PriceTagPrediction.objects.create(
             price_tag=price_tag,
-            type=constants.PRICE_TAG_EXTRACTION_TYPE,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             model_name=GEMINI_MODEL_NAME,
             model_version=GEMINI_MODEL_VERSION,
             data=label,
@@ -467,7 +467,7 @@ def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction:
         return []
 
     price_tag_prediction = PriceTagPrediction.objects.filter(
-        price_tag=price_tag, type=constants.PRICE_TAG_EXTRACTION_TYPE
+        price_tag=price_tag, type=proof_constants.PRICE_TAG_EXTRACTION_TYPE
     ).first()
 
     if not price_tag_prediction:
@@ -571,7 +571,7 @@ def run_and_save_price_tag_detection(
                 PRICE_TAG_DETECTOR_MODEL_NAME,
             )
             if (
-                proof.type == constants.TYPE_PRICE_TAG
+                proof.type == proof_constants.TYPE_PRICE_TAG
                 and not PriceTag.objects.filter(proof=proof).exists()
             ):
                 logger.debug(
@@ -592,14 +592,14 @@ def run_and_save_price_tag_detection(
 
     proof_prediction = ProofPrediction.objects.create(
         proof=proof,
-        type=constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+        type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
         model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
         model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
         data={"objects": detections},
         value=None,
         max_confidence=max_confidence,
     )
-    if proof.type == constants.TYPE_PRICE_TAG:
+    if proof.type == proof_constants.TYPE_PRICE_TAG:
         create_price_tags_from_proof_prediction(
             proof, proof_prediction, run_extraction=run_extraction
         )
@@ -641,7 +641,7 @@ def run_and_save_proof_type_prediction(
     proof_type = max(prediction, key=lambda x: x[1])[0]
     return ProofPrediction.objects.create(
         proof=proof,
-        type=constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
+        type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
         model_name=PROOF_CLASSIFICATION_MODEL_NAME,
         model_version=PROOF_CLASSIFICATION_MODEL_VERSION,
         data={
