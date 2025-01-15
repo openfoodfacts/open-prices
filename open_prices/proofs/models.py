@@ -321,8 +321,23 @@ def proof_post_save_run_ocr(sender, instance, created, **kwargs):
     if not settings.TESTING:
         if created:
             async_task(
-                "open_prices.proofs.utils.fetch_and_save_ocr_data",
+                "open_prices.proofs.ml.fetch_and_save_ocr_data",
                 f"{settings.IMAGES_DIR}/{instance.file_path}",
+            )
+
+
+@receiver(signals.post_save, sender=Proof)
+def proof_post_save_run_ml_models(sender, instance, created, **kwargs):
+    """
+    After saving a proof in DB, run ML models on it.
+    - type prediction
+    - price tags extraction
+    """
+    if not settings.TESTING and settings.ENABLE_ML_PREDICTIONS:
+        if created:
+            async_task(
+                "open_prices.proofs.ml.run_and_save_proof_prediction",
+                instance,
             )
 
 
@@ -402,20 +417,6 @@ class ProofPrediction(models.Model):
 
     def __str__(self):
         return f"{self.proof} - {self.model_name} - {self.model_version}"
-
-
-@receiver(signals.post_save, sender=Proof)
-def proof_post_save_run_ml_models(sender, instance, created, **kwargs):
-    """After saving a proof in DB, run ML models on it.
-
-    Currently, only the proof classification model is run.
-    """
-    if not settings.TESTING and settings.ENABLE_ML_PREDICTIONS:
-        if created:
-            async_task(
-                "open_prices.proofs.ml.run_and_save_proof_prediction",
-                instance.id,
-            )
 
 
 class PriceTagQuerySet(models.QuerySet):

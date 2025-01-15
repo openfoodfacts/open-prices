@@ -27,12 +27,13 @@ from open_prices.proofs.ml import (
     PROOF_CLASSIFICATION_MODEL_VERSION,
     ObjectDetectionRawResult,
     create_price_tags_from_proof_prediction,
+    fetch_and_save_ocr_data,
     run_and_save_price_tag_detection,
     run_and_save_proof_prediction,
     run_and_save_proof_type_prediction,
 )
 from open_prices.proofs.models import PriceTag, Proof
-from open_prices.proofs.utils import fetch_and_save_ocr_data, select_proof_image_dir
+from open_prices.proofs.utils import select_proof_image_dir
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -341,7 +342,7 @@ class RunOCRTaskTest(TestCase):
         with self.settings(GOOGLE_CLOUD_VISION_API_KEY="test_api_key"):
             # mock call to run_ocr_on_image
             with unittest.mock.patch(
-                "open_prices.proofs.utils.run_ocr_on_image",
+                "open_prices.proofs.ml.run_ocr_on_image",
                 return_value=response_data,
             ) as mock_run_ocr_on_image:
                 with tempfile.TemporaryDirectory() as tmpdirname:
@@ -377,20 +378,11 @@ class RunOCRTaskTest(TestCase):
 
 
 class MLModelTest(TestCase):
-    def test_run_and_save_proof_prediction_proof_does_not_exist(self):
-        # check that we emit an error log
-        with self.assertLogs("open_prices.proofs.ml", level="ERROR") as cm:
-            self.assertIsNone(run_and_save_proof_prediction(1))
-            self.assertEqual(
-                cm.output,
-                ["ERROR:open_prices.proofs.ml:Proof with id 1 not found"],
-            )
-
     def test_run_and_save_proof_prediction_proof_file_not_found(self):
         proof = ProofFactory()
         # check that we emit an error log
         with self.assertLogs("open_prices.proofs.ml", level="ERROR") as cm:
-            self.assertIsNone(run_and_save_proof_prediction(proof.id))
+            self.assertIsNone(run_and_save_proof_prediction(proof))
             self.assertEqual(
                 cm.output,
                 [
@@ -436,9 +428,7 @@ class MLModelTest(TestCase):
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
                 ):
-                    run_and_save_proof_prediction(
-                        proof.id, run_price_tag_extraction=False
-                    )
+                    run_and_save_proof_prediction(proof, run_price_tag_extraction=False)
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_called_once()
 

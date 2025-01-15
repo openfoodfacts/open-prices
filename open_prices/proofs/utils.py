@@ -1,18 +1,12 @@
-import base64
-import gzip
-import json
 import logging
 import random
 import string
-import time
 from decimal import Decimal
 from mimetypes import guess_extension
 from pathlib import Path
-from typing import Any
 
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
-from openfoodfacts.utils import http_session
 from PIL import Image, ImageOps
 
 from open_prices.prices.constants import TYPE_CATEGORY, TYPE_PRODUCT
@@ -152,92 +146,6 @@ def select_proof_image_dir(images_dir: Path, max_images_per_dir: int = 1_000) ->
         current_dir_id_str = f"{current_dir_id:04d}"
         current_dir = images_dir / current_dir_id_str
     return current_dir
-
-
-def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | None:
-    """Run Google Cloud Vision OCR on the image stored at the given path.
-
-    :param image_path: the path to the image
-    :param api_key: the Google Cloud Vision API key
-    :return: the OCR data as a dict or None if an error occurred
-
-    This is similar to the run_ocr.py script in openfoodfacts-server:
-    https://github.com/openfoodfacts/openfoodfacts-server/blob/main/scripts/run_ocr.py
-    """
-    with open(image_path, "rb") as f:
-        image_bytes = f.read()
-
-    base64_content = base64.b64encode(image_bytes).decode("utf-8")
-    url = f"https://vision.googleapis.com/v1/images:annotate?key={api_key}"
-    r = http_session.post(
-        url,
-        json={
-            "requests": [
-                {
-                    "features": [
-                        {"type": "TEXT_DETECTION"},
-                        {"type": "LOGO_DETECTION"},
-                        {"type": "LABEL_DETECTION"},
-                        {"type": "SAFE_SEARCH_DETECTION"},
-                        {"type": "FACE_DETECTION"},
-                    ],
-                    "image": {"content": base64_content},
-                }
-            ]
-        },
-    )
-
-    if not r.ok:
-        logger.debug(
-            "Error running OCR on image %s, HTTP %s\n%s",
-            image_path,
-            r.status_code,
-            r.text,
-        )
-    return r.json()
-
-
-def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> bool:
-    """Run OCR on the image stored at the given path and save the result to a
-    JSON file.
-
-    The JSON file will be saved in the same directory as the image, with the
-    same name but a `.json` extension.
-
-    :param image_path: the path to the image
-    :param override: whether to override existing OCR data, default to False
-    :return: True if the OCR data was saved, False otherwise
-    """
-    image_path = Path(image_path)
-
-    if image_path.suffix not in (".jpg", ".jpeg", ".png", ".webp"):
-        logger.debug("Skipping %s, not a supported image type", image_path)
-        return False
-
-    api_key = settings.GOOGLE_CLOUD_VISION_API_KEY
-
-    if not api_key:
-        logger.error("No Google Cloud Vision API key found")
-        return False
-
-    ocr_json_path = image_path.with_suffix(".json.gz")
-
-    if ocr_json_path.exists() and not override:
-        logger.info("OCR data already exists for %s", image_path)
-        return False
-
-    data = run_ocr_on_image(image_path, api_key)
-
-    if data is None:
-        return False
-
-    data["created_at"] = int(time.time())
-
-    with gzip.open(ocr_json_path, "wt") as f:
-        f.write(json.dumps(data))
-
-    logger.debug("OCR data saved to %s", ocr_json_path)
-    return True
 
 
 def match_decimal_with_float(price_decimal: Decimal, price_float: float) -> bool:

@@ -1,21 +1,41 @@
+"""
+Proof ML/AI
+- predict Proof type with triton
+- detect Proof's PriceTags with triton
+- extract data from PriceTags with Gemini
+"""
+
+import base64
 import enum
+import gzip
 import json
 import logging
+import time
 from pathlib import Path
+from typing import Any
 
 import google.generativeai as genai
 import typing_extensions as typing
 from django.conf import settings
 from openfoodfacts.ml.image_classification import ImageClassifier
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDetector
+from openfoodfacts.utils import http_session
 from PIL import Image
 
-from . import constants
+from . import constants as proof_constants
 from .models import PriceTag, PriceTagPrediction, Proof, ProofPrediction
 
 logger = logging.getLogger(__name__)
 
 
+GOOGLE_CLOUD_VISION_OCR_API_URL = "https://vision.googleapis.com/v1/images:annotate"
+GOOGLE_CLOUD_VISION_OCR_FEATURES = [
+    "TEXT_DETECTION",
+    "LOGO_DETECTION",
+    "LABEL_DETECTION",
+    "SAFE_SEARCH_DETECTION",
+    "FACE_DETECTION",
+]
 PROOF_CLASSIFICATION_LABEL_NAMES = [
     "OTHER",
     "PRICE_TAG",
@@ -294,6 +314,84 @@ def detect_price_tags(
     )
 
 
+def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | None:
+    """Run Google Cloud Vision OCR on the image stored at the given path.
+
+    :param image_path: the path to the image
+    :param api_key: the Google Cloud Vision API key
+    :return: the OCR data as a dict or None if an error occurred
+
+    This is similar to the run_ocr.py script in openfoodfacts-server:
+    https://github.com/openfoodfacts/openfoodfacts-server/blob/main/scripts/run_ocr.py
+    """
+    with open(image_path, "rb") as f:
+        image_bytes = f.read()
+
+    base64_content = base64.b64encode(image_bytes).decode("utf-8")
+    url = f"{GOOGLE_CLOUD_VISION_OCR_API_URL}?key={api_key}"
+    data = {
+        "requests": [
+            {
+                "features": [
+                    {"type": feature} for feature in GOOGLE_CLOUD_VISION_OCR_FEATURES
+                ],
+                "image": {"content": base64_content},
+            }
+        ]
+    }
+    response = http_session.post(url, json=data)
+
+    if not response.ok:
+        logger.debug(
+            "Error running OCR on image %s, HTTP %s\n%s",
+            image_path,
+            response.status_code,
+            response.text,
+        )
+    return response.json()
+
+
+def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> bool:
+    """Run OCR on the image stored at the given path and save the result to a
+    JSON file.
+
+    The JSON file will be saved in the same directory as the image, with the
+    same name but a `.json` extension.
+
+    :param image_path: the path to the image
+    :param override: whether to override existing OCR data, default to False
+    :return: True if the OCR data was saved, False otherwise
+    """
+    image_path = Path(image_path)
+
+    if image_path.suffix not in (".jpg", ".jpeg", ".png", ".webp"):
+        logger.debug("Skipping %s, not a supported image type", image_path)
+        return False
+
+    if not settings.GOOGLE_CLOUD_VISION_API_KEY:
+        logger.error("No Google Cloud Vision API key found")
+        return False
+
+    ocr_json_path = image_path.with_suffix(".json.gz")
+
+    if ocr_json_path.exists() and not override:
+        logger.info("OCR data already exists for %s", image_path)
+        return False
+
+    data = run_ocr_on_image(image_path, settings.GOOGLE_CLOUD_VISION_API_KEY)
+
+    if data is None:
+        return False
+
+    data["created_at"] = int(time.time())
+
+    with gzip.open(ocr_json_path, "wt") as f:
+        f.write(json.dumps(data))
+
+    logger.debug("OCR data saved to %s", ocr_json_path)
+    return True
+
+
 def run_and_save_price_tag_extraction_from_id(price_tag_id: int) -> None:
     """Extract information from a single price tag using the Gemini model and
     save the predictions in the database.
@@ -341,7 +439,7 @@ def run_and_save_price_tag_extraction(
         label = extract_from_price_tag(cropped_image)
         prediction = PriceTagPrediction.objects.create(
             price_tag=price_tag,
-            type=constants.PRICE_TAG_EXTRACTION_TYPE,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             model_name=GEMINI_MODEL_NAME,
             model_version=GEMINI_MODEL_VERSION,
             data=label,
@@ -369,7 +467,7 @@ def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction:
         return []
 
     price_tag_prediction = PriceTagPrediction.objects.filter(
-        price_tag=price_tag, type=constants.PRICE_TAG_EXTRACTION_TYPE
+        price_tag=price_tag, type=proof_constants.PRICE_TAG_EXTRACTION_TYPE
     ).first()
 
     if not price_tag_prediction:
@@ -473,7 +571,7 @@ def run_and_save_price_tag_detection(
                 PRICE_TAG_DETECTOR_MODEL_NAME,
             )
             if (
-                proof.type == constants.TYPE_PRICE_TAG
+                proof.type == proof_constants.TYPE_PRICE_TAG
                 and not PriceTag.objects.filter(proof=proof).exists()
             ):
                 logger.debug(
@@ -494,14 +592,14 @@ def run_and_save_price_tag_detection(
 
     proof_prediction = ProofPrediction.objects.create(
         proof=proof,
-        type=constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+        type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
         model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
         model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
         data={"objects": detections},
         value=None,
         max_confidence=max_confidence,
     )
-    if proof.type == constants.TYPE_PRICE_TAG:
+    if proof.type == proof_constants.TYPE_PRICE_TAG:
         create_price_tags_from_proof_prediction(
             proof, proof_prediction, run_extraction=run_extraction
         )
@@ -543,7 +641,7 @@ def run_and_save_proof_type_prediction(
     proof_type = max(prediction, key=lambda x: x[1])[0]
     return ProofPrediction.objects.create(
         proof=proof,
-        type=constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
+        type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
         model_name=PROOF_CLASSIFICATION_MODEL_NAME,
         model_version=PROOF_CLASSIFICATION_MODEL_VERSION,
         data={
@@ -558,7 +656,7 @@ def run_and_save_proof_type_prediction(
 
 
 def run_and_save_proof_prediction(
-    proof_id: int, run_price_tag_extraction: bool = True
+    proof: Proof, run_price_tag_extraction: bool = True
 ) -> None:
     """Run all ML models on a specific proof, and save the predictions in DB.
 
@@ -571,11 +669,6 @@ def run_and_save_proof_prediction(
     :param run_price_tag_extraction: whether to run the price tag extraction
         model on the detected price tags, defaults to True
     """
-    proof = Proof.objects.filter(id=proof_id).first()
-    if not proof:
-        logger.error("Proof with id %s not found", proof_id)
-        return
-
     file_path_full = proof.file_path_full
 
     if file_path_full is None or not Path(file_path_full).exists():

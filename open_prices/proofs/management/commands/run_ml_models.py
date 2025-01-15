@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 from openfoodfacts.utils import get_logger
 
-from open_prices.proofs.constants import PRICE_TAG_EXTRACTION_TYPE, TYPE_PRICE_TAG
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
     PROOF_CLASSIFICATION_MODEL_NAME,
@@ -93,19 +93,21 @@ class Command(BaseCommand):
 
         for proof in tqdm.tqdm(proofs):
             self.stdout.write(f"Processing proof {proof.id}...")
-            run_and_save_proof_prediction(proof.id)
+            run_and_save_proof_prediction(proof)
             self.stdout.write("Done.")
 
     def handle_price_tag_extraction_job(self, limit: int) -> None:
         # Get all proofs of type PRICE_TAG
-        proofs = Proof.objects.filter(type=TYPE_PRICE_TAG).order_by("-id")
+        proofs = Proof.objects.filter(type=proof_constants.TYPE_PRICE_TAG).order_by(
+            "-id"
+        )
 
         added = 0
         for proof in tqdm.tqdm(proofs):
             for price_tag in proof.price_tags.all():
                 # Check if the price tag already has a prediction
                 if not PriceTagPrediction.objects.filter(
-                    type=PRICE_TAG_EXTRACTION_TYPE, price_tag=price_tag
+                    type=proof_constants.PRICE_TAG_EXTRACTION_TYPE, price_tag=price_tag
                 ).exists():
                     self.stdout.write(
                         f"Processing price tag {price_tag.id} (proof {proof.id})..."
