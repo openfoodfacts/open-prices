@@ -1,3 +1,10 @@
+"""
+Proof ML/AI
+- predict Proof type with triton
+- detect Proof's PriceTags with triton
+- extract data from PriceTags with Gemini
+"""
+
 import enum
 import json
 import logging
