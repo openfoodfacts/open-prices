@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.60.2](https://github.com/openfoodfacts/open-prices/compare/v1.60.1...v1.60.2) (2025-01-19)
+
+
+### Bug Fixes
+
+* **Prices:** on price delete, also update any related PriceTag status ([#684](https://github.com/openfoodfacts/open-prices/issues/684)) ([2b46cbb](https://github.com/openfoodfacts/open-prices/commit/2b46cbbef4023931db5194138c56155547e7df39))
+
 ## [1.60.1](https://github.com/openfoodfacts/open-prices/compare/v1.60.0...v1.60.1) (2025-01-19)
 
 
