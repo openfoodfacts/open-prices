@@ -553,6 +553,9 @@ def run_and_save_price_tag_detection(
     :return: the ProofPrediction instance created, or None if the prediction
         already exists and overwrite is False
     """
+    if proof.type != proof_constants.TYPE_PRICE_TAG:
+        logger.debug("Skipping proof %s, not of type PRICE_TAG", proof.id)
+        return None
 
     proof_prediction = ProofPrediction.objects.filter(
         proof=proof, model_name=PRICE_TAG_DETECTOR_MODEL_NAME
@@ -570,10 +573,7 @@ def run_and_save_price_tag_detection(
                 proof.id,
                 PRICE_TAG_DETECTOR_MODEL_NAME,
             )
-            if (
-                proof.type == proof_constants.TYPE_PRICE_TAG
-                and not PriceTag.objects.filter(proof=proof).exists()
-            ):
+            if not PriceTag.objects.filter(proof=proof).exists():
                 logger.debug(
                     "Creating price tags from existing prediction for proof %s",
                     proof.id,
@@ -599,10 +599,9 @@ def run_and_save_price_tag_detection(
         value=None,
         max_confidence=max_confidence,
     )
-    if proof.type == proof_constants.TYPE_PRICE_TAG:
-        create_price_tags_from_proof_prediction(
-            proof, proof_prediction, run_extraction=run_extraction
-        )
+    create_price_tags_from_proof_prediction(
+        proof, proof_prediction, run_extraction=run_extraction
+    )
     return proof_prediction
 
 
@@ -663,7 +662,7 @@ def run_and_save_proof_prediction(
     Currently, the following models are run:
 
     - proof type classification model
-    - price tag detection model (objecct detector)
+    - price tag detection model (object detector)
 
     :param proof_id: the ID of the proof to be classified
     :param run_price_tag_extraction: whether to run the price tag extraction
