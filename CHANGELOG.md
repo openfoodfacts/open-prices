@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.60.1](https://github.com/openfoodfacts/open-prices/compare/v1.60.0...v1.60.1) (2025-01-19)
+
+
+### Bug Fixes
+
+* **Proofs:** Run price tag prediction only on PRICE_TAG proofs ([#683](https://github.com/openfoodfacts/open-prices/issues/683)) ([4c10f86](https://github.com/openfoodfacts/open-prices/commit/4c10f86bca7880549eced8b7d0da682726be9648))
+
+
+### Technical
+
+* **Proofs:** Add test to make sure we don't run price_tag detection on RECEIPT proofs. ref [#683](https://github.com/openfoodfacts/open-prices/issues/683) ([c388e5b](https://github.com/openfoodfacts/open-prices/commit/c388e5bbb2ff2d23f780337a4c3490896c72e74e))
+* **Proofs:** move OCR script in the ML file ([#679](https://github.com/openfoodfacts/open-prices/issues/679)) ([9268606](https://github.com/openfoodfacts/open-prices/commit/926860632f8696bf20cc5141a62e4888aee5808c))
+
 ## [1.60.0](https://github.com/openfoodfacts/open-prices/compare/v1.59.6...v1.60.0) (2025-01-12)
 
 
