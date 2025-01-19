@@ -546,6 +546,14 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
             )
 
 
+@receiver(signals.pre_delete, sender=Price)
+def price_pre_delete_update_price_tag(sender, instance, **kwargs):
+    instance.price_tags.update(
+        status=None,
+        # price_id=None,  # will be done in the CASCADE
+    )
+
+
 @receiver(signals.post_delete, sender=Price)
 def price_post_delete_decrement_counts(sender, instance, **kwargs):
     if instance.owner:

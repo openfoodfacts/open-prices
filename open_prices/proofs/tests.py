@@ -686,7 +686,7 @@ class TestSelectProofImageDir(TestCase):
             self.assertEqual(selected_dir, images_dir / "0002")
 
 
-class PriceTagCreationTest(TestCase):
+class PriceTagTest(TestCase):
     def test_create_price_tag_invalid_bounding_box_length(self):
         with self.assertRaises(ValidationError) as cm:
             PriceTagFactory(
@@ -747,3 +747,16 @@ class PriceTagCreationTest(TestCase):
             str(cm.exception),
             "{'proof': ['Proof should have type PRICE_TAG.']}",
         )
+
+    def test_delete_price_should_update_price_tag(self):
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        price_tag = PriceTagFactory(proof=proof)
+        price = PriceFactory(proof=proof, location=proof.location)
+        price_tag.price_id = price.id
+        price_tag.status = proof_constants.PriceTagStatus.linked_to_price.value
+        price_tag.save()
+        # delete price
+        price.delete()
+        price_tag.refresh_from_db()
+        self.assertIsNone(price_tag.price_id)
+        self.assertIsNone(price_tag.status)
