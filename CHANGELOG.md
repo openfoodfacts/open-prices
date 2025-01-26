@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.60.3](https://github.com/openfoodfacts/open-prices/compare/v1.60.2...v1.60.3) (2025-01-26)
+
+
+### Technical
+
+* **Users:** allow anyone to query any user ([#689](https://github.com/openfoodfacts/open-prices/issues/689)) ([44e1179](https://github.com/openfoodfacts/open-prices/commit/44e1179a2663390ec9dd87e15dc35e03c2d63150))
+
 ## [1.60.2](https://github.com/openfoodfacts/open-prices/compare/v1.60.1...v1.60.2) (2025-01-19)
 
 
