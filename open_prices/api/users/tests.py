@@ -92,22 +92,22 @@ class UserDetailApiTest(TestCase):
     def test_user_detail(self):
         # anonymous
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
         # anonymous, unknown user
         url = reverse("api:users-detail", args=[999])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
         # authenticated, unknown user
         response = self.client.get(
             url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
         # authenticated, but not owner
         response = self.client.get(
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
-        self.assertEqual(response.status_code, 403)
-        # authenticated and owner: OK
+        self.assertEqual(response.status_code, 200)
+        # authenticated and owner
         response = self.client.get(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
