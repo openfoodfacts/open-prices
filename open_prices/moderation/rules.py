@@ -38,8 +38,9 @@ def cleanup_products_with_long_barcodes():
             for price in product_prices_from_source_queryset.all():
                 price.delete()  # delete 1 by 1 to trigger signals
                 price_deleted_count += 1
-            product.delete()
-            product_deleted_count += 1
+            if product.prices.count() == 0:
+                product.delete()
+                product_deleted_count += 1
 
     # recap
     print(f"Deleted {price_deleted_count} prices and {product_deleted_count} products")
