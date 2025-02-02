@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.61.0](https://github.com/openfoodfacts/open-prices/compare/v1.60.3...v1.61.0) (2025-02-02)
+
+
+### Features
+
+* **Price tags:** new prediction_count field (automatically incremented) ([#695](https://github.com/openfoodfacts/open-prices/issues/695)) ([f1a5884](https://github.com/openfoodfacts/open-prices/commit/f1a5884299b0fca8bde03bbf0891b8f1a3130a5f))
+* **Proofs:** new prediction_count field (automatically incremented) ([#693](https://github.com/openfoodfacts/open-prices/issues/693)) ([8bbae67](https://github.com/openfoodfacts/open-prices/commit/8bbae67fa762d1734e82acb658eb888d7888ff51))
+
+
+### Technical
+
+* **Price tags:** API: allow filtering by the new prediction_count field. ref [#695](https://github.com/openfoodfacts/open-prices/issues/695) ([6c319be](https://github.com/openfoodfacts/open-prices/commit/6c319bea787753d3dc57800fac01ea7e3ca29df2))
+
 ## [1.60.3](https://github.com/openfoodfacts/open-prices/compare/v1.60.2...v1.60.3) (2025-01-26)
 
 
