@@ -25,5 +25,5 @@ class Migration(migrations.Migration):
             name="prediction_count",
             field=models.PositiveIntegerField(blank=True, default=0, null=True),
         ),
-        models.RunPython(init_price_tag_prediction_count),
+        migrations.RunPython(init_price_tag_prediction_count),
     ]
