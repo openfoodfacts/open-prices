@@ -64,8 +64,10 @@ def update_product_counts_task():
     Update all product field counts
     """
     for product in Product.objects.with_stats().filter(price_count_annotated__gte=1):
-        for field in Product.COUNT_FIELDS:
-            getattr(product, f"update_{field}")()
+        product.update_price_count()
+        product.update_location_count()
+        product.update_user_count()
+        product.update_proof_count()
 
 
 def update_user_counts_task():

@@ -25,7 +25,14 @@ class Product(models.Model):
         "nova_group",
         "unique_scans_n",
     ]
-    COUNT_FIELDS = ["price_count", "location_count", "user_count", "proof_count"]
+    COUNT_FIELDS = [
+        "price_count",
+        "price_currency_count",
+        "location_count",
+        "location_type_osm_country_count",
+        "user_count",
+        "proof_count",
+    ]
 
     code = models.CharField(unique=True)
 
@@ -51,7 +58,11 @@ class Product(models.Model):
     unique_scans_n = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    location_type_osm_country_count = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
     user_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
@@ -102,9 +113,13 @@ class Product(models.Model):
 
     def update_price_count(self):
         self.price_count = self.prices.count()
-        self.save(update_fields=["price_count"])
+        self.price_currency_count = (
+            self.prices.values_list("currency", flat=True).distinct().count()
+        )
+        self.save(update_fields=["price_count", "price_currency_count"])
 
     def update_location_count(self):
+        from open_prices.locations import constants as location_constants
         from open_prices.prices.models import Price
 
         self.location_count = (
@@ -113,7 +128,17 @@ class Product(models.Model):
             .distinct()
             .count()
         )
-        self.save(update_fields=["location_count"])
+        self.location_type_osm_country_count = (
+            Price.objects.filter(
+                product=self,
+                location_id__isnull=False,
+                location__type=location_constants.TYPE_OSM,
+            )
+            .values_list("location__osm_address_country", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["location_count", "location_type_osm_country_count"])
 
     def update_user_count(self):
         from open_prices.prices.models import Price

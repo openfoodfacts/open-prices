@@ -63,7 +63,7 @@ class UserPropertyTest(TestCase):
             location_osm_id=cls.location_2.osm_id,
             location_osm_type=cls.location_2.osm_type,
             price=2.0,
-            currency=cls.proof.currency,
+            currency="USD",
             owner=cls.user.user_id,
         )
 
@@ -74,11 +74,11 @@ class UserPropertyTest(TestCase):
         # update_price_count() should fix price counts
         self.user.update_price_count()
         self.assertEqual(self.user.price_count, 2)
-        self.assertEqual(self.user.price_currency_count, 1)
+        self.assertEqual(self.user.price_currency_count, 2)
         # bulk delete prices to skip signals
         Price.objects.filter(owner=self.user.user_id).delete()
         self.assertEqual(self.user.price_count, 2)  # should be 0
-        self.assertEqual(self.user.price_currency_count, 1)  # should be 0
+        self.assertEqual(self.user.price_currency_count, 2)  # should be 0
         # update_price_count() should fix price counts
         self.user.update_price_count()
         self.assertEqual(self.user.price_count, 0)
