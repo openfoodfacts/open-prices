@@ -463,6 +463,11 @@ class MLModelTest(TestCase):
                 ).first()
                 self.assertIsNone(price_tag_prediction)
 
+                # prediction_count was incremented
+                proof.refresh_from_db()
+                self.assertEqual(proof.prediction_count, 1)
+
+                # cleanup
                 proof_type_prediction.delete()
                 proof.delete()
 

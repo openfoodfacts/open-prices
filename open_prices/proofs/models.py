@@ -5,7 +5,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Count, signals
+from django.db.models import Count, F, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -60,6 +60,7 @@ class Proof(models.Model):
         "location_osm_id",
         "location_osm_type",
     ]
+    COUNT_FIELDS = ["price_count", "prediction_count"]
 
     file_path = models.CharField(blank=True, null=True)
     mimetype = models.CharField(blank=True, null=True)
@@ -101,6 +102,7 @@ class Proof(models.Model):
     ready_for_price_tag_validation = models.BooleanField(default=False)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    prediction_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
@@ -417,6 +419,15 @@ class ProofPrediction(models.Model):
 
     def __str__(self):
         return f"{self.proof} - {self.model_name} - {self.model_version}"
+
+
+@receiver(signals.post_save, sender=ProofPrediction)
+def proof_prediction_post_create_increment_counts(sender, instance, created, **kwargs):
+    if created:
+        if instance.proof_id:
+            Proof.objects.filter(id=instance.proof_id).update(
+                prediction_count=F("prediction_count") + 1
+            )
 
 
 class PriceTagQuerySet(models.QuerySet):
