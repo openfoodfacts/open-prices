@@ -3,6 +3,17 @@
 from django.db import migrations, models
 
 
+def init_proof_prediction_count(apps, schema_editor):
+    Proof = apps.get_model("proofs", "Proof")
+    for proof in (
+        Proof.objects.prefetch_related("predictions")
+        .annotate(prediction_count_annotated=models.Count("predictions"))
+        .filter(prediction_count_annotated__gt=0)
+    ):
+        proof.prediction_count = proof.prediction_count_annotated
+        proof.save(update_fields=["prediction_count"])
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("proofs", "0009_proof_ready_for_price_tag_validation"),
@@ -14,4 +25,5 @@ class Migration(migrations.Migration):
             name="prediction_count",
             field=models.PositiveIntegerField(blank=True, default=0, null=True),
         ),
+        migrations.RunPython(init_proof_prediction_count),
     ]
