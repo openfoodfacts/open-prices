@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.62.0](https://github.com/openfoodfacts/open-prices/compare/v1.61.0...v1.62.0) (2025-02-02)
+
+
+### Features
+
+* **Moderation:** script to remove Products with long barcodes ([#700](https://github.com/openfoodfacts/open-prices/issues/700)) ([33ff94d](https://github.com/openfoodfacts/open-prices/commit/33ff94d9ac14d57378092529c4038a70fb33f49f))
+* **Products:** Stats: new location country count & price currency count ([#699](https://github.com/openfoodfacts/open-prices/issues/699)) ([3e9c58c](https://github.com/openfoodfacts/open-prices/commit/3e9c58cc6d6b0a6d03440257cfac95fa6b4b25c5))
+* **Users:** Stats: new location country count & price currency count ([#698](https://github.com/openfoodfacts/open-prices/issues/698)) ([6834f9c](https://github.com/openfoodfacts/open-prices/commit/6834f9cb49c3ad04e4fd70db90c63dfc67ef9705))
+
+
+### Technical
+
+* **Stats:** New location country count & price currency count ([#696](https://github.com/openfoodfacts/open-prices/issues/696)) ([0e2f575](https://github.com/openfoodfacts/open-prices/commit/0e2f575699c7cdaee8ec8fcece76c0d2a2d48631))
+
 ## [1.61.0](https://github.com/openfoodfacts/open-prices/compare/v1.60.3...v1.61.0) (2025-02-02)
 
 
