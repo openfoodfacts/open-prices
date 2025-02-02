@@ -46,6 +46,12 @@ class PriceTagFilter(django_filters.FilterSet):
     status__isnull = django_filters.BooleanFilter(
         field_name="status", lookup_expr="isnull"
     )
+    prediction_count__gte = django_filters.NumberFilter(
+        field_name="prediction_count", lookup_expr="gte"
+    )
+    prediction_count__lte = django_filters.NumberFilter(
+        field_name="price_count", lookup_expr="lte"
+    )
     created__gte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="gte"
     )
