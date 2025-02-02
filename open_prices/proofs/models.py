@@ -443,6 +443,7 @@ class PriceTag(models.Model):
 
     UPDATE_FIELDS = ["bounding_box", "status", "price_id"]
     CREATE_FIELDS = UPDATE_FIELDS + ["proof_id"]
+    COUNT_FIELDS = ["prediction_count"]
 
     proof = models.ForeignKey(
         Proof,
@@ -474,6 +475,8 @@ class PriceTag(models.Model):
         blank=True,
         null=True,
     )
+
+    prediction_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     created_by = models.CharField(
         max_length=100,
@@ -538,7 +541,7 @@ class PriceTag(models.Model):
                             "Bounding box values should be in the format [y_min, x_min, y_max, x_max].",
                         )
 
-        # self.proof and self.price is fetched with select_related in the view
+        # self.proof and self.price are fetched with select_related in the view
         # when the action is "create" or "update"
         # We therefore only check the validity of the relationship if the user
         # tries to update the price tag
@@ -617,3 +620,14 @@ class PriceTagPrediction(models.Model):
 
     def __str__(self):
         return f"{self.price_tag} - {self.model_name} - {self.model_version}"
+
+
+@receiver(signals.post_save, sender=PriceTagPrediction)
+def price_tag_prediction_post_create_increment_counts(
+    sender, instance, created, **kwargs
+):
+    if created:
+        if instance.price_tag_id:
+            PriceTag.objects.filter(id=instance.price_tag_id).update(
+                prediction_count=F("prediction_count") + 1
+            )
