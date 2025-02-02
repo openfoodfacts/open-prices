@@ -240,7 +240,7 @@ class Proof(models.Model):
             and self.source
             and any(
                 source in self.source
-                for source in proof_constants.PROOF_READY_FOR_PRICE_TAG_VALIDATION_SOURCES
+                for source in proof_constants.PROOF_READY_FOR_PRICE_TAG_VALIDATION_SOURCE_LIST
             )
         ):
             self.ready_for_price_tag_validation = True
