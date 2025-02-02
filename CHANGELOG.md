@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.62.1](https://github.com/openfoodfacts/open-prices/compare/v1.62.0...v1.62.1) (2025-02-02)
+
+
+### Technical
+
+* **Price tags:** API: allow filtering by the new prediction_count field (gte & lte). ref [#695](https://github.com/openfoodfacts/open-prices/issues/695) ([512e875](https://github.com/openfoodfacts/open-prices/commit/512e87517d9dce064090839f0c22c88eac99b1a6))
+* **Proofs:** API: allow filtering by the new prediction_count field (gte & lte). ref [#693](https://github.com/openfoodfacts/open-prices/issues/693) ([6539cf0](https://github.com/openfoodfacts/open-prices/commit/6539cf087f0604262dc9f7e06da127bae94c4890))
+
 ## [1.62.0](https://github.com/openfoodfacts/open-prices/compare/v1.61.0...v1.62.0) (2025-02-02)
 
 
