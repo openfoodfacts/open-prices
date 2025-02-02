@@ -38,6 +38,7 @@ class ProofFilter(django_filters.FilterSet):
             "owner",
             "ready_for_price_tag_validation",
             "price_count",
+            "prediction_count",
         ]
 
 
@@ -59,4 +60,5 @@ class PriceTagFilter(django_filters.FilterSet):
             "proof__owner",
             "proof__ready_for_price_tag_validation",
             "status",
+            "prediction_count",
         ]
