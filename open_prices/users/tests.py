@@ -69,22 +69,26 @@ class UserPropertyTest(TestCase):
 
     def test_update_price_count(self):
         self.user.refresh_from_db()
-        self.assertEqual(self.user.price_count, 2)
+        self.assertEqual(self.user.price_count, 2)  # price signals
         self.assertEqual(self.user.price_currency_count, 0)
+        # update_price_count() should fix price counts
+        self.user.update_price_count()
+        self.assertEqual(self.user.price_count, 2)
+        self.assertEqual(self.user.price_currency_count, 1)
         # bulk delete prices to skip signals
         Price.objects.filter(owner=self.user.user_id).delete()
         self.assertEqual(self.user.price_count, 2)  # should be 0
-        self.assertEqual(self.user.price_currency_count, 0)
-        # update_price_count() should fix price_count
+        self.assertEqual(self.user.price_currency_count, 1)  # should be 0
+        # update_price_count() should fix price counts
         self.user.update_price_count()
         self.assertEqual(self.user.price_count, 0)
-        self.assertEqual(self.user.price_currency_count, 2)
+        self.assertEqual(self.user.price_currency_count, 0)
 
     def test_update_location_count(self):
         self.user.refresh_from_db()
         self.assertEqual(self.user.location_count, 0)
         self.assertEqual(self.user.location_type_osm_country_count, 0)
-        # update_location_count() should fix location_count
+        # update_location_count() should fix location counts
         self.user.update_location_count()
         self.assertEqual(self.user.location_count, 1)  # proof locations
         self.assertEqual(self.user.location_type_osm_country_count, 1)
@@ -92,13 +96,13 @@ class UserPropertyTest(TestCase):
     def test_update_product_count(self):
         self.user.refresh_from_db()
         self.assertEqual(self.user.product_count, 0)
-        # update_product_count() should fix product_count
+        # update_product_count() should fix product counts
         self.user.update_product_count()
         self.assertEqual(self.user.product_count, 2)
 
     def test_update_proof_count(self):
         self.user.refresh_from_db()
         self.assertEqual(self.user.proof_count, 0)
-        # update_proof_count() should fix proof_count
+        # update_proof_count() should fix proof counts
         self.user.update_proof_count()
         self.assertEqual(self.user.proof_count, 1)
