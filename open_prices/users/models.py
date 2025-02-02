@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
+from open_prices.locations import constants as location_constants
+
 
 class UserQuerySet(models.QuerySet):
     def has_prices(self):
@@ -8,7 +10,14 @@ class UserQuerySet(models.QuerySet):
 
 
 class User(models.Model):
-    COUNT_FIELDS = ["price_count", "location_count", "product_count", "proof_count"]
+    COUNT_FIELDS = [
+        "price_count",
+        "price_currency_count",
+        "location_count",
+        "location_type_osm_country_count",
+        "product_count",
+        "proof_count",
+    ]
     SERIALIZED_FIELDS = [
         "user_id",
     ] + COUNT_FIELDS
@@ -18,7 +27,11 @@ class User(models.Model):
     is_moderator = models.BooleanField(default=False)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    location_type_osm_country_count = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
     product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
 
@@ -40,7 +53,13 @@ class User(models.Model):
         from open_prices.prices.models import Price
 
         self.price_count = Price.objects.filter(owner=self.user_id).count()
-        self.save(update_fields=["price_count"])
+        self.price_currency_count = (
+            Price.objects.filter(owner=self.user_id)
+            .values_list("currency", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["price_count", "price_currency_count"])
 
     def update_location_count(self):
         from open_prices.proofs.models import Proof
@@ -51,7 +70,18 @@ class User(models.Model):
             .distinct()
             .count()
         )
-        self.save(update_fields=["location_count"])
+        self.location_type_osm_country_count = (
+            Proof.objects.select_related("location")
+            .filter(
+                owner=self.user_id,
+                location_id__isnull=False,
+                location__type=location_constants.TYPE_OSM,
+            )
+            .values_list("location__osm_address_country", flat=True)
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=["location_count", "location_type_osm_country_count"])
 
     def update_product_count(self):
         from open_prices.prices.models import Price

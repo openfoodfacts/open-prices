@@ -73,8 +73,10 @@ def update_user_counts_task():
     Update all user field counts
     """
     for user in User.objects.all():
-        for field in User.COUNT_FIELDS:
-            getattr(user, f"update_{field}")()
+        user.update_price_count()
+        user.update_location_count()
+        user.update_product_count()
+        user.update_proof_count()
 
 
 def update_location_counts_task():
