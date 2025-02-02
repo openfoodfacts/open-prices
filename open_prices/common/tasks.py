@@ -12,6 +12,7 @@ from open_prices.api.proofs.serializers import ProofSerializer
 from open_prices.common.openfoodfacts import import_product_db
 from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
+from open_prices.moderation import rules as moderation_rules
 from open_prices.prices.models import Price
 from open_prices.products.models import Product
 from open_prices.proofs.models import Proof
@@ -101,6 +102,10 @@ def fix_proof_fields_task():
         proof.set_missing_fields_from_prices()
 
 
+def moderation_tasks():
+    moderation_rules.cleanup_products_with_long_barcodes()
+
+
 def dump_db_task():
     """
     Dump the database as JSONL files to the data directory
@@ -123,6 +128,7 @@ CRON_SCHEDULES = {
     "import_off_db_task": "30 15 * * *",  # daily at 15:30
     "update_total_stats_task": "0 1 * * *",  # daily at 01:00
     "fix_proof_fields_task": "10 1 * * *",  # daily at 01:10
+    "moderation_tasks": "20 1 * * *",  # daily at 01:20
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
     "update_location_counts_task": "10 2 * * 1",  # every start of the week
     "update_product_counts_task": "20 2 * * 1",  # every start of the week
