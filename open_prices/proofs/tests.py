@@ -562,6 +562,11 @@ class MLModelTest(TestCase):
                 self.assertAlmostEqual(objects[0]["score"], 0.98)
                 self.assertEqual(objects[0]["bounding_box"], [0.5, 0.5, 1.0, 1.0])
 
+                # prediction_count was incremented
+                proof.refresh_from_db()
+                self.assertEqual(proof.prediction_count, 2)
+
+                # cleanup
                 proof_type_prediction.delete()
                 price_tag_prediction.delete()
                 proof.delete()
