@@ -1,8 +1,6 @@
 from django.db import models
 from django.utils import timezone
 
-from open_prices.locations import constants as location_constants
-
 
 class UserQuerySet(models.QuerySet):
     def has_prices(self):
@@ -62,6 +60,7 @@ class User(models.Model):
         self.save(update_fields=["price_count", "price_currency_count"])
 
     def update_location_count(self):
+        from open_prices.locations import constants as location_constants
         from open_prices.proofs.models import Proof
 
         self.location_count = (
