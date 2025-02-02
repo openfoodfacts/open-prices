@@ -8,6 +8,7 @@ class TotalStats(SingletonModel):
         "price_count",
         "price_type_product_code_count",
         "price_type_category_tag_count",
+        "price_currency_count",
     ]
     PRODUCT_COUNT_FIELDS = ["product_count", "product_with_price_count"]
     LOCATION_COUNT_FIELDS = [
@@ -15,6 +16,7 @@ class TotalStats(SingletonModel):
         "location_with_price_count",
         "location_type_osm_count",
         "location_type_online_count",
+        "location_type_osm_country_count",
     ]
     PROOF_COUNT_FIELDS = [
         "proof_count",
@@ -42,12 +44,14 @@ class TotalStats(SingletonModel):
     price_count = models.PositiveIntegerField(default=0)
     price_type_product_code_count = models.PositiveIntegerField(default=0)
     price_type_category_tag_count = models.PositiveIntegerField(default=0)
+    price_currency_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
     product_with_price_count = models.PositiveIntegerField(default=0)
     location_count = models.PositiveIntegerField(default=0)
     location_with_price_count = models.PositiveIntegerField(default=0)
     location_type_osm_count = models.PositiveIntegerField(default=0)
     location_type_online_count = models.PositiveIntegerField(default=0)
+    location_type_osm_country_count = models.PositiveIntegerField(default=0)
     proof_count = models.PositiveIntegerField(default=0)
     proof_with_price_count = models.PositiveIntegerField(default=0)
     proof_type_price_tag_count = models.PositiveIntegerField(default=0)
@@ -76,6 +80,9 @@ class TotalStats(SingletonModel):
         self.price_type_category_tag_count = Price.objects.filter(
             category_tag__isnull=False
         ).count()
+        self.price_currency_count = (
+            Price.objects.values_list("currency", flat=True).distinct().count()
+        )
         self.save(update_fields=self.PRICE_COUNT_FIELDS + ["updated"])
 
     def update_product_stats(self):
@@ -94,6 +101,12 @@ class TotalStats(SingletonModel):
         # self.location_with_price_count = User.objects.values_list("location_id", flat=True).distinct().count()  # noqa
         self.location_type_osm_count = Location.objects.has_type_osm().count()
         self.location_type_online_count = Location.objects.has_type_online().count()
+        self.location_type_osm_country_count = (
+            Location.objects.has_type_osm()
+            .values_list("osm_address_country", flat=True)
+            .distinct()
+            .count()
+        )
         self.save(update_fields=self.LOCATION_COUNT_FIELDS + ["updated"])
 
     def update_proof_stats(self):
