@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.62.2](https://github.com/openfoodfacts/open-prices/compare/v1.62.1...v1.62.2) (2025-02-03)
+
+
+### Technical
+
+* **Price tags:** add a new status 'truncated' ([#702](https://github.com/openfoodfacts/open-prices/issues/702)) ([db6f4dc](https://github.com/openfoodfacts/open-prices/commit/db6f4dc6f15e87ad89bde05894846d6e831c56b4))
+
 ## [1.62.1](https://github.com/openfoodfacts/open-prices/compare/v1.62.0...v1.62.1) (2025-02-02)
 
 
