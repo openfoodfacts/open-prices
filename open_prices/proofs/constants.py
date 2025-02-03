@@ -44,7 +44,8 @@ class PriceTagStatus(enum.IntEnum):
     deleted = 0
     linked_to_price = 1
     not_readable = 2
-    not_price_tag = 3
+    truncated = 3
+    not_price_tag = 4
 
 
 PRICE_TAG_STATUS_CHOICES = [(item.value, item.name) for item in PriceTagStatus]
