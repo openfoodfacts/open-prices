@@ -21,20 +21,24 @@ from open_prices.users.models import User
 
 
 def import_off_db_task():
-    import_product_db(flavor=Flavor.off)
-    import_product_db(flavor=Flavor.off, obsolete=True)
+    if settings.ENABLE_IMPORT_OFF_DB_TASK is True:
+        import_product_db(flavor=Flavor.off)
+        import_product_db(flavor=Flavor.off, obsolete=True)
 
 
 def import_obf_db_task():
-    import_product_db(flavor=Flavor.obf)
+    if settings.ENABLE_IMPORT_OBF_DB_TASK is True:
+        import_product_db(flavor=Flavor.obf)
 
 
 def import_opff_db_task():
-    import_product_db(flavor=Flavor.opff)
+    if settings.ENABLE_IMPORT_OPFF_DB_TASK is True:
+        import_product_db(flavor=Flavor.opff)
 
 
 def import_opf_db_task():
-    import_product_db(flavor=Flavor.opf)
+    if settings.ENABLE_IMPORT_OPF_DB_TASK is True:
+        import_product_db(flavor=Flavor.opf)
 
 
 def import_all_product_db_task():
