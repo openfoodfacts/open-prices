@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.62.3](https://github.com/openfoodfacts/open-prices/compare/v1.62.2...v1.62.3) (2025-02-05)
+
+
+### Technical
+
+* **Product sync:** add settings to opt-in to OxF daily syncs ([#705](https://github.com/openfoodfacts/open-prices/issues/705)) ([114e448](https://github.com/openfoodfacts/open-prices/commit/114e448eddc969ad3ccf3ebcf21258ba6fc64ac7))
+* **Product sync:** disable OFF daily sync (now that we have Redis live updates) ([#707](https://github.com/openfoodfacts/open-prices/issues/707)) ([e81bace](https://github.com/openfoodfacts/open-prices/commit/e81bace82c599df606a78b37d3decb9057317189))
+
 ## [1.62.2](https://github.com/openfoodfacts/open-prices/compare/v1.62.1...v1.62.2) (2025-02-03)
 
 
