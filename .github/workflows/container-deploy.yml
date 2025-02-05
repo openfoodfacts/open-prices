@@ -148,7 +148,7 @@ jobs:
           echo "GOOGLE_GEMINI_API_KEY=${{ secrets.GOOGLE_GEMINI_API_KEY }}" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
           echo "ENABLE_ML_PREDICTIONS=True" >> .env
-          echo "ENABLE_IMPORT_OFF_DB_TASK=True" >> .env
+          # echo "ENABLE_IMPORT_OFF_DB_TASK=True" >> .env  # disabled because we have the REDIS live updates
           echo "ENABLE_IMPORT_OBF_DB_TASK=True" >> .env
           echo "ENABLE_IMPORT_OPFF_DB_TASK=True" >> .env
           echo "ENABLE_IMPORT_OPF_DB_TASK=True" >> .env
