@@ -307,9 +307,15 @@ ENABLE_ML_PREDICTIONS = os.getenv("ENABLE_ML_PREDICTIONS") == "True"
 # https://world.openfoodfacts.org/contributor/openfoodfacts-contributors
 ANONYMOUS_USER_ID = "openfoodfacts-contributors"
 
+ENABLE_IMPORT_OFF_DB_TASK = os.getenv("ENABLE_IMPORT_OFF_DB_TASK") == "True"
+ENABLE_IMPORT_OBF_DB_TASK = os.getenv("ENABLE_IMPORT_OBF_DB_TASK") == "True"
+ENABLE_IMPORT_OPFF_DB_TASK = os.getenv("ENABLE_IMPORT_OPFF_DB_TASK") == "True"
+ENABLE_IMPORT_OPF_DB_TASK = os.getenv("ENABLE_IMPORT_OPF_DB_TASK") == "True"
+
 
 # Redis (for product updates)
 # ------------------------------------------------------------------------------
+
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
 REDIS_STREAM_NAME = os.getenv("REDIS_STREAM_NAME", "product_updates")
