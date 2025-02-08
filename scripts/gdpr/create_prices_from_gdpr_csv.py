@@ -130,11 +130,17 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
         elif gdpr_source == "CARREFOUR":
             if "CAR" in op_price["product_code"]:
                 passes_test = False
-            elif op_price["product_name"] in ["BOUCHERIE", "Coupon Rem Caisse"]:
+            elif op_price["product_name"] in [
+                "BOUCHERIE",
+                "Coupon Rem Caisse",
+                "Coupon FIDELITE",
+            ]:
                 passes_test = False
-            elif op_price["discount"]:
+            elif ("discount" in op_price) and op_price["discount"]:
                 passes_test = False
-            elif op_price["receipt_quantity"].startswith("-"):
+            elif (type(op_price["receipt_quantity"]) is str) and op_price[
+                "receipt_quantity"
+            ].startswith("-"):
                 passes_test = False
         elif gdpr_source == "ELECLERC":
             if len(op_price["product_code"]) < 6:
