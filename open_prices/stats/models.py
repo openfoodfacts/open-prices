@@ -10,7 +10,18 @@ class TotalStats(SingletonModel):
         "price_type_category_tag_count",
         "price_currency_count",
     ]
-    PRODUCT_COUNT_FIELDS = ["product_count", "product_with_price_count"]
+    PRODUCT_COUNT_FIELDS = [
+        "product_count",
+        "product_off_count",
+        "product_obf_count",
+        "product_opff_count",
+        "product_opf_count",
+        "product_with_price_count",
+        "product_off_with_price_count",
+        "product_obf_with_price_count",
+        "product_opff_with_price_count",
+        "product_opf_with_price_count",
+    ]
     LOCATION_COUNT_FIELDS = [
         "location_count",
         "location_with_price_count",
@@ -46,7 +57,15 @@ class TotalStats(SingletonModel):
     price_type_category_tag_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
+    product_off_count = models.PositiveIntegerField(default=0)
+    product_obf_count = models.PositiveIntegerField(default=0)
+    product_opff_count = models.PositiveIntegerField(default=0)
+    product_opf_count = models.PositiveIntegerField(default=0)
     product_with_price_count = models.PositiveIntegerField(default=0)
+    product_off_with_price_count = models.PositiveIntegerField(default=0)
+    product_obf_with_price_count = models.PositiveIntegerField(default=0)
+    product_opff_with_price_count = models.PositiveIntegerField(default=0)
+    product_opf_with_price_count = models.PositiveIntegerField(default=0)
     location_count = models.PositiveIntegerField(default=0)
     location_with_price_count = models.PositiveIntegerField(default=0)
     location_type_osm_count = models.PositiveIntegerField(default=0)
@@ -86,11 +105,23 @@ class TotalStats(SingletonModel):
         self.save(update_fields=self.PRICE_COUNT_FIELDS + ["updated"])
 
     def update_product_stats(self):
+        from open_prices.products import constants as product_constants
         from open_prices.products.models import Product
 
         self.product_count = Product.objects.count()
         self.product_with_price_count = Product.objects.has_prices().count()
         # self.product_with_price_count = User.objects.values_list("product_id", flat=True).distinct().count()  # noqa
+        for source in product_constants.SOURCE_LIST:
+            setattr(
+                self,
+                f"product_{source.value}_count",
+                Product.objects.filter(source=source.value).count(),
+            )
+            setattr(
+                self,
+                f"product_{source.value}_with_price_count",
+                Product.objects.filter(source=source.value).has_prices().count(),
+            )
         self.save(update_fields=self.PRODUCT_COUNT_FIELDS + ["updated"])
 
     def update_location_stats(self):
