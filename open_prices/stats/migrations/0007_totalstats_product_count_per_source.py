@@ -14,42 +14,42 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="totalstats",
-            name="product_obf_count",
+            name="product_source_obf_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="product_obf_with_price_count",
+            name="product_source_obf_with_price_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="product_off_count",
+            name="product_source_off_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="product_off_with_price_count",
+            name="product_source_off_with_price_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="product_opf_count",
+            name="product_source_opf_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="product_opf_with_price_count",
+            name="product_source_opf_with_price_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="product_opff_count",
+            name="product_source_opff_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
             model_name="totalstats",
-            name="product_opff_with_price_count",
+            name="product_source_opff_with_price_count",
             field=models.PositiveIntegerField(default=0),
         ),
     ]

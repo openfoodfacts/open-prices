@@ -99,15 +99,15 @@ class TotalStatsTest(TestCase):
 
     def test_update_product_stats(self):
         self.assertEqual(self.total_stats.product_count, 0)
-        self.assertEqual(self.total_stats.product_off_count, 0)
+        self.assertEqual(self.total_stats.product_source_off_count, 0)
         self.assertEqual(self.total_stats.product_with_price_count, 0)
-        self.assertEqual(self.total_stats.product_off_with_price_count, 0)
+        self.assertEqual(self.total_stats.product_source_off_with_price_count, 0)
         # update_product_stats() will update product_counts
         self.total_stats.update_product_stats()
         self.assertEqual(self.total_stats.product_count, 2)
-        self.assertEqual(self.total_stats.product_off_count, 1)
+        self.assertEqual(self.total_stats.product_source_off_count, 1)
         self.assertEqual(self.total_stats.product_with_price_count, 2)
-        self.assertEqual(self.total_stats.product_off_with_price_count, 1)
+        self.assertEqual(self.total_stats.product_source_off_with_price_count, 1)
 
     def test_update_location_stats(self):
         self.assertEqual(self.total_stats.location_count, 0)

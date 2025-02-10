@@ -12,15 +12,15 @@ class TotalStats(SingletonModel):
     ]
     PRODUCT_COUNT_FIELDS = [
         "product_count",
-        "product_off_count",
-        "product_obf_count",
-        "product_opff_count",
-        "product_opf_count",
+        "product_source_off_count",
+        "product_source_obf_count",
+        "product_source_opff_count",
+        "product_source_opf_count",
         "product_with_price_count",
-        "product_off_with_price_count",
-        "product_obf_with_price_count",
-        "product_opff_with_price_count",
-        "product_opf_with_price_count",
+        "product_source_off_with_price_count",
+        "product_source_obf_with_price_count",
+        "product_source_opff_with_price_count",
+        "product_source_opf_with_price_count",
     ]
     LOCATION_COUNT_FIELDS = [
         "location_count",
@@ -57,15 +57,15 @@ class TotalStats(SingletonModel):
     price_type_category_tag_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
-    product_off_count = models.PositiveIntegerField(default=0)
-    product_obf_count = models.PositiveIntegerField(default=0)
-    product_opff_count = models.PositiveIntegerField(default=0)
-    product_opf_count = models.PositiveIntegerField(default=0)
+    product_source_off_count = models.PositiveIntegerField(default=0)
+    product_source_obf_count = models.PositiveIntegerField(default=0)
+    product_source_opff_count = models.PositiveIntegerField(default=0)
+    product_source_opf_count = models.PositiveIntegerField(default=0)
     product_with_price_count = models.PositiveIntegerField(default=0)
-    product_off_with_price_count = models.PositiveIntegerField(default=0)
-    product_obf_with_price_count = models.PositiveIntegerField(default=0)
-    product_opff_with_price_count = models.PositiveIntegerField(default=0)
-    product_opf_with_price_count = models.PositiveIntegerField(default=0)
+    product_source_off_with_price_count = models.PositiveIntegerField(default=0)
+    product_source_obf_with_price_count = models.PositiveIntegerField(default=0)
+    product_source_opff_with_price_count = models.PositiveIntegerField(default=0)
+    product_source_opf_with_price_count = models.PositiveIntegerField(default=0)
     location_count = models.PositiveIntegerField(default=0)
     location_with_price_count = models.PositiveIntegerField(default=0)
     location_type_osm_count = models.PositiveIntegerField(default=0)
@@ -114,12 +114,12 @@ class TotalStats(SingletonModel):
         for source in product_constants.SOURCE_LIST:
             setattr(
                 self,
-                f"product_{source.value}_count",
+                f"product_source_{source.value}_count",
                 Product.objects.filter(source=source.value).count(),
             )
             setattr(
                 self,
-                f"product_{source.value}_with_price_count",
+                f"product_source_{source.value}_with_price_count",
                 Product.objects.filter(source=source.value).has_prices().count(),
             )
         self.save(update_fields=self.PRODUCT_COUNT_FIELDS + ["updated"])
