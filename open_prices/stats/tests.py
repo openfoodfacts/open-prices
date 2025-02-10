@@ -5,6 +5,8 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.products import constants as product_constants
+from open_prices.products.factories import ProductFactory
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import PriceTagFactory, ProofFactory
 from open_prices.stats.models import TotalStats
@@ -39,6 +41,7 @@ class TotalStatsTest(TestCase):
         cls.user_2 = UserFactory()
         cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.location_2 = LocationFactory()
+        ProductFactory(code="0123456789100", source=product_constants.SOURCE_OFF)
         cls.proof_price_tag = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location.osm_id,
@@ -96,11 +99,15 @@ class TotalStatsTest(TestCase):
 
     def test_update_product_stats(self):
         self.assertEqual(self.total_stats.product_count, 0)
+        self.assertEqual(self.total_stats.product_off_count, 0)
         self.assertEqual(self.total_stats.product_with_price_count, 0)
+        self.assertEqual(self.total_stats.product_off_with_price_count, 0)
         # update_product_stats() will update product_counts
         self.total_stats.update_product_stats()
         self.assertEqual(self.total_stats.product_count, 2)
+        self.assertEqual(self.total_stats.product_off_count, 1)
         self.assertEqual(self.total_stats.product_with_price_count, 2)
+        self.assertEqual(self.total_stats.product_off_with_price_count, 1)
 
     def test_update_location_stats(self):
         self.assertEqual(self.total_stats.location_count, 0)
