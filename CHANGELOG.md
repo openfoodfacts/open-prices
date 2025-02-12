@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.63.0](https://github.com/openfoodfacts/open-prices/compare/v1.62.3...v1.63.0) (2025-02-12)
+
+
+### Features
+
+* **Products:** Stats: new counts per source (OxF flavors) ([#708](https://github.com/openfoodfacts/open-prices/issues/708)) ([3ad9f6b](https://github.com/openfoodfacts/open-prices/commit/3ad9f6b56cfa102f9848c333803ffcdca8683424))
+
+
+### Technical
+
+* **Price tags:** Make ready_for_price_tag_validation field editable by user ([#710](https://github.com/openfoodfacts/open-prices/issues/710)) ([62248a6](https://github.com/openfoodfacts/open-prices/commit/62248a6265c9fa8e1c1f11439aada7aca3d4972c))
+
 ## [1.62.3](https://github.com/openfoodfacts/open-prices/compare/v1.62.2...v1.62.3) (2025-02-05)
 
 
