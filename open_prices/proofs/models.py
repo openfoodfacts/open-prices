@@ -51,6 +51,7 @@ class Proof(models.Model):
         "date",
         "receipt_price_count",
         "receipt_price_total",
+        "ready_for_price_tag_validation",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + [
         "location_id",  # extra field (optional)
@@ -203,20 +204,28 @@ class Proof(models.Model):
                         "location_osm_id",
                         "Should not be a boolean or an invalid string",
                     )
-            # receipt-specific rules
-            if not self.type == proof_constants.TYPE_RECEIPT:
-                if self.receipt_price_count is not None:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "receipt_price_count",
-                        "Can only be set if type RECEIPT",
-                    )
-                if self.receipt_price_total is not None:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "receipt_price_total",
-                        "Can only be set if type RECEIPT",
-                    )
+        # price-tag specific rules
+        if not self.type == proof_constants.TYPE_PRICE_TAG:
+            if self.ready_for_price_tag_validation:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "ready_for_price_tag_validation",
+                    "Can only be set if type PRICE_TAG",
+                )
+        # receipt-specific rules
+        if not self.type == proof_constants.TYPE_RECEIPT:
+            if self.receipt_price_count is not None:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "receipt_price_count",
+                    "Can only be set if type RECEIPT",
+                )
+            if self.receipt_price_total is not None:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "receipt_price_total",
+                    "Can only be set if type RECEIPT",
+                )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
@@ -234,21 +243,9 @@ class Proof(models.Model):
             )
             self.location = location
 
-    def set_ready_for_price_tag_validation(self):
-        if (
-            self.type == proof_constants.TYPE_PRICE_TAG
-            and self.source
-            and any(
-                source in self.source
-                for source in proof_constants.PROOF_READY_FOR_PRICE_TAG_VALIDATION_SOURCE_LIST
-            )
-        ):
-            self.ready_for_price_tag_validation = True
-
     def save(self, *args, **kwargs):
         self.full_clean()
         self.set_location()
-        self.set_ready_for_price_tag_validation()
         super().save(*args, **kwargs)
 
     @property
