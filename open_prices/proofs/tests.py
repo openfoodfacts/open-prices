@@ -128,6 +128,10 @@ class ProofModelSaveTest(TestCase):
             ValidationError,
             ProofFactory,
             ready_for_price_tag_validation=True,
+            type=proof_constants.TYPE_RECEIPT,
+        )
+        ProofFactory(
+            ready_for_price_tag_validation=True,
             type=proof_constants.TYPE_PRICE_TAG,
         )
 
