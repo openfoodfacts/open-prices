@@ -122,6 +122,15 @@ class ProofModelSaveTest(TestCase):
             location_id=location_online.id, location_osm_id=None, location_osm_type=None
         )
 
+    def test_proof_price_tag_fields(self):
+        # ready_for_price_tag_validation
+        self.assertRaises(
+            ValidationError,
+            ProofFactory,
+            ready_for_price_tag_validation=True,
+            type=proof_constants.TYPE_PRICE_TAG,
+        )
+
     def test_proof_receipt_fields(self):
         # receipt_price_count
         for RECEIPT_PRICE_COUNT_NOT_OK in [-5]:  # Decimal("45.10")
@@ -165,13 +174,6 @@ class ProofModelSaveTest(TestCase):
             receipt_price_total=5,
             type=proof_constants.TYPE_PRICE_TAG,
         )
-
-    def test_proof_ready_for_price_tag_validation_field(self):
-        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG, source="/proofs/add/")
-        self.assertFalse(proof.ready_for_price_tag_validation)
-        proof.source = "/proofs/add/multiple"
-        proof.save()
-        self.assertTrue(proof.ready_for_price_tag_validation)
 
 
 class ProofQuerySetTest(TestCase):
