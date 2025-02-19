@@ -116,9 +116,7 @@ class Price(models.Model):
         blank=True,
         null=True,
     )
-    price_is_discounted = models.BooleanField(
-        default=False, blank=True, null=True
-    )  # TODO: remove default=False
+    price_is_discounted = models.BooleanField(default=False)
     price_without_discount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -126,6 +124,13 @@ class Price(models.Model):
         blank=True,
         null=True,
     )
+    discount_type = models.CharField(
+        max_length=20,
+        choices=price_constants.DISCOUNT_TYPE_CHOICES,
+        blank=True,
+        null=True,
+    )
+
     price_per = models.CharField(
         max_length=10,
         choices=price_constants.PRICE_PER_CHOICES,
