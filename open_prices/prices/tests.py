@@ -274,19 +274,21 @@ class PriceModelSaveTest(TestCase):
             price_without_discount=5,
         )
         # discount_type
-        PriceFactory(
+        price_not_discounted = PriceFactory(price=3)
+        self.assertEqual(price_not_discounted.price_is_discounted, False)
+        self.assertEqual(price_not_discounted.discount_type, None)
+        price_discounted_1 = PriceFactory(
             price=3,
             price_is_discounted=True,
             discount_type=price_constants.DISCOUNT_TYPE_QUANTITY,
         )
-        price_not_discounted = PriceFactory(price=3)
-        self.assertEqual(price_not_discounted.discount_type, None)
-        price_discounted = PriceFactory(
+        self.assertEqual(
+            price_discounted_1.discount_type, price_constants.DISCOUNT_TYPE_QUANTITY
+        )
+        price_discounted_2 = PriceFactory(
             price=3, price_is_discounted=True, discount_type=None
         )
-        self.assertEqual(
-            price_discounted.discount_type, price_constants.DISCOUNT_TYPE_OTHER
-        )
+        self.assertEqual(price_discounted_2.discount_type, None)
         self.assertRaises(
             ValidationError,
             PriceFactory,

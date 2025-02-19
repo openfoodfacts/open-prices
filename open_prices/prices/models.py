@@ -65,6 +65,7 @@ class Price(models.Model):
         "price",
         "price_is_discounted",
         "price_without_discount",
+        "discount_type",
         "price_per",
         "currency",
         "date",
@@ -328,7 +329,7 @@ class Price(models.Model):
         # - price_is_discounted must be set if price_without_discount is set
         # - price_without_discount must be greater or equal to price
         # - price_per should be set if category_tag is set
-        # - discount_type can only be set if price_is_discounted is True (default to "OTHER")  # noqa
+        # - discount_type can only be set if price_is_discounted is True
         if self.price in [None, "true", "false", "none", "null"]:
             validation_errors = utils.add_validation_error(
                 validation_errors,
@@ -353,11 +354,8 @@ class Price(models.Model):
                         "price_without_discount",
                         "Should be greater than `price`",
                     )
-            if self.price_is_discounted:
-                if not self.discount_type:
-                    self.discount_type = price_constants.DISCOUNT_TYPE_OTHER
-            else:
-                if self.discount_type:
+            if self.discount_type:
+                if not self.price_is_discounted:
                     validation_errors = utils.add_validation_error(
                         validation_errors,
                         "discount_type",

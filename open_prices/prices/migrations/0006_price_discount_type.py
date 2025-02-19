@@ -3,11 +3,6 @@
 from django.db import migrations, models
 
 
-def init_price_discount_type(apps, schema_editor):
-    Price = apps.get_model("prices", "Price")
-    Price.objects.filter(price_is_discounted=True).update(discount_type="OTHER")
-
-
 class Migration(migrations.Migration):
     dependencies = [
         ("prices", "0005_alter_price_receipt_quantity"),
@@ -32,7 +27,6 @@ class Migration(migrations.Migration):
                 null=True,
             ),
         ),
-        migrations.RunPython(init_price_discount_type),
         migrations.AlterField(
             model_name="price",
             name="price_is_discounted",

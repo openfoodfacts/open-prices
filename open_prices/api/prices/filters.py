@@ -51,6 +51,7 @@ class PriceFilter(django_filters.FilterSet):
             "location_id",
             "price",
             "price_is_discounted",
+            "discount_type",
             "currency",
             "date",
             "proof_id",
