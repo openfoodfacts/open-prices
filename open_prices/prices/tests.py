@@ -273,6 +273,26 @@ class PriceModelSaveTest(TestCase):
             price_is_discounted=True,
             price_without_discount=5,
         )
+        # discount_type
+        PriceFactory(
+            price=3,
+            price_is_discounted=True,
+            discount_type=price_constants.DISCOUNT_TYPE_QUANTITY,
+        )
+        price_not_discounted = PriceFactory(price=3)
+        self.assertEqual(price_not_discounted.discount_type, None)
+        price_discounted = PriceFactory(
+            price=3, price_is_discounted=True, discount_type=None
+        )
+        self.assertEqual(
+            price_discounted.discount_type, price_constants.DISCOUNT_TYPE_OTHER
+        )
+        self.assertRaises(
+            ValidationError,
+            PriceFactory,
+            price=10,
+            discount_type=price_constants.DISCOUNT_TYPE_QUANTITY,
+        )
 
     def test_price_currency_validation(self):
         for CURRENCY_OK in ["EUR", "USD"]:

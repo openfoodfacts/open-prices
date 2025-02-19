@@ -328,7 +328,7 @@ class Price(models.Model):
         # - price_is_discounted must be set if price_without_discount is set
         # - price_without_discount must be greater or equal to price
         # - price_per should be set if category_tag is set
-        # - date should have the right format & not be in the future
+        # - discount_type can only be set if price_is_discounted is True (default to "OTHER")  # noqa
         if self.price in [None, "true", "false", "none", "null"]:
             validation_errors = utils.add_validation_error(
                 validation_errors,
@@ -353,6 +353,16 @@ class Price(models.Model):
                         "price_without_discount",
                         "Should be greater than `price`",
                     )
+            if self.price_is_discounted:
+                if not self.discount_type:
+                    self.discount_type = price_constants.DISCOUNT_TYPE_OTHER
+            else:
+                if self.discount_type:
+                    validation_errors = utils.add_validation_error(
+                        validation_errors,
+                        "discount_type",
+                        "Should not be set if `price_is_discounted` is False",
+                    )
         if self.product_code:
             if self.price_per:
                 validation_errors = utils.add_validation_error(
@@ -367,6 +377,8 @@ class Price(models.Model):
                     "price_per",
                     "Should be set if `category_tag` is filled",
                 )
+        # date rules
+        # - date should have the right format & not be in the future
         if self.date:
             if type(self.date) is str:
                 validation_errors = utils.add_validation_error(
@@ -426,7 +438,6 @@ class Price(models.Model):
                                         "location",
                                         f"Location {LOCATION_FIELD} ({location_field_value}) does not match the price {LOCATION_FIELD} ({price_field_value})",
                                     )
-
         else:
             if self.location_osm_id:
                 if not self.location_osm_type:
@@ -464,7 +475,6 @@ class Price(models.Model):
                     "proof",
                     "Proof not found",
                 )
-
             if proof:
                 if (
                     proof.owner != self.owner
