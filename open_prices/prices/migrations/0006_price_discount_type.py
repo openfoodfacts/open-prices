@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 choices=[
                     ("QUANTITY", "QUANTITY"),
-                    ("PROMOTION", "PROMOTION"),
+                    ("SALE", "SALE"),
                     ("SEASONAL", "SEASONAL"),
                     ("LOYALTY_PROGRAM", "LOYALTY_PROGRAM"),
                     ("EXPIRES_SOON", "EXPIRES_SOON"),
