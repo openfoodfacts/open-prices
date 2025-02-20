@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.64.0](https://github.com/openfoodfacts/open-prices/compare/v1.63.0...v1.64.0) (2025-02-20)
+
+
+### Features
+
+* **Prices:** new `discount_type` field with a list of choices ([#711](https://github.com/openfoodfacts/open-prices/issues/711)) ([521dc19](https://github.com/openfoodfacts/open-prices/commit/521dc1922258a7059934bd44b412163729d4ab3c))
+
+
+### Technical
+
+* fix deploy proxy host ([#714](https://github.com/openfoodfacts/open-prices/issues/714)) ([c3da43f](https://github.com/openfoodfacts/open-prices/commit/c3da43f7939b3f24e7dc6422c41a022e3840cfb8))
+
 ## [1.63.0](https://github.com/openfoodfacts/open-prices/compare/v1.62.3...v1.63.0) (2025-02-12)
 
 
