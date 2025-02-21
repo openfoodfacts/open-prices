@@ -758,7 +758,8 @@ def run_and_save_proof_prediction(
 
     image = Image.open(file_path_full)
     run_and_save_proof_type_prediction(image, proof)
-    run_and_save_receipt_extraction_prediction(image, proof)
+    if proof.type == proof_constants.TYPE_RECEIPT:
+        run_and_save_receipt_extraction_prediction(image, proof)
     run_and_save_price_tag_detection(
         image, proof, run_extraction=run_price_tag_extraction
     )
