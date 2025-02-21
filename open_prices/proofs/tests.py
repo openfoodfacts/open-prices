@@ -430,7 +430,11 @@ class MLModelTest(TestCase):
                         return_value=None,
                     ) as mock_detect_price_tags,
                 ):
-                    run_and_save_proof_prediction(proof, run_price_tag_extraction=False)
+                    run_and_save_proof_prediction(
+                        proof,
+                        run_price_tag_extraction=False,
+                        run_receipt_extraction=False,
+                    )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_not_called()
 
@@ -513,7 +517,11 @@ class MLModelTest(TestCase):
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
                 ):
-                    run_and_save_proof_prediction(proof, run_price_tag_extraction=False)
+                    run_and_save_proof_prediction(
+                        proof,
+                        run_price_tag_extraction=False,
+                        run_receipt_extraction=False,
+                    )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_called_once()
 

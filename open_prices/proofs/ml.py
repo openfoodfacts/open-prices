@@ -731,7 +731,9 @@ def run_and_save_receipt_extraction_prediction(
 
 
 def run_and_save_proof_prediction(
-    proof: Proof, run_price_tag_extraction: bool = True
+    proof: Proof,
+    run_price_tag_extraction: bool = True,
+    run_receipt_extraction: bool = True,
 ) -> None:
     """Run all ML models on a specific proof, and save the predictions in DB.
 
@@ -758,7 +760,7 @@ def run_and_save_proof_prediction(
 
     image = Image.open(file_path_full)
     run_and_save_proof_type_prediction(image, proof)
-    if proof.type == proof_constants.TYPE_RECEIPT:
+    if run_receipt_extraction and proof.type == proof_constants.TYPE_RECEIPT:
         run_and_save_receipt_extraction_prediction(image, proof)
     run_and_save_price_tag_detection(
         image, proof, run_extraction=run_price_tag_extraction
