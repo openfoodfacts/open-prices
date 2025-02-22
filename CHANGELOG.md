@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.65.1](https://github.com/openfoodfacts/open-prices/compare/v1.65.0...v1.65.1) (2025-02-22)
+
+
+### Bug Fixes
+
+* **Proofs:** ML: fix typo in gemini result. ref [#718](https://github.com/openfoodfacts/open-prices/issues/718) ([e133216](https://github.com/openfoodfacts/open-prices/commit/e1332167aac9ac63c531d2cb7059c77f5ec88d01))
+
 ## [1.65.0](https://github.com/openfoodfacts/open-prices/compare/v1.64.0...v1.65.0) (2025-02-22)
 
 
