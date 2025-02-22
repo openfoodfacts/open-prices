@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.65.0](https://github.com/openfoodfacts/open-prices/compare/v1.64.0...v1.65.0) (2025-02-22)
+
+
+### Features
+
+* **Proofs:** ML: receipt content extraction ([#715](https://github.com/openfoodfacts/open-prices/issues/715)) ([11dad87](https://github.com/openfoodfacts/open-prices/commit/11dad873450ece30a6d560bc7041b9495979b33b))
+
+
+### Technical
+
+* **API:** return proof/price/location source field ([#719](https://github.com/openfoodfacts/open-prices/issues/719)) ([5a6cb3e](https://github.com/openfoodfacts/open-prices/commit/5a6cb3ed392a9351b8ab2ee21894b7962c5e07c3))
+* **Prices:** Stats: new stat with_discount count ([#716](https://github.com/openfoodfacts/open-prices/issues/716)) ([d05320f](https://github.com/openfoodfacts/open-prices/commit/d05320fde7a9444c2cc257bcbff8246594e1378f))
+* **Proofs:** ML: move some config to a dedicated google.py file ([#718](https://github.com/openfoodfacts/open-prices/issues/718)) ([3f4da4c](https://github.com/openfoodfacts/open-prices/commit/3f4da4c359941a461badce3161587def3d019ff3))
+
 ## [1.64.0](https://github.com/openfoodfacts/open-prices/compare/v1.63.0...v1.64.0) (2025-02-20)
 
 
