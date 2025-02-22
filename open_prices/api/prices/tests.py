@@ -430,7 +430,6 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["currency"], "EUR")
         self.assertEqual(response.data["date"], "2024-01-01")
         self.assertEqual(response.data["receipt_quantity"], 1)  # default
-        self.assertTrue("source" not in response.data)
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         # with proof, product & location
         self.assertTrue("proof_id" in response.data)
@@ -550,9 +549,8 @@ class PriceCreateApiTest(TestCase):
                     content_type="application/json",
                 )
                 self.assertEqual(response.status_code, 201)
-                self.assertTrue("source" not in response.data)
-                p = Price.objects.last()
-                self.assertEqual(p.source, result)
+                self.assertEqual(response.data["source"], result)
+                self.assertEqual(Price.objects.last().source, result)
 
 
 class PriceUpdateApiTest(TestCase):

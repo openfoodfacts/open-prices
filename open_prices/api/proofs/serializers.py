@@ -33,7 +33,7 @@ class ProofSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proof
         # fields = "__all__"
-        exclude = ["location", "source"]
+        exclude = ["location"]
 
 
 class ProofHalfFullSerializer(ProofSerializer):
@@ -41,7 +41,7 @@ class ProofHalfFullSerializer(ProofSerializer):
 
     class Meta:
         model = Proof
-        exclude = ["source"]  # ProofSerializer.Meta.exclude
+        fields = "__all__"
 
 
 class ProofFullSerializer(ProofSerializer):
@@ -50,7 +50,7 @@ class ProofFullSerializer(ProofSerializer):
 
     class Meta:
         model = Proof
-        exclude = ["source"]  # ProofSerializer.Meta.exclude
+        fields = "__all__"
 
 
 class ProofUploadSerializer(serializers.ModelSerializer):
