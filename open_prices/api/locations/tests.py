@@ -218,7 +218,7 @@ class LocationCreateApiTest(TestCase):
                     self.url + params, data, content_type="application/json"
                 )
                 self.assertEqual(response.status_code, 201)
-                self.assertTrue("source" not in response.data)
+                self.assertEqual(response.data["source"], result)
                 self.assertEqual(Location.objects.last().source, result)
 
 
