@@ -214,7 +214,7 @@ def extract_from_price_tag(image: Image.Image) -> Label:
             prompt,
             image,
         ],
-        generation_config=common_google.get_generation_config(Labels),
+        generation_config=common_google.get_generation_config(Label),
     )
     return json.loads(response.text)
 
