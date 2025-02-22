@@ -703,6 +703,10 @@ def run_and_save_receipt_extraction_prediction(
     :return: the ProofPrediction instance created, or None if the prediction
         already exists and overwrite is False
     """
+    if proof.type != proof_constants.TYPE_RECEIPT:
+        logger.debug("Skipping proof %s, not of type RECEIPT", proof.id)
+        return None
+
     if ProofPrediction.objects.filter(
         proof=proof, model_name=GEMINI_MODEL_NAME
     ).exists():
@@ -740,9 +744,9 @@ def run_and_save_proof_prediction(
     Currently, the following models are run:
 
     - proof type classification model
-    - receipt extraction model
     - price tag detection model (object detector)
     - price tag extraction model
+    - receipt extraction model
 
     :param proof_id: the ID of the proof to be classified
     :param run_price_tag_extraction: whether to run the price tag extraction
@@ -760,8 +764,8 @@ def run_and_save_proof_prediction(
 
     image = Image.open(file_path_full)
     run_and_save_proof_type_prediction(image, proof)
-    if run_receipt_extraction and proof.type == proof_constants.TYPE_RECEIPT:
-        run_and_save_receipt_extraction_prediction(image, proof)
     run_and_save_price_tag_detection(
         image, proof, run_extraction=run_price_tag_extraction
     )
+    if run_receipt_extraction:
+        run_and_save_receipt_extraction_prediction(image, proof)
