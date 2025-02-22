@@ -181,6 +181,9 @@ class Receipt(typing.TypedDict):
     store_address: str
     store_city_name: str
     date: str
+    # currency: str
+    # price_count: int
+    # price_total: float
     items: list[ReceiptItem]
 
 
@@ -192,8 +195,7 @@ def extract_from_price_tag(image: Image.Image) -> Label:
     """
 
     # Gemini model max payload size is 20MB
-    # To prevent the payload from being too large, we resize the images before
-    # upload
+    # To prevent the payload from being too large, we resize the images
     max_size = 1024
     if image.width > max_size or image.height > max_size:
         image = image.copy()
@@ -228,8 +230,7 @@ def extract_from_price_tags(images: Image.Image) -> Labels:
     """
 
     # Gemini model max payload size is 20MB
-    # To prevent the payload from being too large, we resize the images before
-    # upload
+    # To prevent the payload from being too large, we resize the images
     image_list = []
     max_size = 1024
     for image in images:
@@ -265,14 +266,13 @@ def extract_from_receipt(image: Image.Image) -> Receipt:
         image = image.copy()
         image.thumbnail((max_size, max_size))
 
-    response = model.generate_content(
+    prompt = "Extract all relevent information, use empty strings for unknown values."
+    response = common_google.gemini_model.generate_content(
         [
-            "Extract all relevent information, use empty strings for unknown values.",
+            prompt,
             image,
         ],
-        generation_config=genai.GenerationConfig(
-            response_mime_type="application/json", response_schema=Receipt
-        ),
+        generation_config=common_google.get_generation_config(Receipt),
     )
     return json.loads(response.text)
 
@@ -692,18 +692,18 @@ def run_and_save_receipt_extraction_prediction(
         return None
 
     if ProofPrediction.objects.filter(
-        proof=proof, model_name=GEMINI_MODEL_NAME
+        proof=proof, model_name=common_google.GEMINI_MODEL_NAME
     ).exists():
         if overwrite:
             logger.info("Overwriting existing type prediction for proof %s", proof.id)
             ProofPrediction.objects.filter(
-                proof=proof, model_name=GEMINI_MODEL_NAME
+                proof=proof, model_name=common_google.GEMINI_MODEL_NAME
             ).delete()
         else:
             logger.debug(
                 "Proof %s already has a prediction for model %s",
                 proof.id,
-                GEMINI_MODEL_NAME,
+                common_google.GEMINI_MODEL_NAME,
             )
             return None
 
@@ -712,8 +712,8 @@ def run_and_save_receipt_extraction_prediction(
     return ProofPrediction.objects.create(
         proof=proof,
         type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
-        model_name=GEMINI_MODEL_NAME,
-        model_version=GEMINI_MODEL_VERSION,
+        model_name=common_google.GEMINI_MODEL_NAME,
+        model_version=common_google.GEMINI_MODEL_VERSION,
         data=prediction,
     )
 
