@@ -28,6 +28,9 @@ _cached_create_taxonomy_mapping = functools.lru_cache()(create_taxonomy_mapping)
 
 
 class PriceQuerySet(models.QuerySet):
+    def has_discount(self):
+        return self.filter(price_is_discounted=True)
+
     def exclude_discounted(self):
         return self.filter(price_is_discounted=False)
 

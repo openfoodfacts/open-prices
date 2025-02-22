@@ -8,6 +8,7 @@ class TotalStats(SingletonModel):
         "price_count",
         "price_type_product_code_count",
         "price_type_category_tag_count",
+        "price_with_discount_count",
         "price_currency_count",
     ]
     PRODUCT_COUNT_FIELDS = [
@@ -55,6 +56,7 @@ class TotalStats(SingletonModel):
     price_count = models.PositiveIntegerField(default=0)
     price_type_product_code_count = models.PositiveIntegerField(default=0)
     price_type_category_tag_count = models.PositiveIntegerField(default=0)
+    price_with_discount_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
     product_source_off_count = models.PositiveIntegerField(default=0)
@@ -83,6 +85,10 @@ class TotalStats(SingletonModel):
     user_count = models.PositiveIntegerField(default=0)
     user_with_price_count = models.PositiveIntegerField(default=0)
 
+    # Ideas
+    # - price count per discount type
+    # - ?
+
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
@@ -99,6 +105,7 @@ class TotalStats(SingletonModel):
         self.price_type_category_tag_count = Price.objects.filter(
             category_tag__isnull=False
         ).count()
+        self.price_with_discount_count = Price.objects.has_discount().count()
         self.price_currency_count = (
             Price.objects.values_list("currency", flat=True).distinct().count()
         )

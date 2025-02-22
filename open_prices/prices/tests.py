@@ -25,6 +25,10 @@ class PriceQuerySetTest(TestCase):
         PriceFactory(price=8)
         PriceFactory(price=10)
 
+    def test_has_discount(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.has_discount().count(), 1)
+
     def test_exclude_discounted(self):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.exclude_discounted().count(), 2)
