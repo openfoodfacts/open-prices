@@ -14,7 +14,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-import google.generativeai as genai
 import typing_extensions as typing
 from django.conf import settings
 from openfoodfacts.ml.image_classification import ImageClassifier
@@ -22,20 +21,14 @@ from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDe
 from openfoodfacts.utils import http_session
 from PIL import Image
 
+from open_prices.common import google as common_google
+
 from . import constants as proof_constants
 from .models import PriceTag, PriceTagPrediction, Proof, ProofPrediction
 
 logger = logging.getLogger(__name__)
 
 
-GOOGLE_CLOUD_VISION_OCR_API_URL = "https://vision.googleapis.com/v1/images:annotate"
-GOOGLE_CLOUD_VISION_OCR_FEATURES = [
-    "TEXT_DETECTION",
-    "LOGO_DETECTION",
-    "LABEL_DETECTION",
-    "SAFE_SEARCH_DETECTION",
-    "FACE_DETECTION",
-]
 PROOF_CLASSIFICATION_LABEL_NAMES = [
     "OTHER",
     "PRICE_TAG",
@@ -52,11 +45,6 @@ PRICE_TAG_DETECTOR_MODEL_NAME = "price_tag_detection"
 PRICE_TAG_DETECTOR_MODEL_VERSION = "price_tag_detection-1.0"
 PRICE_TAG_DETECTOR_TRITON_VERSION = "1"
 PRICE_TAG_DETECTOR_IMAGE_SIZE = 960
-GEMINI_MODEL_NAME = "gemini"
-GEMINI_MODEL_VERSION = "gemini-1.5-flash"
-
-genai.configure(api_key=settings.GOOGLE_GEMINI_API_KEY)
-model = genai.GenerativeModel(model_name=GEMINI_MODEL_VERSION)
 
 
 # TODO: what about other categories?
@@ -193,6 +181,9 @@ class Receipt(typing.TypedDict):
     store_address: str
     store_city_name: str
     date: str
+    # currency: str
+    # price_count: int
+    # price_total: float
     items: list[ReceiptItem]
 
 
@@ -204,28 +195,26 @@ def extract_from_price_tag(image: Image.Image) -> Label:
     """
 
     # Gemini model max payload size is 20MB
-    # To prevent the payload from being too large, we resize the images before
-    # upload
+    # To prevent the payload from being too large, we resize the images
     max_size = 1024
     if image.width > max_size or image.height > max_size:
         image = image.copy()
         image.thumbnail((max_size, max_size))
 
-    response = model.generate_content(
+    prompt = (
+        "Here is one picture containing a label. "
+        "Please extract all the following attributes: "
+        "the product category matching product name, the origin category matching country of origin, the price, "
+        "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode (valid EAN-13 usually). "
+        "I expect a single JSON in your reply, no more, no less. "
+        "If you cannot decode an attribute, set it to an empty string."
+    )
+    response = common_google.gemini_model.generate_content(
         [
-            (
-                "Here is one picture containing a label. "
-                "Please extract all the following attributes: "
-                "the product category matching product name, the origin category matching country of origin, the price, "
-                "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode (valid EAN-13 usually). "
-                "I expect a single JSON in your reply, no more, no less. "
-                "If you cannot decode an attribute, set it to an empty string."
-            ),
+            prompt,
             image,
         ],
-        generation_config=genai.GenerationConfig(
-            response_mime_type="application/json", response_schema=Label
-        ),
+        generation_config=common_google.get_generation_config(Labels),
     )
     return json.loads(response.text)
 
@@ -241,33 +230,28 @@ def extract_from_price_tags(images: Image.Image) -> Labels:
     """
 
     # Gemini model max payload size is 20MB
-    # To prevent the payload from being too large, we resize the images before
-    # upload
-    resized_images = []
+    # To prevent the payload from being too large, we resize the images
+    image_list = []
     max_size = 1024
     for image in images:
         if image.width > max_size or image.height > max_size:
             resized_image = image.copy()
             resized_image.thumbnail((max_size, max_size))
-            resized_images.append(resized_image)
+            image_list.append(resized_image)
         else:
-            resized_images.append(image)
+            image_list.append(image)
 
-    response = model.generate_content(
-        [
-            (
-                f"Here are {len(resized_images)} pictures containing a label. "
-                "For each picture of a label, please extract all the following attributes: "
-                "the product category matching product name, the origin category matching country of origin, the price, "
-                "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode (valid EAN-13 usually). "
-                f"I expect a list of {len(resized_images)} labels in your reply, no more, no less. "
-                "If you cannot decode an attribute, set it to an empty string"
-            )
-        ]
-        + resized_images,
-        generation_config=genai.GenerationConfig(
-            response_mime_type="application/json", response_schema=Labels
-        ),
+    prompt = (
+        f"Here are {len(image_list)} pictures containing a label. "
+        "For each picture of a label, please extract all the following attributes: "
+        "the product category matching product name, the origin category matching country of origin, the price, "
+        "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode (valid EAN-13 usually). "
+        f"I expect a list of {len(image_list)} labels in your reply, no more, no less. "
+        "If you cannot decode an attribute, set it to an empty string"
+    )
+    response = common_google.gemini_model.generate_content(
+        [prompt] + image_list,
+        generation_config=common_google.get_generation_config(Labels),
     )
     return json.loads(response.text)
 
@@ -282,14 +266,13 @@ def extract_from_receipt(image: Image.Image) -> Receipt:
         image = image.copy()
         image.thumbnail((max_size, max_size))
 
-    response = model.generate_content(
+    prompt = "Extract all relevent information, use empty strings for unknown values."
+    response = common_google.gemini_model.generate_content(
         [
-            "Extract all relevent information, use empty strings for unknown values.",
+            prompt,
             image,
         ],
-        generation_config=genai.GenerationConfig(
-            response_mime_type="application/json", response_schema=Receipt
-        ),
+        generation_config=common_google.get_generation_config(Receipt),
     )
     return json.loads(response.text)
 
@@ -364,12 +347,13 @@ def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | N
         image_bytes = f.read()
 
     base64_content = base64.b64encode(image_bytes).decode("utf-8")
-    url = f"{GOOGLE_CLOUD_VISION_OCR_API_URL}?key={api_key}"
+    url = f"{common_google.GOOGLE_CLOUD_VISION_OCR_API_URL}?key={api_key}"
     data = {
         "requests": [
             {
                 "features": [
-                    {"type": feature} for feature in GOOGLE_CLOUD_VISION_OCR_FEATURES
+                    {"type": feature}
+                    for feature in common_google.GOOGLE_CLOUD_VISION_OCR_FEATURES
                 ],
                 "image": {"content": base64_content},
             }
@@ -476,8 +460,8 @@ def run_and_save_price_tag_extraction(
         prediction = PriceTagPrediction.objects.create(
             price_tag=price_tag,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-            model_name=GEMINI_MODEL_NAME,
-            model_version=GEMINI_MODEL_VERSION,
+            model_name=common_google.GEMINI_MODEL_NAME,
+            model_version=common_google.GEMINI_MODEL_VERSION,
             data=label,
         )
         predictions.append(prediction)
@@ -524,8 +508,8 @@ def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction:
     cropped_image = image.crop((left, top, right, bottom))
     gemini_output = extract_from_price_tag(cropped_image)
     price_tag_prediction.data = gemini_output
-    price_tag_prediction.model_name = GEMINI_MODEL_NAME
-    price_tag_prediction.model_version = GEMINI_MODEL_VERSION
+    price_tag_prediction.model_name = common_google.GEMINI_MODEL_NAME
+    price_tag_prediction.model_version = common_google.GEMINI_MODEL_VERSION
     price_tag_prediction.save()
     return price_tag_prediction
 
@@ -708,18 +692,18 @@ def run_and_save_receipt_extraction_prediction(
         return None
 
     if ProofPrediction.objects.filter(
-        proof=proof, model_name=GEMINI_MODEL_NAME
+        proof=proof, model_name=common_google.GEMINI_MODEL_NAME
     ).exists():
         if overwrite:
             logger.info("Overwriting existing type prediction for proof %s", proof.id)
             ProofPrediction.objects.filter(
-                proof=proof, model_name=GEMINI_MODEL_NAME
+                proof=proof, model_name=common_google.GEMINI_MODEL_NAME
             ).delete()
         else:
             logger.debug(
                 "Proof %s already has a prediction for model %s",
                 proof.id,
-                GEMINI_MODEL_NAME,
+                common_google.GEMINI_MODEL_NAME,
             )
             return None
 
@@ -728,8 +712,8 @@ def run_and_save_receipt_extraction_prediction(
     return ProofPrediction.objects.create(
         proof=proof,
         type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
-        model_name=GEMINI_MODEL_NAME,
-        model_version=GEMINI_MODEL_VERSION,
+        model_name=common_google.GEMINI_MODEL_NAME,
+        model_version=common_google.GEMINI_MODEL_VERSION,
         data=prediction,
     )
 
