@@ -22,8 +22,7 @@ class PriceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Price
-        # fields = "__all__"
-        exclude = ["source"]
+        fields = "__all__"
 
 
 class PriceFullSerializer(PriceSerializer):
@@ -33,7 +32,7 @@ class PriceFullSerializer(PriceSerializer):
 
     class Meta:
         model = Price
-        exclude = PriceSerializer.Meta.exclude
+        fields = "__all__"
 
 
 class PriceCreateSerializer(serializers.ModelSerializer):
