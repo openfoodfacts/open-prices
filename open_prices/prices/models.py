@@ -480,15 +480,15 @@ class Price(models.Model):
                 if (
                     proof.owner != self.owner
                     and proof.type
-                    not in proof_constants.TYPE_ALLOW_ANY_USER_PRICE_ADD_LIST
+                    not in proof_constants.TYPE_GROUP_ALLOW_ANY_USER_PRICE_ADD_LIST
                 ):
                     validation_errors = utils.add_validation_error(
                         validation_errors,
                         "proof",
-                        f"Proof does not belong to the current user. Adding a price to a proof a user does not own is only allowed for {proof_constants.TYPE_ALLOW_ANY_USER_PRICE_ADD_LIST} proofs",
+                        f"Proof does not belong to the current user. Adding a price to a proof a user does not own is only allowed for {proof_constants.TYPE_GROUP_ALLOW_ANY_USER_PRICE_ADD_LIST} proofs",
                     )
                 if not self.id:  # skip these checks on update
-                    if proof.type in proof_constants.TYPE_SINGLE_SHOP_LIST:
+                    if proof.type in proof_constants.TYPE_GROUP_SINGLE_SHOP_LIST:
                         for PROOF_FIELD in Price.DUPLICATE_PROOF_FIELDS:
                             proof_field_value = getattr(proof, PROOF_FIELD)
                             if proof_field_value:
@@ -499,7 +499,7 @@ class Price(models.Model):
                                         "proof",
                                         f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
                                     )
-                if proof.type in proof_constants.TYPE_SHOPPING_SESSION_LIST:
+                if proof.type in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
                     if not self.receipt_quantity:
                         self.receipt_quantity = 1
                 else:
@@ -507,7 +507,7 @@ class Price(models.Model):
                         validation_errors = utils.add_validation_error(
                             validation_errors,
                             "receipt_quantity",
-                            f"Can only be set if proof type in {proof_constants.TYPE_SHOPPING_SESSION_LIST}",
+                            f"Can only be set if proof type in {proof_constants.TYPE_GROUP_CONSUMPTION_LIST}",
                         )
         # return
         if bool(validation_errors):

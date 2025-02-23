@@ -29,10 +29,13 @@ class ProofQuerySet(models.QuerySet):
         return self.filter(type=proof_constants.TYPE_SHOP_IMPORT)
 
     def has_type_single_shop(self):
-        return self.filter(type__in=proof_constants.TYPE_SINGLE_SHOP_LIST)
+        return self.filter(type__in=proof_constants.TYPE_GROUP_SINGLE_SHOP_LIST)
 
-    def has_type_shopping_session(self):
-        return self.filter(type__in=proof_constants.TYPE_SHOPPING_SESSION_LIST)
+    def has_type_group_community(self):
+        return self.filter(type__in=proof_constants.TYPE_GROUP_COMMUNITY_LIST)
+
+    def has_type_group_consumption(self):
+        return self.filter(type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST)
 
     def has_prices(self):
         return self.filter(price_count__gt=0)
@@ -262,7 +265,7 @@ class Proof(models.Model):
 
     @property
     def is_type_single_shop(self):
-        return self.type in proof_constants.TYPE_SINGLE_SHOP_LIST
+        return self.type in proof_constants.TYPE_GROUP_SINGLE_SHOP_LIST
 
     def update_price_count(self):
         self.price_count = self.prices.count()
