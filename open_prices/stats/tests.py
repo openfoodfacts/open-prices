@@ -124,6 +124,10 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_with_price_count, 0)
         self.assertEqual(self.total_stats.proof_type_price_tag_count, 0)
         self.assertEqual(self.total_stats.proof_type_receipt_count, 0)
+        self.assertEqual(self.total_stats.proof_type_gdpr_request_count, 0)
+        self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
+        self.assertEqual(self.total_stats.proof_type_group_community_count, 0)
+        self.assertEqual(self.total_stats.prooft_type_group_consumption_count, 0)
         # update_proof_stats() will update proof_counts
         self.total_stats.update_proof_stats()
         self.assertEqual(self.total_stats.proof_count, 2)
@@ -132,6 +136,8 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_type_receipt_count, 1)
         self.assertEqual(self.total_stats.proof_type_gdpr_request_count, 0)
         self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
+        self.assertEqual(self.total_stats.proof_type_group_community_count, 1)
+        self.assertEqual(self.total_stats.prooft_type_group_consumption_count, 1)
 
     def test_update_price_tag_stats(self):
         self.assertEqual(self.total_stats.price_tag_count, 0)
