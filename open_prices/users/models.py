@@ -8,9 +8,13 @@ class UserQuerySet(models.QuerySet):
 
 
 class User(models.Model):
-    COUNT_FIELDS = [
+    PRICE_COUNT_FIELDS = [
         "price_count",
+        "price_type_group_community_count",
+        "price_type_group_consumption_count",
         "price_currency_count",
+    ]
+    COUNT_FIELDS = PRICE_COUNT_FIELDS + [
         "location_count",
         "location_type_osm_country_count",
         "product_count",
@@ -25,6 +29,8 @@ class User(models.Model):
     is_moderator = models.BooleanField(default=False)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    price_type_group_community_count = models.PositiveIntegerField(default=0)
+    price_type_group_consumption_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     location_type_osm_country_count = models.PositiveIntegerField(
@@ -51,13 +57,21 @@ class User(models.Model):
         from open_prices.prices.models import Price
 
         self.price_count = Price.objects.filter(owner=self.user_id).count()
+        self.price_type_group_community_count = (
+            Price.objects.filter(owner=self.user_id).has_type_group_community().count()
+        )
+        self.price_type_group_consumption_count = (
+            Price.objects.filter(owner=self.user_id)
+            .has_type_group_consumption()
+            .count()
+        )
         self.price_currency_count = (
             Price.objects.filter(owner=self.user_id)
             .values_list("currency", flat=True)
             .distinct()
             .count()
         )
-        self.save(update_fields=["price_count", "price_currency_count"])
+        self.save(update_fields=self.PRICE_COUNT_FIELDS)
 
     def update_location_count(self):
         from open_prices.locations import constants as location_constants
