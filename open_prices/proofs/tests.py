@@ -178,6 +178,31 @@ class ProofModelSaveTest(TestCase):
             receipt_price_total=5,
             type=proof_constants.TYPE_PRICE_TAG,
         )
+        # receipt_online_delivery_costs
+        for RECEIPT_ONLINE_DELIVERY_COSTS_NOT_OK in [-5]:
+            with self.subTest(
+                RECEIPT_ONLINE_DELIVERY_COSTS_NOT_OK=RECEIPT_ONLINE_DELIVERY_COSTS_NOT_OK
+            ):
+                self.assertRaises(
+                    ValidationError,
+                    ProofFactory,
+                    receipt_online_delivery_costs=RECEIPT_ONLINE_DELIVERY_COSTS_NOT_OK,
+                    type=proof_constants.TYPE_RECEIPT,
+                )
+        for RECEIPT_ONLINE_DELIVERY_COSTS_OK in [None, 0, 5, Decimal("45.10")]:
+            with self.subTest(
+                RECEIPT_ONLINE_DELIVERY_COSTS_OK=RECEIPT_ONLINE_DELIVERY_COSTS_OK
+            ):
+                ProofFactory(
+                    receipt_online_delivery_costs=RECEIPT_ONLINE_DELIVERY_COSTS_OK,
+                    type=proof_constants.TYPE_RECEIPT,
+                )
+        self.assertRaises(
+            ValidationError,
+            ProofFactory,
+            receipt_online_delivery_costs=5,
+            type=proof_constants.TYPE_PRICE_TAG,
+        )
 
 
 class ProofQuerySetTest(TestCase):

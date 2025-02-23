@@ -102,6 +102,14 @@ class Proof(models.Model):
         blank=True,
         null=True,
     )
+    receipt_online_delivery_costs = models.DecimalField(
+        verbose_name="Receipt's online delivery costs (user input)",
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(decimal.Decimal(0))],
+        blank=True,
+        null=True,
+    )
 
     ready_for_price_tag_validation = models.BooleanField(default=False)
 
@@ -227,6 +235,12 @@ class Proof(models.Model):
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "receipt_price_total",
+                    "Can only be set if type RECEIPT",
+                )
+            if self.receipt_online_delivery_costs is not None:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "receipt_online_delivery_costs",
                     "Can only be set if type RECEIPT",
                 )
         # return
