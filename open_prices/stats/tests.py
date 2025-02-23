@@ -46,16 +46,19 @@ class TotalStatsTest(TestCase):
             type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            currency="EUR",
             owner=cls.user.user_id,
         )
         cls.proof_receipt = ProofFactory(
             type=proof_constants.TYPE_RECEIPT,
             location_osm_id=cls.location_2.osm_id,
             location_osm_type=cls.location_2.osm_type,
+            currency="EUR",
             owner=cls.user_2.user_id,
         )
         cls.proof_gdpr_request = ProofFactory(
             type=proof_constants.TYPE_GDPR_REQUEST,
+            currency="EUR",
             owner=cls.user_2.user_id,
         )
         cls.price = PriceFactory(
@@ -64,7 +67,7 @@ class TotalStatsTest(TestCase):
             location_osm_type=cls.location.osm_type,
             proof_id=cls.proof_price_tag.id,
             price=1.0,
-            currency="EUR",
+            currency=cls.proof_price_tag.currency,
             owner=cls.user.user_id,
         )
         PriceFactory(
@@ -85,7 +88,7 @@ class TotalStatsTest(TestCase):
             location_osm_type=cls.location.osm_type,
             proof_id=cls.proof_gdpr_request.id,
             price=2.0,
-            currency="EUR",
+            currency=cls.proof_gdpr_request.currency,
             owner=cls.user_2.user_id,
         )
         PriceTagFactory(proof=cls.proof_price_tag, status=None)
