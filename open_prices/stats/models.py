@@ -164,7 +164,7 @@ class TotalStats(SingletonModel):
         )
         self.proof_type_shop_import_count = Proof.objects.has_type_shop_import().count()
         self.proof_type_group_community_count = (
-            Proof.objects.has_type_group_consumption().count()
+            Proof.objects.has_type_group_community().count()
         )
         self.prooft_type_group_consumption_count = (
             Proof.objects.has_type_group_consumption().count()

@@ -54,6 +54,10 @@ class TotalStatsTest(TestCase):
             location_osm_type=cls.location_2.osm_type,
             owner=cls.user_2.user_id,
         )
+        cls.proof_gdpr_request = ProofFactory(
+            type=proof_constants.TYPE_GDPR_REQUEST,
+            owner=cls.user_2.user_id,
+        )
         cls.price = PriceFactory(
             product_code="0123456789100",
             location_osm_id=cls.location.osm_id,
@@ -130,14 +134,14 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.prooft_type_group_consumption_count, 0)
         # update_proof_stats() will update proof_counts
         self.total_stats.update_proof_stats()
-        self.assertEqual(self.total_stats.proof_count, 2)
+        self.assertEqual(self.total_stats.proof_count, 3)
         self.assertEqual(self.total_stats.proof_with_price_count, 1)
         self.assertEqual(self.total_stats.proof_type_price_tag_count, 1)
         self.assertEqual(self.total_stats.proof_type_receipt_count, 1)
-        self.assertEqual(self.total_stats.proof_type_gdpr_request_count, 0)
+        self.assertEqual(self.total_stats.proof_type_gdpr_request_count, 1)
         self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
         self.assertEqual(self.total_stats.proof_type_group_community_count, 1)
-        self.assertEqual(self.total_stats.prooft_type_group_consumption_count, 1)
+        self.assertEqual(self.total_stats.prooft_type_group_consumption_count, 2)
 
     def test_update_price_tag_stats(self):
         self.assertEqual(self.total_stats.price_tag_count, 0)
