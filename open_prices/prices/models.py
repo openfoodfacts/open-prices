@@ -34,6 +34,17 @@ class PriceQuerySet(models.QuerySet):
     def exclude_discounted(self):
         return self.filter(price_is_discounted=False)
 
+    def has_type_group_community(self):
+        # TODO: what about prices without proofs?
+        return self.prefetch_related("proof").filter(
+            proof__type__in=proof_constants.TYPE_GROUP_COMMUNITY_LIST
+        )
+
+    def has_type_group_consumption(self):
+        return self.prefetch_related("proof").filter(
+            proof__type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST
+        )
+
     def calculate_min(self):
         return self.aggregate(Min("price"))["price__min"]
 

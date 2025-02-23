@@ -64,6 +64,7 @@ class TotalStatsTest(TestCase):
             location_osm_type=cls.location.osm_type,
             proof_id=cls.proof_price_tag.id,
             price=1.0,
+            currency="EUR",
             owner=cls.user.user_id,
         )
         PriceFactory(
@@ -74,6 +75,7 @@ class TotalStatsTest(TestCase):
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
             price=3,
+            currency="EUR",
             price_per=price_constants.PRICE_PER_KILOGRAM,
             owner=cls.user.user_id,
         )
@@ -81,7 +83,9 @@ class TotalStatsTest(TestCase):
             product_code="0123456789101",
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
+            proof_id=cls.proof_gdpr_request.id,
             price=2.0,
+            currency="EUR",
             owner=cls.user_2.user_id,
         )
         PriceTagFactory(proof=cls.proof_price_tag, status=None)
@@ -95,11 +99,19 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_count, 0)
         self.assertEqual(self.total_stats.price_type_product_code_count, 0)
         self.assertEqual(self.total_stats.price_type_category_tag_count, 0)
+        self.assertEqual(self.total_stats.price_with_discount_count, 0)
+        self.assertEqual(self.total_stats.price_currency_count, 0)
+        self.assertEqual(self.total_stats.price_type_group_community_count, 0)
+        self.assertEqual(self.total_stats.price_type_group_consumption_count, 0)
         # update_price_stats() will update price_counts
         self.total_stats.update_price_stats()
         self.assertEqual(self.total_stats.price_count, 3)
         self.assertEqual(self.total_stats.price_type_product_code_count, 2)
         self.assertEqual(self.total_stats.price_type_category_tag_count, 1)
+        self.assertEqual(self.total_stats.price_with_discount_count, 0)
+        self.assertEqual(self.total_stats.price_currency_count, 1)
+        self.assertEqual(self.total_stats.price_type_group_community_count, 1)
+        self.assertEqual(self.total_stats.price_type_group_consumption_count, 1)
 
     def test_update_product_stats(self):
         self.assertEqual(self.total_stats.product_count, 0)
@@ -131,17 +143,17 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_type_gdpr_request_count, 0)
         self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
         self.assertEqual(self.total_stats.proof_type_group_community_count, 0)
-        self.assertEqual(self.total_stats.prooft_type_group_consumption_count, 0)
+        self.assertEqual(self.total_stats.proof_type_group_consumption_count, 0)
         # update_proof_stats() will update proof_counts
         self.total_stats.update_proof_stats()
         self.assertEqual(self.total_stats.proof_count, 3)
-        self.assertEqual(self.total_stats.proof_with_price_count, 1)
+        self.assertEqual(self.total_stats.proof_with_price_count, 2)
         self.assertEqual(self.total_stats.proof_type_price_tag_count, 1)
         self.assertEqual(self.total_stats.proof_type_receipt_count, 1)
         self.assertEqual(self.total_stats.proof_type_gdpr_request_count, 1)
         self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
         self.assertEqual(self.total_stats.proof_type_group_community_count, 1)
-        self.assertEqual(self.total_stats.prooft_type_group_consumption_count, 2)
+        self.assertEqual(self.total_stats.proof_type_group_consumption_count, 2)
 
     def test_update_price_tag_stats(self):
         self.assertEqual(self.total_stats.price_tag_count, 0)

@@ -10,6 +10,8 @@ class TotalStats(SingletonModel):
         "price_type_category_tag_count",
         "price_with_discount_count",
         "price_currency_count",
+        "price_type_group_community_count",
+        "price_type_group_consumption_count",
     ]
     PRODUCT_COUNT_FIELDS = [
         "product_count",
@@ -38,7 +40,7 @@ class TotalStats(SingletonModel):
         "proof_type_gdpr_request_count",
         "proof_type_shop_import_count",
         "proof_type_group_community_count",
-        "prooft_type_group_consumption_count",
+        "proof_type_group_consumption_count",
     ]
     PRICE_TAG_COUNT_FIELDS = [
         "price_tag_count",
@@ -60,6 +62,8 @@ class TotalStats(SingletonModel):
     price_type_category_tag_count = models.PositiveIntegerField(default=0)
     price_with_discount_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0)
+    price_type_group_community_count = models.PositiveIntegerField(default=0)
+    price_type_group_consumption_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
     product_source_off_count = models.PositiveIntegerField(default=0)
     product_source_obf_count = models.PositiveIntegerField(default=0)
@@ -82,7 +86,7 @@ class TotalStats(SingletonModel):
     proof_type_gdpr_request_count = models.PositiveIntegerField(default=0)
     proof_type_shop_import_count = models.PositiveIntegerField(default=0)
     proof_type_group_community_count = models.PositiveIntegerField(default=0)
-    prooft_type_group_consumption_count = models.PositiveIntegerField(default=0)
+    proof_type_group_consumption_count = models.PositiveIntegerField(default=0)
     price_tag_count = models.PositiveIntegerField(default=0)
     price_tag_status_unknown_count = models.PositiveIntegerField(default=0)
     price_tag_status_linked_to_price_count = models.PositiveIntegerField(default=0)
@@ -112,6 +116,12 @@ class TotalStats(SingletonModel):
         self.price_with_discount_count = Price.objects.has_discount().count()
         self.price_currency_count = (
             Price.objects.values_list("currency", flat=True).distinct().count()
+        )
+        self.price_type_group_community_count = (
+            Price.objects.has_type_group_community().count()
+        )
+        self.price_type_group_consumption_count = (
+            Price.objects.has_type_group_consumption().count()
         )
         self.save(update_fields=self.PRICE_COUNT_FIELDS + ["updated"])
 
@@ -166,7 +176,7 @@ class TotalStats(SingletonModel):
         self.proof_type_group_community_count = (
             Proof.objects.has_type_group_community().count()
         )
-        self.prooft_type_group_consumption_count = (
+        self.proof_type_group_consumption_count = (
             Proof.objects.has_type_group_consumption().count()
         )
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
