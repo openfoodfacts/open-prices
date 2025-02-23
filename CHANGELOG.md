@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.66.0](https://github.com/openfoodfacts/open-prices/compare/v1.65.1...v1.66.0) (2025-02-23)
+
+
+### Features
+
+* **Prices:** Stats: new community & consumption counts ([#728](https://github.com/openfoodfacts/open-prices/issues/728)) ([5320afc](https://github.com/openfoodfacts/open-prices/commit/5320afc6004f0714d20dcfe1bd8a58a4f3fd028d))
+* **Proofs:** new receipt_online_delivery_costs field ([#724](https://github.com/openfoodfacts/open-prices/issues/724)) ([e2d56d4](https://github.com/openfoodfacts/open-prices/commit/e2d56d4ae3000f017c378ab3af862fda96ec167b))
+* **Proofs:** Stats: new community & consumption counts ([#725](https://github.com/openfoodfacts/open-prices/issues/725)) ([f9960d0](https://github.com/openfoodfacts/open-prices/commit/f9960d0c86d0168172628a5db7ce4b25185c345d))
+* **Users:** new price counts per community & consumption type groups ([#729](https://github.com/openfoodfacts/open-prices/issues/729)) ([5431923](https://github.com/openfoodfacts/open-prices/commit/54319239e8a4755f947d09bd481ad5085597ce99))
+* **Users:** new proof counts per community & consumption type groups ([#730](https://github.com/openfoodfacts/open-prices/issues/730)) ([ccf25e8](https://github.com/openfoodfacts/open-prices/commit/ccf25e8e2024c0b37ebad1d7820a99ba47636226))
+
+
+### Bug Fixes
+
+* **Proofs:** Stats: fix typo in proof_type_group_community_count calculation. ref [#725](https://github.com/openfoodfacts/open-prices/issues/725) ([e25ae64](https://github.com/openfoodfacts/open-prices/commit/e25ae64e784aad9f9333fcba1e107f8314c4451e))
+
+
+### Technical
+
+* **Prices:** add a new discount_type: Second hand ([#722](https://github.com/openfoodfacts/open-prices/issues/722)) ([ae6782f](https://github.com/openfoodfacts/open-prices/commit/ae6782f05c3629778de279345c84502b9f2ac05b))
+* **Proofs:** rename some constants, introduce GROUP_COMMUNITY & GROUP_CONSUMPTION ([#726](https://github.com/openfoodfacts/open-prices/issues/726)) ([4d3799b](https://github.com/openfoodfacts/open-prices/commit/4d3799b6b2cdd3e37f3a99e012a2814153df39b5))
+
 ## [1.65.1](https://github.com/openfoodfacts/open-prices/compare/v1.65.0...v1.65.1) (2025-02-22)
 
 
