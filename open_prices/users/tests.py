@@ -113,6 +113,10 @@ class UserPropertyTest(TestCase):
     def test_update_proof_count(self):
         self.user.refresh_from_db()
         self.assertEqual(self.user.proof_count, 0)
+        self.assertEqual(self.user.proof_type_group_community_count, 0)
+        self.assertEqual(self.user.proof_type_group_consumption_count, 0)
         # update_proof_count() should fix proof counts
         self.user.update_proof_count()
         self.assertEqual(self.user.proof_count, 1)
+        self.assertEqual(self.user.proof_type_group_community_count, 1)
+        self.assertEqual(self.user.proof_type_group_consumption_count, 0)
