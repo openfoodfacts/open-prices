@@ -4,6 +4,7 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
 from open_prices.users.models import User
@@ -44,6 +45,7 @@ class UserPropertyTest(TestCase):
         cls.location_1 = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.location_2 = LocationFactory(**LOCATION_ONLINE_DECATHLON)
         cls.proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location_1.osm_id,
             location_osm_type=cls.location_1.osm_type,
             currency="EUR",
@@ -70,18 +72,26 @@ class UserPropertyTest(TestCase):
     def test_update_price_count(self):
         self.user.refresh_from_db()
         self.assertEqual(self.user.price_count, 2)  # price signals
+        self.assertEqual(self.user.price_type_group_community_count, 0)
+        self.assertEqual(self.user.price_type_group_consumption_count, 0)
         self.assertEqual(self.user.price_currency_count, 0)
         # update_price_count() should fix price counts
         self.user.update_price_count()
         self.assertEqual(self.user.price_count, 2)
+        self.assertEqual(self.user.price_type_group_community_count, 1)
+        self.assertEqual(self.user.price_type_group_consumption_count, 0)
         self.assertEqual(self.user.price_currency_count, 2)
         # bulk delete prices to skip signals
         Price.objects.filter(owner=self.user.user_id).delete()
         self.assertEqual(self.user.price_count, 2)  # should be 0
+        self.assertEqual(self.user.price_type_group_community_count, 1)
+        self.assertEqual(self.user.price_type_group_consumption_count, 0)
         self.assertEqual(self.user.price_currency_count, 2)  # should be 0
         # update_price_count() should fix price counts
         self.user.update_price_count()
         self.assertEqual(self.user.price_count, 0)
+        self.assertEqual(self.user.price_type_group_community_count, 0)
+        self.assertEqual(self.user.price_type_group_consumption_count, 0)
         self.assertEqual(self.user.price_currency_count, 0)
 
     def test_update_location_count(self):
