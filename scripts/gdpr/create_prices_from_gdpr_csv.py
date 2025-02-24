@@ -204,6 +204,9 @@ def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_da
                         gdpr_source, op_field, gdpr_field_value
                     )
                     open_prices_price[op_field] = gdpr_price_field_cleaned
+                else:
+                    if op_field in ["product_code"]:
+                        raise Exception(f"{op_field} field missing in the source file?")
         # print(open_prices_price)
         open_prices_price_list_1.append({**open_prices_price, **extra_data})
 
