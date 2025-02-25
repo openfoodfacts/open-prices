@@ -5,9 +5,13 @@ from decimal import Decimal
 from mimetypes import guess_extension
 from pathlib import Path
 
+from google.cloud import vision
+import io
+
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
-from PIL import Image, ImageOps
+
+from PIL import Image, ImageOps, ImageDraw
 
 from open_prices.prices.constants import TYPE_CATEGORY, TYPE_PRODUCT
 from open_prices.prices.models import Price
@@ -92,6 +96,25 @@ def generate_thumbnail(
     return image_thumb_path
 
 
+def blur_faces(image_path):
+    client = vision.ImageAnnotatorClient()
+    with io.open(image_path, 'rb') as image_file:
+        content = image_file.read()
+
+    image = vision.Image(content=content)
+    response = client.face_detection(image=image)
+    faces = response.face_annotations
+
+    im = Image.open(image_path)
+    draw = ImageDraw.Draw(im)
+
+    for face in faces:
+        box = [(vertex.x, vertex.y) for vertex in face.bounding_poly.vertices]
+        draw.rectangle(box, fill=(0, 0, 0, 128))  # Adjust as necessary
+
+    im.save(image_path)
+
+
 def store_file(
     file: InMemoryUploadedFile | TemporaryUploadedFile,
 ) -> tuple[str, str, str | None]:
@@ -115,6 +138,11 @@ def store_file(
     # write the content of the file to the new file
     with file_full_path.open("wb") as f:
         f.write(file.file.read())
+
+    # Blur faces
+    blur_faces(file_full_path) 
+
+
     # create a thumbnail
     image_thumb_path = generate_thumbnail(
         current_dir, current_dir.name, file_stem, extension, mimetype
