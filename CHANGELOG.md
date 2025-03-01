@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.67.0](https://github.com/openfoodfacts/open-prices/compare/v1.66.0...v1.67.0) (2025-03-01)
+
+
+### Features
+
+* **Stats:** new Price & Proof counts per source ([#736](https://github.com/openfoodfacts/open-prices/issues/736)) ([c3352bd](https://github.com/openfoodfacts/open-prices/commit/c3352bd90104045c0f2ad67979a1d6158eefb0f7))
+
+
+### Technical
+
+* **GDPR:** Improve script (fixes for Carrefour, Auchan) ([#731](https://github.com/openfoodfacts/open-prices/issues/731)) ([509dad6](https://github.com/openfoodfacts/open-prices/commit/509dad6578fb473e8fc196e006767c3b382aa347))
+
 ## [1.66.0](https://github.com/openfoodfacts/open-prices/compare/v1.65.1...v1.66.0) (2025-02-23)
 
 
