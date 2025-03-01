@@ -47,6 +47,10 @@ class TotalStats(SingletonModel):
         "proof_type_shop_import_count",
         "proof_type_group_community_count",
         "proof_type_group_consumption_count",
+        "proof_source_web_count",
+        "proof_source_mobile_count",
+        "proof_source_api_count",
+        "proof_source_other_count",
     ]
     PRICE_TAG_COUNT_FIELDS = [
         "price_tag_count",
@@ -97,6 +101,10 @@ class TotalStats(SingletonModel):
     proof_type_shop_import_count = models.PositiveIntegerField(default=0)
     proof_type_group_community_count = models.PositiveIntegerField(default=0)
     proof_type_group_consumption_count = models.PositiveIntegerField(default=0)
+    proof_source_web_count = models.PositiveIntegerField(default=0)
+    proof_source_mobile_count = models.PositiveIntegerField(default=0)
+    proof_source_api_count = models.PositiveIntegerField(default=0)
+    proof_source_other_count = models.PositiveIntegerField(default=0)
     price_tag_count = models.PositiveIntegerField(default=0)
     price_tag_status_unknown_count = models.PositiveIntegerField(default=0)
     price_tag_status_linked_to_price_count = models.PositiveIntegerField(default=0)
@@ -197,6 +205,14 @@ class TotalStats(SingletonModel):
         self.proof_type_group_consumption_count = (
             Proof.objects.has_type_group_consumption().count()
         )
+        for source in constants.SOURCE_LIST:
+            setattr(
+                self,
+                f"proof_source_{source.lower()}_count",
+                Proof.objects.with_extra_fields()
+                .filter(source_annotated=source)
+                .count(),
+            )
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
 
     def update_price_tag_stats(self):

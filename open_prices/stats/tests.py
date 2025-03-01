@@ -48,6 +48,7 @@ class TotalStatsTest(TestCase):
             location_osm_type=cls.location.osm_type,
             currency="EUR",
             owner=cls.user.user_id,
+            source="Open Prices Web App",
         )
         cls.proof_receipt = ProofFactory(
             type=proof_constants.TYPE_RECEIPT,
@@ -60,6 +61,7 @@ class TotalStatsTest(TestCase):
             type=proof_constants.TYPE_GDPR_REQUEST,
             currency="EUR",
             owner=cls.user_2.user_id,
+            source="API",
         )
         cls.price = PriceFactory(
             product_code="0123456789100",
@@ -69,7 +71,7 @@ class TotalStatsTest(TestCase):
             price=1.0,
             currency=cls.proof_price_tag.currency,
             owner=cls.user.user_id,
-            source="API",
+            source="Open Prices Web App",
         )
         PriceFactory(
             type=price_constants.TYPE_CATEGORY,
@@ -82,7 +84,6 @@ class TotalStatsTest(TestCase):
             currency="EUR",
             price_per=price_constants.PRICE_PER_KILOGRAM,
             owner=cls.user.user_id,
-            source="Open Prices Web App",
         )
         PriceFactory(
             product_code="0123456789101",
@@ -92,6 +93,7 @@ class TotalStatsTest(TestCase):
             price=2.0,
             currency=cls.proof_gdpr_request.currency,
             owner=cls.user_2.user_id,
+            source="API",
         )
         PriceTagFactory(proof=cls.proof_price_tag, status=None)
         PriceTagFactory(
@@ -157,6 +159,10 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
         self.assertEqual(self.total_stats.proof_type_group_community_count, 0)
         self.assertEqual(self.total_stats.proof_type_group_consumption_count, 0)
+        self.assertEqual(self.total_stats.proof_source_web_count, 0)
+        self.assertEqual(self.total_stats.proof_source_mobile_count, 0)
+        self.assertEqual(self.total_stats.proof_source_api_count, 0)
+        self.assertEqual(self.total_stats.proof_source_other_count, 0)
         # update_proof_stats() will update proof_counts
         self.total_stats.update_proof_stats()
         self.assertEqual(self.total_stats.proof_count, 3)
@@ -167,6 +173,10 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_type_shop_import_count, 0)
         self.assertEqual(self.total_stats.proof_type_group_community_count, 1)
         self.assertEqual(self.total_stats.proof_type_group_consumption_count, 2)
+        self.assertEqual(self.total_stats.proof_source_web_count, 1)
+        self.assertEqual(self.total_stats.proof_source_mobile_count, 0)
+        self.assertEqual(self.total_stats.proof_source_api_count, 1)
+        self.assertEqual(self.total_stats.proof_source_other_count, 1)
 
     def test_update_price_tag_stats(self):
         self.assertEqual(self.total_stats.price_tag_count, 0)
