@@ -5,7 +5,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Count, F, signals
+from django.db.models import Case, CharField, Count, F, Value, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -39,6 +39,23 @@ class ProofQuerySet(models.QuerySet):
 
     def has_prices(self):
         return self.filter(price_count__gt=0)
+
+    def with_extra_fields(self):
+        return self.annotate(
+            source_annotated=Case(
+                When(
+                    source__contains="Open Prices Web App",
+                    then=Value(constants.SOURCE_WEB),
+                ),
+                When(
+                    source__contains="Smoothie",
+                    then=Value(constants.SOURCE_MOBILE),
+                ),
+                When(source__contains="API", then=Value(constants.SOURCE_API)),
+                default=Value(constants.SOURCE_OTHER),
+                output_field=CharField(),
+            )
+        )
 
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
