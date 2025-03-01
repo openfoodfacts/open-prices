@@ -69,6 +69,7 @@ class TotalStatsTest(TestCase):
             price=1.0,
             currency=cls.proof_price_tag.currency,
             owner=cls.user.user_id,
+            source="API",
         )
         PriceFactory(
             type=price_constants.TYPE_CATEGORY,
@@ -81,6 +82,7 @@ class TotalStatsTest(TestCase):
             currency="EUR",
             price_per=price_constants.PRICE_PER_KILOGRAM,
             owner=cls.user.user_id,
+            source="Open Prices Web App",
         )
         PriceFactory(
             product_code="0123456789101",
@@ -106,6 +108,10 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_currency_count, 0)
         self.assertEqual(self.total_stats.price_type_group_community_count, 0)
         self.assertEqual(self.total_stats.price_type_group_consumption_count, 0)
+        self.assertEqual(self.total_stats.price_source_web_count, 0)
+        self.assertEqual(self.total_stats.price_source_mobile_count, 0)
+        self.assertEqual(self.total_stats.price_source_api_count, 0)
+        self.assertEqual(self.total_stats.price_source_other_count, 0)
         # update_price_stats() will update price_counts
         self.total_stats.update_price_stats()
         self.assertEqual(self.total_stats.price_count, 3)
@@ -115,6 +121,10 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_currency_count, 1)
         self.assertEqual(self.total_stats.price_type_group_community_count, 1)
         self.assertEqual(self.total_stats.price_type_group_consumption_count, 1)
+        self.assertEqual(self.total_stats.price_source_web_count, 1)
+        self.assertEqual(self.total_stats.price_source_mobile_count, 0)
+        self.assertEqual(self.total_stats.price_source_api_count, 1)
+        self.assertEqual(self.total_stats.price_source_other_count, 1)
 
     def test_update_product_stats(self):
         self.assertEqual(self.total_stats.product_count, 0)

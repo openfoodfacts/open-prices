@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from solo.models import SingletonModel
 
+from open_prices.prices import constants as price_constants
+
 
 class TotalStats(SingletonModel):
     PRICE_COUNT_FIELDS = [
@@ -12,6 +14,10 @@ class TotalStats(SingletonModel):
         "price_currency_count",
         "price_type_group_community_count",
         "price_type_group_consumption_count",
+        "price_source_web_count",
+        "price_source_mobile_count",
+        "price_source_api_count",
+        "price_source_other_count",
     ]
     PRODUCT_COUNT_FIELDS = [
         "product_count",
@@ -64,6 +70,10 @@ class TotalStats(SingletonModel):
     price_currency_count = models.PositiveIntegerField(default=0)
     price_type_group_community_count = models.PositiveIntegerField(default=0)
     price_type_group_consumption_count = models.PositiveIntegerField(default=0)
+    price_source_web_count = models.PositiveIntegerField(default=0)
+    price_source_mobile_count = models.PositiveIntegerField(default=0)
+    price_source_api_count = models.PositiveIntegerField(default=0)
+    price_source_other_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
     product_source_off_count = models.PositiveIntegerField(default=0)
     product_source_obf_count = models.PositiveIntegerField(default=0)
@@ -123,6 +133,14 @@ class TotalStats(SingletonModel):
         self.price_type_group_consumption_count = (
             Price.objects.has_type_group_consumption().count()
         )
+        for source in price_constants.SOURCE_LIST:
+            setattr(
+                self,
+                f"price_source_{source.lower()}_count",
+                Price.objects.with_extra_fields()
+                .filter(source_annotated=source)
+                .count(),
+            )
         self.save(update_fields=self.PRICE_COUNT_FIELDS + ["updated"])
 
     def update_product_stats(self):

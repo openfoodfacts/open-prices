@@ -58,19 +58,17 @@ class PriceQuerySet(models.QuerySet):
 
     def with_extra_fields(self):
         return self.annotate(
-            source_cleaned_annotated=Case(
+            source_annotated=Case(
                 When(
                     source__contains="Open Prices Web App",
-                    then=Value(price_constants.PRICE_SOURCE_WEB),
+                    then=Value(price_constants.SOURCE_WEB),
                 ),
                 When(
                     source__contains="Smoothie",
-                    then=Value(price_constants.PRICE_SOURCE_MOBILE),
+                    then=Value(price_constants.SOURCE_MOBILE),
                 ),
-                When(
-                    source__contains="API", then=Value(price_constants.PRICE_SOURCE_API)
-                ),
-                default=Value(price_constants.PRICE_SOURCE_OTHER),
+                When(source__contains="API", then=Value(price_constants.SOURCE_API)),
+                default=Value(price_constants.SOURCE_OTHER),
                 output_field=CharField(),
             )
         )

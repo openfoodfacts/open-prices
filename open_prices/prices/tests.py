@@ -37,7 +37,7 @@ class PriceQuerySetTest(TestCase):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(
             Price.objects.with_extra_fields()
-            .filter(source_cleaned_annotated=price_constants.PRICE_SOURCE_WEB)
+            .filter(source_annotated=price_constants.SOURCE_WEB)
             .count(),
             1,
         )
