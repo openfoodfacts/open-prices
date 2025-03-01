@@ -3,7 +3,18 @@ import functools
 
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import Avg, Count, F, Max, Min, signals
+from django.db.models import (
+    Avg,
+    Case,
+    CharField,
+    Count,
+    F,
+    Max,
+    Min,
+    Value,
+    When,
+    signals,
+)
 from django.db.models.functions import Cast
 from django.dispatch import receiver
 from django.utils import timezone
@@ -43,6 +54,23 @@ class PriceQuerySet(models.QuerySet):
     def has_type_group_consumption(self):
         return self.prefetch_related("proof").filter(
             proof__type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST
+        )
+
+    def with_extra_fields(self):
+        return self.annotate(
+            source_annotated=Case(
+                When(
+                    source__contains="Open Prices Web App",
+                    then=Value(constants.SOURCE_WEB),
+                ),
+                When(
+                    source__contains="Smoothie",
+                    then=Value(constants.SOURCE_MOBILE),
+                ),
+                When(source__contains="API", then=Value(constants.SOURCE_API)),
+                default=Value(constants.SOURCE_OTHER),
+                output_field=CharField(),
+            )
         )
 
     def calculate_min(self):

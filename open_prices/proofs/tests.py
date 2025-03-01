@@ -11,6 +11,7 @@ from django.test import TestCase
 from django.utils import timezone
 from PIL import Image
 
+from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
@@ -47,6 +48,41 @@ LOCATION_OSM_NODE_6509705997 = {
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Carrefour",
 }
+
+
+class ProofQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof_without_price = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG, source="Open Prices Web App"
+        )
+        cls.proof_with_price = ProofFactory(type=proof_constants.TYPE_GDPR_REQUEST)
+        PriceFactory(proof_id=cls.proof_with_price.id, price=1.0)
+
+    def test_has_type_single_shop(self):
+        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.has_type_single_shop().count(), 1)
+
+    def test_has_prices(self):
+        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.has_prices().count(), 1)
+
+    def with_extra_fields(self):
+        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(
+            Proof.objects.with_extra_fields()
+            .filter(source_annotated=constants.SOURCE_WEB)
+            .count(),
+            1,
+        )
+
+    def test_with_stats(self):
+        proof = Proof.objects.with_stats().get(id=self.proof_without_price.id)
+        self.assertEqual(proof.price_count_annotated, 0)
+        self.assertEqual(proof.price_count, 0)
+        proof = Proof.objects.with_stats().get(id=self.proof_with_price.id)
+        self.assertEqual(proof.price_count_annotated, 1)
+        self.assertEqual(proof.price_count, 1)
 
 
 class ProofModelSaveTest(TestCase):
@@ -203,30 +239,6 @@ class ProofModelSaveTest(TestCase):
             receipt_online_delivery_costs=5,
             type=proof_constants.TYPE_PRICE_TAG,
         )
-
-
-class ProofQuerySetTest(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.proof_without_price = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        cls.proof_with_price = ProofFactory(type=proof_constants.TYPE_GDPR_REQUEST)
-        PriceFactory(proof_id=cls.proof_with_price.id, price=1.0)
-
-    def test_has_type_single_shop(self):
-        self.assertEqual(Proof.objects.count(), 2)
-        self.assertEqual(Proof.objects.has_type_single_shop().count(), 1)
-
-    def test_has_prices(self):
-        self.assertEqual(Proof.objects.count(), 2)
-        self.assertEqual(Proof.objects.has_prices().count(), 1)
-
-    def test_with_stats(self):
-        proof = Proof.objects.with_stats().get(id=self.proof_without_price.id)
-        self.assertEqual(proof.price_count_annotated, 0)
-        self.assertEqual(proof.price_count, 0)
-        proof = Proof.objects.with_stats().get(id=self.proof_with_price.id)
-        self.assertEqual(proof.price_count_annotated, 1)
-        self.assertEqual(proof.price_count, 1)
 
 
 class ProofPropertyTest(TestCase):
