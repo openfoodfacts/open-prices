@@ -2,7 +2,7 @@
 
 ## Context
 
-One of our data sources is GDPR request to supermarkets (with fidelity cards).
+One of our data sources is GDPR request to supermarkets (thanks to fidelity cards).
 
 See https://wiki.openfoodfacts.org/GDPR_request
 
@@ -38,7 +38,9 @@ The file must be a `.csv`.
 
 #### For each location
 
-Depending on the source, you'll need to provide the correct `LOCATION` key, and provide the corresponding `LOCATION_OSM_ID` & `LOCATION_OSM_TYPE`. You can use https://www.openstreetmap.org/ to pinpoint the corresponding places.
+Depending on the source, you'll need to provide the correct `LOCATION` key, and provide the corresponding `LOCATION_OSM_ID` & `LOCATION_OSM_TYPE`. You can use https://www.openstreetmap.org to pinpoint the corresponding places.
+
+Note: sometimes 2 locations share the same LOCATION key. An alternative is to split the file into multiple subfiles, and import them seperately.
 
 #### Upload command
 

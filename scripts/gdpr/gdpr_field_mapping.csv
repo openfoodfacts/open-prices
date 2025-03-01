@@ -3,6 +3,6 @@ product_code,CODE_PRODUIT,"raw products have a length of 4 or 12 or 13 but endin
 product_name,NOM_PRODUIT,,Description du produit,,article_libelle,,LB_ARTC,duplicate column with LB_COMM0,LIBELLE ARTICLE,
 price,PRIX_UNITAIRE,,Prix unitaire TTC avec remise (€),,article_ca,,CA TTC Produit,has commas instead of points,PRIX TTC,has commas instead of points
 discount,,,"Remise sur le produit (€) (chaque remise d'un produit regroupe les promotions, les avantages de la carte PASS,  les bons d'achats…  appliqués lors du passage en caisse)",,,,,,IDENTIFIANT REMISE,a string ID to another table
-receipt_quantity,,,Quantité,,article_quantite_vendue,,Qte Vendues,,NOMBRE UNITES,
+receipt_quantity,QUANTITE_VENDUE,,Quantité,,article_quantite_vendue,,Qte Vendues,,NOMBRE UNITES,
 date,JOUR,format YYYY-MM-DD,Date de transaction,format DD/MM/YYYY,date_ticket,format YYYY-MM-DD,DT_TICK,format DD/MM/YYYY,DATE TICKET,
 location,CODE_POSTAL,,NOM DU MAGASIN,,code_postal,,COD_POIN_VENT,,NOM DU MAGASIN,

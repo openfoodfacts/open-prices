@@ -130,11 +130,17 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
         elif gdpr_source == "CARREFOUR":
             if "CAR" in op_price["product_code"]:
                 passes_test = False
-            elif op_price["product_name"] in ["BOUCHERIE", "Coupon Rem Caisse"]:
+            elif op_price["product_name"] in [
+                "BOUCHERIE",
+                "Coupon Rem Caisse",
+                "Coupon FIDELITE",
+            ]:
                 passes_test = False
-            elif op_price["discount"]:
+            elif ("discount" in op_price) and op_price["discount"]:
                 passes_test = False
-            elif op_price["receipt_quantity"].startswith("-"):
+            elif (type(op_price["receipt_quantity"]) is str) and op_price[
+                "receipt_quantity"
+            ].startswith("-"):
                 passes_test = False
         elif gdpr_source == "ELECLERC":
             if len(op_price["product_code"]) < 6:
@@ -198,6 +204,9 @@ def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_da
                         gdpr_source, op_field, gdpr_field_value
                     )
                     open_prices_price[op_field] = gdpr_price_field_cleaned
+                else:
+                    if op_field in ["product_code"]:
+                        raise Exception(f"{op_field} field missing in the source file?")
         # print(open_prices_price)
         open_prices_price_list_1.append({**open_prices_price, **extra_data})
 
