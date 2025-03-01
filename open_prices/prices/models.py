@@ -61,14 +61,14 @@ class PriceQuerySet(models.QuerySet):
             source_annotated=Case(
                 When(
                     source__contains="Open Prices Web App",
-                    then=Value(price_constants.SOURCE_WEB),
+                    then=Value(constants.SOURCE_WEB),
                 ),
                 When(
                     source__contains="Smoothie",
-                    then=Value(price_constants.SOURCE_MOBILE),
+                    then=Value(constants.SOURCE_MOBILE),
                 ),
-                When(source__contains="API", then=Value(price_constants.SOURCE_API)),
-                default=Value(price_constants.SOURCE_OTHER),
+                When(source__contains="API", then=Value(constants.SOURCE_API)),
+                default=Value(constants.SOURCE_OTHER),
                 output_field=CharField(),
             )
         )

@@ -34,12 +34,6 @@ PRICE_PER_KILOGRAM = "KILOGRAM"
 PRICE_PER_LIST = [PRICE_PER_UNIT, PRICE_PER_KILOGRAM]
 PRICE_PER_CHOICES = [(key, key) for key in PRICE_PER_LIST]
 
-SOURCE_WEB = "WEB"  # Open Prices Web App
-SOURCE_MOBILE = "MOBILE"  # Smoothie - OpenFoodFacts
-SOURCE_API = "API"  # API
-SOURCE_OTHER = "OTHER"  # None, MyMeals
-SOURCE_LIST = [SOURCE_WEB, SOURCE_MOBILE, SOURCE_API, SOURCE_OTHER]
-
 PRICE_CREATED_FROM_PRICE_TAG_VALIDATION_SOURCE_LIST = [
     "/experiments/price-validation-assistant",
     "/experiments/contribution-assistant",

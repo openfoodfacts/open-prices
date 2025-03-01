@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 from solo.models import SingletonModel
 
-from open_prices.prices import constants as price_constants
+from open_prices.common import constants
 
 
 class TotalStats(SingletonModel):
@@ -133,7 +133,7 @@ class TotalStats(SingletonModel):
         self.price_type_group_consumption_count = (
             Price.objects.has_type_group_consumption().count()
         )
-        for source in price_constants.SOURCE_LIST:
+        for source in constants.SOURCE_LIST:
             setattr(
                 self,
                 f"price_source_{source.lower()}_count",

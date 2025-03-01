@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
@@ -37,7 +38,7 @@ class PriceQuerySetTest(TestCase):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(
             Price.objects.with_extra_fields()
-            .filter(source_annotated=price_constants.SOURCE_WEB)
+            .filter(source_annotated=constants.SOURCE_WEB)
             .count(),
             1,
         )
