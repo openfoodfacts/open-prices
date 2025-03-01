@@ -22,7 +22,7 @@ class PriceQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         PriceFactory(price=5, price_is_discounted=True, price_without_discount=10)
-        PriceFactory(price=8)
+        PriceFactory(price=8, source="Open Prices Web App")
         PriceFactory(price=10)
 
     def test_has_discount(self):
@@ -32,6 +32,15 @@ class PriceQuerySetTest(TestCase):
     def test_exclude_discounted(self):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.exclude_discounted().count(), 2)
+
+    def with_extra_fields(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(
+            Price.objects.with_extra_fields()
+            .filter(source_cleaned_annotated=price_constants.PRICE_SOURCE_WEB)
+            .count(),
+            1,
+        )
 
     def test_min(self):
         self.assertEqual(Price.objects.calculate_min(), 5)
