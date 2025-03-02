@@ -134,6 +134,9 @@ class PriceListFilterApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
+        cls.user_proof_price_tag = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG, owner=cls.user_session.user.user_id
+        )
         cls.user_proof_receipt = ProofFactory(
             type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
         )
@@ -149,6 +152,7 @@ class PriceListFilterApiTest(TestCase):
             **PRICE_APPLES,
             labels_tags=[],
             origins_tags=["en:spain"],
+            proof_id=cls.user_proof_price_tag.id,
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
@@ -291,10 +295,10 @@ class PriceListFilterApiTest(TestCase):
         # proof_id__isnull
         url = self.url + "?proof_id__isnull=true"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 4)
+        self.assertEqual(response.data["total"], 3)
         url = self.url + "?proof_id__isnull=false"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["total"], 2)
         # proof__type
         url = self.url + f"?proof__type={proof_constants.TYPE_RECEIPT}"
         # thanks to select_related, we only have 2 queries:
@@ -304,6 +308,15 @@ class PriceListFilterApiTest(TestCase):
             response = self.client.get(url)
             self.assertEqual(response.data["total"], 1)
             self.assertTrue("proof" in response.data["items"][0])
+        url = self.url + f"?proof__type={proof_constants.TYPE_PRICE_TAG}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = (
+            self.url
+            + f"?proof__type={proof_constants.TYPE_RECEIPT}&proof__type={proof_constants.TYPE_PRICE_TAG}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 1)
 
     def test_price_list_filter_by_date(self):
         self.assertEqual(Price.objects.count(), 5)

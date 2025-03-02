@@ -27,7 +27,7 @@ class PriceFilter(django_filters.FilterSet):
     proof_id__isnull = django_filters.BooleanFilter(
         field_name="proof_id", lookup_expr="isnull"
     )
-    proof__type = django_filters.ChoiceFilter(
+    proof__type = django_filters.MultipleChoiceFilter(
         field_name="proof__type",
         choices=proof_constants.TYPE_CHOICES,
     )
