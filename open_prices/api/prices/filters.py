@@ -1,11 +1,15 @@
 import django_filters
 
 from open_prices.prices.models import Price
+from open_prices.proofs import constants as proof_constants
 
 
 class PriceFilter(django_filters.FilterSet):
     product_id__isnull = django_filters.BooleanFilter(
         field_name="product_id", lookup_expr="isnull"
+    )
+    product__categories_tags__contains = django_filters.CharFilter(
+        field_name="product__categories_tags", lookup_expr="icontains"
     )
     labels_tags__contains = django_filters.CharFilter(
         field_name="labels_tags", lookup_expr="icontains"
@@ -23,6 +27,10 @@ class PriceFilter(django_filters.FilterSet):
     proof_id__isnull = django_filters.BooleanFilter(
         field_name="proof_id", lookup_expr="isnull"
     )
+    proof__type = django_filters.ChoiceFilter(
+        field_name="proof__type",
+        choices=proof_constants.TYPE_CHOICES,
+    )
     date__gt = django_filters.DateFilter(field_name="date", lookup_expr="gt")
     date__gte = django_filters.DateFilter(field_name="date", lookup_expr="gte")
     date__lt = django_filters.DateFilter(field_name="date", lookup_expr="lt")
@@ -34,9 +42,6 @@ class PriceFilter(django_filters.FilterSet):
     )
     created__lte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="lte"
-    )
-    product__categories_tags__contains = django_filters.CharFilter(
-        field_name="product__categories_tags", lookup_expr="icontains"
     )
 
     class Meta:

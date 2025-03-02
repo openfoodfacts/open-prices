@@ -201,6 +201,15 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?category_tag=en:apples"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
+        # product__categories_tags__contains
+        url = self.url + "?product__categories_tags__contains=en:breakfasts"
+        # thanks to select_related, we only have 2 queries:
+        # - 1 to count the number of prices
+        # - 1 to get the prices (even when filtering on product fields)
+        with self.assertNumQueries(1 + 1):
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 1)
+            self.assertTrue("product" in response.data["items"][0])
 
     def test_price_list_filter_by_tags(self):
         self.assertEqual(Price.objects.count(), 5)
@@ -286,6 +295,15 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?proof_id__isnull=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # proof__type
+        url = self.url + f"?proof__type={proof_constants.TYPE_RECEIPT}"
+        # thanks to select_related, we only have 2 queries:
+        # - 1 to count the number of prices
+        # - 1 to get the prices (even when filtering on proof fields)
+        with self.assertNumQueries(1 + 1):
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 1)
+            self.assertTrue("proof" in response.data["items"][0])
 
     def test_price_list_filter_by_date(self):
         self.assertEqual(Price.objects.count(), 5)
@@ -320,17 +338,6 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?created__lte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)
-
-    def test_price_list_filter_by_product_categories_tags(self):
-        self.assertEqual(Price.objects.count(), 5)
-        url = self.url + "?product__categories_tags__contains=en:breakfasts"
-        # thanks to select_related, we only have 2 queries:
-        # - 1 to count the number of prices
-        # - 1 to get the prices (even when filtering on product fields)
-        with self.assertNumQueries(1 + 1):
-            response = self.client.get(url)
-            self.assertEqual(response.data["total"], 1)
-            self.assertTrue("product" in response.data["items"][0])
 
 
 class PriceDetailApiTest(TestCase):
