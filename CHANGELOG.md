@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.68.0](https://github.com/openfoodfacts/open-prices/compare/v1.67.0...v1.68.0) (2025-03-02)
+
+
+### Features
+
+* **Prices:** API: new filter on proof type ([#741](https://github.com/openfoodfacts/open-prices/issues/741)) ([a41c868](https://github.com/openfoodfacts/open-prices/commit/a41c868bafd445ffc52316a87bc7f66e8662a923))
+* **Stats:** new price_location_country_count field ([#740](https://github.com/openfoodfacts/open-prices/issues/740)) ([94fb106](https://github.com/openfoodfacts/open-prices/commit/94fb1064a0d89cb760c144fea4fa34873561a5dd))
+* **Stats:** new price_year_count field ([#738](https://github.com/openfoodfacts/open-prices/issues/738)) ([16e0e59](https://github.com/openfoodfacts/open-prices/commit/16e0e59556b3fa7bd5c40de8b1b16736c93a5424))
+
 ## [1.67.0](https://github.com/openfoodfacts/open-prices/compare/v1.66.0...v1.67.0) (2025-03-01)
 
 
