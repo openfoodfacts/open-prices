@@ -47,6 +47,7 @@ class TotalStatsTest(TestCase):
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             currency="EUR",
+            date="2024-06-30",
             owner=cls.user.user_id,
             source="Open Prices Web App",
         )
@@ -70,6 +71,7 @@ class TotalStatsTest(TestCase):
             proof_id=cls.proof_price_tag.id,
             price=1.0,
             currency=cls.proof_price_tag.currency,
+            date=cls.proof_price_tag.date,
             owner=cls.user.user_id,
             source="Open Prices Web App",
         )
@@ -92,6 +94,7 @@ class TotalStatsTest(TestCase):
             proof_id=cls.proof_gdpr_request.id,
             price=2.0,
             currency=cls.proof_gdpr_request.currency,
+            date="2025-01-01",
             owner=cls.user_2.user_id,
             source="API",
         )
@@ -108,6 +111,7 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_type_category_tag_count, 0)
         self.assertEqual(self.total_stats.price_with_discount_count, 0)
         self.assertEqual(self.total_stats.price_currency_count, 0)
+        self.assertEqual(self.total_stats.price_year_count, 0)
         self.assertEqual(self.total_stats.price_type_group_community_count, 0)
         self.assertEqual(self.total_stats.price_type_group_consumption_count, 0)
         self.assertEqual(self.total_stats.price_source_web_count, 0)
@@ -121,6 +125,7 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_type_category_tag_count, 1)
         self.assertEqual(self.total_stats.price_with_discount_count, 0)
         self.assertEqual(self.total_stats.price_currency_count, 1)
+        self.assertEqual(self.total_stats.price_year_count, 3)  # None included
         self.assertEqual(self.total_stats.price_type_group_community_count, 1)
         self.assertEqual(self.total_stats.price_type_group_consumption_count, 1)
         self.assertEqual(self.total_stats.price_source_web_count, 1)

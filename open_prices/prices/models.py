@@ -15,7 +15,7 @@ from django.db.models import (
     When,
     signals,
 )
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
 from django.utils import timezone
 from openfoodfacts.taxonomy import (
@@ -58,6 +58,7 @@ class PriceQuerySet(models.QuerySet):
 
     def with_extra_fields(self):
         return self.annotate(
+            date_year_annotated=ExtractYear("date"),
             source_annotated=Case(
                 When(
                     source__contains="Open Prices Web App",
@@ -70,7 +71,7 @@ class PriceQuerySet(models.QuerySet):
                 When(source__contains="API", then=Value(constants.SOURCE_API)),
                 default=Value(constants.SOURCE_OTHER),
                 output_field=CharField(),
-            )
+            ),
         )
 
     def calculate_min(self):
