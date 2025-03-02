@@ -24,7 +24,7 @@ class PriceQuerySetTest(TestCase):
     def setUpTestData(cls):
         PriceFactory(price=5, price_is_discounted=True, price_without_discount=10)
         PriceFactory(price=8, source="Open Prices Web App")
-        PriceFactory(price=10)
+        PriceFactory(price=10, date="2024-01-01")
 
     def test_has_discount(self):
         self.assertEqual(Price.objects.count(), 3)
@@ -36,6 +36,10 @@ class PriceQuerySetTest(TestCase):
 
     def with_extra_fields(self):
         self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(
+            Price.objects.with_extra_fields().filter(date_year_annotated=2024).count(),
+            1,
+        )
         self.assertEqual(
             Price.objects.with_extra_fields()
             .filter(source_annotated=constants.SOURCE_WEB)
