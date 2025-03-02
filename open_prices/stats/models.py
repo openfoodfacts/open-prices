@@ -13,6 +13,7 @@ class TotalStats(SingletonModel):
         "price_with_discount_count",
         "price_currency_count",
         "price_year_count",
+        "price_location_country_count",
         "price_type_group_community_count",
         "price_type_group_consumption_count",
         "price_source_web_count",
@@ -74,6 +75,7 @@ class TotalStats(SingletonModel):
     price_with_discount_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0)
     price_year_count = models.PositiveIntegerField(default=0)
+    price_location_country_count = models.PositiveIntegerField(default=0)
     price_type_group_community_count = models.PositiveIntegerField(default=0)
     price_type_group_consumption_count = models.PositiveIntegerField(default=0)
     price_source_web_count = models.PositiveIntegerField(default=0)
@@ -140,6 +142,12 @@ class TotalStats(SingletonModel):
         self.price_year_count = (
             Price.objects.with_extra_fields()
             .values_list("date_year_annotated", flat=True)
+            .distinct()
+            .count()
+        )
+        self.price_location_country_count = (
+            Price.objects.select_related("location")
+            .values_list("location__osm_address_country", flat=True)
             .distinct()
             .count()
         )

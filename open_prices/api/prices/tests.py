@@ -37,6 +37,7 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_id": 652825274,
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
+    "osm_address_country": "France",
     "osm_lat": "45.1805534",
     "osm_lon": "5.7153387",
 }

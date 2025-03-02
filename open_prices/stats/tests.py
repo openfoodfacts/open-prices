@@ -17,6 +17,7 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_id": 652825274,
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
+    "osm_address_country": "France",
     "osm_lat": "45.1805534",
     "osm_lon": "5.7153387",
     "price_count": 15,
@@ -112,6 +113,7 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_with_discount_count, 0)
         self.assertEqual(self.total_stats.price_currency_count, 0)
         self.assertEqual(self.total_stats.price_year_count, 0)
+        self.assertEqual(self.total_stats.price_location_country_count, 0)
         self.assertEqual(self.total_stats.price_type_group_community_count, 0)
         self.assertEqual(self.total_stats.price_type_group_consumption_count, 0)
         self.assertEqual(self.total_stats.price_source_web_count, 0)
@@ -126,6 +128,7 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_with_discount_count, 0)
         self.assertEqual(self.total_stats.price_currency_count, 1)
         self.assertEqual(self.total_stats.price_year_count, 3)  # None included
+        self.assertEqual(self.total_stats.price_location_country_count, 1)
         self.assertEqual(self.total_stats.price_type_group_community_count, 1)
         self.assertEqual(self.total_stats.price_type_group_consumption_count, 1)
         self.assertEqual(self.total_stats.price_source_web_count, 1)
