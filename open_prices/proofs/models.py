@@ -71,6 +71,7 @@ class Proof(models.Model):
         "date",
         "receipt_price_count",
         "receipt_price_total",
+        "receipt_online_delivery_costs",
         "ready_for_price_tag_validation",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + [
