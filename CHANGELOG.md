@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.68.1](https://github.com/openfoodfacts/open-prices/compare/v1.68.0...v1.68.1) (2025-03-04)
+
+
+### Bug Fixes
+
+* **Proofs:** allow updating the receipt_online_delivery_costs field. ref [#724](https://github.com/openfoodfacts/open-prices/issues/724) ([49fb711](https://github.com/openfoodfacts/open-prices/commit/49fb711e530de64f8cd9f4f0dec60eb39542712f))
+
 ## [1.68.0](https://github.com/openfoodfacts/open-prices/compare/v1.67.0...v1.68.0) (2025-03-02)
 
 
