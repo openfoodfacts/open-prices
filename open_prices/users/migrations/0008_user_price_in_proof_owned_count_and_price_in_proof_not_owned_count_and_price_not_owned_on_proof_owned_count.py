@@ -22,4 +22,9 @@ class Migration(migrations.Migration):
             name="price_in_proof_not_owned_count",
             field=models.PositiveIntegerField(blank=True, default=0, null=True),
         ),
+        migrations.AddField(
+            model_name="user",
+            name="price_not_owned_on_proof_owned_count",
+            field=models.PositiveIntegerField(blank=True, default=0, null=True),
+        ),
     ]
