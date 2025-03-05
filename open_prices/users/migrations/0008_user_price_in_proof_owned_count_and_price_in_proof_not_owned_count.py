@@ -14,7 +14,12 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="user",
-            name="price_from_proof_owned_count",
+            name="price_in_proof_owned_count",
+            field=models.PositiveIntegerField(blank=True, default=0, null=True),
+        ),
+        migrations.AddField(
+            model_name="user",
+            name="price_in_proof_not_owned_count",
             field=models.PositiveIntegerField(blank=True, default=0, null=True),
         ),
     ]

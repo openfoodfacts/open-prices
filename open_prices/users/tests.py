@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.test import TestCase
 
 from open_prices.locations import constants as location_constants
@@ -42,97 +41,117 @@ class UserQuerySetTest(TestCase):
 class UserPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = UserFactory()
+        cls.user_1 = UserFactory()
+        cls.user_2 = UserFactory()
         cls.location_1 = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.location_2 = LocationFactory(**LOCATION_ONLINE_DECATHLON)
-        cls.proof = ProofFactory(
+        cls.proof_1 = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location_1.osm_id,
             location_osm_type=cls.location_1.osm_type,
             currency="EUR",
-            owner=cls.user.user_id,
+            owner=cls.user_1.user_id,
+        )
+        cls.proof_2 = ProofFactory(
+            type=proof_constants.TYPE_GDPR_REQUEST,
+            currency="USD",
+            owner=cls.user_1.user_id,
         )
         PriceFactory(
             product_code="0123456789100",
             location_osm_id=cls.location_1.osm_id,
             location_osm_type=cls.location_1.osm_type,
-            proof_id=cls.proof.id,
+            proof_id=cls.proof_1.id,
             price=1.0,
-            currency=cls.proof.currency,
-            owner=cls.user.user_id,
+            currency=cls.proof_1.currency,
+            owner=cls.user_1.user_id,
         )
         PriceFactory(
             product_code="0123456789101",
             location_osm_id=cls.location_2.osm_id,
             location_osm_type=cls.location_2.osm_type,
+            proof_id=cls.proof_2.id,
             price=2.0,
-            currency="USD",
-            owner=cls.user.user_id,
+            currency=cls.proof_2.currency,
+            owner=cls.user_1.user_id,
         )
         PriceFactory(
             product_code="0123456789100",
             location_osm_id=cls.location_1.osm_id,
             location_osm_type=cls.location_1.osm_type,
-            proof_id=cls.proof.id,
+            proof_id=cls.proof_1.id,
             price=1.0,
-            currency=cls.proof.currency,
-            owner=settings.ANONYMOUS_USER_ID,
+            currency=cls.proof_1.currency,
+            owner=cls.user_2.user_id,
         )
 
     def test_update_price_count(self):
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.price_count, 2)  # price signals
-        self.assertEqual(self.user.price_type_group_community_count, 0)
-        self.assertEqual(self.user.price_type_group_consumption_count, 0)
-        self.assertEqual(self.user.price_currency_count, 0)
-        self.assertEqual(self.user.price_in_proof_owned_count, 0)
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.price_count, 2)  # price signals
+        self.assertEqual(self.user_1.price_type_group_community_count, 0)
+        self.assertEqual(self.user_1.price_type_group_consumption_count, 0)
+        self.assertEqual(self.user_1.price_currency_count, 0)
+        self.assertEqual(self.user_1.price_in_proof_owned_count, 0)
+        self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
         # update_price_count() should fix price counts
-        self.user.update_price_count()
-        self.assertEqual(self.user.price_count, 2)
-        self.assertEqual(self.user.price_type_group_community_count, 1)
-        self.assertEqual(self.user.price_type_group_consumption_count, 0)
-        self.assertEqual(self.user.price_currency_count, 2)
-        self.assertEqual(self.user.price_in_proof_owned_count, 2)
+        self.user_1.update_price_count()
+        self.assertEqual(self.user_1.price_count, 2)
+        self.assertEqual(self.user_1.price_type_group_community_count, 1)
+        self.assertEqual(self.user_1.price_type_group_consumption_count, 1)
+        self.assertEqual(self.user_1.price_currency_count, 2)
+        self.assertEqual(self.user_1.price_in_proof_owned_count, 2)
+        self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
         # bulk delete user's prices to skip signals
-        Price.objects.filter(owner=self.user.user_id).delete()
-        self.assertEqual(self.user.price_count, 2)  # should be 0
-        self.assertEqual(self.user.price_type_group_community_count, 1)
-        self.assertEqual(self.user.price_type_group_consumption_count, 0)
-        self.assertEqual(self.user.price_currency_count, 2)  # should be 0
-        self.assertEqual(self.user.price_in_proof_owned_count, 2)  # should be 0
+        Price.objects.filter(owner=self.user_1.user_id).delete()
+        self.assertEqual(self.user_1.price_count, 2)  # should be 0
+        self.assertEqual(self.user_1.price_type_group_community_count, 1)
+        self.assertEqual(self.user_1.price_type_group_consumption_count, 1)
+        self.assertEqual(self.user_1.price_currency_count, 2)
+        self.assertEqual(self.user_1.price_in_proof_owned_count, 2)
+        self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
         # update_price_count() should fix price counts
-        self.user.update_price_count()
-        self.assertEqual(self.user.price_count, 0)
-        self.assertEqual(self.user.price_type_group_community_count, 0)
-        self.assertEqual(self.user.price_type_group_consumption_count, 0)
-        self.assertEqual(self.user.price_currency_count, 0)
+        self.user_1.update_price_count()
+        self.assertEqual(self.user_1.price_count, 0)
+        self.assertEqual(self.user_1.price_type_group_community_count, 0)
+        self.assertEqual(self.user_1.price_type_group_consumption_count, 0)
+        self.assertEqual(self.user_1.price_currency_count, 0)
         self.assertEqual(
-            self.user.price_in_proof_owned_count, 1
-        )  # price from anonymous user
+            self.user_1.price_in_proof_owned_count, 0
+        )  # price from another user
+        self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
+        # stats for user_2
+        self.user_2.refresh_from_db()
+        self.user_2.update_price_count()
+        self.assertEqual(self.user_2.price_count, 1)
+        self.assertEqual(self.user_2.price_type_group_community_count, 1)
+        self.assertEqual(self.user_2.price_type_group_consumption_count, 0)
+        self.assertEqual(self.user_2.price_currency_count, 1)
+        self.assertEqual(self.user_2.price_in_proof_owned_count, 0)
+        self.assertEqual(self.user_2.price_in_proof_not_owned_count, 1)
 
     def test_update_location_count(self):
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.location_count, 0)
-        self.assertEqual(self.user.location_type_osm_country_count, 0)
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.location_count, 0)
+        self.assertEqual(self.user_1.location_type_osm_country_count, 0)
         # update_location_count() should fix location counts
-        self.user.update_location_count()
-        self.assertEqual(self.user.location_count, 1)  # proof locations
-        self.assertEqual(self.user.location_type_osm_country_count, 1)
+        self.user_1.update_location_count()
+        self.assertEqual(self.user_1.location_count, 1)  # proof locations
+        self.assertEqual(self.user_1.location_type_osm_country_count, 1)
 
     def test_update_product_count(self):
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.product_count, 0)
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.product_count, 0)
         # update_product_count() should fix product counts
-        self.user.update_product_count()
-        self.assertEqual(self.user.product_count, 2)
+        self.user_1.update_product_count()
+        self.assertEqual(self.user_1.product_count, 2)
 
     def test_update_proof_count(self):
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.proof_count, 0)
-        self.assertEqual(self.user.proof_type_group_community_count, 0)
-        self.assertEqual(self.user.proof_type_group_consumption_count, 0)
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.proof_count, 0)
+        self.assertEqual(self.user_1.proof_type_group_community_count, 0)
+        self.assertEqual(self.user_1.proof_type_group_consumption_count, 0)
         # update_proof_count() should fix proof counts
-        self.user.update_proof_count()
-        self.assertEqual(self.user.proof_count, 1)
-        self.assertEqual(self.user.proof_type_group_community_count, 1)
-        self.assertEqual(self.user.proof_type_group_consumption_count, 0)
+        self.user_1.update_proof_count()
+        self.assertEqual(self.user_1.proof_count, 2)
+        self.assertEqual(self.user_1.proof_type_group_community_count, 1)
+        self.assertEqual(self.user_1.proof_type_group_consumption_count, 1)
