@@ -85,21 +85,21 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user.price_type_group_community_count, 0)
         self.assertEqual(self.user.price_type_group_consumption_count, 0)
         self.assertEqual(self.user.price_currency_count, 0)
-        self.assertEqual(self.user.price_from_proof_owned_count, 0)
+        self.assertEqual(self.user.price_in_proof_owned_count, 0)
         # update_price_count() should fix price counts
         self.user.update_price_count()
         self.assertEqual(self.user.price_count, 2)
         self.assertEqual(self.user.price_type_group_community_count, 1)
         self.assertEqual(self.user.price_type_group_consumption_count, 0)
         self.assertEqual(self.user.price_currency_count, 2)
-        self.assertEqual(self.user.price_from_proof_owned_count, 2)
+        self.assertEqual(self.user.price_in_proof_owned_count, 2)
         # bulk delete user's prices to skip signals
         Price.objects.filter(owner=self.user.user_id).delete()
         self.assertEqual(self.user.price_count, 2)  # should be 0
         self.assertEqual(self.user.price_type_group_community_count, 1)
         self.assertEqual(self.user.price_type_group_consumption_count, 0)
         self.assertEqual(self.user.price_currency_count, 2)  # should be 0
-        self.assertEqual(self.user.price_from_proof_owned_count, 2)  # should be 0
+        self.assertEqual(self.user.price_in_proof_owned_count, 2)  # should be 0
         # update_price_count() should fix price counts
         self.user.update_price_count()
         self.assertEqual(self.user.price_count, 0)
@@ -107,7 +107,7 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user.price_type_group_consumption_count, 0)
         self.assertEqual(self.user.price_currency_count, 0)
         self.assertEqual(
-            self.user.price_from_proof_owned_count, 1
+            self.user.price_in_proof_owned_count, 1
         )  # price from anonymous user
 
     def test_update_location_count(self):

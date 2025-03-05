@@ -13,7 +13,7 @@ class User(models.Model):
         "price_type_group_community_count",
         "price_type_group_consumption_count",
         "price_currency_count",
-        "price_from_proof_owned_count",
+        "price_in_proof_owned_count",
     ]
     PROOF_COUNT_FIELDS = [
         "proof_count",
@@ -41,7 +41,7 @@ class User(models.Model):
     price_type_group_community_count = models.PositiveIntegerField(default=0)
     price_type_group_consumption_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    price_from_proof_owned_count = models.PositiveIntegerField(
+    price_in_proof_owned_count = models.PositiveIntegerField(
         default=0, blank=True, null=True
     )
     location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
@@ -85,7 +85,7 @@ class User(models.Model):
             .distinct()
             .count()
         )
-        self.price_from_proof_owned_count = (
+        self.price_in_proof_owned_count = (
             Price.objects.select_related("proof")
             .filter(proof__owner=self.user_id)
             .distinct()
