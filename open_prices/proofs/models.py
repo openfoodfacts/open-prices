@@ -73,6 +73,7 @@ class Proof(models.Model):
         "receipt_price_total",
         "receipt_online_delivery_costs",
         "ready_for_price_tag_validation",
+        "owner_consumption",
         "owner_comment",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + [
@@ -132,6 +133,7 @@ class Proof(models.Model):
 
     ready_for_price_tag_validation = models.BooleanField(default=False)
 
+    owner_consumption = models.BooleanField(blank=True, null=True)
     owner_comment = models.TextField(blank=True, null=True)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
@@ -244,7 +246,7 @@ class Proof(models.Model):
                     "ready_for_price_tag_validation",
                     "Can only be set if type PRICE_TAG",
                 )
-        # receipt-specific rules
+        # receipt specific rules
         if not self.type == proof_constants.TYPE_RECEIPT:
             if self.receipt_price_count is not None:
                 validation_errors = utils.add_validation_error(
@@ -263,6 +265,14 @@ class Proof(models.Model):
                     validation_errors,
                     "receipt_online_delivery_costs",
                     "Can only be set if type RECEIPT",
+                )
+        # consumption specific rules
+        if self.type not in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
+            if self.owner_consumption is not None:
+                validation_errors = utils.add_validation_error(
+                    validation_errors,
+                    "owner_consumption",
+                    f"Can only be set if type is consumption ({proof_constants.TYPE_GROUP_CONSUMPTION_LIST})",
                 )
         # return
         if bool(validation_errors):
