@@ -2,6 +2,15 @@
 
 from django.db import migrations, models
 
+from open_prices.proofs import constants as proof_constants
+
+
+def init_owner_consumption(apps, schema_editor):
+    Proof = apps.get_model("proofs", "Proof")
+    Proof.objects.filter(type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST).update(
+        owner_consumption=True
+    )
+
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -14,4 +23,5 @@ class Migration(migrations.Migration):
             name="owner_consumption",
             field=models.BooleanField(blank=True, null=True),
         ),
+        migrations.RunPython(init_owner_consumption),
     ]
