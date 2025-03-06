@@ -113,6 +113,7 @@ class Price(models.Model):
         "currency",
         "date",
         "receipt_quantity",
+        "owner_comment",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + [
         "type",  # optional in the serializer
@@ -218,6 +219,8 @@ class Price(models.Model):
         blank=True,
         null=True,
     )
+
+    owner_comment = models.TextField(blank=True, null=True)
 
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
