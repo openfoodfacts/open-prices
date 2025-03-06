@@ -73,6 +73,7 @@ class Proof(models.Model):
         "receipt_price_total",
         "receipt_online_delivery_costs",
         "ready_for_price_tag_validation",
+        "owner_comment",
     ]
     CREATE_FIELDS = UPDATE_FIELDS + [
         "location_id",  # extra field (optional)
@@ -130,6 +131,8 @@ class Proof(models.Model):
     )
 
     ready_for_price_tag_validation = models.BooleanField(default=False)
+
+    owner_comment = models.TextField(blank=True, null=True)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     prediction_count = models.PositiveIntegerField(default=0, blank=True, null=True)
