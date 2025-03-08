@@ -241,6 +241,28 @@ class ProofModelSaveTest(TestCase):
             type=proof_constants.TYPE_PRICE_TAG,
         )
 
+    def test_proof_owner_fields(self):
+        # owner_consumption: can be set only for consumption-type proofs
+        for OWNER_CONSUMPTION_OK in [None, True, False]:
+            for PROOF_TYPE in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
+                with self.subTest(OWNER_CONSUMPTION_OK=OWNER_CONSUMPTION_OK):
+                    ProofFactory(
+                        type=PROOF_TYPE,
+                        owner_consumption=OWNER_CONSUMPTION_OK,
+                    )
+        for OWNER_CONSUMPTION_NOT_OK in [True, False]:
+            for PROOF_TYPE in proof_constants.TYPE_GROUP_COMMUNITY_LIST:
+                with self.subTest(OWNER_CONSUMPTION_NOT_OK=OWNER_CONSUMPTION_NOT_OK):
+                    self.assertRaises(
+                        ValidationError,
+                        ProofFactory,
+                        type=PROOF_TYPE,
+                        owner_consumption=OWNER_CONSUMPTION_NOT_OK,
+                    )
+        # owner_comment
+        for OWNER_COMMENT_OK in [None, "", "test"]:
+            ProofFactory(owner_comment=OWNER_COMMENT_OK)
+
 
 class ProofPropertyTest(TestCase):
     @classmethod
