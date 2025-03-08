@@ -37,7 +37,7 @@ class ProofViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    authentication_classes = []
+    authentication_classes = []  # see get_authenticators
     permission_classes = [IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = Proof.objects.all()
@@ -48,10 +48,10 @@ class ProofViewSet(
     ordering = ["created"]
 
     def get_authenticators(self):
-        if self.request.method not in ["GET"]:
+        if self.request and self.request.method in ["GET"]:
             # Note: we also allow anonymous upload ("POST")
-            return [CustomAuthentication()]
-        return super().get_authenticators()
+            return super().get_authenticators()
+        return [CustomAuthentication()]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -158,9 +158,9 @@ class PriceTagViewSet(
     ordering = ["created"]
 
     def get_authenticators(self):
-        if self.request.method not in ["GET"]:
-            return [CustomAuthentication()]
-        return super().get_authenticators()
+        if self.request and self.request.method in ["GET"]:
+            return super().get_authenticators()
+        return [CustomAuthentication()]
 
     def get_queryset(self):
         if self.action in ["create", "update"]:

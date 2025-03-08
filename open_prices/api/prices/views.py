@@ -38,9 +38,9 @@ class PriceViewSet(
     ordering = ["created"]
 
     def get_authenticators(self):
-        if self.request.method not in ["GET"]:
-            return [CustomAuthentication()]
-        return super().get_authenticators()
+        if self.request and self.request.method in ["GET"]:
+            return super().get_authenticators()
+        return [CustomAuthentication()]
 
     def get_queryset(self):
         if self.request.method in ["GET"]:
