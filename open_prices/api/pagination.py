@@ -1,14 +1,14 @@
-from rest_framework import pagination
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 
-class CustomPagination(pagination.PageNumberPagination):
+class CustomPagination(PageNumberPagination):
     """
-    https://www.django-rest-framework.org/api-guide/pagination/#custom-pagination-styles
-    - results -> items
-    - count -> total
-    - next -> ?
-    - previous -> ?
+    docs: https://www.django-rest-framework.org/api-guide/pagination/#custom-pagination-styles  # noqa
+    why do we override the pagination keys? we used to have fastapi-pagination before  # noqa
+    - overriden keys: results -> items; count -> total
+    - added keys: page, pages, size
+    - removed keys: next, previous
     """
 
     page_size_query_param = "size"
