@@ -37,15 +37,21 @@ class ProofViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    authentication_classes = [CustomAuthentication]
+    authentication_classes = []
     permission_classes = [IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = Proof.objects.all()
-    serializer_class = ProofFullSerializer
+    serializer_class = ProofFullSerializer  # see get_serializer_class
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
     ordering_fields = ["date", "price_count", "created"]
     ordering = ["created"]
+
+    def get_authenticators(self):
+        if self.request.method not in ["GET"]:
+            # Note: we also allow anonymous upload ("POST")
+            return [CustomAuthentication()]
+        return super().get_authenticators()
 
     def get_queryset(self):
         queryset = self.queryset
@@ -137,7 +143,7 @@ class PriceTagViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    authentication_classes = [CustomAuthentication]
+    authentication_classes = []  # see get_authenticators
     permission_classes = [IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = (
@@ -151,8 +157,13 @@ class PriceTagViewSet(
     ordering_fields = ["proof_id", "created"]
     ordering = ["created"]
 
+    def get_authenticators(self):
+        if self.request.method not in ["GET"]:
+            return [CustomAuthentication()]
+        return super().get_authenticators()
+
     def get_queryset(self):
-        if self.action in ("create", "update"):
+        if self.action in ["create", "update"]:
             # We need to prefetch the price object if it exists to validate the
             # price_id field, and the proof object to validate the proof_id
             # field

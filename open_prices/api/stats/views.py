@@ -8,9 +8,6 @@ from open_prices.stats.models import TotalStats
 
 
 class StatsView(APIView):
-    authentication_classes = []
-    permission_classes = []
-
     @extend_schema(responses=TotalStatsSerializer, tags=["stats"])
     def get(self, request: Request) -> Response:
         total_stats = TotalStats.get_solo()

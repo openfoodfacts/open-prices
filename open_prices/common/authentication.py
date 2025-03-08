@@ -1,6 +1,8 @@
 import uuid
 
 from django.conf import settings
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
+from drf_spectacular.plumbing import build_bearer_security_scheme_object
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.request import Request
 
@@ -40,3 +42,17 @@ class CustomAuthentication(BaseAuthentication):
             return (session.user, None)
         # raise exceptions.AuthenticationFailed("Invalid authentication credentials")  # noqa
         return None
+
+
+class MyCustomAuthenticationScheme(OpenApiAuthenticationExtension):
+    """
+    https://drf-spectacular.readthedocs.io/en/latest/customization.html#specify-authentication-with-openapiauthenticationextension  # noqa
+    """
+
+    target_class = CustomAuthentication
+    name = "CustomAuthentication"
+
+    def get_security_definition(self, auto_schema):
+        return build_bearer_security_scheme_object(
+            header_name="Authorization", token_prefix="Bearer"
+        )

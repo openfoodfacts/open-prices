@@ -9,8 +9,6 @@ from open_prices.users.models import User
 class UserViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
-    authentication_classes = []
-    permission_classes = []
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = "user_id"

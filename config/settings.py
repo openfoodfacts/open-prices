@@ -189,6 +189,8 @@ REST_FRAMEWORK = {
     "ORDERING_PARAM": "order_by",
     "DEFAULT_PAGINATION_CLASS": "open_prices.api.pagination.CustomPagination",
     "COERCE_DECIMAL_TO_STRING": False,
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": [],
 }
 
 SPECTACULAR_SETTINGS = {

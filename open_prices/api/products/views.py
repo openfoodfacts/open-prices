@@ -13,8 +13,6 @@ from open_prices.products.models import Product
 class ProductViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
-    authentication_classes = []
-    permission_classes = []
     queryset = Product.objects.all()
     serializer_class = ProductFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]

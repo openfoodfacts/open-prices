@@ -7,9 +7,6 @@ from open_prices.api.serializers import StatusSerializer
 
 
 class StatusView(APIView):
-    authentication_classes = []
-    permission_classes = []
-
     @extend_schema(responses=StatusSerializer, tags=["status"])
     def get(self, request: Request) -> Response:
         return Response({"status": "running"}, status=200)
