@@ -1,7 +1,7 @@
 import uuid
 
 from django.conf import settings
-from rest_framework import authentication
+from rest_framework.authentication import BaseAuthentication
 from rest_framework.request import Request
 
 from open_prices.users.utils import get_session
@@ -33,7 +33,7 @@ def get_request_session(request: Request):
     return None
 
 
-class CustomAuthentication(authentication.BaseAuthentication):
+class CustomAuthentication(BaseAuthentication):
     def authenticate(self, request: Request):
         session = get_request_session(request)
         if session:

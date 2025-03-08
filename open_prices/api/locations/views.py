@@ -19,6 +19,8 @@ class LocationViewSet(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
+    authentication_classes = []
+    permission_classes = []
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
