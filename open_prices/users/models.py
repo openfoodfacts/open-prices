@@ -15,7 +15,7 @@ class User(models.Model):
         "price_currency_count",
         "price_in_proof_owned_count",
         "price_in_proof_not_owned_count",
-        "price_not_owned_on_proof_owned_count",
+        "price_not_owned_in_proof_owned_count",
     ]
     PROOF_COUNT_FIELDS = [
         "proof_count",
@@ -49,7 +49,7 @@ class User(models.Model):
     price_in_proof_not_owned_count = models.PositiveIntegerField(
         default=0, blank=True, null=True
     )
-    price_not_owned_on_proof_owned_count = models.PositiveIntegerField(
+    price_not_owned_in_proof_owned_count = models.PositiveIntegerField(
         default=0, blank=True, null=True
     )
     location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
@@ -107,7 +107,7 @@ class User(models.Model):
             .distinct()
             .count()
         )
-        self.price_not_owned_on_proof_owned_count = (
+        self.price_not_owned_in_proof_owned_count = (
             Price.objects.select_related("proof")
             .exclude(owner=self.user_id)
             .filter(proof__owner=self.user_id)
