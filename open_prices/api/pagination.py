@@ -23,3 +23,35 @@ class CustomPagination(pagination.PageNumberPagination):
                 "total": self.page.paginator.count,
             }
         )
+
+    def get_paginated_response_schema(self, schema):
+        return {
+            "type": "object",
+            "required": ["items", "page", "pages", "size", "total"],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": schema,
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Current page number",
+                    "example": 1,
+                },
+                "pages": {
+                    "type": "integer",
+                    "description": "Total number of pages",
+                    "example": 16,
+                },
+                "size": {
+                    "type": "integer",
+                    "description": "Number of items per page",
+                    "example": 100,
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total number of items",
+                    "example": 1531,
+                },
+            },
+        }
