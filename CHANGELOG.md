@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.69.0](https://github.com/openfoodfacts/open-prices/compare/v1.68.1...v1.69.0) (2025-03-08)
+
+
+### Features
+
+* **Prices:** new owner_comment field ([#747](https://github.com/openfoodfacts/open-prices/issues/747)) ([2443716](https://github.com/openfoodfacts/open-prices/commit/24437165299abe9b35a8c040ac365cc407e3589f))
+* **Proofs:** new owner_comment field ([#748](https://github.com/openfoodfacts/open-prices/issues/748)) ([04672c7](https://github.com/openfoodfacts/open-prices/commit/04672c73138c7ae4299c7410038e6886d48a4eba))
+* **Proofs:** new owner_consumption field ([#750](https://github.com/openfoodfacts/open-prices/issues/750)) ([9349374](https://github.com/openfoodfacts/open-prices/commit/934937428804003903993f25c803ac2db5812f93))
+* **Users:** new price count on owned (and not owned) proofs ([#744](https://github.com/openfoodfacts/open-prices/issues/744)) ([0e56244](https://github.com/openfoodfacts/open-prices/commit/0e56244c03c02d550f853d96c8ba4df00833c37b))
+
+
+### Technical
+
+* **API:** custom paginated response schema ([#751](https://github.com/openfoodfacts/open-prices/issues/751)) ([eb719a3](https://github.com/openfoodfacts/open-prices/commit/eb719a32f76a65b48937445e12d2984e371f9564))
+* **API:** set default size to 10. and limit max size to 100 ([#752](https://github.com/openfoodfacts/open-prices/issues/752)) ([7f0434b](https://github.com/openfoodfacts/open-prices/commit/7f0434b87e4b5b82fc7398239907bf7a4ce8de99))
+* **Users:** rename stat field to price_not_owned_in_proof_owned_count. ref [#744](https://github.com/openfoodfacts/open-prices/issues/744) ([8f70777](https://github.com/openfoodfacts/open-prices/commit/8f707771cd65bb89a4139f6c9ca894cb6460d02c))
+
 ## [1.68.1](https://github.com/openfoodfacts/open-prices/compare/v1.68.0...v1.68.1) (2025-03-04)
 
 
