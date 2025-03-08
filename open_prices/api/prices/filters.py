@@ -31,6 +31,9 @@ class PriceFilter(django_filters.FilterSet):
         field_name="proof__type",
         choices=proof_constants.TYPE_CHOICES,
     )
+    proof__owner_consumption = django_filters.BooleanFilter(
+        field_name="proof__owner_consumption"
+    )
     date__gt = django_filters.DateFilter(field_name="date", lookup_expr="gt")
     date__gte = django_filters.DateFilter(field_name="date", lookup_expr="gte")
     date__lt = django_filters.DateFilter(field_name="date", lookup_expr="lt")
