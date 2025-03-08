@@ -27,15 +27,20 @@ class PriceViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    authentication_classes = [CustomAuthentication]
+    authentication_classes = []  # see get_authenticators
     permission_classes = [IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = Price.objects.all()
-    serializer_class = PriceFullSerializer
+    serializer_class = PriceFullSerializer  # see get_serializer_class
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = PriceFilter
     ordering_fields = ["price", "date", "created"]
     ordering = ["created"]
+
+    def get_authenticators(self):
+        if self.request and self.request.method in ["GET"]:
+            return super().get_authenticators()
+        return [CustomAuthentication()]
 
     def get_queryset(self):
         if self.request.method in ["GET"]:
