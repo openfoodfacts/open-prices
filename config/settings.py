@@ -57,6 +57,7 @@ LOCAL_APPS = [
     "open_prices.stats",
     "open_prices.api",
     "open_prices.www",
+    "open_prices.challenges",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
