@@ -9,4 +9,4 @@ class ChallengeModelTestSave(TestCase):
         pass
 
     def test_challenge_validation(self):
-        ChallengeFactory(id=1)
+        ChallengeFactory(challenge_id=1)

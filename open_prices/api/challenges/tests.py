@@ -21,7 +21,7 @@ class ChallengeListApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(len(response.data["items"]), 2)
-        self.assertFalse("challenge_id" in response.data["items"][0])
+        self.assertTrue("challenge_id" in response.data["items"][0])
         self.assertEqual(
             response.data["items"][0]["challenge_id"], "1"
         )  # default order
