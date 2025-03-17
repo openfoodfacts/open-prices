@@ -16,3 +16,4 @@ class ChallengeAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_published",)
     search_fields = ("id",)
+    readonly_fields = ("created", "updated")
