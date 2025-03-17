@@ -24,6 +24,12 @@ class Challenge(models.Model):
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)
 
     is_published = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=20,
+        choices=challenge_constants.CHALLENGE_STATUS_CHOICES,
+        blank=True,
+        help_text="Read-only. Calculated based on is_published, start_date and end_date.",
+    )
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -34,6 +40,18 @@ class Challenge(models.Model):
         db_table = "challenges"
         verbose_name = "Challenge"
         verbose_name_plural = "Challenges"
+
+    def set_status(self):
+        if not self.is_published:
+            self.status = challenge_constants.CHALLENGE_STATUS_DRAFT
+        elif self.start_date is None or self.end_date is None:
+            pass  # cannot happen (see full_clean validation)
+        elif str(self.start_date) > str(timezone.now().date()):
+            self.status = challenge_constants.CHALLENGE_STATUS_UPCOMING
+        elif str(self.end_date) < str(timezone.now().date()):
+            self.status = challenge_constants.CHALLENGE_STATUS_COMPLETED
+        else:
+            self.status = challenge_constants.CHALLENGE_STATUS_ONGOING
 
     def clean(self, *args, **kwargs):
         validation_errors = dict()
@@ -68,14 +86,5 @@ class Challenge(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        self.set_status()
         super().save(*args, **kwargs)
-
-    @property
-    def status(self):
-        if self.start_date and self.end_date:
-            if str(self.start_date) > str(timezone.now().date()):
-                return challenge_constants.CHALLENGE_STATUS_UPCOMING
-            elif str(self.end_date) < str(timezone.now().date()):
-                return challenge_constants.CHALLENGE_STATUS_ARCHIVED
-            else:
-                return challenge_constants.CHALLENGE_STATUS_ONGOING
