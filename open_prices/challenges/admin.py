@@ -10,9 +10,7 @@ class ChallengeAdmin(admin.ModelAdmin):
         "start_date",
         "end_date",
         "categories",
-        "status",
         "created",
         "updated",
     )
-    list_filter = ("status",)
     search_fields = ("id",)

@@ -35,4 +35,4 @@ class ChallengeFilter(django_filters.FilterSet):
 
     class Meta:
         model = Challenge
-        fields = ["id", "status"]
+        fields = ["id"]

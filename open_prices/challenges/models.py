@@ -18,10 +18,6 @@ class Challenge(models.Model):
     categories = ArrayField(base_field=models.CharField(), blank=True, default=list)
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)
 
-    status = models.CharField(
-        max_length=20, choices=challenge_constants.CHALLENGE_STATUS_CHOICES
-    )
-
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
@@ -34,7 +30,7 @@ class Challenge(models.Model):
         validation_errors = dict()
         # date rules
         if self.start_date is not None and self.end_date is not None:
-            if self.start_date > self.end_date:
+            if str(self.start_date) > str(self.end_date):
                 utils.add_validation_error(
                     validation_errors, "start_date", "Must be before end date"
                 )
@@ -46,3 +42,13 @@ class Challenge(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def status(self):
+        if self.start_date and self.end_date:
+            if str(self.start_date) > str(timezone.now().date()):
+                return challenge_constants.CHALLENGE_STATUS_UPCOMING
+            elif str(self.end_date) < str(timezone.now().date()):
+                return challenge_constants.CHALLENGE_STATUS_ARCHIVED
+            else:
+                return challenge_constants.CHALLENGE_STATUS_ONGOING
