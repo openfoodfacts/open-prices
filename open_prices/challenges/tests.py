@@ -66,35 +66,35 @@ class ChallengeModelSaveTest(TestCase):
             end_date="2024-06-30",
         )
 
-
-class ChallengePropertyTest(TestCase):
     @freeze_time("2025-01-01")
-    def test_status(self):
-        challenge_archived = ChallengeFactory(
-            start_date="2024-06-30", end_date="2024-07-30"
-        )
-        self.assertEqual(challenge_archived.status, "ARCHIVED")
-        challenge_ongoing = ChallengeFactory(
-            start_date="2024-12-30", end_date="2025-01-30"
-        )
-        self.assertEqual(challenge_ongoing.status, "ONGOING")
+    def test_challenge_set_status(self):
+        challenge_draft = ChallengeFactory(is_published=False)
+        self.assertEqual(challenge_draft.status, "DRAFT")
         challenge_upcoming = ChallengeFactory(
-            start_date="2025-01-20", end_date="2025-02-20"
+            is_published=True, start_date="2025-01-20", end_date="2025-02-20"
         )
         self.assertEqual(challenge_upcoming.status, "UPCOMING")
+        challenge_ongoing = ChallengeFactory(
+            is_published=True, start_date="2024-12-30", end_date="2025-01-30"
+        )
+        self.assertEqual(challenge_ongoing.status, "ONGOING")
+        challenge_completed = ChallengeFactory(
+            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
+        )
+        self.assertEqual(challenge_completed.status, "COMPLETED")
 
 
 class ChallengeQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.challenge_archived = ChallengeFactory(
-            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
+        cls.challenge_upcoming = ChallengeFactory(
+            is_published=False, start_date="2025-01-20", end_date="2025-02-20"
         )
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True, start_date="2024-12-30", end_date="2025-01-30"
         )
-        cls.challenge_upcoming = ChallengeFactory(
-            is_published=False, start_date="2025-01-20", end_date="2025-02-20"
+        cls.challenge_completed = ChallengeFactory(
+            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
         )
 
     def test_published(self):
