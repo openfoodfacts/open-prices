@@ -87,14 +87,14 @@ class ChallengeModelSaveTest(TestCase):
 class ChallengeQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.challenge_archived = ChallengeFactory(
-            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
+        cls.challenge_upcoming = ChallengeFactory(
+            is_published=False, start_date="2025-01-20", end_date="2025-02-20"
         )
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True, start_date="2024-12-30", end_date="2025-01-30"
         )
-        cls.challenge_upcoming = ChallengeFactory(
-            is_published=False, start_date="2025-01-20", end_date="2025-02-20"
+        cls.challenge_completed = ChallengeFactory(
+            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
         )
 
     def test_published(self):

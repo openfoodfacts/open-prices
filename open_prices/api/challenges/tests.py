@@ -43,14 +43,14 @@ class ChallengeListFilterApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:challenges-list")
-        cls.challenge_archived = ChallengeFactory(
-            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
+        cls.challenge_draft_upcoming = ChallengeFactory(
+            is_published=False, start_date="2025-01-20", end_date="2025-02-20"
         )
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True, start_date="2024-12-30", end_date="2025-01-30"
         )
-        cls.challenge_upcoming = ChallengeFactory(
-            is_published=False, start_date="2025-01-20", end_date="2025-02-20"
+        cls.challenge_completed = ChallengeFactory(
+            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
         )
 
     def test_challenge_list_without_filter(self):
@@ -63,19 +63,38 @@ class ChallengeListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["id"], self.challenge_ongoing.id)
 
+    def test_challenge_list_filter_by_start_date(self):
+        response = self.client.get(self.url + "?start_date__gte=" + "2025-01-01")
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["id"], self.challenge_draft_upcoming.id
+        )
+
+    def test_challenge_list_filter_by_end_date(self):
+        response = self.client.get(self.url + "?end_date__lt=" + "2025-01-01")
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_completed.id)
+
     def test_challenge_list_filter_by_is_published(self):
         response = self.client.get(self.url + "?is_published=true")
         self.assertEqual(response.data["total"], 2)
         response = self.client.get(self.url + "?is_published=false")
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["id"], self.challenge_upcoming.id)
+        self.assertEqual(
+            response.data["items"][0]["id"], self.challenge_draft_upcoming.id
+        )
 
-    def test_challenge_list_filter_by_start_date(self):
-        response = self.client.get(self.url + "?start_date__gte=" + "2025-01-01")
+    def test_challenge_list_filter_by_status(self):
+        response = self.client.get(self.url + "?status=" + "DRAFT")
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["id"], self.challenge_upcoming.id)
-
-    def test_challenge_list_filter_by_end_date(self):
-        response = self.client.get(self.url + "?end_date__lt=" + "2025-01-01")
+        self.assertEqual(
+            response.data["items"][0]["id"], self.challenge_draft_upcoming.id
+        )
+        response = self.client.get(self.url + "?status=" + "UPCOMING")
+        self.assertEqual(response.data["total"], 0)
+        response = self.client.get(self.url + "?status=" + "ONGOING")
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["id"], self.challenge_archived.id)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_ongoing.id)
+        response = self.client.get(self.url + "?status=" + "COMPLETED")
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_completed.id)
