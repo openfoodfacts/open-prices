@@ -44,13 +44,13 @@ class ChallengeListFilterApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:challenges-list")
         cls.challenge_archived = ChallengeFactory(
-            start_date="2024-06-30", end_date="2024-07-30"
+            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
         )
         cls.challenge_ongoing = ChallengeFactory(
-            start_date="2024-12-30", end_date="2025-01-30"
+            is_published=True, start_date="2024-12-30", end_date="2025-01-30"
         )
         cls.challenge_upcoming = ChallengeFactory(
-            start_date="2025-01-20", end_date="2025-02-20"
+            is_published=False, start_date="2025-01-20", end_date="2025-02-20"
         )
 
     def test_price_list_without_filter(self):
@@ -62,6 +62,13 @@ class ChallengeListFilterApiTest(TestCase):
         response = self.client.get(self.url + "?id=" + str(self.challenge_ongoing.id))
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["id"], self.challenge_ongoing.id)
+
+    def test_challenge_list_filter_by_is_published(self):
+        response = self.client.get(self.url + "?is_published=true")
+        self.assertEqual(response.data["total"], 2)
+        response = self.client.get(self.url + "?is_published=false")
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_upcoming.id)
 
     def test_challenge_list_filter_by_start_date(self):
         response = self.client.get(self.url + "?start_date__gte=" + "2025-01-01")
