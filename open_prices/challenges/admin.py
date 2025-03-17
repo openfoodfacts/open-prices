@@ -6,16 +6,13 @@ from open_prices.challenges.models import Challenge
 @admin.register(Challenge)
 class ChallengeAdmin(admin.ModelAdmin):
     list_display = (
-        "challenge_id",
-        "state",
         "title",
-        "icon",
-        "subtitle",
         "start_date",
         "end_date",
         "categories",
-        "example_proof_url",
+        "status",
         "created",
         "updated",
     )
-    search_fields = ("challenge_id",)
+    list_filter = ("status",)
+    search_fields = ("id",)
