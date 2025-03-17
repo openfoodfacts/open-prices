@@ -29,7 +29,7 @@ class ChallengeListPaginationApiTest(TestCase):
         cls.challenge_1 = ChallengeFactory()
         cls.challenge_2 = ChallengeFactory()
 
-    def test_price_list_size(self):
+    def test_challenge_list_size(self):
         # default
         response = self.client.get(self.url)
         for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
@@ -53,7 +53,7 @@ class ChallengeListFilterApiTest(TestCase):
             is_published=False, start_date="2025-01-20", end_date="2025-02-20"
         )
 
-    def test_price_list_without_filter(self):
+    def test_challenge_list_without_filter(self):
         self.assertEqual(Challenge.objects.count(), 3)
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 3)
