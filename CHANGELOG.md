@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.70.0](https://github.com/openfoodfacts/open-prices/compare/v1.69.0...v1.70.0) (2025-03-17)
+
+
+### Features
+
+* **Challenges:** add a new `status` field (read-only, calculated) ([#759](https://github.com/openfoodfacts/open-prices/issues/759)) ([c3880ba](https://github.com/openfoodfacts/open-prices/commit/c3880ba250de1181b5e21cacaead052887c49c0b))
+* **Challenges:** basic model and API endpoint ([#758](https://github.com/openfoodfacts/open-prices/issues/758)) ([48c4348](https://github.com/openfoodfacts/open-prices/commit/48c4348c2af063db2bd38c61c2660c81f8587364))
+
+
+### Technical
+
+* **API:** better indicate which endpoints require authentication ([#754](https://github.com/openfoodfacts/open-prices/issues/754)) ([3659f8b](https://github.com/openfoodfacts/open-prices/commit/3659f8b4055dfeb6f2a32c16fee19060fd3e3668))
+
 ## [1.69.0](https://github.com/openfoodfacts/open-prices/compare/v1.68.1...v1.69.0) (2025-03-08)
 
 
