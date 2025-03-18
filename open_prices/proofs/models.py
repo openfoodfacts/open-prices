@@ -423,7 +423,7 @@ class ProofPrediction(models.Model):
     )
     type = models.CharField(
         max_length=20,
-        choices=proof_constants.PROOF_TYPE_CHOICES,
+        choices=proof_constants.PROOF_PREDICTION_TYPE_CHOICES,
         verbose_name="The type of the prediction",
     )
     model_name = models.CharField(
@@ -496,6 +496,14 @@ class PriceTag(models.Model):
         related_name="price_tags",
         help_text="The proof this price tag belongs to",
     )
+    proof_prediction = models.ForeignKey(
+        ProofPrediction,
+        on_delete=models.SET_NULL,
+        related_name="price_tags",
+        null=True,
+        blank=True,
+        help_text="The proof prediction used to create this price tag. Null if created by a user.",
+    )
     price = models.ForeignKey(
         "prices.Price",
         on_delete=models.SET_NULL,
@@ -513,12 +521,6 @@ class PriceTag(models.Model):
         null=True,
         blank=True,
         help_text="The annotation status",
-    )
-    model_version = models.CharField(
-        max_length=30,
-        help_text="The version of the object detector model that generated the prediction",
-        blank=True,
-        null=True,
     )
 
     prediction_count = models.PositiveIntegerField(default=0, blank=True, null=True)
@@ -598,6 +600,14 @@ class PriceTag(models.Model):
                     "Proof should have type PRICE_TAG.",
                 )
 
+        if self.proof_prediction:
+            if self.proof_prediction.proof_id != self.proof.id:
+                utils.add_validation_error(
+                    validation_errors,
+                    "proof_prediction",
+                    "Proof prediction should belong to the same proof.",
+                )
+
         if self.price:
             if self.proof and self.price.proof_id != self.proof.id:
                 utils.add_validation_error(
@@ -605,7 +615,6 @@ class PriceTag(models.Model):
                     "price",
                     "Price should belong to the same proof.",
                 )
-
             if self.status is None:
                 self.status = proof_constants.PriceTagStatus.linked_to_price.value
             elif self.status != proof_constants.PriceTagStatus.linked_to_price.value:
@@ -615,9 +624,9 @@ class PriceTag(models.Model):
                     "Status should be `linked_to_price` when price_id is set.",
                 )
 
+        # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
-
         super().clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
