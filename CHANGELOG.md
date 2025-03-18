@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.71.0](https://github.com/openfoodfacts/open-prices/compare/v1.70.0...v1.71.0) (2025-03-18)
+
+
+### Features
+
+* **Moderation:** script to remove Products (and their prices) with invalid barcodes ([#761](https://github.com/openfoodfacts/open-prices/issues/761)) ([b39ea42](https://github.com/openfoodfacts/open-prices/commit/b39ea4215a00c7e0607973fb358e6c3784fb3043))
+
+
+### Technical
+
+* **PriceTags:** new FK to link to the proof_prediction ([#763](https://github.com/openfoodfacts/open-prices/issues/763)) ([02ecb0e](https://github.com/openfoodfacts/open-prices/commit/02ecb0e228d49344ed1466dd36825efe98bd7e43))
+
 ## [1.70.0](https://github.com/openfoodfacts/open-prices/compare/v1.69.0...v1.70.0) (2025-03-17)
 
 
