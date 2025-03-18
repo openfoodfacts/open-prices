@@ -7,6 +7,7 @@ from django.db.models.functions import Length
 
 from open_prices.prices import constants as price_constants
 from open_prices.products.models import Product
+from open_prices.proofs.models import ProofPrediction
 
 
 def cleanup_products_with_long_barcodes():
@@ -87,3 +88,21 @@ def cleanup_products_with_invalid_barcodes():
 
     # recap
     print(f"Deleted {product_deleted_count} products and {price_deleted_count} prices")
+
+
+def cleanup_useless_proof_predictions():
+    """
+    - OBJECT_DETECTION "price_tag_detection" only run on PRICE_TAG proofs
+    - RECEIPT_EXTRACTION "gemini" only run on RECEIPT proofs
+    """
+    proof_prediction_object_detection_qs = ProofPrediction.objects.filter(
+        type=price_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE
+    ).exclude(proof__type=price_constants.TYPE_PRICE_TAG)
+    for proof_prediction in proof_prediction_object_detection_qs:
+        proof_prediction.delete()
+
+    proof_prediction_receipt_extraction_qs = ProofPrediction.objects.filter(
+        type=price_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE
+    ).exclude(proof__type=price_constants.TYPE_RECEIPT)
+    for proof_prediction in proof_prediction_receipt_extraction_qs:
+        proof_prediction.delete()
