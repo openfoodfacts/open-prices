@@ -54,5 +54,5 @@ class ModerationRulesTest(TestCase):
         self.assertEqual(Product.objects.count(), 3)
         self.assertEqual(Price.objects.count(), 5)
         cleanup_products_with_invalid_barcodes()
-        self.assertEqual(Product.objects.count(), 1)  # 1 product deleted
+        self.assertEqual(Product.objects.count(), 2)  # 1 product deleted
         self.assertEqual(Price.objects.count(), 3)  # 2 prices deleted

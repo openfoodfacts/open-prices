@@ -21,11 +21,9 @@ def cleanup_products_with_long_barcodes():
     price_deleted_count = 0
 
     # products with long barcodes
-    product_queryset = (
-        Product.objects.prefetch_related("prices")
-        .annotate(code_length_annotated=Length("code"))
-        .filter(source=None, code_length_annotated__gt=13)
-    )
+    product_queryset = Product.objects.annotate(
+        code_length_annotated=Length("code")
+    ).filter(source=None, code_length_annotated__gt=13)
     print(f"Found {product_queryset.count()} products with long barcodes")
 
     # build the price source filter query
@@ -37,7 +35,6 @@ def cleanup_products_with_long_barcodes():
     for product in product_queryset:
         product_prices_from_source_queryset = product.prices.filter(source_query)
         if product_prices_from_source_queryset.exists():
-            print("cleanup_products_with_long_barcodes", product.code)
             for price in product_prices_from_source_queryset.all():
                 price.delete()  # delete 1 by 1 to trigger signals
                 price_deleted_count += 1
@@ -69,9 +66,7 @@ def cleanup_products_with_invalid_barcodes():
         for code in product_code_list
         if not openfoodfacts.barcode.has_valid_check_digit(code)
     ]
-    product_queryset = Product.objects.prefetch_related("prices").filter(
-        code__in=product_code_invalid_list
-    )
+    product_queryset = Product.objects.filter(code__in=product_code_invalid_list)
     print(f"Found {product_queryset.count()} products with invalid barcodes")
 
     # build the price source filter query
@@ -83,7 +78,6 @@ def cleanup_products_with_invalid_barcodes():
     for product in product_queryset:
         product_prices_from_source_queryset = product.prices.filter(source_query)
         if product_prices_from_source_queryset.exists():
-            print("cleanup_products_with_invalid_barcodes", product.code)
             for price in product_prices_from_source_queryset.all():
                 price.delete()  # delete 1 by 1 to trigger signals
                 price_deleted_count += 1
