@@ -108,6 +108,7 @@ def fix_proof_fields_task():
 
 def moderation_tasks():
     moderation_rules.cleanup_products_with_long_barcodes()
+    moderation_rules.cleanup_products_with_invalid_barcodes()
 
 
 def dump_db_task():
