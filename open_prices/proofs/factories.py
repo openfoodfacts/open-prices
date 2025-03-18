@@ -51,7 +51,9 @@ class PriceTagFactory(DjangoModelFactory):
         model = PriceTag
 
     proof = factory.SubFactory(ProofFactory)
-    model_version = "price_tag_detection-1.0"
+    proof_prediction = factory.LazyAttribute(
+        lambda x: ProofPredictionFactory(proof=x.proof)
+    )
     created = factory.LazyFunction(
         lambda: datetime.datetime.now(tz=datetime.timezone.utc)
     )

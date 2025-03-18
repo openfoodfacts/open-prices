@@ -572,9 +572,7 @@ class PriceTagUpdateApiTest(TestCase):
         cls.proof_2 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
         cls.price = PriceFactory(proof=cls.proof)
         cls.price_2 = PriceFactory(proof=cls.proof_2)
-        cls.price_tag = PriceTagFactory(
-            proof=cls.proof, model_version="object-detector"
-        )
+        cls.price_tag = PriceTagFactory(proof=cls.proof)
         cls.url = reverse("api:price-tags-detail", args=[cls.price_tag.id])
         cls.new_bounding_box = [0.2, 0.3, 0.4, 0.5]
 
@@ -588,7 +586,6 @@ class PriceTagUpdateApiTest(TestCase):
         )
 
     def test_price_tag_create_update_read_only_fields(self):
-        self.assertEqual(self.price_tag.model_version, "object-detector")
         self.assertNotEqual(self.price_tag.bounding_box, self.new_bounding_box)
         response = self.client.patch(
             self.url,
@@ -596,15 +593,12 @@ class PriceTagUpdateApiTest(TestCase):
             data={
                 "bounding_box": self.new_bounding_box,
                 "proof_id": self.proof_2.id,
-                "model_version": "test",
             },
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 200)
         # Proof ID didn't change
         self.assertEqual(response.data["proof"]["id"], self.proof.id)
-        # Model version didn't change
-        self.assertEqual(response.data["model_version"], "object-detector")
         # New bounding box was set
         self.assertEqual(response.data["bounding_box"], self.new_bounding_box)
 

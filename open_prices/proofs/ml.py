@@ -544,8 +544,8 @@ def create_price_tags_from_proof_prediction(
         if detected_object["score"] >= threshold:
             price_tag = PriceTag.objects.create(
                 proof=proof,
+                proof_prediction=proof_prediction,
                 bounding_box=detected_object["bounding_box"],
-                model_version=proof_prediction.model_version,
                 status=None,
                 created_by=None,
                 updated_by=None,
