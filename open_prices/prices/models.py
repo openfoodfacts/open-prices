@@ -58,6 +58,14 @@ class PriceQuerySet(models.QuerySet):
 
     def with_extra_fields(self):
         return self.annotate(
+            price_without_discount_annotated=Case(
+                When(
+                    price_is_discounted=True,
+                    then=F("price_without_discount"),
+                ),
+                default=F("price"),
+                output_field=models.DecimalField(max_digits=10, decimal_places=2),
+            ),
             date_year_annotated=ExtractYear("date"),
             source_annotated=Case(
                 When(
