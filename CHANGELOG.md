@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.71.1](https://github.com/openfoodfacts/open-prices/compare/v1.71.0...v1.71.1) (2025-03-22)
+
+
+### Technical
+
+* **deps:** Update django-related packages ([#768](https://github.com/openfoodfacts/open-prices/issues/768)) ([3dbc5d1](https://github.com/openfoodfacts/open-prices/commit/3dbc5d1df68f270375b007833f81164e73196ef7))
+* **Proofs:** API: allow multiple filters on `type` ([#766](https://github.com/openfoodfacts/open-prices/issues/766)) ([2085158](https://github.com/openfoodfacts/open-prices/commit/2085158b4cfa526279603de7d15b6f1b80c9c7a0))
+
 ## [1.71.0](https://github.com/openfoodfacts/open-prices/compare/v1.70.0...v1.71.0) (2025-03-18)
 
 
