@@ -131,6 +131,12 @@ class ProofListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
+        url = self.url + "?type=PRICE_TAG"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?type=RECEIPT&type=PRICE_TAG"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 2)
 
     def test_proof_list_filter_by_owner(self):
         url = self.url + f"?owner={self.user_session.user.user_id}"

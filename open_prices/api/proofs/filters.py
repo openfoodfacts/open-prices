@@ -1,9 +1,14 @@
 import django_filters
 
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import PriceTag, Proof
 
 
 class ProofFilter(django_filters.FilterSet):
+    type = django_filters.MultipleChoiceFilter(
+        field_name="type",
+        choices=proof_constants.TYPE_CHOICES,
+    )
     location_id__isnull = django_filters.BooleanFilter(
         field_name="location_id", lookup_expr="isnull"
     )
@@ -35,7 +40,6 @@ class ProofFilter(django_filters.FilterSet):
     class Meta:
         model = Proof
         fields = [
-            "type",
             "location_osm_id",
             "location_osm_type",
             "location_id",
