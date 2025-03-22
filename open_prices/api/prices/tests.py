@@ -147,7 +147,9 @@ class PriceListFilterApiTest(TestCase):
             type=proof_constants.TYPE_PRICE_TAG, owner=cls.user_session.user.user_id
         )
         cls.user_proof_receipt = ProofFactory(
-            type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
+            type=proof_constants.TYPE_RECEIPT,
+            owner=cls.user_session.user.user_id,
+            owner_consumption=True,
         )
         cls.product = ProductFactory(**PRODUCT_8001505005707)
         cls.user_price = PriceFactory(
@@ -326,6 +328,15 @@ class PriceListFilterApiTest(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1 + 1)
+        # proof__owner_consumption
+        url = self.url + "?proof__owner_consumption=true"
+        # thanks to select_related, we only have 2 queries:
+        # - 1 to count the number of prices
+        # - 1 to get the prices (even when filtering on proof fields)
+        with self.assertNumQueries(1 + 1):
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 1)
+            self.assertTrue("proof" in response.data["items"][0])
 
     def test_price_list_filter_by_date(self):
         self.assertEqual(Price.objects.count(), 5)
