@@ -8,8 +8,8 @@ from open_prices.common import constants
 class TotalStats(SingletonModel):
     PRICE_COUNT_FIELDS = [
         "price_count",
-        "price_type_product_code_count",
-        "price_type_category_tag_count",
+        "price_type_product_count",
+        "price_type_category_count",
         "price_with_discount_count",
         "price_currency_count",
         "price_year_count",
@@ -70,8 +70,8 @@ class TotalStats(SingletonModel):
     )
 
     price_count = models.PositiveIntegerField(default=0)
-    price_type_product_code_count = models.PositiveIntegerField(default=0)
-    price_type_category_tag_count = models.PositiveIntegerField(default=0)
+    price_type_product_count = models.PositiveIntegerField(default=0)
+    price_type_category_count = models.PositiveIntegerField(default=0)
     price_with_discount_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0)
     price_year_count = models.PositiveIntegerField(default=0)
@@ -129,12 +129,8 @@ class TotalStats(SingletonModel):
         from open_prices.prices.models import Price
 
         self.price_count = Price.objects.count()
-        self.price_type_product_code_count = Price.objects.filter(
-            product_code__isnull=False
-        ).count()
-        self.price_type_category_tag_count = Price.objects.filter(
-            category_tag__isnull=False
-        ).count()
+        self.price_type_product_count = Price.objects.has_type_product().count()
+        self.price_type_category_count = Price.objects.has_type_category().count()
         self.price_with_discount_count = Price.objects.has_discount().count()
         self.price_currency_count = (
             Price.objects.values_list("currency", flat=True).distinct().count()
