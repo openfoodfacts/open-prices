@@ -1,5 +1,6 @@
 import django_filters
 
+from open_prices.common import constants
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import PriceTag, Proof
 
@@ -8,6 +9,10 @@ class ProofFilter(django_filters.FilterSet):
     type = django_filters.MultipleChoiceFilter(
         field_name="type",
         choices=proof_constants.TYPE_CHOICES,
+    )
+    kind = django_filters.ChoiceFilter(
+        choices=constants.KIND_CHOICES,
+        method="filter_kind",
     )
     location_id__isnull = django_filters.BooleanFilter(
         field_name="location_id", lookup_expr="isnull"
@@ -36,6 +41,13 @@ class ProofFilter(django_filters.FilterSet):
     created__lte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="lte"
     )
+
+    def filter_kind(self, queryset, name, value):
+        if value == constants.KIND_COMMUNITY:
+            return queryset.has_kind_community()
+        elif value == constants.KIND_CONSUMPTION:
+            return queryset.has_kind_consumption()
+        return queryset
 
     class Meta:
         model = Proof
