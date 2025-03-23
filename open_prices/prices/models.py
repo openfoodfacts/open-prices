@@ -51,11 +51,10 @@ class PriceQuerySet(models.QuerySet):
     def has_type_category(self):
         return self.filter(type=price_constants.TYPE_CATEGORY)
 
-    def has_type_group_community(self):
-        # TODO: what about prices without proofs?
+    def has_kind_community(self):
         return self.prefetch_related("proof").exclude(proof__owner_consumption=True)
 
-    def has_type_group_consumption(self):
+    def has_kind_consumption(self):
         return self.prefetch_related("proof").filter(
             proof__type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST,
             proof__owner_consumption=True,

@@ -12,8 +12,8 @@ class User(models.Model):
         "price_count",
         "price_type_product_count",
         "price_type_category_count",
-        "price_type_group_community_count",
-        "price_type_group_consumption_count",
+        "price_kind_community_count",
+        "price_kind_consumption_count",
         "price_currency_count",
         "price_in_proof_owned_count",
         "price_in_proof_not_owned_count",
@@ -48,8 +48,8 @@ class User(models.Model):
     price_type_category_count = models.PositiveIntegerField(
         default=0, blank=True, null=True
     )
-    price_type_group_community_count = models.PositiveIntegerField(default=0)
-    price_type_group_consumption_count = models.PositiveIntegerField(default=0)
+    price_kind_community_count = models.PositiveIntegerField(default=0)
+    price_kind_consumption_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     price_in_proof_owned_count = models.PositiveIntegerField(
         default=0, blank=True, null=True
@@ -93,13 +93,11 @@ class User(models.Model):
         self.price_type_category_count = (
             Price.objects.filter(owner=self.user_id).has_type_category().count()
         )
-        self.price_type_group_community_count = (
-            Price.objects.filter(owner=self.user_id).has_type_group_community().count()
+        self.price_kind_community_count = (
+            Price.objects.filter(owner=self.user_id).has_kind_community().count()
         )
-        self.price_type_group_consumption_count = (
-            Price.objects.filter(owner=self.user_id)
-            .has_type_group_consumption()
-            .count()
+        self.price_kind_consumption_count = (
+            Price.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
         self.price_currency_count = (
             Price.objects.filter(owner=self.user_id)
