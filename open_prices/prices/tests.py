@@ -22,6 +22,9 @@ from open_prices.users.models import User
 class PriceQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.proof_receipt = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT, owner_consumption=True
+        )
         PriceFactory(
             type=price_constants.TYPE_PRODUCT,
             price=5,
@@ -32,6 +35,7 @@ class PriceQuerySetTest(TestCase):
             type=price_constants.TYPE_PRODUCT, price=8, source="Open Prices Web App"
         )
         PriceFactory(
+            proof_id=cls.proof_receipt.id,
             type=price_constants.TYPE_CATEGORY,
             category_tag="en:apples",
             price_per=price_constants.PRICE_PER_UNIT,
@@ -54,6 +58,14 @@ class PriceQuerySetTest(TestCase):
     def test_has_type_category(self):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.has_type_category().count(), 1)
+
+    def test_has_type_group_community(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.has_type_group_community().count(), 2)
+
+    def test_has_type_group_consumption(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.has_type_group_consumption().count(), 1)
 
     def with_extra_fields(self):
         self.assertEqual(Price.objects.count(), 3)

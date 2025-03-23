@@ -131,7 +131,7 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_currency_count, 1)
         self.assertEqual(self.total_stats.price_year_count, 3)  # None included
         self.assertEqual(self.total_stats.price_location_country_count, 1)
-        self.assertEqual(self.total_stats.price_type_group_community_count, 1)
+        self.assertEqual(self.total_stats.price_type_group_community_count, 2)
         self.assertEqual(self.total_stats.price_type_group_consumption_count, 1)
         self.assertEqual(self.total_stats.price_source_web_count, 1)
         self.assertEqual(self.total_stats.price_source_mobile_count, 0)
