@@ -94,12 +94,10 @@ class User(models.Model):
             Price.objects.filter(owner=self.user_id).has_type_category().count()
         )
         self.price_type_group_community_count = (
-            Price.objects.filter(owner=self.user_id).has_type_group_community().count()
+            Price.objects.filter(owner=self.user_id).has_kind_community().count()
         )
         self.price_type_group_consumption_count = (
-            Price.objects.filter(owner=self.user_id)
-            .has_type_group_consumption()
-            .count()
+            Price.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
         self.price_currency_count = (
             Price.objects.filter(owner=self.user_id)

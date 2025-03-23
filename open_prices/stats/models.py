@@ -152,10 +152,10 @@ class TotalStats(SingletonModel):
             .count()
         )
         self.price_type_group_community_count = (
-            Price.objects.has_type_group_community().count()
+            Price.objects.has_kind_community().count()
         )
         self.price_type_group_consumption_count = (
-            Price.objects.has_type_group_consumption().count()
+            Price.objects.has_kind_consumption().count()
         )
         for source in constants.SOURCE_LIST:
             setattr(

@@ -59,13 +59,13 @@ class PriceQuerySetTest(TestCase):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.has_type_category().count(), 1)
 
-    def test_has_type_group_community(self):
+    def test_has_kind_community(self):
         self.assertEqual(Price.objects.count(), 3)
-        self.assertEqual(Price.objects.has_type_group_community().count(), 2)
+        self.assertEqual(Price.objects.has_kind_community().count(), 2)
 
-    def test_has_type_group_consumption(self):
+    def test_has_kind_consumption(self):
         self.assertEqual(Price.objects.count(), 3)
-        self.assertEqual(Price.objects.has_type_group_consumption().count(), 1)
+        self.assertEqual(Price.objects.has_kind_consumption().count(), 1)
 
     def with_extra_fields(self):
         self.assertEqual(Price.objects.count(), 3)
