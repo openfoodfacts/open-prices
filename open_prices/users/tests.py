@@ -56,6 +56,7 @@ class UserPropertyTest(TestCase):
         cls.proof_2 = ProofFactory(
             type=proof_constants.TYPE_GDPR_REQUEST,
             currency="USD",
+            owner_consumption=True,
             owner=cls.user_1.user_id,
         )
         PriceFactory(

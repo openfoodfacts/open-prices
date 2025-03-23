@@ -57,11 +57,13 @@ class TotalStatsTest(TestCase):
             location_osm_id=cls.location_2.osm_id,
             location_osm_type=cls.location_2.osm_type,
             currency="EUR",
+            owner_consumption=True,
             owner=cls.user_2.user_id,
         )
         cls.proof_gdpr_request = ProofFactory(
             type=proof_constants.TYPE_GDPR_REQUEST,
             currency="EUR",
+            owner_consumption=True,
             owner=cls.user_2.user_id,
             source="API",
         )
