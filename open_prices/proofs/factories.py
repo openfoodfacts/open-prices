@@ -76,7 +76,7 @@ class ReceiptItemFactory(DjangoModelFactory):
     )
     price = None
     order = factory.Faker("pyint", min_value=1, max_value=10)
-    data = {
+    predicted_data = {
         "product": "en:apples",
         "product_name": "Apples",
         "price": 0.98,
