@@ -147,7 +147,9 @@ class PriceListFilterApiTest(TestCase):
             type=proof_constants.TYPE_PRICE_TAG, owner=cls.user_session.user.user_id
         )
         cls.user_proof_receipt = ProofFactory(
-            type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
+            type=proof_constants.TYPE_RECEIPT,
+            owner_consumption=True,
+            owner=cls.user_session.user.user_id,
         )
         cls.product = ProductFactory(**PRODUCT_8001505005707)
         cls.user_price = PriceFactory(
@@ -326,6 +328,16 @@ class PriceListFilterApiTest(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1 + 1)
+
+    def test_price_list_filter_by_kind(self):
+        self.assertEqual(Price.objects.count(), 5)
+        # kind
+        url = self.url + "?kind=CONSUMPTION"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?kind=COMMUNITY"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_date(self):
         self.assertEqual(Price.objects.count(), 5)
