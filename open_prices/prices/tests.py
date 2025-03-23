@@ -22,9 +22,22 @@ from open_prices.users.models import User
 class PriceQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        PriceFactory(price=5, price_is_discounted=True, price_without_discount=10)
-        PriceFactory(price=8, source="Open Prices Web App")
-        PriceFactory(price=10, date="2024-01-01")
+        PriceFactory(
+            type=price_constants.TYPE_PRODUCT,
+            price=5,
+            price_is_discounted=True,
+            price_without_discount=10,
+        )
+        PriceFactory(
+            type=price_constants.TYPE_PRODUCT, price=8, source="Open Prices Web App"
+        )
+        PriceFactory(
+            type=price_constants.TYPE_CATEGORY,
+            category_tag="en:apples",
+            price_per=price_constants.PRICE_PER_UNIT,
+            price=10,
+            date="2024-01-01",
+        )
 
     def test_has_discount(self):
         self.assertEqual(Price.objects.count(), 3)
@@ -33,6 +46,14 @@ class PriceQuerySetTest(TestCase):
     def test_exclude_discounted(self):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.exclude_discounted().count(), 2)
+
+    def test_has_type_product(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.has_type_product().count(), 2)
+
+    def test_has_type_category(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.has_type_category().count(), 1)
 
     def with_extra_fields(self):
         self.assertEqual(Price.objects.count(), 3)

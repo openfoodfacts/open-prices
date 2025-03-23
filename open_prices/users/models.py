@@ -10,6 +10,8 @@ class UserQuerySet(models.QuerySet):
 class User(models.Model):
     PRICE_COUNT_FIELDS = [
         "price_count",
+        "price_type_product_count",
+        "price_type_category_count",
         "price_type_group_community_count",
         "price_type_group_consumption_count",
         "price_currency_count",
@@ -40,6 +42,12 @@ class User(models.Model):
     is_moderator = models.BooleanField(default=False)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    price_type_product_count = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    price_type_category_count = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
     price_type_group_community_count = models.PositiveIntegerField(default=0)
     price_type_group_consumption_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
@@ -79,6 +87,12 @@ class User(models.Model):
         from open_prices.prices.models import Price
 
         self.price_count = Price.objects.filter(owner=self.user_id).count()
+        self.price_type_product_count = (
+            Price.objects.filter(owner=self.user_id).has_type_product().count()
+        )
+        self.price_type_category_count = (
+            Price.objects.filter(owner=self.user_id).has_type_category().count()
+        )
         self.price_type_group_community_count = (
             Price.objects.filter(owner=self.user_id).has_type_group_community().count()
         )

@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
@@ -67,7 +68,9 @@ class UserPropertyTest(TestCase):
             owner=cls.user_1.user_id,
         )
         PriceFactory(
-            product_code="0123456789101",
+            type=price_constants.TYPE_CATEGORY,
+            category_tag="en:apples",
+            price_per=price_constants.PRICE_PER_UNIT,
             location_osm_id=cls.location_2.osm_id,
             location_osm_type=cls.location_2.osm_type,
             proof_id=cls.proof_2.id,
@@ -76,7 +79,7 @@ class UserPropertyTest(TestCase):
             owner=cls.user_1.user_id,
         )
         PriceFactory(
-            product_code="0123456789100",
+            product_code="0123456789101",
             location_osm_id=cls.location_1.osm_id,
             location_osm_type=cls.location_1.osm_type,
             proof_id=cls.proof_1.id,
@@ -88,6 +91,8 @@ class UserPropertyTest(TestCase):
     def test_update_price_count(self):
         self.user_1.refresh_from_db()
         self.assertEqual(self.user_1.price_count, 2)  # price signals
+        self.assertEqual(self.user_1.price_type_product_count, 0)
+        self.assertEqual(self.user_1.price_type_category_count, 0)
         self.assertEqual(self.user_1.price_type_group_community_count, 0)
         self.assertEqual(self.user_1.price_type_group_consumption_count, 0)
         self.assertEqual(self.user_1.price_currency_count, 0)
@@ -97,6 +102,8 @@ class UserPropertyTest(TestCase):
         # update_price_count() should fix price counts
         self.user_1.update_price_count()
         self.assertEqual(self.user_1.price_count, 2)
+        self.assertEqual(self.user_1.price_type_product_count, 1)
+        self.assertEqual(self.user_1.price_type_category_count, 1)
         self.assertEqual(self.user_1.price_type_group_community_count, 1)
         self.assertEqual(self.user_1.price_type_group_consumption_count, 1)
         self.assertEqual(self.user_1.price_currency_count, 2)
@@ -106,6 +113,8 @@ class UserPropertyTest(TestCase):
         # bulk delete user's prices to skip signals
         Price.objects.filter(owner=self.user_1.user_id).delete()
         self.assertEqual(self.user_1.price_count, 2)  # should be 0
+        self.assertEqual(self.user_1.price_type_product_count, 1)
+        self.assertEqual(self.user_1.price_type_category_count, 1)
         self.assertEqual(self.user_1.price_type_group_community_count, 1)
         self.assertEqual(self.user_1.price_type_group_consumption_count, 1)
         self.assertEqual(self.user_1.price_currency_count, 2)
@@ -115,6 +124,8 @@ class UserPropertyTest(TestCase):
         # update_price_count() should fix price counts
         self.user_1.update_price_count()
         self.assertEqual(self.user_1.price_count, 0)
+        self.assertEqual(self.user_1.price_type_product_count, 0)
+        self.assertEqual(self.user_1.price_type_category_count, 0)
         self.assertEqual(self.user_1.price_type_group_community_count, 0)
         self.assertEqual(self.user_1.price_type_group_consumption_count, 0)
         self.assertEqual(self.user_1.price_currency_count, 0)
@@ -127,6 +138,8 @@ class UserPropertyTest(TestCase):
         self.user_2.refresh_from_db()
         self.user_2.update_price_count()
         self.assertEqual(self.user_2.price_count, 1)
+        self.assertEqual(self.user_2.price_type_product_count, 1)
+        self.assertEqual(self.user_2.price_type_category_count, 0)
         self.assertEqual(self.user_2.price_type_group_community_count, 1)
         self.assertEqual(self.user_2.price_type_group_consumption_count, 0)
         self.assertEqual(self.user_2.price_currency_count, 1)
@@ -148,7 +161,7 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.product_count, 0)
         # update_product_count() should fix product counts
         self.user_1.update_product_count()
-        self.assertEqual(self.user_1.product_count, 2)
+        self.assertEqual(self.user_1.product_count, 1)
 
     def test_update_proof_count(self):
         self.user_1.refresh_from_db()

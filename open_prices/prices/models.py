@@ -45,6 +45,12 @@ class PriceQuerySet(models.QuerySet):
     def exclude_discounted(self):
         return self.filter(price_is_discounted=False)
 
+    def has_type_product(self):
+        return self.filter(type=price_constants.TYPE_PRODUCT)
+
+    def has_type_category(self):
+        return self.filter(type=price_constants.TYPE_CATEGORY)
+
     def has_type_group_community(self):
         # TODO: what about prices without proofs?
         return self.prefetch_related("proof").filter(
