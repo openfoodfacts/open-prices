@@ -54,31 +54,42 @@ LOCATION_OSM_NODE_6509705997 = {
 class ProofQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.proof_without_price = ProofFactory(
+        cls.proof_without_price_1 = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG, source="Open Prices Web App"
+        )
+        cls.proof_without_price_2 = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT, source="Open Prices Web App"
         )
         cls.proof_with_price = ProofFactory(type=proof_constants.TYPE_GDPR_REQUEST)
         PriceFactory(proof_id=cls.proof_with_price.id, price=1.0)
 
     def test_has_type_single_shop(self):
-        self.assertEqual(Proof.objects.count(), 2)
-        self.assertEqual(Proof.objects.has_type_single_shop().count(), 1)
+        self.assertEqual(Proof.objects.count(), 3)
+        self.assertEqual(Proof.objects.has_type_single_shop().count(), 2)
+
+    def test_has_type_group_community(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        self.assertEqual(Proof.objects.has_type_group_community().count(), 1)
+
+    def test_has_type_group_consumption(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        self.assertEqual(Proof.objects.has_type_group_consumption().count(), 2)
 
     def test_has_prices(self):
-        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.count(), 3)
         self.assertEqual(Proof.objects.has_prices().count(), 1)
 
     def with_extra_fields(self):
-        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.count(), 3)
         self.assertEqual(
             Proof.objects.with_extra_fields()
             .filter(source_annotated=constants.SOURCE_WEB)
             .count(),
-            1,
+            2,
         )
 
     def test_with_stats(self):
-        proof = Proof.objects.with_stats().get(id=self.proof_without_price.id)
+        proof = Proof.objects.with_stats().get(id=self.proof_without_price_1.id)
         self.assertEqual(proof.price_count_annotated, 0)
         self.assertEqual(proof.price_count, 0)
         proof = Proof.objects.with_stats().get(id=self.proof_with_price.id)
