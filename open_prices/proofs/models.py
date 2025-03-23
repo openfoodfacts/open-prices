@@ -32,10 +32,12 @@ class ProofQuerySet(models.QuerySet):
         return self.filter(type__in=proof_constants.TYPE_GROUP_SINGLE_SHOP_LIST)
 
     def has_type_group_community(self):
-        return self.filter(type__in=proof_constants.TYPE_GROUP_COMMUNITY_LIST)
+        return self.exclude(owner_consumption=True)
 
     def has_type_group_consumption(self):
-        return self.filter(type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST)
+        return self.filter(
+            type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST, owner_consumption=True
+        )
 
     def has_prices(self):
         return self.filter(price_count__gt=0)
