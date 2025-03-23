@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.72.0](https://github.com/openfoodfacts/open-prices/compare/v1.71.1...v1.72.0) (2025-03-23)
+
+
+### Features
+
+* **Prices:** API: new filter on `kind` ([#777](https://github.com/openfoodfacts/open-prices/issues/777)) ([5edfb71](https://github.com/openfoodfacts/open-prices/commit/5edfb71ee497c1d3e79470031f361da2fae12b18))
+* **Proofs:** API: new filter on `kind` ([#776](https://github.com/openfoodfacts/open-prices/issues/776)) ([308d49b](https://github.com/openfoodfacts/open-prices/commit/308d49b56a27da491c12b8c6c9c91cf000174ba5))
+* **Users:** new price count per type (product or category) ([#771](https://github.com/openfoodfacts/open-prices/issues/771)) ([4160eea](https://github.com/openfoodfacts/open-prices/commit/4160eeaedabbb26ab355c1df1963252295686581))
+
+
+### Technical
+
+* **Auth:** Drop invalid json parser from post api ([#769](https://github.com/openfoodfacts/open-prices/issues/769)) ([8dc930e](https://github.com/openfoodfacts/open-prices/commit/8dc930e1a4d81c8404ef4d5840b7024e37efc6db))
+* **Prices:** rename type_group to kind (community & consumption) ([#775](https://github.com/openfoodfacts/open-prices/issues/775)) ([5461b99](https://github.com/openfoodfacts/open-prices/commit/5461b998029f6d124177abf07092979d7156cc78))
+* **Proofs:** rename type_group to kind (community & consumption) ([#774](https://github.com/openfoodfacts/open-prices/issues/774)) ([c298144](https://github.com/openfoodfacts/open-prices/commit/c298144d5311f3e29b44a87d5ea3120371861d34))
+* **Proofs:** take owner_consumption into account to differentiate community & consumption ([#773](https://github.com/openfoodfacts/open-prices/issues/773)) ([1ffb7e0](https://github.com/openfoodfacts/open-prices/commit/1ffb7e0a98d39e680b32716a5fa830f8d7414e32))
+
 ## [1.71.1](https://github.com/openfoodfacts/open-prices/compare/v1.71.0...v1.71.1) (2025-03-22)
 
 
