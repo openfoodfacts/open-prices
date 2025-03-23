@@ -10,7 +10,11 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from open_prices.api.proofs.filters import PriceTagFilter, ProofFilter
+from open_prices.api.proofs.filters import (
+    PriceTagFilter,
+    ProofFilter,
+    ReceiptItemFilter,
+)
 from open_prices.api.proofs.serializers import (
     PriceTagCreateSerializer,
     PriceTagFullSerializer,
@@ -21,12 +25,13 @@ from open_prices.api.proofs.serializers import (
     ProofProcessWithGeminiSerializer,
     ProofUpdateSerializer,
     ProofUploadSerializer,
+    ReceiptItemFullSerializer,
 )
 from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml import extract_from_price_tag
-from open_prices.proofs.models import PriceTag, Proof
+from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
 from open_prices.proofs.utils import store_file
 
 
@@ -231,3 +236,50 @@ class PriceTagViewSet(
 
         # return full price tag
         return Response(self.serializer_class(price_tag).data)
+
+
+class ReceiptItemViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = ReceiptItem.objects.all()
+    serializer_class = ReceiptItemFullSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    http_method_names = ["get", "post", "patch", "delete"]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = ReceiptItemFilter
+    ordering_fields = ["proof_id", "created", "order"]
+    ordering = ["order"]
+
+    def get_authenticators(self):
+        if self.request and self.request.method in ["GET"]:
+            return super().get_authenticators()
+        return [CustomAuthentication()]
+
+    def get_queryset(self):
+        if self.action in ["create", "update"]:
+            # We need to prefetch the price object if it exists to validate the
+            # price_id field, and the proof object to validate the proof_id
+            # field
+            return (
+                ReceiptItem.objects.select_related("proof")
+                .select_related("price")
+                .all()
+            )
+        return super().get_queryset()
+
+    def create(self, request: Request, *args, **kwargs):
+        # validate
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # save
+
+        receipt_item = serializer.save()
+
+        # return full price tag
+        return Response(
+            self.serializer_class(receipt_item).data, status=status.HTTP_201_CREATED
+        )
