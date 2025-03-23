@@ -216,10 +216,10 @@ class TotalStats(SingletonModel):
         )
         self.proof_type_shop_import_count = Proof.objects.has_type_shop_import().count()
         self.proof_type_group_community_count = (
-            Proof.objects.has_type_group_community().count()
+            Proof.objects.has_kind_community().count()
         )
         self.proof_type_group_consumption_count = (
-            Proof.objects.has_type_group_consumption().count()
+            Proof.objects.has_kind_consumption().count()
         )
         for source in constants.SOURCE_LIST:
             setattr(

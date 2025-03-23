@@ -169,12 +169,10 @@ class User(models.Model):
 
         self.proof_count = Proof.objects.filter(owner=self.user_id).count()
         self.proof_type_group_community_count = (
-            Proof.objects.filter(owner=self.user_id).has_type_group_community().count()
+            Proof.objects.filter(owner=self.user_id).has_kind_community().count()
         )
         self.proof_type_group_consumption_count = (
-            Proof.objects.filter(owner=self.user_id)
-            .has_type_group_consumption()
-            .count()
+            Proof.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
         self.save(update_fields=self.PROOF_COUNT_FIELDS)
 

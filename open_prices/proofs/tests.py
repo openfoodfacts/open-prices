@@ -70,17 +70,17 @@ class ProofQuerySetTest(TestCase):
         )
         PriceFactory(proof_id=cls.proof_with_price.id, price=1.0)
 
-    def test_has_type_single_shop(self):
+    def test_has_type_group_single_shop(self):
         self.assertEqual(Proof.objects.count(), 4)
-        self.assertEqual(Proof.objects.has_type_single_shop().count(), 3)
+        self.assertEqual(Proof.objects.has_type_group_single_shop().count(), 3)
 
-    def test_has_type_group_community(self):
+    def test_has_kind_community(self):
         self.assertEqual(Proof.objects.count(), 4)
-        self.assertEqual(Proof.objects.has_type_group_community().count(), 2)
+        self.assertEqual(Proof.objects.has_kind_community().count(), 2)
 
-    def test_has_type_group_consumption(self):
+    def test_has_kind_consumption(self):
         self.assertEqual(Proof.objects.count(), 4)
-        self.assertEqual(Proof.objects.has_type_group_consumption().count(), 2)
+        self.assertEqual(Proof.objects.has_kind_consumption().count(), 2)
 
     def test_has_prices(self):
         self.assertEqual(Proof.objects.count(), 4)
@@ -88,6 +88,13 @@ class ProofQuerySetTest(TestCase):
 
     def with_extra_fields(self):
         self.assertEqual(Proof.objects.count(), 4)
+        self.assertEqual(Proof.objects.with_extra_fields().count(), 4)
+        self.assertEqual(
+            Proof.objects.with_extra_fields()
+            .filter(kind_annotated=constants.KIND_COMMUNITY)
+            .count(),
+            2,
+        )
         self.assertEqual(
             Proof.objects.with_extra_fields()
             .filter(source_annotated=constants.SOURCE_WEB)
@@ -304,7 +311,9 @@ class ProofPropertyTest(TestCase):
             location_osm_type=cls.proof_price_tag.location.osm_type,
             price=2.0,
         )
-        cls.proof_receipt = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        cls.proof_receipt = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT, owner_consumption=True
+        )
         PriceFactory(
             proof_id=cls.proof_receipt.id,
             location_osm_id=cls.location_osm_1.osm_id,
@@ -316,6 +325,10 @@ class ProofPropertyTest(TestCase):
 
     def test_is_type_single_shop(self):
         self.assertTrue(self.proof_price_tag.is_type_single_shop)
+
+    def test_kind(self):
+        self.assertEqual(self.proof_price_tag.kind, constants.KIND_COMMUNITY)
+        self.assertEqual(self.proof_receipt.kind, constants.KIND_CONSUMPTION)
 
     def test_update_price_count(self):
         self.proof_price_tag.refresh_from_db()

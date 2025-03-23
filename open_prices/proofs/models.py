@@ -28,13 +28,13 @@ class ProofQuerySet(models.QuerySet):
     def has_type_shop_import(self):
         return self.filter(type=proof_constants.TYPE_SHOP_IMPORT)
 
-    def has_type_single_shop(self):
+    def has_type_group_single_shop(self):
         return self.filter(type__in=proof_constants.TYPE_GROUP_SINGLE_SHOP_LIST)
 
-    def has_type_group_community(self):
+    def has_kind_community(self):
         return self.exclude(owner_consumption=True)
 
-    def has_type_group_consumption(self):
+    def has_kind_consumption(self):
         return self.filter(
             type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST, owner_consumption=True
         )
@@ -44,6 +44,15 @@ class ProofQuerySet(models.QuerySet):
 
     def with_extra_fields(self):
         return self.annotate(
+            kind_annotated=Case(
+                When(
+                    type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST,
+                    owner_consumption=True,
+                    then=Value(constants.KIND_CONSUMPTION),
+                ),
+                default=Value(constants.KIND_COMMUNITY),
+                output_field=CharField(),
+            ),
             source_annotated=Case(
                 When(
                     source__contains="Open Prices Web App",
@@ -56,7 +65,7 @@ class ProofQuerySet(models.QuerySet):
                 When(source__contains="API", then=Value(constants.SOURCE_API)),
                 default=Value(constants.SOURCE_OTHER),
                 output_field=CharField(),
-            )
+            ),
         )
 
     def with_stats(self):
@@ -313,6 +322,12 @@ class Proof(models.Model):
     @property
     def is_type_single_shop(self):
         return self.type in proof_constants.TYPE_GROUP_SINGLE_SHOP_LIST
+
+    @property
+    def kind(self):
+        if self.owner_consumption:
+            return constants.KIND_CONSUMPTION
+        return constants.KIND_COMMUNITY
 
     def update_price_count(self):
         self.price_count = self.prices.count()
