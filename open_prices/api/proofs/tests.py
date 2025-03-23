@@ -34,7 +34,7 @@ LOCATION_OSM_NODE_6509705997 = {
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Carrefour",
 }
-PROOF = {
+PROOF_RECEIPT = {
     "type": proof_constants.TYPE_RECEIPT,
     "currency": "EUR",
     "date": "2024-01-01",
@@ -42,6 +42,7 @@ PROOF = {
     "location_osm_type": LOCATION_OSM_NODE_652825274["osm_type"],
     "receipt_price_count": 5,
     "receipt_price_total": Decimal("45.10"),
+    "owner_consumption": True,
 }
 
 
@@ -59,7 +60,7 @@ class ProofListApiTest(TestCase):
         cls.url = reverse("api:proofs-list")
         cls.user_session = SessionFactory()
         cls.proof = ProofFactory(
-            **PROOF, price_count=15, owner=cls.user_session.user.user_id
+            **PROOF_RECEIPT, price_count=15, owner=cls.user_session.user.user_id
         )
         cls.proof_prediction = ProofPredictionFactory(
             proof=cls.proof, type="CLASSIFICATION"
@@ -95,7 +96,7 @@ class ProofListOrderApiTest(TestCase):
         cls.url = reverse("api:proofs-list")
         cls.user_session = SessionFactory()
         cls.proof = ProofFactory(
-            **PROOF, price_count=15, owner=cls.user_session.user.user_id
+            **PROOF_RECEIPT, price_count=15, owner=cls.user_session.user.user_id
         )
         ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
         ProofFactory(
@@ -117,7 +118,7 @@ class ProofListFilterApiTest(TestCase):
         cls.url = reverse("api:proofs-list")
         cls.user_session = SessionFactory()
         cls.proof = ProofFactory(
-            **PROOF, price_count=15, owner=cls.user_session.user.user_id
+            **PROOF_RECEIPT, price_count=15, owner=cls.user_session.user.user_id
         )
         ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
         ProofFactory(
@@ -127,6 +128,7 @@ class ProofListFilterApiTest(TestCase):
         )
 
     def test_proof_list_filter_by_type(self):
+        self.assertEqual(Proof.objects.count(), 3)
         url = self.url + "?type=RECEIPT"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
@@ -138,7 +140,17 @@ class ProofListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1 + 2)
 
+    def test_proof_list_filter_by_kind(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        url = self.url + "?kind=COMMUNITY"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?kind=CONSUMPTION"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
     def test_proof_list_filter_by_owner(self):
+        self.assertEqual(Proof.objects.count(), 3)
         url = self.url + f"?owner={self.user_session.user.user_id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
@@ -151,7 +163,7 @@ class ProofDetailApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.proof = ProofFactory(
-            **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
+            **PROOF_RECEIPT, price_count=15, owner=cls.user_session_1.user.user_id
         )
         cls.proof_prediction = ProofPredictionFactory(
             proof=cls.proof, type="CLASSIFICATION"
@@ -185,7 +197,7 @@ class ProofCreateApiTest(TestCase):
         cls.user_session = SessionFactory()
         cls.data = {
             "file": create_fake_image(),  # open("filename.webp", "rb"),
-            **PROOF,
+            **PROOF_RECEIPT,
             "price_count": 15,
             "source": "test",
         }
@@ -300,7 +312,7 @@ class ProofUpdateApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.proof = ProofFactory(
-            **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
+            **PROOF_RECEIPT, price_count=15, owner=cls.user_session_1.user.user_id
         )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
         cls.data = {
@@ -360,7 +372,7 @@ class ProofDeleteApiTest(TestCase):
         cls.user_session_1 = SessionFactory()
         cls.user_session_2 = SessionFactory()
         cls.proof = ProofFactory(
-            **PROOF, price_count=15, owner=cls.user_session_1.user.user_id
+            **PROOF_RECEIPT, price_count=15, owner=cls.user_session_1.user.user_id
         )
         PriceFactory(
             proof_id=cls.proof.id,
