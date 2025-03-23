@@ -47,8 +47,8 @@ class TotalStats(SingletonModel):
         "proof_type_receipt_count",
         "proof_type_gdpr_request_count",
         "proof_type_shop_import_count",
-        "proof_type_group_community_count",
-        "proof_type_group_consumption_count",
+        "proof_kind_community_count",
+        "proof_kind_consumption_count",
         "proof_source_web_count",
         "proof_source_mobile_count",
         "proof_source_api_count",
@@ -103,8 +103,8 @@ class TotalStats(SingletonModel):
     proof_type_receipt_count = models.PositiveIntegerField(default=0)
     proof_type_gdpr_request_count = models.PositiveIntegerField(default=0)
     proof_type_shop_import_count = models.PositiveIntegerField(default=0)
-    proof_type_group_community_count = models.PositiveIntegerField(default=0)
-    proof_type_group_consumption_count = models.PositiveIntegerField(default=0)
+    proof_kind_community_count = models.PositiveIntegerField(default=0)
+    proof_kind_consumption_count = models.PositiveIntegerField(default=0)
     proof_source_web_count = models.PositiveIntegerField(default=0)
     proof_source_mobile_count = models.PositiveIntegerField(default=0)
     proof_source_api_count = models.PositiveIntegerField(default=0)
@@ -215,12 +215,8 @@ class TotalStats(SingletonModel):
             Proof.objects.has_type_gdpr_request().count()
         )
         self.proof_type_shop_import_count = Proof.objects.has_type_shop_import().count()
-        self.proof_type_group_community_count = (
-            Proof.objects.has_kind_community().count()
-        )
-        self.proof_type_group_consumption_count = (
-            Proof.objects.has_kind_consumption().count()
-        )
+        self.proof_kind_community_count = Proof.objects.has_kind_community().count()
+        self.proof_kind_consumption_count = Proof.objects.has_kind_consumption().count()
         for source in constants.SOURCE_LIST:
             setattr(
                 self,

@@ -21,8 +21,8 @@ class User(models.Model):
     ]
     PROOF_COUNT_FIELDS = [
         "proof_count",
-        "proof_type_group_community_count",
-        "proof_type_group_consumption_count",
+        "proof_kind_community_count",
+        "proof_kind_consumption_count",
     ]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
@@ -66,8 +66,8 @@ class User(models.Model):
     )
     product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    proof_type_group_community_count = models.PositiveIntegerField(default=0)
-    proof_type_group_consumption_count = models.PositiveIntegerField(default=0)
+    proof_kind_community_count = models.PositiveIntegerField(default=0)
+    proof_kind_consumption_count = models.PositiveIntegerField(default=0)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -168,10 +168,10 @@ class User(models.Model):
         from open_prices.proofs.models import Proof
 
         self.proof_count = Proof.objects.filter(owner=self.user_id).count()
-        self.proof_type_group_community_count = (
+        self.proof_kind_community_count = (
             Proof.objects.filter(owner=self.user_id).has_kind_community().count()
         )
-        self.proof_type_group_consumption_count = (
+        self.proof_kind_consumption_count = (
             Proof.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
         self.save(update_fields=self.PROOF_COUNT_FIELDS)
