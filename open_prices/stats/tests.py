@@ -108,8 +108,8 @@ class TotalStatsTest(TestCase):
 
     def test_update_price_stats(self):
         self.assertEqual(self.total_stats.price_count, 0)
-        self.assertEqual(self.total_stats.price_type_product_code_count, 0)
-        self.assertEqual(self.total_stats.price_type_category_tag_count, 0)
+        self.assertEqual(self.total_stats.price_type_product_count, 0)
+        self.assertEqual(self.total_stats.price_type_category_count, 0)
         self.assertEqual(self.total_stats.price_with_discount_count, 0)
         self.assertEqual(self.total_stats.price_currency_count, 0)
         self.assertEqual(self.total_stats.price_year_count, 0)
@@ -123,8 +123,8 @@ class TotalStatsTest(TestCase):
         # update_price_stats() will update price_counts
         self.total_stats.update_price_stats()
         self.assertEqual(self.total_stats.price_count, 3)
-        self.assertEqual(self.total_stats.price_type_product_code_count, 2)
-        self.assertEqual(self.total_stats.price_type_category_tag_count, 1)
+        self.assertEqual(self.total_stats.price_type_product_count, 2)
+        self.assertEqual(self.total_stats.price_type_category_count, 1)
         self.assertEqual(self.total_stats.price_with_discount_count, 0)
         self.assertEqual(self.total_stats.price_currency_count, 1)
         self.assertEqual(self.total_stats.price_year_count, 3)  # None included
