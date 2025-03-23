@@ -3,6 +3,7 @@ import time
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -24,6 +25,7 @@ from open_prices.users.utils import get_or_create_session
 
 class LoginView(APIView):
     serializer_class = LoginSerializer
+    parser_classes = [FormParser, MultiPartParser]
 
     @extend_schema(responses=SessionResponseSerializer, tags=["auth"])
     def post(self, request: Request) -> Response:
