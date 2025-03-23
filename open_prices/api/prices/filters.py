@@ -1,5 +1,6 @@
 import django_filters
 
+from open_prices.common import constants
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
 
@@ -31,6 +32,10 @@ class PriceFilter(django_filters.FilterSet):
         field_name="proof__type",
         choices=proof_constants.TYPE_CHOICES,
     )
+    kind = django_filters.ChoiceFilter(
+        choices=constants.KIND_CHOICES,
+        method="filter_kind",
+    )
     date__gt = django_filters.DateFilter(field_name="date", lookup_expr="gt")
     date__gte = django_filters.DateFilter(field_name="date", lookup_expr="gte")
     date__lt = django_filters.DateFilter(field_name="date", lookup_expr="lt")
@@ -43,6 +48,13 @@ class PriceFilter(django_filters.FilterSet):
     created__lte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="lte"
     )
+
+    def filter_kind(self, queryset, name, value):
+        if value == constants.KIND_COMMUNITY:
+            return queryset.has_kind_community()
+        elif value == constants.KIND_CONSUMPTION:
+            return queryset.has_kind_consumption()
+        return queryset
 
     class Meta:
         model = Price
