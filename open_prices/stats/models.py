@@ -14,8 +14,8 @@ class TotalStats(SingletonModel):
         "price_currency_count",
         "price_year_count",
         "price_location_country_count",
-        "price_type_group_community_count",
-        "price_type_group_consumption_count",
+        "price_kind_community_count",
+        "price_kind_consumption_count",
         "price_source_web_count",
         "price_source_mobile_count",
         "price_source_api_count",
@@ -76,8 +76,8 @@ class TotalStats(SingletonModel):
     price_currency_count = models.PositiveIntegerField(default=0)
     price_year_count = models.PositiveIntegerField(default=0)
     price_location_country_count = models.PositiveIntegerField(default=0)
-    price_type_group_community_count = models.PositiveIntegerField(default=0)
-    price_type_group_consumption_count = models.PositiveIntegerField(default=0)
+    price_kind_community_count = models.PositiveIntegerField(default=0)
+    price_kind_consumption_count = models.PositiveIntegerField(default=0)
     price_source_web_count = models.PositiveIntegerField(default=0)
     price_source_mobile_count = models.PositiveIntegerField(default=0)
     price_source_api_count = models.PositiveIntegerField(default=0)
@@ -151,12 +151,8 @@ class TotalStats(SingletonModel):
             .distinct()
             .count()
         )
-        self.price_type_group_community_count = (
-            Price.objects.has_kind_community().count()
-        )
-        self.price_type_group_consumption_count = (
-            Price.objects.has_kind_consumption().count()
-        )
+        self.price_kind_community_count = Price.objects.has_kind_community().count()
+        self.price_kind_consumption_count = Price.objects.has_kind_consumption().count()
         for source in constants.SOURCE_LIST:
             setattr(
                 self,
