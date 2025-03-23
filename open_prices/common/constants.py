@@ -1,5 +1,9 @@
 from babel.numbers import list_currencies
 
+KIND_COMMUNITY = "COMMUNITY"
+KIND_CONSUMPTION = "CONSUMPTION"
+KIND_LIST = [KIND_COMMUNITY, KIND_CONSUMPTION]
+
 CURRENCY_LIST = sorted(list_currencies())
 CURRENCY_CHOICES = [(key, key) for key in CURRENCY_LIST]
 
