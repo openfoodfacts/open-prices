@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.73.0](https://github.com/openfoodfacts/open-prices/compare/v1.72.0...v1.73.0) (2025-03-29)
+
+
+### Features
+
+* **ProofMl:** Added ReceiptItem model and API ([#778](https://github.com/openfoodfacts/open-prices/issues/778)) ([fc22a1c](https://github.com/openfoodfacts/open-prices/commit/fc22a1c687d51137c4667478494237bfd9ce972d))
+
 ## [1.72.0](https://github.com/openfoodfacts/open-prices/compare/v1.71.1...v1.72.0) (2025-03-23)
 
 
