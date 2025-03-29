@@ -572,12 +572,12 @@ def create_receipt_items_from_proof_prediction(
         return []
 
     created = []
-    for predicted_item in proof_prediction.data["items"]:
+    for index, predicted_item in enumerate(proof_prediction.data["items"]):
         receipt_item = ReceiptItem.objects.create(
             proof=proof,
             proof_prediction=proof_prediction,
             price=None,
-            order=len(created) + 1,
+            order=index + 1,
             predicted_data=predicted_item,
             status=None,
         )
