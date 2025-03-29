@@ -702,3 +702,57 @@ def price_tag_prediction_post_create_increment_counts(
             PriceTag.objects.filter(id=instance.price_tag_id).update(
                 prediction_count=F("prediction_count") + 1
             )
+
+
+class ReceiptItem(models.Model):
+    """A single receipt item."""
+
+    CREATE_FIELDS = ["status", "proof_id", "price_id", "order"]
+    proof = models.ForeignKey(
+        Proof,
+        on_delete=models.CASCADE,
+        related_name="receipt_items",
+        help_text="The proof this receipt item belongs to",
+    )
+    proof_prediction = models.ForeignKey(
+        ProofPrediction,
+        on_delete=models.SET_NULL,
+        related_name="receipt_items",
+        null=True,
+        blank=True,
+        help_text="The proof prediction used to create this receipt item. Null if created by a user.",
+    )
+    price = models.ForeignKey(
+        "prices.Price",
+        on_delete=models.SET_NULL,
+        related_name="receipt_items",
+        null=True,
+        blank=True,
+        help_text="The price linked to this receipt item",
+    )
+    order = models.IntegerField(
+        help_text="The order of the item in the receipt. Item on top is 1.",
+    )
+    predicted_data = models.JSONField(
+        null=False,
+        blank=False,
+        help_text="A dict representing the predicted data of the receipt item. For example the product name, the price etc.",
+        default=dict,
+    )
+    status = models.CharField(
+        choices=proof_constants.RECEIPT_ITEM_STATUS_CHOICES,
+        null=True,
+        blank=True,
+        help_text="The current status of the item",
+    )
+    created = models.DateTimeField(
+        default=timezone.now, help_text="When the item was created in DB"
+    )
+    updated = models.DateTimeField(
+        auto_now=True, help_text="When the item was last updated"
+    )
+
+    class Meta:
+        db_table = "receipt_items"
+        verbose_name = "Receipt Item"
+        verbose_name_plural = "Receipt Items"

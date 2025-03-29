@@ -8,6 +8,7 @@ from open_prices.proofs.models import (
     PriceTagPrediction,
     Proof,
     ProofPrediction,
+    ReceiptItem,
 )
 
 
@@ -126,3 +127,16 @@ class PriceTagUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = PriceTag
         fields = PriceTag.UPDATE_FIELDS
+
+
+class ReceiptItemFullSerializer(serializers.ModelSerializer):
+    proof_id = serializers.PrimaryKeyRelatedField(
+        queryset=Proof.objects.all(), source="proof"
+    )
+    price_id = serializers.PrimaryKeyRelatedField(
+        queryset=Price.objects.all(), source="price"
+    )
+
+    class Meta:
+        model = ReceiptItem
+        exclude = ["price", "proof"]

@@ -5,7 +5,7 @@ import factory.fuzzy
 from factory.django import DjangoModelFactory
 
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.models import PriceTag, Proof, ProofPrediction
+from open_prices.proofs.models import PriceTag, Proof, ProofPrediction, ReceiptItem
 
 
 class ProofFactory(DjangoModelFactory):
@@ -64,3 +64,27 @@ class PriceTagFactory(DjangoModelFactory):
     status = None
     created_by = None
     updated_by = None
+
+
+class ReceiptItemFactory(DjangoModelFactory):
+    class Meta:
+        model = ReceiptItem
+
+    proof = factory.SubFactory(ProofFactory)
+    proof_prediction = factory.LazyAttribute(
+        lambda x: ProofPredictionFactory(proof=x.proof)
+    )
+    price = None
+    order = factory.Faker("pyint", min_value=1, max_value=10)
+    predicted_data = {
+        "product": "en:apples",
+        "product_name": "Apples",
+        "price": 0.98,
+    }
+    status = None
+    created = factory.LazyFunction(
+        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
+    )
+    updated = factory.LazyFunction(
+        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
+    )

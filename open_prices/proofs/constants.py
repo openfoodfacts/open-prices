@@ -58,3 +58,11 @@ class PriceTagStatus(enum.IntEnum):
 
 
 PRICE_TAG_STATUS_CHOICES = [(item.value, item.name) for item in PriceTagStatus]
+
+
+class ReceiptItemStatus(enum.IntEnum):
+    deleted = 0
+    linked_to_price = 1
+
+
+RECEIPT_ITEM_STATUS_CHOICES = [(item.value, item.name) for item in ReceiptItemStatus]

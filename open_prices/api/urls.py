@@ -11,7 +11,11 @@ from open_prices.api.challenges.views import ChallengeViewSet
 from open_prices.api.locations.views import LocationViewSet
 from open_prices.api.prices.views import PriceViewSet
 from open_prices.api.products.views import ProductViewSet
-from open_prices.api.proofs.views import PriceTagViewSet, ProofViewSet
+from open_prices.api.proofs.views import (
+    PriceTagViewSet,
+    ProofViewSet,
+    ReceiptItemViewSet,
+)
 from open_prices.api.stats.views import StatsView
 from open_prices.api.users.views import UserViewSet
 from open_prices.api.views import StatusView
@@ -25,6 +29,7 @@ router.register(r"v1/products", ProductViewSet, basename="products")
 router.register(r"v1/proofs", ProofViewSet, basename="proofs")
 router.register(r"v1/prices", PriceViewSet, basename="prices")
 router.register(r"v1/price-tags", PriceTagViewSet, basename="price-tags")
+router.register(r"v1/receipt-items", ReceiptItemViewSet, basename="receipt-items")
 router.register(r"v1/challenges", ChallengeViewSet, basename="challenges")
 
 urlpatterns = [

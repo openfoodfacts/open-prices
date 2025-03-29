@@ -24,7 +24,7 @@ from PIL import Image
 from open_prices.common import google as common_google
 
 from . import constants as proof_constants
-from .models import PriceTag, PriceTagPrediction, Proof, ProofPrediction
+from .models import PriceTag, PriceTagPrediction, Proof, ProofPrediction, ReceiptItem
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ class Labels(typing.TypedDict):
     labels: list[Label]
 
 
-class ReceiptItem(typing.TypedDict):
+class ReceiptItemType(typing.TypedDict):
     product: Products
     price: float
     product_name: str
@@ -184,7 +184,7 @@ class Receipt(typing.TypedDict):
     # currency: str
     # price_count: int
     # price_total: float
-    items: list[ReceiptItem]
+    items: list[ReceiptItemType]
 
 
 def extract_from_price_tag(image: Image.Image) -> Label:
@@ -558,6 +558,33 @@ def create_price_tags_from_proof_prediction(
     return created
 
 
+def create_receipt_items_from_proof_prediction(
+    proof: Proof, proof_prediction: ProofPrediction
+) -> list[ReceiptItem]:
+    """Create receipt items from a proof prediction containing receipt item
+    detections."""
+
+    if proof_prediction.model_name != common_google.GEMINI_MODEL_NAME:
+        logger.error(
+            "Proof prediction model %s is not a receipt extraction",
+            proof_prediction.model_name,
+        )
+        return []
+
+    created = []
+    for index, predicted_item in enumerate(proof_prediction.data["items"]):
+        receipt_item = ReceiptItem.objects.create(
+            proof=proof,
+            proof_prediction=proof_prediction,
+            price=None,
+            order=index + 1,
+            predicted_data=predicted_item,
+            status=None,
+        )
+        created.append(receipt_item)
+    return created
+
+
 def run_and_save_price_tag_detection(
     image: Image, proof: Proof, overwrite: bool = False, run_extraction: bool = True
 ) -> ProofPrediction | None:
@@ -709,13 +736,15 @@ def run_and_save_receipt_extraction_prediction(
 
     prediction = extract_from_receipt(image)
 
-    return ProofPrediction.objects.create(
+    proof_prediction = ProofPrediction.objects.create(
         proof=proof,
         type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
         model_name=common_google.GEMINI_MODEL_NAME,
         model_version=common_google.GEMINI_MODEL_VERSION,
         data=prediction,
     )
+    create_receipt_items_from_proof_prediction(proof, proof_prediction)
+    return proof_prediction
 
 
 def run_and_save_proof_prediction(

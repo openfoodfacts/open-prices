@@ -2,7 +2,7 @@ import django_filters
 
 from open_prices.common import constants
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.models import PriceTag, Proof
+from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
 
 
 class ProofFilter(django_filters.FilterSet):
@@ -90,3 +90,19 @@ class PriceTagFilter(django_filters.FilterSet):
             "status",
             "prediction_count",
         ]
+
+
+class ReceiptItemFilter(django_filters.FilterSet):
+    status__isnull = django_filters.BooleanFilter(
+        field_name="status", lookup_expr="isnull"
+    )
+    created__gte = django_filters.DateTimeFilter(
+        field_name="created", lookup_expr="gte"
+    )
+    created__lte = django_filters.DateTimeFilter(
+        field_name="created", lookup_expr="lte"
+    )
+
+    class Meta:
+        model = ReceiptItem
+        fields = ["proof_id", "proof__owner", "status"]
