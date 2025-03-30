@@ -11,7 +11,7 @@ from PIL import Image, ImageOps
 from open_prices.common import utils
 from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
-from open_prices.proofs.models import PriceTag
+from open_prices.proofs.models import PriceTag, ReceiptItem
 
 logger = logging.getLogger(__name__)
 
@@ -203,11 +203,34 @@ def match_price_tag_with_price(price_tag: PriceTag, price: Price) -> bool:
         )
     )
     proof_price_tag_prices = [
-        price_tag.predictions.first().data.get("price")
-        for price_tag in PriceTag.objects.filter(proof_id=price_tag.proof_id)
+        pt.predictions.first().data.get("price")
+        for pt in PriceTag.objects.filter(proof_id=price_tag.proof_id)
     ]
     return (
         utils.match_decimal_with_float(price.price, price_tag_prediction_price)
         and proof_prices.count(price.price) == 1
         and proof_price_tag_prices.count(price_tag_prediction_price) == 1
+    )
+
+
+def match_receipt_item_with_price(receipt_item: ReceiptItem, price: Price) -> bool:
+    """
+    Match only on price.
+    We make sure this price is unique in the proof to avoid errors.
+    """
+    receipt_item_prediction_data = receipt_item.predicted_data
+    receipt_item_prediction_price = receipt_item_prediction_data.get("price")
+    proof_prices = list(
+        Price.objects.filter(proof_id=receipt_item.proof_id).values_list(
+            "price", flat=True
+        )
+    )
+    proof_receipt_item_prices = [
+        ri.predicted_data.get("price")
+        for ri in ReceiptItem.objects.filter(proof_id=receipt_item.proof_id)
+    ]
+    return (
+        utils.match_decimal_with_float(price.price, receipt_item_prediction_price)
+        and proof_prices.count(price.price) == 1
+        and proof_receipt_item_prices.count(receipt_item_prediction_price) == 1
     )
