@@ -21,6 +21,7 @@ from open_prices.proofs.factories import (
     PriceTagFactory,
     ProofFactory,
     ProofPredictionFactory,
+    ReceiptItemFactory,
 )
 from open_prices.proofs.ml import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
@@ -39,6 +40,7 @@ from open_prices.proofs.utils import (
     match_category_price_tag_with_category_price,
     match_price_tag_with_price,
     match_product_price_tag_with_product_price,
+    match_receipt_item_with_price,
     select_proof_image_dir,
 )
 
@@ -1000,3 +1002,32 @@ class PriceTagMatchingUtilsTest(TestCase):
         self.assertFalse(
             match_price_tag_with_price(self.price_tag_category, self.price_category)
         )
+
+
+class ReceiptItemMatchingUtilsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        cls.receipt_item = ReceiptItemFactory(
+            predicted_data={"product_name": "NOCCIOLATA BIANCA 250G", "price": 3.5},
+            proof=cls.proof,
+        )
+        cls.price = PriceFactory(
+            type=price_constants.TYPE_PRODUCT,
+            product_code="8052575090346",
+            price=3.5,
+            proof=cls.proof,
+            location=cls.proof.location,
+        )
+
+    def test_match_receipt_item_with_price(self):
+        self.assertTrue(match_receipt_item_with_price(self.receipt_item, self.price))
+        # add an extra price with the same price
+        PriceFactory(
+            type=price_constants.TYPE_PRODUCT,
+            product_code="0123456789101",
+            price=3.5,
+            proof=self.proof,
+            location=self.proof.location,
+        )
+        self.assertFalse(match_receipt_item_with_price(self.receipt_item, self.price))
