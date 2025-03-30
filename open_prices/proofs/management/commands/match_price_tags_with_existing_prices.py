@@ -36,7 +36,7 @@ class Command(BaseCommand):
     help = "Match price tags with existing prices."
 
     def handle(self, *args, **options) -> None:  # type: ignore
-        self.stdout.write("=== Stats before...")
+        self.stdout.write("=== Stats before ===")
         stats()
 
         self.stdout.write("=== Running matching script...")
@@ -81,6 +81,7 @@ class Command(BaseCommand):
                                 price_tag.status = 1
                                 price_tag.save()
                                 break
+                            # match only on price
                             elif match_price_tag_with_price(price_tag, price):
                                 price_tag.price_id = price.id
                                 price_tag.status = 1
@@ -89,5 +90,5 @@ class Command(BaseCommand):
             if index % 500 == 0:
                 self.stdout.write(f"Processed {index} proofs")
 
-        self.stdout.write("=== Stats after...")
+        self.stdout.write("=== Stats after ===")
         stats()
