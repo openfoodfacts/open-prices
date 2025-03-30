@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.73.0](https://github.com/openfoodfacts/open-prices/compare/v1.72.0...v1.73.0) (2025-03-30)
+
+
+### Features
+
+* **ProofMl:** Added ReceiptItem model and API ([#778](https://github.com/openfoodfacts/open-prices/issues/778)) ([fc22a1c](https://github.com/openfoodfacts/open-prices/commit/fc22a1c687d51137c4667478494237bfd9ce972d))
+
+
+### Technical
+
+* **docs:** create dotenv example file, ignore the local one ([#784](https://github.com/openfoodfacts/open-prices/issues/784)) ([f55299b](https://github.com/openfoodfacts/open-prices/commit/f55299bbf8fdb82c0a30264877de1ab9f5f15ec0))
+* **docs:** revert [#784](https://github.com/openfoodfacts/open-prices/issues/784) (create dotenv example file, ignore the local one) ([#787](https://github.com/openfoodfacts/open-prices/issues/787)) ([3918972](https://github.com/openfoodfacts/open-prices/commit/3918972db92edf16cee3480d6bd681d558980070))
+* Move match_decimal_with_float to common utils. Add tests ([2f55f53](https://github.com/openfoodfacts/open-prices/commit/2f55f534e7c4e94278ea61dc25a944c88c7107f0))
+* **Price tags:** matching script: fix script for category_tag. add tests ([#786](https://github.com/openfoodfacts/open-prices/issues/786)) ([9783439](https://github.com/openfoodfacts/open-prices/commit/9783439f584af7ea149ee8de3a825f75a6dd3102))
+
 ## [1.72.0](https://github.com/openfoodfacts/open-prices/compare/v1.71.1...v1.72.0) (2025-03-23)
 
 
