@@ -2,6 +2,7 @@ from collections import Counter
 
 from django.core.management.base import BaseCommand
 
+from open_prices.prices import constants as price_constants
 from open_prices.proofs.models import PriceTag, Proof
 from open_prices.proofs.utils import (
     match_category_price_tag_with_category_price,
@@ -59,16 +60,22 @@ class Command(BaseCommand):
                             if price.price_tags.count() > 0:
                                 continue
                             # match product price
-                            elif match_product_price_tag_with_product_price(
-                                price_tag, price
+                            elif (
+                                price.type == price_constants.TYPE_PRODUCT
+                                and match_product_price_tag_with_product_price(
+                                    price_tag, price
+                                )
                             ):
                                 price_tag.price_id = price.id
                                 price_tag.status = 1
                                 price_tag.save()
                                 break
                             # match category price
-                            elif match_category_price_tag_with_category_price(
-                                price_tag, price
+                            elif (
+                                price.type == price_constants.TYPE_CATEGORY
+                                and match_category_price_tag_with_category_price(
+                                    price_tag, price
+                                )
                             ):
                                 price_tag.price_id = price.id
                                 price_tag.status = 1

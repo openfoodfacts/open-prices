@@ -14,6 +14,7 @@ from PIL import Image
 from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import (
@@ -33,8 +34,13 @@ from open_prices.proofs.ml import (
     run_and_save_proof_prediction,
     run_and_save_proof_type_prediction,
 )
-from open_prices.proofs.models import PriceTag, Proof
-from open_prices.proofs.utils import select_proof_image_dir
+from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof
+from open_prices.proofs.utils import (
+    match_category_price_tag_with_category_price,
+    match_price_tag_with_price,
+    match_product_price_tag_with_product_price,
+    select_proof_image_dir,
+)
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -875,3 +881,122 @@ class PriceTagTest(TestCase):
         price_tag.refresh_from_db()
         self.assertIsNone(price_tag.price_id)
         self.assertIsNone(price_tag.status)
+
+
+class PriceTagMatchingUtilsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price_tag_product = PriceTagFactory(
+            bounding_box=[0.1, 0.1, 0.2, 0.2],
+            proof=cls.proof,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_product,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={"price": 1.5, "barcode": "0123456789100", "product": "other"},
+        )
+        cls.price_product = PriceFactory(
+            type=price_constants.TYPE_PRODUCT,
+            product_code="0123456789100",
+            price=1.5,
+            proof=cls.proof,
+            location=cls.proof.location,
+        )
+        cls.price_tag_category = PriceTagFactory(
+            bounding_box=[0.2, 0.2, 0.3, 0.3],
+            proof=cls.proof,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_category,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={"price": 2.5, "barcode": "", "product": "en:tomatoes"},
+        )
+        cls.price_category = PriceFactory(
+            type=price_constants.TYPE_CATEGORY,
+            category_tag="en:tomatoes",
+            price=2.5,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+            proof=cls.proof,
+            location=cls.proof.location,
+        )
+
+    def test_match_product_price_tag_with_product_price(self):
+        self.assertTrue(
+            match_product_price_tag_with_product_price(
+                self.price_tag_product, self.price_product
+            )
+        )
+        self.assertFalse(
+            match_product_price_tag_with_product_price(
+                self.price_tag_product, self.price_category
+            )
+        )
+        self.assertFalse(
+            match_product_price_tag_with_product_price(
+                self.price_tag_category, self.price_category
+            )
+        )
+        self.assertFalse(
+            match_product_price_tag_with_product_price(
+                self.price_tag_category, self.price_product
+            )
+        )
+
+    def test_match_category_price_tag_with_category_price(self):
+        self.assertFalse(
+            match_category_price_tag_with_category_price(
+                self.price_tag_product, self.price_product
+            )
+        )
+        self.assertFalse(
+            match_category_price_tag_with_category_price(
+                self.price_tag_product, self.price_category
+            )
+        )
+        self.assertTrue(
+            match_category_price_tag_with_category_price(
+                self.price_tag_category, self.price_category
+            )
+        )
+        self.assertFalse(
+            match_category_price_tag_with_category_price(
+                self.price_tag_category, self.price_product
+            )
+        )
+
+    def test_match_price_tag_with_price(self):
+        self.assertTrue(
+            match_price_tag_with_price(self.price_tag_product, self.price_product)
+        )
+        self.assertFalse(
+            match_price_tag_with_price(self.price_tag_product, self.price_category)
+        )
+        self.assertTrue(
+            match_price_tag_with_price(self.price_tag_category, self.price_category)
+        )
+        self.assertFalse(
+            match_price_tag_with_price(self.price_tag_category, self.price_product)
+        )
+        # add extra prices with the same price
+        PriceFactory(
+            type=price_constants.TYPE_PRODUCT,
+            product_code="0123456789101",
+            price=1.5,
+            proof=self.proof,
+            location=self.proof.location,
+        )
+        self.assertFalse(
+            match_price_tag_with_price(self.price_tag_product, self.price_product)
+        )
+        PriceFactory(
+            type=price_constants.TYPE_CATEGORY,
+            category_tag="en:apples",
+            price=2.5,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+            proof=self.proof,
+            location=self.proof.location,
+        )
+        self.assertFalse(
+            match_price_tag_with_price(self.price_tag_category, self.price_category)
+        )
