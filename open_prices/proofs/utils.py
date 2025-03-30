@@ -9,7 +9,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUpload
 from PIL import Image, ImageOps
 
 from open_prices.common import utils
-from open_prices.prices.constants import TYPE_CATEGORY, TYPE_PRODUCT
+from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 from open_prices.proofs.models import PriceTag
 
@@ -159,7 +159,7 @@ def match_product_price_tag_with_product_price(
     price_tag: PriceTag, price: Price
 ) -> bool:
     """
-    Match on barcode and price.
+    Match on product_code ("barcode") and price.
     """
     price_tag_prediction_data = price_tag.predictions.first().data
     price_tag_prediction_barcode = price_tag_prediction_data.get("barcode")
@@ -168,7 +168,7 @@ def match_product_price_tag_with_product_price(
     )
     price_tag_prediction_price = price_tag_prediction_data.get("price")
     return (
-        price.type == TYPE_PRODUCT
+        price.type == price_constants.TYPE_PRODUCT
         and (price.product_code == price_tag_prediction_barcode)
         and utils.match_decimal_with_float(price.price, price_tag_prediction_price)
     )
@@ -178,14 +178,14 @@ def match_category_price_tag_with_category_price(
     price_tag: PriceTag, price: Price
 ) -> bool:
     """
-    Match on product (category_tag) and price.
+    Match on category_tag ("product") and price.
     """
     price_tag_prediction_data = price_tag.predictions.first().data
     price_tag_prediction_product = price_tag_prediction_data.get("product")
     price_tag_prediction_price = price_tag_prediction_data.get("price")
     return (
-        price.type == TYPE_CATEGORY
-        and (price.product_code == price_tag_prediction_product)
+        price.type == price_constants.TYPE_CATEGORY
+        and (price.category_tag == price_tag_prediction_product)
         and utils.match_decimal_with_float(price.price, price_tag_prediction_price)
     )
 
