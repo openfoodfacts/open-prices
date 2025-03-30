@@ -1,7 +1,10 @@
+from decimal import Decimal
+
 from django.test import TestCase
 
 from open_prices.common.utils import (
     is_float,
+    match_decimal_with_float,
     truncate_decimal,
     url_add_missing_https,
     url_keep_only_domain,
@@ -25,6 +28,13 @@ class UtilsTest(TestCase):
         self.assertEqual(
             truncate_decimal("0.123456789", max_decimal_places=9), "0.123456789"
         )
+
+    def test_match_decimal_with_float(self):
+        self.assertTrue(match_decimal_with_float(Decimal("1"), 1))
+        self.assertTrue(match_decimal_with_float(Decimal("1"), 1.0))
+        self.assertTrue(match_decimal_with_float(Decimal("1.0"), 1))
+        self.assertTrue(match_decimal_with_float(Decimal("1.0"), 1.0))
+        self.assertTrue(match_decimal_with_float(Decimal("1.0"), 1.00))
 
     def url_add_missing_https(self):
         self.assertEqual(

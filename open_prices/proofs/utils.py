@@ -1,7 +1,6 @@
 import logging
 import random
 import string
-from decimal import Decimal
 from mimetypes import guess_extension
 from pathlib import Path
 
@@ -9,6 +8,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 from PIL import Image, ImageOps
 
+from open_prices.common import utils
 from open_prices.prices.constants import TYPE_CATEGORY, TYPE_PRODUCT
 from open_prices.prices.models import Price
 from open_prices.proofs.models import PriceTag
@@ -148,10 +148,6 @@ def select_proof_image_dir(images_dir: Path, max_images_per_dir: int = 1_000) ->
     return current_dir
 
 
-def match_decimal_with_float(price_decimal: Decimal, price_float: float) -> bool:
-    return float(price_decimal) == price_float
-
-
 def cleanup_price_tag_prediction_barcode(barcode: str) -> str:
     # Carrefour price_tag barcodes: 214626/5410769800530/051
     if barcode.count("/") == 2:
@@ -174,7 +170,7 @@ def match_product_price_tag_with_product_price(
     return (
         price.type == TYPE_PRODUCT
         and (price.product_code == price_tag_prediction_barcode)
-        and match_decimal_with_float(price.price, price_tag_prediction_price)
+        and utils.match_decimal_with_float(price.price, price_tag_prediction_price)
     )
 
 
@@ -190,7 +186,7 @@ def match_category_price_tag_with_category_price(
     return (
         price.type == TYPE_CATEGORY
         and (price.product_code == price_tag_prediction_product)
-        and match_decimal_with_float(price.price, price_tag_prediction_price)
+        and utils.match_decimal_with_float(price.price, price_tag_prediction_price)
     )
 
 
@@ -211,7 +207,7 @@ def match_price_tag_with_price(price_tag: PriceTag, price: Price) -> bool:
         for price_tag in PriceTag.objects.filter(proof_id=price_tag.proof_id)
     ]
     return (
-        match_decimal_with_float(price.price, price_tag_prediction_price)
+        utils.match_decimal_with_float(price.price, price_tag_prediction_price)
         and proof_prices.count(price.price) == 1
         and proof_price_tag_prices.count(price_tag_prediction_price) == 1
     )

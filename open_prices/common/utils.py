@@ -1,6 +1,7 @@
 import gzip
 import json
 import os
+from decimal import Decimal
 from urllib.parse import urlparse
 
 import tqdm
@@ -13,6 +14,21 @@ def is_float(string):
         return True
     except ValueError:
         return False
+
+
+def truncate_decimal(value, max_decimal_places=7):
+    if value:
+        if type(value) is str:
+            if "." in value:
+                integer_part, decimal_part = value.split(".")
+                if len(decimal_part) > max_decimal_places:
+                    decimal_part = decimal_part[:max_decimal_places]
+                value = f"{integer_part}.{decimal_part}"
+    return value
+
+
+def match_decimal_with_float(price_decimal: Decimal, price_float: float) -> bool:
+    return float(price_decimal) == price_float
 
 
 def add_validation_error(dict, key, value):
@@ -36,17 +52,6 @@ def export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir):
         for item in tqdm.tqdm(model_class.objects.all(), desc=table_name):
             f.write(json.dumps(schema_class(item).data, cls=DjangoJSONEncoder))
             f.write("\n")
-
-
-def truncate_decimal(value, max_decimal_places=7):
-    if value:
-        if type(value) is str:
-            if "." in value:
-                integer_part, decimal_part = value.split(".")
-                if len(decimal_part) > max_decimal_places:
-                    decimal_part = decimal_part[:max_decimal_places]
-                value = f"{integer_part}.{decimal_part}"
-    return value
 
 
 def url_add_missing_https(url):
