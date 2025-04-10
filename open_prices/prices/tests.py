@@ -518,7 +518,7 @@ class PriceModelSaveTest(TestCase):
             owner=user_proof_receipt.owner,
         )
         # receipt_quantity
-        for RECEIPT_QUANTITY_NOT_OK in [-5, "test"]:
+        for RECEIPT_QUANTITY_NOT_OK in [-5, "test", Decimal("0.9999")]:
             with self.subTest(RECEIPT_QUANTITY_NOT_OK=RECEIPT_QUANTITY_NOT_OK):
                 self.assertRaises(
                     ValidationError,
@@ -531,7 +531,7 @@ class PriceModelSaveTest(TestCase):
                     owner=user_proof_receipt.owner,
                     receipt_quantity=RECEIPT_QUANTITY_NOT_OK,
                 )
-        for RECEIPT_QUANTITY_OK in [None, 0, 1, 2, Decimal("1.5")]:
+        for RECEIPT_QUANTITY_OK in [None, 0, 1, 2, Decimal("1.5"), Decimal("0.395")]:
             with self.subTest(RECEIPT_QUANTITY_OK=RECEIPT_QUANTITY_OK):
                 PriceFactory(
                     proof_id=user_proof_receipt.id,
