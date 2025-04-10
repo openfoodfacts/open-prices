@@ -218,7 +218,7 @@ class Price(models.Model):
     receipt_quantity = models.DecimalField(
         verbose_name="Receipt's price quantity (user input)",
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
