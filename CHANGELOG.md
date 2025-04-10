@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.74.0](https://github.com/openfoodfacts/open-prices/compare/v1.73.0...v1.74.0) (2025-04-10)
+
+
+### Features
+
+* **Receipt Item:** script to match historical ReceiptItem with their prices ([#788](https://github.com/openfoodfacts/open-prices/issues/788)) ([d7a0421](https://github.com/openfoodfacts/open-prices/commit/d7a0421c65b0609a5f504302166b6fcc0af27c62))
+
+
+### Bug Fixes
+
+* **Prices:** Allow 3 decimals on the receipt_quantity field ([#795](https://github.com/openfoodfacts/open-prices/issues/795)) ([eb23a0b](https://github.com/openfoodfacts/open-prices/commit/eb23a0bbd847f42e8fa02831dd327182821bb184))
+
 ## [1.73.0](https://github.com/openfoodfacts/open-prices/compare/v1.72.0...v1.73.0) (2025-03-30)
 
 
