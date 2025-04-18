@@ -51,6 +51,15 @@ PRODUCT_8001505005707 = {
     "price_count": 15,
 }
 
+PRODUCT_8850187002197 = {
+    "code": "8850187002197",
+    "product_name": "Riz 20 kg",
+    "categories_tags": ["en:rices"],
+    "labels_tags": [],
+    "brands_tags": ["royal-umbrella"],
+    "price_count": 10,
+}
+
 
 class PriceListApiTest(TestCase):
     @classmethod
@@ -151,13 +160,14 @@ class PriceListFilterApiTest(TestCase):
             owner_consumption=True,
             owner=cls.user_session.user.user_id,
         )
-        cls.product = ProductFactory(**PRODUCT_8001505005707)
+        cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
+        cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
         cls.user_price = PriceFactory(
             **PRICE_8001505005707,
             receipt_quantity=2,
             proof_id=cls.user_proof_receipt.id,
             owner=cls.user_session.user.user_id,
-            product=cls.product,
+            product=cls.product_8001505005707,
         )
         PriceFactory(
             **PRICE_APPLES,
@@ -179,6 +189,7 @@ class PriceListFilterApiTest(TestCase):
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
+            product_code="8850187002197",
             price=50,
             price_without_discount=70,
             price_is_discounted=True,
@@ -187,6 +198,7 @@ class PriceListFilterApiTest(TestCase):
             location_osm_type=None,
             date="2024-06-30",
             owner="user_2",
+            product=cls.product_8850187002197,
         )
 
     def test_price_list_without_filter(self):
@@ -225,6 +237,10 @@ class PriceListFilterApiTest(TestCase):
             response = self.client.get(url)
             self.assertEqual(response.data["total"], 1)
             self.assertTrue("product" in response.data["items"][0])
+        # product__categories_tags__overlap
+        url = self.url + "?product__categories_tags__overlap=en:breakfasts,en:rices"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 1)
 
     def test_price_list_filter_by_tags(self):
         self.assertEqual(Price.objects.count(), 5)

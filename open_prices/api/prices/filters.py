@@ -12,6 +12,11 @@ class PriceFilter(django_filters.FilterSet):
     product__categories_tags__contains = django_filters.CharFilter(
         field_name="product__categories_tags", lookup_expr="icontains"
     )
+    product__categories_tags__overlap = django_filters.BaseInFilter(
+        field_name="product__categories_tags",
+        lookup_expr="overlap",
+        help_text="Provide multiple values as separate query parameters. Example: ?product__categories_tags__overlap=en:breakfasts&product__categories_tags__overlap=en:apples",
+    )
     labels_tags__contains = django_filters.CharFilter(
         field_name="labels_tags", lookup_expr="icontains"
     )
