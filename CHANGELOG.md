@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.74.1](https://github.com/openfoodfacts/open-prices/compare/v1.74.0...v1.74.1) (2025-04-18)
+
+
+### Technical
+
+* **API:** Prices: allow multiple (overlap) filter on product categories_tags field ([#799](https://github.com/openfoodfacts/open-prices/issues/799)) ([9fd1d28](https://github.com/openfoodfacts/open-prices/commit/9fd1d284b6e6697fa728a114dc9d06fdb65dc6c8))
+
 ## [1.74.0](https://github.com/openfoodfacts/open-prices/compare/v1.73.0...v1.74.0) (2025-04-10)
 
 
