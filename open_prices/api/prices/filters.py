@@ -12,6 +12,12 @@ class PriceFilter(django_filters.FilterSet):
     product__categories_tags__contains = django_filters.CharFilter(
         field_name="product__categories_tags", lookup_expr="icontains"
     )
+    product__categories_tags__overlap = django_filters.CharFilter(
+        field_name="product__categories_tags",
+        # lookup_expr="overlap"
+        method="filter_product_categories_tags_overlap",
+        help_text="Comma-separated list of tags to filter by. Example: en:breakfasts,en:apples",
+    )
     labels_tags__contains = django_filters.CharFilter(
         field_name="labels_tags", lookup_expr="icontains"
     )
@@ -55,6 +61,14 @@ class PriceFilter(django_filters.FilterSet):
         elif value == constants.KIND_CONSUMPTION:
             return queryset.has_kind_consumption()
         return queryset
+
+    def filter_product_categories_tags_overlap(self, queryset, name, value):
+        """
+        Why not use lookup_expr="overlap"?
+        Because I get an error: "malformed array literal"
+        """
+        categories_tags_list = value.split(",")
+        return queryset.filter(**{f"{name}__overlap": categories_tags_list})
 
     class Meta:
         model = Price
