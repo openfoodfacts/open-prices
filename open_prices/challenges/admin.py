@@ -11,10 +11,10 @@ class ChallengeAdmin(admin.ModelAdmin):
         "end_date",
         "categories",
         "is_published",
-        "status",
+        # "status",
         "created",
         "updated",
     )
-    list_filter = ("is_published", "status")
+    list_filter = ("is_published",)
     search_fields = ("id",)
-    readonly_fields = ("status", "created", "updated")
+    readonly_fields = ("created", "updated")

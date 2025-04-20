@@ -66,23 +66,6 @@ class ChallengeModelSaveTest(TestCase):
             end_date="2024-06-30",
         )
 
-    @freeze_time("2025-01-01")
-    def test_challenge_set_status(self):
-        challenge_draft = ChallengeFactory(is_published=False)
-        self.assertEqual(challenge_draft.status, "DRAFT")
-        challenge_upcoming = ChallengeFactory(
-            is_published=True, start_date="2025-01-20", end_date="2025-02-20"
-        )
-        self.assertEqual(challenge_upcoming.status, "UPCOMING")
-        challenge_ongoing = ChallengeFactory(
-            is_published=True, start_date="2024-12-30", end_date="2025-01-30"
-        )
-        self.assertEqual(challenge_ongoing.status, "ONGOING")
-        challenge_completed = ChallengeFactory(
-            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
-        )
-        self.assertEqual(challenge_completed.status, "COMPLETED")
-
 
 class ChallengeQuerySetTest(TestCase):
     @classmethod
@@ -100,3 +83,26 @@ class ChallengeQuerySetTest(TestCase):
     def test_published(self):
         self.assertEqual(Challenge.objects.count(), 3)
         self.assertEqual(Challenge.objects.published().count(), 2)
+
+
+class ChallengePropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        pass
+
+    @freeze_time("2025-01-01")
+    def test_challenge_status_property(self):
+        challenge_draft = ChallengeFactory(is_published=False)
+        self.assertEqual(challenge_draft.status, "DRAFT")
+        challenge_upcoming = ChallengeFactory(
+            is_published=True, start_date="2025-01-20", end_date="2025-02-20"
+        )
+        self.assertEqual(challenge_upcoming.status, "UPCOMING")
+        challenge_ongoing = ChallengeFactory(
+            is_published=True, start_date="2024-12-30", end_date="2025-01-30"
+        )
+        self.assertEqual(challenge_ongoing.status, "ONGOING")
+        challenge_completed = ChallengeFactory(
+            is_published=True, start_date="2024-06-30", end_date="2024-07-30"
+        )
+        self.assertEqual(challenge_completed.status, "COMPLETED")

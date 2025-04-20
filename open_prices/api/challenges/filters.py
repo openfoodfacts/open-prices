@@ -32,7 +32,8 @@ class ChallengeFilter(django_filters.FilterSet):
     end_date__month = django_filters.NumberFilter(
         field_name="end_date", lookup_expr="month"
     )
+    # status
 
     class Meta:
         model = Challenge
-        fields = ["id", "is_published", "status"]
+        fields = ["id", "is_published"]
