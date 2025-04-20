@@ -3,18 +3,7 @@ import functools
 
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import (
-    Avg,
-    Case,
-    CharField,
-    Count,
-    F,
-    Max,
-    Min,
-    Value,
-    When,
-    signals,
-)
+from django.db.models import Avg, Case, Count, F, Max, Min, Value, When, signals
 from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
 from django.utils import timezone
@@ -74,7 +63,7 @@ class PriceQuerySet(models.QuerySet):
                 ),
                 When(source__contains="API", then=Value(constants.SOURCE_API)),
                 default=Value(constants.SOURCE_OTHER),
-                output_field=CharField(),
+                output_field=models.CharField(),
             ),
         )
 

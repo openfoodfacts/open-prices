@@ -11,10 +11,14 @@ class ChallengeAdmin(admin.ModelAdmin):
         "end_date",
         "categories",
         "is_published",
-        # "status",
+        "status_display",
         "created",
         "updated",
     )
     list_filter = ("is_published",)
     search_fields = ("id",)
     readonly_fields = ("created", "updated")
+
+    @admin.display(description="Status")
+    def status_display(self, obj):
+        return obj.status

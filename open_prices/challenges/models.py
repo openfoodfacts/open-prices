@@ -1,6 +1,7 @@
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import ValidationError
 from django.db import models
+from django.db.models import Case, Value, When
 from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
@@ -10,6 +11,26 @@ from open_prices.common import utils
 class ChallengeQuerySet(models.QuerySet):
     def published(self):
         return self.filter(is_published=True)
+
+    def with_status(self):
+        return self.annotate(
+            status_annotated=Case(
+                When(
+                    is_published=False,
+                    then=Value(challenge_constants.CHALLENGE_STATUS_DRAFT),
+                ),
+                When(
+                    start_date__gt=timezone.now().date(),
+                    then=Value(challenge_constants.CHALLENGE_STATUS_UPCOMING),
+                ),
+                When(
+                    end_date__lt=timezone.now().date(),
+                    then=Value(challenge_constants.CHALLENGE_STATUS_COMPLETED),
+                ),
+                default=Value(challenge_constants.CHALLENGE_STATUS_ONGOING),
+                output_field=models.CharField(),
+            )
+        )
 
 
 class Challenge(models.Model):

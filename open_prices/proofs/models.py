@@ -5,7 +5,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Case, CharField, Count, F, Value, When, signals
+from django.db.models import Case, Count, F, Value, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -51,7 +51,7 @@ class ProofQuerySet(models.QuerySet):
                     then=Value(constants.KIND_CONSUMPTION),
                 ),
                 default=Value(constants.KIND_COMMUNITY),
-                output_field=CharField(),
+                output_field=models.CharField(),
             ),
             source_annotated=Case(
                 When(
@@ -64,7 +64,7 @@ class ProofQuerySet(models.QuerySet):
                 ),
                 When(source__contains="API", then=Value(constants.SOURCE_API)),
                 default=Value(constants.SOURCE_OTHER),
-                output_field=CharField(),
+                output_field=models.CharField(),
             ),
         )
 
