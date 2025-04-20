@@ -1,6 +1,7 @@
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import ValidationError
 from django.db import models
+from django.db.models import Case, Value, When
 from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
@@ -10,6 +11,27 @@ from open_prices.common import utils
 class ChallengeQuerySet(models.QuerySet):
     def published(self):
         return self.filter(is_published=True)
+
+    def with_status(self):
+        today_date = timezone.now().date()
+        return self.annotate(
+            status_annotated=Case(
+                When(
+                    is_published=False,
+                    then=Value(challenge_constants.CHALLENGE_STATUS_DRAFT),
+                ),
+                When(
+                    start_date__gt=today_date,
+                    then=Value(challenge_constants.CHALLENGE_STATUS_UPCOMING),
+                ),
+                When(
+                    end_date__lt=today_date,
+                    then=Value(challenge_constants.CHALLENGE_STATUS_COMPLETED),
+                ),
+                default=Value(challenge_constants.CHALLENGE_STATUS_ONGOING),
+                output_field=models.CharField(),
+            )
+        )
 
 
 class Challenge(models.Model):
@@ -24,12 +46,6 @@ class Challenge(models.Model):
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)
 
     is_published = models.BooleanField(default=False)
-    status = models.CharField(
-        max_length=20,
-        choices=challenge_constants.CHALLENGE_STATUS_CHOICES,
-        blank=True,
-        help_text="Read-only. Calculated based on is_published, start_date and end_date.",
-    )
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -40,18 +56,6 @@ class Challenge(models.Model):
         db_table = "challenges"
         verbose_name = "Challenge"
         verbose_name_plural = "Challenges"
-
-    def set_status(self):
-        if not self.is_published:
-            self.status = challenge_constants.CHALLENGE_STATUS_DRAFT
-        elif self.start_date is None or self.end_date is None:
-            pass  # cannot happen (see full_clean validation)
-        elif str(self.start_date) > str(timezone.now().date()):
-            self.status = challenge_constants.CHALLENGE_STATUS_UPCOMING
-        elif str(self.end_date) < str(timezone.now().date()):
-            self.status = challenge_constants.CHALLENGE_STATUS_COMPLETED
-        else:
-            self.status = challenge_constants.CHALLENGE_STATUS_ONGOING
 
     def clean(self, *args, **kwargs):
         validation_errors = dict()
@@ -86,5 +90,17 @@ class Challenge(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        self.set_status()
         super().save(*args, **kwargs)
+
+    @property
+    def status(self) -> str:
+        if not self.is_published:
+            return challenge_constants.CHALLENGE_STATUS_DRAFT
+        elif self.start_date is None or self.end_date is None:
+            pass  # cannot happen (see full_clean validation)
+        elif str(self.start_date) > str(timezone.now().date()):
+            return challenge_constants.CHALLENGE_STATUS_UPCOMING
+        elif str(self.end_date) < str(timezone.now().date()):
+            return challenge_constants.CHALLENGE_STATUS_COMPLETED
+        else:
+            return challenge_constants.CHALLENGE_STATUS_ONGOING

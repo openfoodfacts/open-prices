@@ -1,5 +1,6 @@
 import django_filters
 
+from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges.models import Challenge
 
 
@@ -32,7 +33,16 @@ class ChallengeFilter(django_filters.FilterSet):
     end_date__month = django_filters.NumberFilter(
         field_name="end_date", lookup_expr="month"
     )
+    status = django_filters.ChoiceFilter(
+        choices=challenge_constants.CHALLENGE_STATUS_CHOICES,
+        method="filter_status",
+    )
 
     class Meta:
         model = Challenge
-        fields = ["id", "is_published", "status"]
+        fields = ["id", "is_published"]
+
+    def filter_status(self, queryset, name, value):
+        return queryset.filter(
+            status_annotated=value,
+        )
