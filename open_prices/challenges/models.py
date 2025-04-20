@@ -13,6 +13,7 @@ class ChallengeQuerySet(models.QuerySet):
         return self.filter(is_published=True)
 
     def with_status(self):
+        today_date = timezone.now().date()
         return self.annotate(
             status_annotated=Case(
                 When(
@@ -20,11 +21,11 @@ class ChallengeQuerySet(models.QuerySet):
                     then=Value(challenge_constants.CHALLENGE_STATUS_DRAFT),
                 ),
                 When(
-                    start_date__gt=timezone.now().date(),
+                    start_date__gt=today_date,
                     then=Value(challenge_constants.CHALLENGE_STATUS_UPCOMING),
                 ),
                 When(
-                    end_date__lt=timezone.now().date(),
+                    end_date__lt=today_date,
                     then=Value(challenge_constants.CHALLENGE_STATUS_COMPLETED),
                 ),
                 default=Value(challenge_constants.CHALLENGE_STATUS_ONGOING),

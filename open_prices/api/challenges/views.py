@@ -9,7 +9,7 @@ from open_prices.challenges.models import Challenge
 class ChallengeViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
-    queryset = Challenge.objects.all()
+    queryset = Challenge.objects.with_status().all()
     serializer_class = ChallengeSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ChallengeFilter
