@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.74.2](https://github.com/openfoodfacts/open-prices/compare/v1.74.1...v1.74.2) (2025-04-20)
+
+
+### Technical
+
+* **Challenges:** move 'status' to a property (instead of a field) ([#803](https://github.com/openfoodfacts/open-prices/issues/803)) ([1369fb6](https://github.com/openfoodfacts/open-prices/commit/1369fb6e11a5f43a4e060a557f1c70b1f535d5c5))
+
 ## [1.74.1](https://github.com/openfoodfacts/open-prices/compare/v1.74.0...v1.74.1) (2025-04-18)
 
 
