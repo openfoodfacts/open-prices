@@ -2,7 +2,9 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from freezegun import freeze_time
 
+from open_prices.challenges.factories import ChallengeFactory
 from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
@@ -17,6 +19,24 @@ from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 from open_prices.users.models import User
+
+PRODUCT_8001505005707 = {
+    "code": "8001505005707",
+    "product_name": "Nocciolata",
+    "categories_tags": ["en:breakfasts", "en:spreads"],
+    "labels_tags": ["en:no-gluten", "en:organic"],
+    "brands_tags": ["rigoni-di-asiago"],
+    "price_count": 15,
+}
+
+PRODUCT_8850187002197 = {
+    "code": "8850187002197",
+    "product_name": "Riz 20 kg",
+    "categories_tags": ["en:rices"],
+    "labels_tags": [],
+    "brands_tags": ["royal-umbrella"],
+    "price_count": 10,
+}
 
 
 class PriceQuerySetTest(TestCase):
@@ -110,6 +130,52 @@ class PriceQuerySetTest(TestCase):
                 "price__max": 10,
                 "price__avg": 9,
             },
+        )
+
+
+class PriceChallengeQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
+        cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
+        cls.challenge_ongoing = ChallengeFactory(
+            is_published=True,
+            start_date="2024-12-30",
+            end_date="2025-01-30",
+            categories=["en:breakfasts"],
+        )
+
+    def test_in_challenge(self):
+        with freeze_time("2025-01-01"):  # during the challenge
+            PriceFactory()
+            PriceFactory(
+                product_code="8001505005707", product=self.product_8001505005707
+            )
+            PriceFactory(
+                product_code="8850187002197", product=self.product_8850187002197
+            )
+
+        with freeze_time("2025-01-30 22:00:00"):  # last day of the challenge
+            PriceFactory()
+            PriceFactory(
+                product_code="8001505005707", product=self.product_8001505005707
+            )
+            PriceFactory(
+                product_code="8850187002197", product=self.product_8850187002197
+            )
+
+        with freeze_time("2025-02-01"):  # after the challenge
+            PriceFactory()
+            PriceFactory(
+                product_code="8001505005707", product=self.product_8001505005707
+            )
+            PriceFactory(
+                product_code="8850187002197", product=self.product_8850187002197
+            )
+
+        self.assertEqual(Price.objects.count(), 9)
+        self.assertEqual(
+            Price.objects.in_challenge(self.challenge_ongoing).count(), 1 + 1
         )
 
 
