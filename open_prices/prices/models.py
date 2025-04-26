@@ -584,6 +584,13 @@ class Price(models.Model):
         self.get_or_create_location()
         super().save(*args, **kwargs)
 
+    def in_challenge(self, challenge: Challenge):
+        return (
+            self.created >= challenge.start_date_with_time
+            and self.created <= challenge.end_date_with_time
+            and bool(set(self.product.categories_tags) & set(challenge.categories))
+        )
+
 
 @receiver(signals.post_save, sender=Price)
 def price_post_create_increment_counts(sender, instance, created, **kwargs):
