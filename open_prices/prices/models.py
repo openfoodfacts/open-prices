@@ -13,6 +13,7 @@ from openfoodfacts.taxonomy import (
     map_to_canonical_id,
 )
 
+from open_prices.challenges.models import Challenge
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
@@ -90,6 +91,13 @@ class PriceQuerySet(models.QuerySet):
                 Avg("price"),
                 output_field=models.DecimalField(max_digits=10, decimal_places=2),
             ),
+        )
+
+    def in_challenge(self, challenge: Challenge):
+        return self.select_related("product").filter(
+            created__gte=challenge.start_date_with_time,
+            created__lte=challenge.end_date_with_time,
+            product__categories_tags__overlap=challenge.categories,
         )
 
 
