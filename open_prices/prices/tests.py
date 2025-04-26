@@ -136,7 +136,9 @@ class PriceQuerySetTest(TestCase):
 class PriceChallengeQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
+        cls.product_8001505005707 = ProductFactory(
+            **PRODUCT_8001505005707
+        )  # in challenge
         cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True,

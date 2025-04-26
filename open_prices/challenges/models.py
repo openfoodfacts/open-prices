@@ -95,16 +95,18 @@ class Challenge(models.Model):
         super().save(*args, **kwargs)
 
     @property
-    def start_date_with_time(self) -> str:
+    def start_date_with_time(self):
         if self.start_date is None:
             return None
-        return datetime.combine(self.start_date, datetime.min.time())
+        return timezone.make_aware(
+            datetime.combine(self.start_date, datetime.min.time())
+        )
 
     @property
-    def end_date_with_time(self) -> str:
+    def end_date_with_time(self):
         if self.end_date is None:
             return None
-        return datetime.combine(self.end_date, datetime.max.time())
+        return timezone.make_aware(datetime.combine(self.end_date, datetime.max.time()))
 
     @property
     def status(self) -> str:
