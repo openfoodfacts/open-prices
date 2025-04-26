@@ -1,6 +1,7 @@
 import decimal
 import functools
 
+from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import Avg, Case, Count, F, Max, Min, Value, When, signals
@@ -225,6 +226,8 @@ class Price(models.Model):
 
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
+
+    tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
