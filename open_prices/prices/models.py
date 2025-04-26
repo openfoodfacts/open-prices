@@ -8,6 +8,7 @@ from django.db.models import Avg, Case, Count, F, Max, Min, Value, When, signals
 from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
 from django.utils import timezone
+from django_q.tasks import async_task
 from openfoodfacts.taxonomy import (
     create_taxonomy_mapping,
     get_taxonomy,
@@ -614,6 +615,15 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
             Location.objects.filter(id=instance.location_id).update(
                 price_count=F("price_count") + 1
             )
+
+
+@receiver(signals.post_save, sender=Price)
+def price_post_create_update_tags(sender, instance, created, **kwargs):
+    if created:
+        async_task(
+            "open_prices.prices.tasks.update_tags",
+            instance,
+        )
 
 
 @receiver(signals.pre_delete, sender=Price)
