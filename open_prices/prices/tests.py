@@ -133,7 +133,7 @@ class PriceQuerySetTest(TestCase):
         )
 
 
-class PriceChallengeQuerySetTest(TestCase):
+class PriceChallengeQuerySetAndPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.product_8001505005707 = ProductFactory(
@@ -146,39 +146,49 @@ class PriceChallengeQuerySetTest(TestCase):
             end_date="2025-01-30",
             categories=["en:breakfasts"],
         )
-
-    def test_in_challenge(self):
         with freeze_time("2025-01-01"):  # during the challenge
-            PriceFactory()
-            PriceFactory(
-                product_code="8001505005707", product=self.product_8001505005707
+            cls.price_11 = PriceFactory()
+            cls.price_12 = PriceFactory(
+                product_code="8001505005707", product=cls.product_8001505005707
             )
-            PriceFactory(
-                product_code="8850187002197", product=self.product_8850187002197
+            cls.price_13 = PriceFactory(
+                product_code="8850187002197", product=cls.product_8850187002197
             )
 
         with freeze_time("2025-01-30 22:00:00"):  # last day of the challenge
-            PriceFactory()
-            PriceFactory(
-                product_code="8001505005707", product=self.product_8001505005707
+            cls.price_21 = PriceFactory()
+            cls.price_22 = PriceFactory(
+                product_code="8001505005707", product=cls.product_8001505005707
             )
-            PriceFactory(
-                product_code="8850187002197", product=self.product_8850187002197
+            cls.price_23 = PriceFactory(
+                product_code="8850187002197", product=cls.product_8850187002197
             )
 
         with freeze_time("2025-02-01"):  # after the challenge
-            PriceFactory()
-            PriceFactory(
-                product_code="8001505005707", product=self.product_8001505005707
+            cls.price_31 = PriceFactory()
+            cls.price_32 = PriceFactory(
+                product_code="8001505005707", product=cls.product_8001505005707
             )
-            PriceFactory(
-                product_code="8850187002197", product=self.product_8850187002197
+            cls.price_33 = PriceFactory(
+                product_code="8850187002197", product=cls.product_8850187002197
             )
 
+    def test_in_challenge_queryset(self):
         self.assertEqual(Price.objects.count(), 9)
         self.assertEqual(
             Price.objects.in_challenge(self.challenge_ongoing).count(), 1 + 1
         )
+
+    def test_in_challenge_property(self):
+        self.assertEqual(self.price_11.in_challenge(self.challenge_ongoing), False)
+        self.assertEqual(self.price_12.in_challenge(self.challenge_ongoing), True)
+        self.assertEqual(self.price_13.in_challenge(self.challenge_ongoing), False)
+        self.assertEqual(self.price_21.in_challenge(self.challenge_ongoing), False)
+        self.assertEqual(self.price_22.in_challenge(self.challenge_ongoing), True)
+        self.assertEqual(self.price_23.in_challenge(self.challenge_ongoing), False)
+        self.assertEqual(self.price_31.in_challenge(self.challenge_ongoing), False)
+        self.assertEqual(self.price_32.in_challenge(self.challenge_ongoing), False)
+        self.assertEqual(self.price_33.in_challenge(self.challenge_ongoing), False)
 
 
 class PriceModelSaveTest(TestCase):
