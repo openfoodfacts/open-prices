@@ -133,7 +133,7 @@ class PriceQuerySetTest(TestCase):
         )
 
 
-class PriceChallengeQuerySetAndPropertyTest(TestCase):
+class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.product_8001505005707 = ProductFactory(
@@ -180,15 +180,18 @@ class PriceChallengeQuerySetAndPropertyTest(TestCase):
         )
 
     def test_in_challenge_property(self):
-        self.assertEqual(self.price_11.in_challenge(self.challenge_ongoing), False)
-        self.assertEqual(self.price_12.in_challenge(self.challenge_ongoing), True)
-        self.assertEqual(self.price_13.in_challenge(self.challenge_ongoing), False)
-        self.assertEqual(self.price_21.in_challenge(self.challenge_ongoing), False)
-        self.assertEqual(self.price_22.in_challenge(self.challenge_ongoing), True)
-        self.assertEqual(self.price_23.in_challenge(self.challenge_ongoing), False)
-        self.assertEqual(self.price_31.in_challenge(self.challenge_ongoing), False)
-        self.assertEqual(self.price_32.in_challenge(self.challenge_ongoing), False)
-        self.assertEqual(self.price_33.in_challenge(self.challenge_ongoing), False)
+        for price in Price.objects.all():
+            if price in [self.price_12, self.price_22]:
+                self.assertEqual(price.in_challenge(self.challenge_ongoing), True)
+            else:
+                self.assertEqual(price.in_challenge(self.challenge_ongoing), False)
+
+    def test_on_create_signal(self):
+        for price in Price.objects.all():
+            if price in [self.price_12, self.price_22]:
+                self.assertIn(f"challenge-{self.challenge_ongoing.id}", price.tags)
+            else:
+                self.assertNotIn(f"challenge-{self.challenge_ongoing.id}", price.tags)
 
 
 class PriceModelSaveTest(TestCase):
