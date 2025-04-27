@@ -5,6 +5,18 @@ from freezegun import freeze_time
 from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.challenges.models import Challenge
+from open_prices.prices.factories import PriceFactory
+from open_prices.prices.models import Price
+from open_prices.products.factories import ProductFactory
+
+PRODUCT_8001505005707 = {
+    "code": "8001505005707",
+    "product_name": "Nocciolata",
+    "categories_tags": ["en:breakfasts", "en:spreads"],
+    "labels_tags": ["en:no-gluten", "en:organic"],
+    "brands_tags": ["rigoni-di-asiago"],
+    "price_count": 15,
+}
 
 
 class ChallengeModelSaveTest(TestCase):
@@ -164,3 +176,30 @@ class ChallengeStatusQuerySetAndPropertyTest(TestCase):
     def test_challenge_is_ongoing_queryset(self):
         self.assertEqual(Challenge.objects.count(), 4)
         self.assertEqual(Challenge.objects.is_ongoing().count(), 1)
+
+
+class ChallengePropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product_8001505005707 = ProductFactory(
+            **PRODUCT_8001505005707
+        )  # in challenge
+        # create prices before the challenge
+        # (avoids setting the tag by the signal)
+        with freeze_time("2025-01-01"):  # during the challenge
+            PriceFactory()
+            PriceFactory(
+                product_code="8001505005707", product=cls.product_8001505005707
+            )
+        cls.challenge_ongoing = ChallengeFactory(
+            is_published=True,
+            start_date="2024-12-30",
+            end_date="2025-01-30",
+            categories=["en:breakfasts"],
+        )
+
+    def test_set_price_tags(self):
+        self.assertEqual(Price.objects.count(), 2)
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
+        self.challenge_ongoing.set_price_tags()
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 1)

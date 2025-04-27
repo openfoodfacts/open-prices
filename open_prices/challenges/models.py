@@ -129,3 +129,10 @@ class Challenge(models.Model):
     @property
     def tag(self):
         return f"challenge-{self.id}"
+
+    def set_price_tags(self):
+        from open_prices.prices.models import Price
+
+        challenge_prices = Price.objects.in_challenge(self)
+        for price in challenge_prices.exclude(tags__contains=[self.tag]):
+            price.set_tag(self.tag, save=True)
