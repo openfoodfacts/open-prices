@@ -125,3 +125,7 @@ class Challenge(models.Model):
             return challenge_constants.CHALLENGE_STATUS_COMPLETED
         else:
             return challenge_constants.CHALLENGE_STATUS_ONGOING
+
+    @property
+    def tag(self):
+        return f"challenge-{self.id}"

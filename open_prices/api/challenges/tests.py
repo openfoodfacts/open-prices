@@ -21,8 +21,9 @@ class ChallengeListApiTest(TestCase):
         self.assertEqual(
             response.data["items"][0]["id"], self.challenge_1.id
         )  # default order
-        # extra fields: status
+        # extra fields: status, tag
         self.assertTrue("status" in response.data["items"][0])
+        self.assertTrue("tag" in response.data["items"][0])
 
 
 class ChallengeListPaginationApiTest(TestCase):
