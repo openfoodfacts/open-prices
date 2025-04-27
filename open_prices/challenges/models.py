@@ -134,5 +134,6 @@ class Challenge(models.Model):
         from open_prices.prices.models import Price
 
         challenge_prices = Price.objects.in_challenge(self)
+        # TODO: manage cases where prices are removed from the challenge
         for price in challenge_prices.exclude(tags__contains=[self.tag]):
             price.set_tag(self.tag, save=True)
