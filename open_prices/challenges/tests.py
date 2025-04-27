@@ -86,7 +86,7 @@ class ChallengeQuerySetTest(TestCase):
         self.assertEqual(Challenge.objects.published().count(), 2)
 
 
-class ChallengeStatusTest(TestCase):
+class ChallengeStatusQuerySetAndPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.challenge_draft = ChallengeFactory(is_published=False)
@@ -159,3 +159,8 @@ class ChallengeStatusTest(TestCase):
         self.assertEqual(self.challenge_upcoming.status, "UPCOMING")
         self.assertEqual(self.challenge_ongoing.status, "ONGOING")
         self.assertEqual(self.challenge_completed.status, "COMPLETED")
+
+    @freeze_time("2025-01-01")
+    def test_challenge_is_ongoing_queryset(self):
+        self.assertEqual(Challenge.objects.count(), 4)
+        self.assertEqual(Challenge.objects.is_ongoing().count(), 1)

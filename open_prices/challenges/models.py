@@ -35,6 +35,11 @@ class ChallengeQuerySet(models.QuerySet):
             )
         )
 
+    def is_ongoing(self):
+        return self.with_status().filter(
+            status_annotated=challenge_constants.CHALLENGE_STATUS_ONGOING
+        )
+
 
 class Challenge(models.Model):
     title = models.CharField(max_length=200, blank=True, null=True)
