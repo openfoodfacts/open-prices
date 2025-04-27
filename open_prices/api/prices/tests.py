@@ -199,6 +199,7 @@ class PriceListFilterApiTest(TestCase):
             date="2024-06-30",
             owner="user_2",
             product=cls.product_8850187002197,
+            tags=["challenge-1"],
         )
 
     def test_price_list_without_filter(self):
@@ -263,6 +264,11 @@ class PriceListFilterApiTest(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # tags
+        url = self.url + "?tags__contains=challenge-1"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["tags"], ["challenge-1"])
 
     def test_price_list_filter_by_price(self):
         self.assertEqual(Price.objects.count(), 5)
