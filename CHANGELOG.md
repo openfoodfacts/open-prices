@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.75.0](https://github.com/openfoodfacts/open-prices/compare/v1.74.2...v1.75.0) (2025-04-27)
+
+
+### Features
+
+* **Challenges:** new tag property. return in the API ([#812](https://github.com/openfoodfacts/open-prices/issues/812)) ([a202e30](https://github.com/openfoodfacts/open-prices/commit/a202e306fbb04373fc27d11a1409f8eb05238607))
+* **Challenges:** set the price tag on price create (if the price belongs to an ongoing challenge) ([#811](https://github.com/openfoodfacts/open-prices/issues/811)) ([66cb692](https://github.com/openfoodfacts/open-prices/commit/66cb6925b50700540a5766af570cbd4e71cb51ab))
+* **Prices:** API: new filter by tags (contains) ([#813](https://github.com/openfoodfacts/open-prices/issues/813)) ([2a16f59](https://github.com/openfoodfacts/open-prices/commit/2a16f597426ae380349be0dd11c1ba2c02573e18))
+* **Prices:** new tags field (arrayfield) ([#807](https://github.com/openfoodfacts/open-prices/issues/807)) ([96fb506](https://github.com/openfoodfacts/open-prices/commit/96fb506690fcaafaee843172458ce23d33e12442))
+
+
+### Technical
+
+* **Challenges:** new is_ongoing queryset ([bd1395e](https://github.com/openfoodfacts/open-prices/commit/bd1395e6475682c4404416727ce74385a26df90a))
+* **Challenges:** new Price property to check if it belongs in a given challenge ([#810](https://github.com/openfoodfacts/open-prices/issues/810)) ([9451796](https://github.com/openfoodfacts/open-prices/commit/9451796548c078c47f172ba788504d53232e78f4))
+* **Challenges:** new Price queryset to filter on the ones part of a challenge ([#808](https://github.com/openfoodfacts/open-prices/issues/808)) ([df6830d](https://github.com/openfoodfacts/open-prices/commit/df6830d2795cab5f5f08610b5e5eec5d916c228a))
+* **Challenges:** new set_price_tags helper method ([#815](https://github.com/openfoodfacts/open-prices/issues/815)) ([9a4f337](https://github.com/openfoodfacts/open-prices/commit/9a4f337c4e56b6920c3c3984cd643e6328cdebcf))
+* **Prices:** new has_tag queryset ([#814](https://github.com/openfoodfacts/open-prices/issues/814)) ([d5e264f](https://github.com/openfoodfacts/open-prices/commit/d5e264fbfcba797830750eb2ffc3799eff75c8cf))
+
 ## [1.74.2](https://github.com/openfoodfacts/open-prices/compare/v1.74.1...v1.74.2) (2025-04-20)
 
 
