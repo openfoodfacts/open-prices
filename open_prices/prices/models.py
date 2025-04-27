@@ -95,6 +95,9 @@ class PriceQuerySet(models.QuerySet):
             ),
         )
 
+    def has_tag(self, tag: str):
+        return self.filter(tags__contains=[tag])
+
     def in_challenge(self, challenge: Challenge):
         return self.select_related("product").filter(
             created__gte=challenge.start_date_with_time,

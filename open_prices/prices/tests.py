@@ -61,6 +61,7 @@ class PriceQuerySetTest(TestCase):
             price_per=price_constants.PRICE_PER_UNIT,
             price=10,
             date="2024-01-01",
+            tags=["challenge-1"],
         )
 
     def test_has_discount(self):
@@ -131,6 +132,11 @@ class PriceQuerySetTest(TestCase):
                 "price__avg": 9,
             },
         )
+
+    def has_tags(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.has_tags("challenge-1").count(), 1)
+        self.assertEqual(Price.objects.has_tags("unknown").count(), 0)
 
 
 class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
