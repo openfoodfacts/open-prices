@@ -47,6 +47,9 @@ class PriceFilter(django_filters.FilterSet):
     date__lte = django_filters.DateFilter(field_name="date", lookup_expr="lte")
     date__year = django_filters.NumberFilter(field_name="date", lookup_expr="year")
     date__month = django_filters.NumberFilter(field_name="date", lookup_expr="month")
+    tags__contains = django_filters.CharFilter(
+        field_name="tags", lookup_expr="icontains"
+    )
     created__gte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="gte"
     )
