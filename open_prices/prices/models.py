@@ -591,6 +591,14 @@ class Price(models.Model):
         self.get_or_create_location()
         super().save(*args, **kwargs)
 
+    def set_tag(self, tag: str, save: bool = True):
+        if tag not in self.tags:
+            self.tags.append(tag)
+            if save:
+                self.save(update_fields=["tags"])
+            return True
+        return False
+
     def in_challenge(self, challenge: Challenge):
         return (
             self.created >= challenge.start_date_with_time
