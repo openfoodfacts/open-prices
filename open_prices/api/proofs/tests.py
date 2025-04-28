@@ -125,6 +125,7 @@ class ProofListFilterApiTest(TestCase):
             type=proof_constants.TYPE_PRICE_TAG,
             price_count=50,
             owner=cls.user_session.user.user_id,
+            tags=["challenge-1"],
         )
 
     def test_proof_list_filter_by_type(self):
@@ -155,6 +156,14 @@ class ProofListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
+
+    def test_price_list_filter_by_tags(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        # tags
+        url = self.url + "?tags__contains=challenge-1"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["tags"], ["challenge-1"])
 
 
 class ProofDetailApiTest(TestCase):
