@@ -133,10 +133,10 @@ class PriceQuerySetTest(TestCase):
             },
         )
 
-    def has_tags(self):
+    def test_has_tags(self):
         self.assertEqual(Price.objects.count(), 3)
-        self.assertEqual(Price.objects.has_tags("challenge-1").count(), 1)
-        self.assertEqual(Price.objects.has_tags("unknown").count(), 0)
+        self.assertEqual(Price.objects.has_tag("challenge-1").count(), 1)
+        self.assertEqual(Price.objects.has_tag("unknown").count(), 0)
 
 
 class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):

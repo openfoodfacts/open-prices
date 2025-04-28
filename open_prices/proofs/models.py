@@ -71,6 +71,9 @@ class ProofQuerySet(models.QuerySet):
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
+    def has_tag(self, tag: str):
+        return self.filter(tags__contains=[tag])
+
 
 class Proof(models.Model):
     FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
@@ -152,6 +155,8 @@ class Proof(models.Model):
 
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
+
+    tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -378,6 +383,14 @@ class Proof(models.Model):
                         )
         if len(fields_to_update):
             self.save()
+
+    def set_tag(self, tag: str, save: bool = True):
+        if tag not in self.tags:
+            self.tags.append(tag)
+            if save:
+                self.save(update_fields=["tags"])
+            return True
+        return False
 
 
 @receiver(signals.post_save, sender=Proof)
