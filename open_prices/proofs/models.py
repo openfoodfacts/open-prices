@@ -153,6 +153,8 @@ class Proof(models.Model):
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
 
+    tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
+
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
