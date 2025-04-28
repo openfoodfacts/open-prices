@@ -74,7 +74,9 @@ class ProofQuerySetTest(TestCase):
             source="Open Prices Web App",
         )
         cls.proof_with_price = ProofFactory(
-            type=proof_constants.TYPE_GDPR_REQUEST, owner_consumption=True
+            type=proof_constants.TYPE_GDPR_REQUEST,
+            owner_consumption=True,
+            tags=["challenge-1"],
         )
         PriceFactory(proof_id=cls.proof_with_price.id, price=1.0)
 
@@ -117,6 +119,11 @@ class ProofQuerySetTest(TestCase):
         proof = Proof.objects.with_stats().get(id=self.proof_with_price.id)
         self.assertEqual(proof.price_count_annotated, 1)
         self.assertEqual(proof.price_count, 1)
+
+    def test_has_tags(self):
+        self.assertEqual(Proof.objects.count(), 4)
+        self.assertEqual(Proof.objects.has_tags("challenge-1").count(), 1)
+        self.assertEqual(Proof.objects.has_tags("unknown").count(), 0)
 
 
 class ProofModelSaveTest(TestCase):

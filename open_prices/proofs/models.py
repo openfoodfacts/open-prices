@@ -71,6 +71,9 @@ class ProofQuerySet(models.QuerySet):
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
+    def has_tag(self, tag: str):
+        return self.filter(tags__contains=[tag])
+
 
 class Proof(models.Model):
     FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
