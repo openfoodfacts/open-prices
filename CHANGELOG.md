@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.76.0](https://github.com/openfoodfacts/open-prices/compare/v1.75.0...v1.76.0) (2025-04-28)
+
+
+### Features
+
+* **Proofs:** API: new filter by tags (contains) ([#821](https://github.com/openfoodfacts/open-prices/issues/821)) ([94ab329](https://github.com/openfoodfacts/open-prices/commit/94ab329848c81ad649965cfbdb3d2451bb834ac0))
+* **Proofs:** new tags field (arrayfield) ([#817](https://github.com/openfoodfacts/open-prices/issues/817)) ([2a0b5ba](https://github.com/openfoodfacts/open-prices/commit/2a0b5ba03be23ef052ab0c6b831a08056ed9506e))
+
+
+### Technical
+
+* **Challenges:** new Proof queryset & property to filter on the ones part of a challenge ([#819](https://github.com/openfoodfacts/open-prices/issues/819)) ([14548ec](https://github.com/openfoodfacts/open-prices/commit/14548ecb6278b457ebe9d2a9bb6cb32749a1a18c))
+* **Challenges:** new set_proof_tags helper method ([#820](https://github.com/openfoodfacts/open-prices/issues/820)) ([5f841c4](https://github.com/openfoodfacts/open-prices/commit/5f841c4f51bf2cf331e6ba2149d5056eabb19086))
+
 ## [1.75.0](https://github.com/openfoodfacts/open-prices/compare/v1.74.2...v1.75.0) (2025-04-27)
 
 
