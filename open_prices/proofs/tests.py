@@ -122,8 +122,8 @@ class ProofQuerySetTest(TestCase):
 
     def test_has_tags(self):
         self.assertEqual(Proof.objects.count(), 4)
-        self.assertEqual(Proof.objects.has_tags("challenge-1").count(), 1)
-        self.assertEqual(Proof.objects.has_tags("unknown").count(), 0)
+        self.assertEqual(Proof.objects.has_tag("challenge-1").count(), 1)
+        self.assertEqual(Proof.objects.has_tag("unknown").count(), 0)
 
 
 class ProofModelSaveTest(TestCase):
