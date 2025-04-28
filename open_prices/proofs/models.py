@@ -398,6 +398,9 @@ class Proof(models.Model):
             return True
         return False
 
+    def in_challenge(self, challenge: Challenge):
+        return self.prices.filter(tags__contains=[challenge.tag]).exists()
+
 
 @receiver(signals.post_save, sender=Proof)
 def proof_post_save_run_ocr(sender, instance, created, **kwargs):

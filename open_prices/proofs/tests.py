@@ -147,7 +147,7 @@ class ProofQuerySetTest(TestCase):
         self.assertEqual(Proof.objects.has_tag("unknown").count(), 0)
 
 
-class ProofChallengeQuerySetTest(TestCase):
+class ProofChallengeQuerySetAndPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.challenge_ongoing = ChallengeFactory(
@@ -173,12 +173,17 @@ class ProofChallengeQuerySetTest(TestCase):
                 product_code="8850187002197", product=cls.product_8850187002197
             )
 
-    def test_in_challenge(self):
+    def test_in_challenge_queryset(self):
         self.assertEqual(Proof.objects.count(), 2)
-        from open_prices.prices.models import Price
-
-        print(Price.objects.values_list("tags", flat=True))
         self.assertEqual(Proof.objects.in_challenge(self.challenge_ongoing).count(), 1)
+
+    def test_in_challenge_property(self):
+        self.assertEqual(
+            self.proof_in_challenge.in_challenge(self.challenge_ongoing), True
+        )
+        self.assertEqual(
+            self.proof_not_in_challenge.in_challenge(self.challenge_ongoing), False
+        )
 
 
 class ProofModelSaveTest(TestCase):
