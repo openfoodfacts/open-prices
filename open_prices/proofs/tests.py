@@ -9,13 +9,16 @@ import numpy as np
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 from PIL import Image
 
+from open_prices.challenges.factories import ChallengeFactory
 from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.products.factories import ProductFactory
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import (
     PriceTagFactory,
@@ -43,6 +46,24 @@ from open_prices.proofs.utils import (
     match_receipt_item_with_price,
     select_proof_image_dir,
 )
+
+PRODUCT_8001505005707 = {
+    "code": "8001505005707",
+    "product_name": "Nocciolata",
+    "categories_tags": ["en:breakfasts", "en:spreads"],
+    "labels_tags": ["en:no-gluten", "en:organic"],
+    "brands_tags": ["rigoni-di-asiago"],
+    "price_count": 15,
+}
+
+PRODUCT_8850187002197 = {
+    "code": "8850187002197",
+    "product_name": "Riz 20 kg",
+    "categories_tags": ["en:rices"],
+    "labels_tags": [],
+    "brands_tags": ["royal-umbrella"],
+    "price_count": 10,
+}
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -124,6 +145,45 @@ class ProofQuerySetTest(TestCase):
         self.assertEqual(Proof.objects.count(), 4)
         self.assertEqual(Proof.objects.has_tag("challenge-1").count(), 1)
         self.assertEqual(Proof.objects.has_tag("unknown").count(), 0)
+
+
+class ProofChallengeQuerySetAndPropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.challenge_ongoing = ChallengeFactory(
+            is_published=True,
+            start_date="2024-12-30",
+            end_date="2025-01-30",
+            categories=["en:breakfasts"],
+        )
+        cls.proof_in_challenge = ProofFactory()
+        cls.proof_not_in_challenge = ProofFactory()
+        cls.product_8001505005707 = ProductFactory(
+            **PRODUCT_8001505005707
+        )  # in challenge
+        cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
+        with freeze_time("2025-01-01"):  # during the challenge
+            PriceFactory(proof=cls.proof_not_in_challenge)
+            PriceFactory(
+                product_code="8001505005707",
+                product=cls.product_8001505005707,
+                proof=cls.proof_in_challenge,
+            )
+            PriceFactory(
+                product_code="8850187002197", product=cls.product_8850187002197
+            )
+
+    def test_in_challenge_queryset(self):
+        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.in_challenge(self.challenge_ongoing).count(), 1)
+
+    def test_in_challenge_property(self):
+        self.assertEqual(
+            self.proof_in_challenge.in_challenge(self.challenge_ongoing), True
+        )
+        self.assertEqual(
+            self.proof_not_in_challenge.in_challenge(self.challenge_ongoing), False
+        )
 
 
 class ProofModelSaveTest(TestCase):

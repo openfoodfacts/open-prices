@@ -142,16 +142,16 @@ class PriceQuerySetTest(TestCase):
 class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.product_8001505005707 = ProductFactory(
-            **PRODUCT_8001505005707
-        )  # in challenge
-        cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True,
             start_date="2024-12-30",
             end_date="2025-01-30",
             categories=["en:breakfasts"],
         )
+        cls.product_8001505005707 = ProductFactory(
+            **PRODUCT_8001505005707
+        )  # in challenge
+        cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
         with freeze_time("2025-01-01"):  # during the challenge
             cls.price_11 = PriceFactory()
             cls.price_12 = PriceFactory(
