@@ -8,6 +8,8 @@ from open_prices.challenges.models import Challenge
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.products.factories import ProductFactory
+from open_prices.proofs.factories import ProofFactory
+from open_prices.proofs.models import Proof
 
 PRODUCT_8001505005707 = {
     "code": "8001505005707",
@@ -181,15 +183,19 @@ class ChallengeStatusQuerySetAndPropertyTest(TestCase):
 class ChallengePropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.proof_in_challenge = ProofFactory()
+        cls.proof_not_in_challenge = ProofFactory()
         cls.product_8001505005707 = ProductFactory(
             **PRODUCT_8001505005707
         )  # in challenge
         # create prices before the challenge
         # (avoids setting the tag by the signal)
         with freeze_time("2025-01-01"):  # during the challenge
-            PriceFactory()
+            PriceFactory(proof=cls.proof_not_in_challenge)
             PriceFactory(
-                product_code="8001505005707", product=cls.product_8001505005707
+                product_code="8001505005707",
+                product=cls.product_8001505005707,
+                proof=cls.proof_in_challenge,
             )
         # create the challenge afterwards
         cls.challenge_ongoing = ChallengeFactory(
@@ -204,3 +210,10 @@ class ChallengePropertyTest(TestCase):
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+
+    def test_set_proof_tags(self):
+        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
+        self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
+        self.challenge_ongoing.set_proof_tags()
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)

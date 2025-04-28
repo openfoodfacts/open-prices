@@ -76,7 +76,7 @@ class ProofQuerySet(models.QuerySet):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
-        return self.select_related("prices").filter(
+        return self.prefetch_related("prices").filter(
             prices__tags__contains=[challenge.tag]
         )
 
