@@ -137,3 +137,11 @@ class Challenge(models.Model):
         # TODO: manage cases where prices are removed from the challenge
         for price in challenge_prices.exclude(tags__contains=[self.tag]):
             price.set_tag(self.tag, save=True)
+
+    def set_proof_tags(self):
+        from open_prices.proofs.models import Proof
+
+        challenge_proofs = Proof.objects.in_challenge(self)
+        # TODO: manage cases where prices/proofs are removed from the challenge
+        for proof in challenge_proofs.exclude(tags__contains=[self.tag]):
+            proof.set_tag(self.tag, save=True)
