@@ -191,6 +191,7 @@ class ChallengePropertyTest(TestCase):
             PriceFactory(
                 product_code="8001505005707", product=cls.product_8001505005707
             )
+        # create the challenge afterwards
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True,
             start_date="2024-12-30",

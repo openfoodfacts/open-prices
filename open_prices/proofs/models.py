@@ -10,6 +10,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
 
+from open_prices.challenges.models import Challenge
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
@@ -73,6 +74,11 @@ class ProofQuerySet(models.QuerySet):
 
     def has_tag(self, tag: str):
         return self.filter(tags__contains=[tag])
+
+    def in_challenge(self, challenge: Challenge):
+        return self.select_related("prices").filter(
+            prices__tags__contains=[challenge.tag]
+        )
 
 
 class Proof(models.Model):
