@@ -384,6 +384,14 @@ class Proof(models.Model):
         if len(fields_to_update):
             self.save()
 
+    def set_tag(self, tag: str, save: bool = True):
+        if tag not in self.tags:
+            self.tags.append(tag)
+            if save:
+                self.save(update_fields=["tags"])
+            return True
+        return False
+
 
 @receiver(signals.post_save, sender=Proof)
 def proof_post_save_run_ocr(sender, instance, created, **kwargs):
