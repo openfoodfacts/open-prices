@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.76.1](https://github.com/openfoodfacts/open-prices/compare/v1.76.0...v1.76.1) (2025-04-29)
+
+
+### Technical
+
+* **Challenges:** set the price's proof tag on price create (if the price belongs to an ongoing challenge) ([#823](https://github.com/openfoodfacts/open-prices/issues/823)) ([8a4a9fc](https://github.com/openfoodfacts/open-prices/commit/8a4a9fc05eb0ac527bf9f47308ff243ade47e7e6))
+
 ## [1.76.0](https://github.com/openfoodfacts/open-prices/compare/v1.75.0...v1.76.0) (2025-04-28)
 
 
