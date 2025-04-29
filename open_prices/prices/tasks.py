@@ -15,6 +15,6 @@ def update_tags(price: Price):
                     changes = True
                 # update the price's proof
                 if price.proof:
-                    success = price.proof.set_tag(challenge.tag, save=True)
+                    price.proof.set_tag(challenge.tag, save=True)
     if changes:
         price.save(update_fields=["tags"])

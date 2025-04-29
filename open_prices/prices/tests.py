@@ -193,7 +193,7 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
                 self.assertEqual(price.in_challenge(self.challenge_ongoing), False)
 
     def test_on_create_signal(self):
-        for price in Price.objects.all():
+        for price in Price.objects.all():  # refresh_from_db
             if price in [self.price_12, self.price_22]:
                 self.assertIn(f"challenge-{self.challenge_ongoing.id}", price.tags)
             else:
