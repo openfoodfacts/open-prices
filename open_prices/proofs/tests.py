@@ -185,6 +185,16 @@ class ProofChallengeQuerySetAndPropertyTest(TestCase):
             self.proof_not_in_challenge.in_challenge(self.challenge_ongoing), False
         )
 
+    def test_on_price_create_signal(self):
+        self.proof_in_challenge.refresh_from_db()
+        self.proof_not_in_challenge.refresh_from_db()
+        self.assertIn(
+            f"challenge-{self.challenge_ongoing.id}", self.proof_in_challenge.tags
+        )
+        self.assertNotIn(
+            f"challenge-{self.challenge_ongoing.id}", self.proof_not_in_challenge.tags
+        )
+
 
 class ProofModelSaveTest(TestCase):
     @classmethod
