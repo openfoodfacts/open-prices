@@ -9,8 +9,12 @@ def update_tags(price: Price):
     if challenge_qs.exists():
         for challenge in challenge_qs:
             if price.in_challenge(challenge):
+                # update the price
                 success = price.set_tag(challenge.tag, save=False)
                 if success:
                     changes = True
+                # update the price's proof
+                if price.proof:
+                    success = price.proof.set_tag(challenge.tag, save=True)
     if changes:
         price.save(update_fields=["tags"])
