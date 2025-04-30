@@ -14,11 +14,11 @@ theme:
     - content.action.edit
   logo: https://static.openfoodfacts.org/images/logos/off-logo-horizontal-light.svg
   favicon: https://static.openfoodfacts.org/images/logos/off-logo-favicon-light.png
-  palette: 
+  palette:
     # Palette toggle for light mode
     - scheme: default
       toggle:
-        icon: material/brightness-7 
+        icon: material/brightness-7
         name: Switch to dark mode
     # Palette toggle for dark mode
     - scheme: slate
