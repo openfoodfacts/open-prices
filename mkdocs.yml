@@ -10,7 +10,8 @@ site_dir: gh_pages
 
 theme:
   name: material
-
+  features:
+    - content.action.edit
 markdown_extensions:
   - footnotes
   - mdx_truly_sane_lists
