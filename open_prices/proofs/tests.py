@@ -18,6 +18,7 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
+from open_prices.prices.models import Price
 from open_prices.products.factories import ProductFactory
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import (
@@ -38,7 +39,7 @@ from open_prices.proofs.ml import (
     run_and_save_proof_prediction,
     run_and_save_proof_type_prediction,
 )
-from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof
+from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
 from open_prices.proofs.utils import (
     match_category_price_tag_with_category_price,
     match_price_tag_with_price,
@@ -886,6 +887,54 @@ class TestSelectProofImageDir(TestCase):
             self.assertEqual(selected_dir, images_dir / "0002")
 
 
+class PriceTagQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price_product = PriceFactory(
+            type=price_constants.TYPE_PRODUCT,
+            product_code="0123456789100",
+            price=1.5,
+            proof=cls.proof,
+            location=cls.proof.location,
+            # product_name="NAME",
+        )
+        cls.price_tag_product = PriceTagFactory(
+            bounding_box=[0.1, 0.1, 0.2, 0.2],
+            proof=cls.proof,
+            price=cls.price_product,
+            status=proof_constants.PriceTagStatus.linked_to_price.value,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_product,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={
+                "price": 1.5,
+                "barcode": "0123456789100",
+                "product": "other",
+                "product_name": "NAME",
+            },
+        )
+        PriceTagFactory(
+            bounding_box=[0.1, 0.1, 0.2, 0.2],
+            proof=cls.proof,
+        )
+
+    def test_status_unknown(self):
+        self.assertEqual(PriceTag.objects.count(), 2)
+        self.assertEqual(PriceTag.objects.status_unknown().count(), 1)
+
+    def test_status_linked_to_price(self):
+        self.assertEqual(PriceTag.objects.count(), 2)
+        self.assertEqual(PriceTag.objects.status_linked_to_price().count(), 1)
+
+    def test_has_price_product_name_empty(self):
+        self.assertEqual(PriceTag.objects.count(), 2)
+        self.assertEqual(PriceTag.objects.has_price_product_name_empty().count(), 2)
+        Price.objects.filter(id=self.price_product.id).update(product_name="NAME")
+        self.assertEqual(PriceTag.objects.has_price_product_name_empty().count(), 1)
+
+
 class PriceTagTest(TestCase):
     def test_create_price_tag_invalid_bounding_box_length(self):
         with self.assertRaises(ValidationError) as cm:
@@ -1079,6 +1128,45 @@ class PriceTagMatchingUtilsTest(TestCase):
         self.assertFalse(
             match_price_tag_with_price(self.price_tag_category, self.price_category)
         )
+
+
+class ReceiptItemQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        cls.price = PriceFactory(
+            type=price_constants.TYPE_PRODUCT,
+            product_code="8052575090346",
+            price=3.5,
+            proof=cls.proof,
+            location=cls.proof.location,
+        )
+        cls.receipt_item = ReceiptItemFactory(
+            predicted_data={"product_name": "NOCCIOLATA BIANCA 250G", "price": 3.5},
+            proof=cls.proof,
+            price=cls.price,
+            status=proof_constants.ReceiptItemStatus.linked_to_price.value,
+        )
+        ReceiptItemFactory(
+            predicted_data={"product_name": "Nutella", "price": 5},
+            proof=cls.proof,
+        )
+
+    def test_status_unknown(self):
+        self.assertEqual(ReceiptItem.objects.count(), 2)
+        self.assertEqual(ReceiptItem.objects.status_unknown().count(), 1)
+
+    def test_status_linked_to_price(self):
+        self.assertEqual(ReceiptItem.objects.count(), 2)
+        self.assertEqual(ReceiptItem.objects.status_linked_to_price().count(), 1)
+
+    def test_has_price_product_name_empty(self):
+        self.assertEqual(ReceiptItem.objects.count(), 2)
+        self.assertEqual(ReceiptItem.objects.has_price_product_name_empty().count(), 2)
+        Price.objects.filter(id=self.price.id).update(
+            product_name="NOCCIOLATA BIANCA 250G"
+        )
+        self.assertEqual(ReceiptItem.objects.has_price_product_name_empty().count(), 1)
 
 
 class ReceiptItemMatchingUtilsTest(TestCase):

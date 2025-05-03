@@ -5,7 +5,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Case, Count, F, Value, When, signals
+from django.db.models import Case, Count, F, Q, Value, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -521,6 +521,11 @@ class PriceTagQuerySet(models.QuerySet):
     def status_linked_to_price(self):
         return self.filter(status=proof_constants.PriceTagStatus.linked_to_price.value)
 
+    def has_price_product_name_empty(self):
+        return self.select_related("price").filter(
+            Q(price__product_name=None) | Q(price__product_name="")
+        )
+
 
 class PriceTag(models.Model):
     """A single price tag in a proof."""
@@ -724,6 +729,21 @@ def price_tag_prediction_post_create_increment_counts(
             PriceTag.objects.filter(id=instance.price_tag_id).update(
                 prediction_count=F("prediction_count") + 1
             )
+
+
+class ReceiptItemQuerySet(models.QuerySet):
+    def status_unknown(self):
+        return self.filter(status=None)
+
+    def status_linked_to_price(self):
+        return self.filter(
+            status=proof_constants.ReceiptItemStatus.linked_to_price.value
+        )
+
+    def has_price_product_name_empty(self):
+        return self.select_related("price").filter(
+            Q(price__product_name=None) | Q(price__product_name="")
+        )
 
 
 class ReceiptItem(models.Model):
