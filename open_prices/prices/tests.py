@@ -50,6 +50,7 @@ class PriceQuerySetTest(TestCase):
             price=5,
             price_is_discounted=True,
             price_without_discount=10,
+            product_name="",
         )
         PriceFactory(
             type=price_constants.TYPE_PRODUCT, price=8, source="Open Prices Web App"
@@ -62,6 +63,7 @@ class PriceQuerySetTest(TestCase):
             price=10,
             date="2024-01-01",
             tags=["challenge-1"],
+            product_name="POMME VRAC",
         )
 
     def test_has_discount(self):
@@ -87,6 +89,10 @@ class PriceQuerySetTest(TestCase):
     def test_has_kind_consumption(self):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.has_kind_consumption().count(), 1)
+
+    def test_has_product_name(self):
+        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.has_product_name().count(), 1)
 
     def with_extra_fields(self):
         self.assertEqual(Price.objects.count(), 3)

@@ -52,6 +52,9 @@ class PriceQuerySet(models.QuerySet):
             proof__owner_consumption=True,
         )
 
+    def has_product_name(self):
+        return self.filter(product_name__isnull=False).exclude(product_name="")
+
     def with_extra_fields(self):
         return self.annotate(
             date_year_annotated=ExtractYear("date"),
