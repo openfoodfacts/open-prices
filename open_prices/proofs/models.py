@@ -677,6 +677,26 @@ class PriceTag(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def get_predicted_price(self):
+        if self.predictions.exists():
+            return self.predictions.first().data.get("price")
+        return None
+
+    def get_predicted_barcode(self):
+        if self.predictions.exists():
+            return self.predictions.first().data.get("barcode")
+        return None
+
+    def get_predicted_product(self):
+        if self.predictions.exists():
+            return self.predictions.first().data.get("product")
+        return None
+
+    def get_predicted_product_name(self):
+        if self.predictions.exists():
+            return self.predictions.first().data.get("product_name")
+        return None
+
 
 class PriceTagPrediction(models.Model):
     """A machine learning prediction for a price tag."""
@@ -794,7 +814,15 @@ class ReceiptItem(models.Model):
         auto_now=True, help_text="When the item was last updated"
     )
 
+    objects = models.Manager.from_queryset(ReceiptItemQuerySet)()
+
     class Meta:
         db_table = "receipt_items"
         verbose_name = "Receipt Item"
         verbose_name_plural = "Receipt Items"
+
+    def get_predicted_price(self):
+        return self.predicted_data.get("price")
+
+    def get_predicted_product_name(self):
+        return self.predicted_data.get("product_name")

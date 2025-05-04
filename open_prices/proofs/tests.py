@@ -935,7 +935,7 @@ class PriceTagQuerySetTest(TestCase):
         self.assertEqual(PriceTag.objects.has_price_product_name_empty().count(), 1)
 
 
-class PriceTagTest(TestCase):
+class PriceTagModelTest(TestCase):
     def test_create_price_tag_invalid_bounding_box_length(self):
         with self.assertRaises(ValidationError) as cm:
             PriceTagFactory(
@@ -1009,6 +1009,76 @@ class PriceTagTest(TestCase):
         price_tag.refresh_from_db()
         self.assertIsNone(price_tag.price_id)
         self.assertIsNone(price_tag.status)
+
+
+class PriceTagPropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price_tag_product = PriceTagFactory(
+            bounding_box=[0.1, 0.1, 0.2, 0.2],
+            proof=cls.proof,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_product,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={
+                "price": 3.5,
+                "barcode": "8052575090346",
+                "product": "other",
+                "product_name": "NOCCIOLATA BIANCA 250G",
+            },
+        )
+        cls.price_tag_category = PriceTagFactory(
+            bounding_box=[0.2, 0.2, 0.3, 0.3],
+            proof=cls.proof,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_category,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={
+                "price": 2.5,
+                "barcode": "",
+                "product": "en:tomatoes",
+                "product_name": "TOMATES",
+            },
+        )
+        cls.price_tag_empty = PriceTagFactory(
+            bounding_box=[0.3, 0.3, 0.4, 0.4],
+            proof=cls.proof,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_category,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={},
+        )
+
+    def test_get_predicted_price(self):
+        self.assertEqual(self.price_tag_product.get_predicted_price(), 3.5)
+        self.assertEqual(self.price_tag_category.get_predicted_price(), 2.5)
+        self.assertEqual(self.price_tag_empty.get_predicted_price(), None)
+
+    def test_get_predicted_barcode(self):
+        self.assertEqual(
+            self.price_tag_product.get_predicted_barcode(), "8052575090346"
+        )
+        self.assertEqual(self.price_tag_category.get_predicted_barcode(), "")
+        self.assertEqual(self.price_tag_empty.get_predicted_barcode(), None)
+
+    def test_get_predicted_product(self):
+        self.assertEqual(self.price_tag_product.get_predicted_product(), "other")
+        self.assertEqual(self.price_tag_category.get_predicted_product(), "en:tomatoes")
+        self.assertEqual(self.price_tag_empty.get_predicted_product(), None)
+
+    def test_get_predicted_product_name(self):
+        self.assertEqual(
+            self.price_tag_product.get_predicted_product_name(),
+            "NOCCIOLATA BIANCA 250G",
+        )
+        self.assertEqual(
+            self.price_tag_category.get_predicted_product_name(), "TOMATES"
+        )
+        self.assertEqual(self.price_tag_empty.get_predicted_product_name(), None)
 
 
 class PriceTagMatchingUtilsTest(TestCase):
@@ -1167,6 +1237,39 @@ class ReceiptItemQuerySetTest(TestCase):
             product_name="NOCCIOLATA BIANCA 250G"
         )
         self.assertEqual(ReceiptItem.objects.has_price_product_name_empty().count(), 1)
+
+
+class ReceiptItemPropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        cls.price = PriceFactory(
+            type=price_constants.TYPE_PRODUCT,
+            product_code="8052575090346",
+            price=3.5,
+            proof=cls.proof,
+            location=cls.proof.location,
+        )
+        cls.receipt_item = ReceiptItemFactory(
+            predicted_data={"product_name": "NOCCIOLATA BIANCA 250G", "price": 3.5},
+            proof=cls.proof,
+            price=cls.price,
+            status=proof_constants.ReceiptItemStatus.linked_to_price.value,
+        )
+        cls.receipt_item_empty = ReceiptItemFactory(
+            predicted_data={},
+            proof=cls.proof,
+        )
+
+    def test_get_predicted_price(self):
+        self.assertEqual(self.receipt_item.get_predicted_price(), 3.5)
+        self.assertEqual(self.receipt_item_empty.get_predicted_price(), None)
+
+    def test_get_predicted_product_name(self):
+        self.assertEqual(
+            self.receipt_item.get_predicted_product_name(), "NOCCIOLATA BIANCA 250G"
+        )
+        self.assertEqual(self.receipt_item_empty.get_predicted_product_name(), None)
 
 
 class ReceiptItemMatchingUtilsTest(TestCase):
