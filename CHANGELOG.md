@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.77.0](https://github.com/openfoodfacts/open-prices/compare/v1.76.1...v1.77.0) (2025-05-06)
+
+
+### Features
+
+* **Prices:** script to set missing product_name from PriceTag & ReceiptItem ([#829](https://github.com/openfoodfacts/open-prices/issues/829)) ([7c58b63](https://github.com/openfoodfacts/open-prices/commit/7c58b63ba04acc56c940e5d396ee0096334cc148))
+
+
+### Bug Fixes
+
+* **Prices:** fix script border case where PriceTag or ReceiptItem is not exactly linked to a price. ref [#829](https://github.com/openfoodfacts/open-prices/issues/829) ([8fdbba2](https://github.com/openfoodfacts/open-prices/commit/8fdbba22c68c06a5cb079c8da22872244a71fe93))
+
+
+### Technical
+
+* Add edit button to doc ([#825](https://github.com/openfoodfacts/open-prices/issues/825)) ([08a7066](https://github.com/openfoodfacts/open-prices/commit/08a7066c61a3db02adf01128228a6a5889d27ca1))
+* design promo ([#805](https://github.com/openfoodfacts/open-prices/issues/805)) ([a56fb94](https://github.com/openfoodfacts/open-prices/commit/a56fb9438235c03acf8f2536e06c0bb613c42716))
+* **Prices:** new has_product_name queryset. ref [#827](https://github.com/openfoodfacts/open-prices/issues/827) ([f50fed7](https://github.com/openfoodfacts/open-prices/commit/f50fed73e8500b9eb65df6d887bb23706429a7eb))
+* **Proofs:** new helper methods to easily access PriceTag & ReceiptItem predicted data. ref [#827](https://github.com/openfoodfacts/open-prices/issues/827) ([e846c89](https://github.com/openfoodfacts/open-prices/commit/e846c892c371e10b07fef21ba723dc331783969d))
+* **Proofs:** new PriceTag & ReceiptItem has_price_product_name_empty queryset. ref [#827](https://github.com/openfoodfacts/open-prices/issues/827) ([f3ef153](https://github.com/openfoodfacts/open-prices/commit/f3ef1538f45f38da406ffe61cedc9fcf5f2ab660))
+
 ## [1.76.1](https://github.com/openfoodfacts/open-prices/compare/v1.76.0...v1.76.1) (2025-04-29)
 
 
