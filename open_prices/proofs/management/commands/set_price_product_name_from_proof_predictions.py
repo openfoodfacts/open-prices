@@ -22,18 +22,20 @@ class Command(BaseCommand):
         stats()
 
         # Step 1: PriceTag
-        for (
-            price_tag
-        ) in PriceTag.objects.status_linked_to_price().has_price_product_name_empty():
+        for price_tag in (
+            PriceTag.objects.status_linked_to_price()
+            .exclude(price__isnull=True)
+            .has_price_product_name_empty()
+        ):
             if price_tag.get_predicted_product_name():
                 price_tag.price.product_name = price_tag.get_predicted_product_name()
                 price_tag.price.save(update_fields=["product_name"])
 
         # Step 2: ReceiptItem
-        for (
-            receipt_item
-        ) in (
-            ReceiptItem.objects.status_linked_to_price().has_price_product_name_empty()
+        for receipt_item in (
+            ReceiptItem.objects.status_linked_to_price()
+            .exclude(price__isnull=True)
+            .has_price_product_name_empty()
         ):
             if receipt_item.get_predicted_product_name():
                 receipt_item.price.product_name = (
