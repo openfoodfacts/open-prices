@@ -139,7 +139,7 @@ class PriceQuerySetTest(TestCase):
             },
         )
 
-    def test_has_tags(self):
+    def test_has_tag(self):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.has_tag("challenge-1").count(), 1)
         self.assertEqual(Price.objects.has_tag("unknown").count(), 0)

@@ -526,6 +526,9 @@ class PriceTagQuerySet(models.QuerySet):
             Q(price__product_name=None) | Q(price__product_name="")
         )
 
+    def has_tag(self, tag: str):
+        return self.filter(tags__contains=[tag])
+
 
 class PriceTag(models.Model):
     """A single price tag in a proof."""
@@ -583,6 +586,8 @@ class PriceTag(models.Model):
         null=True,
         blank=True,
     )
+
+    tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
 
     created = models.DateTimeField(
         default=timezone.now, help_text="When the tag was created in DB"
@@ -676,6 +681,14 @@ class PriceTag(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def set_tag(self, tag: str, save: bool = True):
+        if tag not in self.tags:
+            self.tags.append(tag)
+            if save:
+                self.save(update_fields=["tags"])
+            return True
+        return False
 
     def get_predicted_price(self):
         if self.predictions.exists():

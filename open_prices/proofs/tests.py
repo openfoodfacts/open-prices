@@ -142,7 +142,7 @@ class ProofQuerySetTest(TestCase):
         self.assertEqual(proof.price_count_annotated, 1)
         self.assertEqual(proof.price_count, 1)
 
-    def test_has_tags(self):
+    def test_has_tag(self):
         self.assertEqual(Proof.objects.count(), 4)
         self.assertEqual(Proof.objects.has_tag("challenge-1").count(), 1)
         self.assertEqual(Proof.objects.has_tag("unknown").count(), 0)
@@ -904,6 +904,7 @@ class PriceTagQuerySetTest(TestCase):
             proof=cls.proof,
             price=cls.price_product,
             status=proof_constants.PriceTagStatus.linked_to_price.value,
+            tags=["prediction-found-product"],
         )
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
@@ -933,6 +934,13 @@ class PriceTagQuerySetTest(TestCase):
         self.assertEqual(PriceTag.objects.has_price_product_name_empty().count(), 2)
         Price.objects.filter(id=self.price_product.id).update(product_name="NAME")
         self.assertEqual(PriceTag.objects.has_price_product_name_empty().count(), 1)
+
+    def test_has_tag(self):
+        self.assertEqual(PriceTag.objects.count(), 2)
+        self.assertEqual(
+            PriceTag.objects.has_tag("prediction-found-product").count(), 1
+        )
+        self.assertEqual(PriceTag.objects.has_tag("unknown").count(), 0)
 
 
 class PriceTagModelTest(TestCase):
