@@ -197,6 +197,9 @@ class ChallengePropertyTest(TestCase):
                 product=cls.product_8001505005707,
                 proof=cls.proof_in_challenge,
             )
+            PriceFactory(
+                category_tag="en:breakfasts",
+            )
         # create the challenge afterwards
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True,
@@ -209,11 +212,11 @@ class ChallengePropertyTest(TestCase):
         self.assertEqual(Price.objects.count(), 2)
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
-        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
 
     def test_set_proof_tags(self):
         self.assertEqual(Proof.objects.count(), 2)
         self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()
-        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 2)

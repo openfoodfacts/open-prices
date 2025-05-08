@@ -166,6 +166,7 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
             cls.price_13 = PriceFactory(
                 product_code="8850187002197", product=cls.product_8850187002197
             )
+            cls.price_14 = PriceFactory(category_tag="en:breakfasts")
 
         with freeze_time("2025-01-30 22:00:00"):  # last day of the challenge
             cls.price_21 = PriceFactory()
@@ -186,21 +187,21 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
             )
 
     def test_in_challenge_queryset(self):
-        self.assertEqual(Price.objects.count(), 9)
+        self.assertEqual(Price.objects.count(), 10)
         self.assertEqual(
-            Price.objects.in_challenge(self.challenge_ongoing).count(), 1 + 1
+            Price.objects.in_challenge(self.challenge_ongoing).count(), 1 + 1 + 1
         )
 
     def test_in_challenge_property(self):
         for price in Price.objects.all():
-            if price in [self.price_12, self.price_22]:
+            if price in [self.price_12, self.price_22, self.price_14]:
                 self.assertEqual(price.in_challenge(self.challenge_ongoing), True)
             else:
                 self.assertEqual(price.in_challenge(self.challenge_ongoing), False)
 
     def test_on_create_signal(self):
         for price in Price.objects.all():  # refresh_from_db
-            if price in [self.price_12, self.price_22]:
+            if price in [self.price_12, self.price_22, self.price_14]:
                 self.assertIn(f"challenge-{self.challenge_ongoing.id}", price.tags)
             else:
                 self.assertNotIn(f"challenge-{self.challenge_ongoing.id}", price.tags)

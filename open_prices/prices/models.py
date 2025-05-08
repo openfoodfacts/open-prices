@@ -102,7 +102,11 @@ class PriceQuerySet(models.QuerySet):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
-        return self.select_related("product").filter(
+        return self.filter(
+            created__gte=challenge.start_date_with_time,
+            created__lte=challenge.end_date_with_time,
+            category_tag__in=challenge.categories,
+        ) or self.select_related("product").filter(
             created__gte=challenge.start_date_with_time,
             created__lte=challenge.end_date_with_time,
             product__categories_tags__overlap=challenge.categories,
@@ -603,10 +607,17 @@ class Price(models.Model):
         return False
 
     def in_challenge(self, challenge: Challenge):
+        is_category_matching = False
+        if self.product:
+            is_category_matching = bool(
+                set(self.product.categories_tags) & set(challenge.categories)
+            )
+        elif self.category_tag in challenge.categories:
+            is_category_matching = True
         return (
             self.created >= challenge.start_date_with_time
             and self.created <= challenge.end_date_with_time
-            and bool(set(self.product.categories_tags) & set(challenge.categories))
+            and is_category_matching
         )
 
 
