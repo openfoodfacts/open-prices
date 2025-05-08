@@ -5,6 +5,7 @@ from freezegun import freeze_time
 from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.challenges.models import Challenge
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.products.factories import ProductFactory
@@ -198,7 +199,9 @@ class ChallengePropertyTest(TestCase):
                 proof=cls.proof_in_challenge,
             )
             PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
                 category_tag="en:breakfasts",
+                price_per=price_constants.PRICE_PER_UNIT,
             )
         # create the challenge afterwards
         cls.challenge_ongoing = ChallengeFactory(

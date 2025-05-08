@@ -166,7 +166,11 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
             cls.price_13 = PriceFactory(
                 product_code="8850187002197", product=cls.product_8850187002197
             )
-            cls.price_14 = PriceFactory(category_tag="en:breakfasts")
+            cls.price_14 = PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:breakfasts",
+                price_per=price_constants.PRICE_PER_UNIT,
+            )
 
         with freeze_time("2025-01-30 22:00:00"):  # last day of the challenge
             cls.price_21 = PriceFactory()
