@@ -202,6 +202,7 @@ class ChallengePropertyTest(TestCase):
                 type=price_constants.TYPE_CATEGORY,
                 category_tag="en:breakfasts",
                 price_per=price_constants.PRICE_PER_UNIT,
+                proof=cls.proof_in_challenge,
             )
         # create the challenge afterwards
         cls.challenge_ongoing = ChallengeFactory(

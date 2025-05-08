@@ -102,15 +102,17 @@ class PriceQuerySet(models.QuerySet):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
-        return self.filter(
+        category_tag_in_challenge = self.filter(
             created__gte=challenge.start_date_with_time,
             created__lte=challenge.end_date_with_time,
             category_tag__in=challenge.categories,
-        ) or self.select_related("product").filter(
+        )
+        product_category_tags_in_challenge = self.select_related("product").filter(
             created__gte=challenge.start_date_with_time,
             created__lte=challenge.end_date_with_time,
             product__categories_tags__overlap=challenge.categories,
         )
+        return category_tag_in_challenge | product_category_tags_in_challenge
 
 
 class Price(models.Model):
