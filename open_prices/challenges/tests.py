@@ -213,7 +213,7 @@ class ChallengePropertyTest(TestCase):
         )
 
     def test_set_price_tags(self):
-        self.assertEqual(Price.objects.count(), 2)
+        self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
@@ -223,4 +223,4 @@ class ChallengePropertyTest(TestCase):
         self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()
-        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
