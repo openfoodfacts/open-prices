@@ -436,6 +436,7 @@ class PriceTagListApiTest(TestCase):
             proof=cls.proof,
             price=cls.price,
             status=proof_constants.PriceTagStatus.linked_to_price.value,
+            tags=["prediction-found-product"],
         )
         cls.price_tag_2 = PriceTagFactory(proof=cls.proof)
         cls.price_tag_3 = PriceTagFactory(
@@ -478,6 +479,14 @@ class PriceTagListApiTest(TestCase):
         # Price tag 1 is linked to price, price tag 3 is deleted, so only
         # price tag 2 is returned
         self.assertEqual(response.data["items"][0]["id"], self.price_tag_2.id)
+
+    def test_price_list_filter_by_tags(self):
+        url = self.url + "?tags__contains=prediction-found-product"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["tags"], ["prediction-found-product"]
+        )
 
 
 class PriceTagDetailApiTest(TestCase):
