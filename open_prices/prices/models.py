@@ -614,18 +614,26 @@ class Price(models.Model):
             return True
         return False
 
+    def has_category_tag(self, category_tag_list: list):
+        if (
+            self.type == price_constants.TYPE_CATEGORY
+            and self.category_tag in category_tag_list
+        ):
+            return True
+        elif (
+            self.type == price_constants.TYPE_PRODUCT
+            and self.product
+            and self.product.categories_tags
+        ):
+            if set(self.product.categories_tags) & set(category_tag_list):
+                return True
+        return False
+
     def in_challenge(self, challenge: Challenge):
-        is_category_matching = False
-        if self.product:
-            is_category_matching = bool(
-                set(self.product.categories_tags) & set(challenge.categories)
-            )
-        elif self.category_tag in challenge.categories:
-            is_category_matching = True
         return (
             self.created >= challenge.start_date_with_time
             and self.created <= challenge.end_date_with_time
-            and is_category_matching
+            and self.has_category_tag(challenge.categories)
         )
 
 
