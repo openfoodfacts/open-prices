@@ -4,7 +4,7 @@ import functools
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import Avg, Case, Count, F, Max, Min, Value, When, signals
+from django.db.models import Avg, Case, Count, F, Max, Min, Q, Value, When, signals
 from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
 from django.utils import timezone
@@ -102,10 +102,22 @@ class PriceQuerySet(models.QuerySet):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
-        return self.select_related("product").filter(
-            created__gte=challenge.start_date_with_time,
-            created__lte=challenge.end_date_with_time,
-            product__categories_tags__overlap=challenge.categories,
+        return (
+            self.select_related("product")
+            .filter(
+                created__gte=challenge.start_date_with_time,
+                created__lte=challenge.end_date_with_time,
+            )
+            .filter(
+                Q(
+                    type=price_constants.TYPE_CATEGORY,
+                    category_tag__in=challenge.categories,
+                )
+                | Q(
+                    type=price_constants.TYPE_PRODUCT,
+                    product__categories_tags__overlap=challenge.categories,
+                )
+            )
         )
 
 
@@ -602,11 +614,26 @@ class Price(models.Model):
             return True
         return False
 
+    def has_category_tag(self, category_tag_list: list):
+        if (
+            self.type == price_constants.TYPE_CATEGORY
+            and self.category_tag in category_tag_list
+        ):
+            return True
+        elif (
+            self.type == price_constants.TYPE_PRODUCT
+            and self.product
+            and self.product.categories_tags
+        ):
+            if set(self.product.categories_tags) & set(category_tag_list):
+                return True
+        return False
+
     def in_challenge(self, challenge: Challenge):
         return (
             self.created >= challenge.start_date_with_time
             and self.created <= challenge.end_date_with_time
-            and bool(set(self.product.categories_tags) & set(challenge.categories))
+            and self.has_category_tag(challenge.categories)
         )
 
 

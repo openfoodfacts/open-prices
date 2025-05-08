@@ -5,6 +5,7 @@ from freezegun import freeze_time
 from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.challenges.models import Challenge
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.products.factories import ProductFactory
@@ -197,6 +198,12 @@ class ChallengePropertyTest(TestCase):
                 product=cls.product_8001505005707,
                 proof=cls.proof_in_challenge,
             )
+            PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:breakfasts",
+                price_per=price_constants.PRICE_PER_UNIT,
+                proof=cls.proof_in_challenge,
+            )
         # create the challenge afterwards
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True,
@@ -206,10 +213,10 @@ class ChallengePropertyTest(TestCase):
         )
 
     def test_set_price_tags(self):
-        self.assertEqual(Price.objects.count(), 2)
+        self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
-        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
 
     def test_set_proof_tags(self):
         self.assertEqual(Proof.objects.count(), 2)
