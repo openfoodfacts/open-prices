@@ -3,9 +3,25 @@ from django.core.management.base import BaseCommand
 from open_prices.prices.models import Price
 from open_prices.proofs.models import PriceTag, ReceiptItem
 
+price_tag_qs = (
+    PriceTag.objects.status_linked_to_price()
+    .exclude(price__isnull=True)
+    .has_price_product_name_empty()
+)
+receipt_item_qs = (
+    ReceiptItem.objects.status_linked_to_price()
+    .exclude(price__isnull=True)
+    .has_price_product_name_empty()
+)
+
 
 def stats():
     print("Prices with product_name:", Price.objects.has_product_name().count())
+    print("PriceTag with a price without a product_name:", price_tag_qs.all().count())
+    print(
+        "ReceiptItem with a price without a product_name:",
+        receipt_item_qs.all().count(),
+    )
 
 
 class Command(BaseCommand):
@@ -22,21 +38,15 @@ class Command(BaseCommand):
         stats()
 
         # Step 1: PriceTag
-        for price_tag in (
-            PriceTag.objects.status_linked_to_price()
-            .exclude(price__isnull=True)
-            .has_price_product_name_empty()
-        ):
+        self.stdout.write("=== Running script on PriceTags...")
+        for price_tag in price_tag_qs.all():
             if price_tag.get_predicted_product_name():
                 price_tag.price.product_name = price_tag.get_predicted_product_name()
                 price_tag.price.save(update_fields=["product_name"])
 
         # Step 2: ReceiptItem
-        for receipt_item in (
-            ReceiptItem.objects.status_linked_to_price()
-            .exclude(price__isnull=True)
-            .has_price_product_name_empty()
-        ):
+        self.stdout.write("=== Running script on ReceiptItems...")
+        for receipt_item in receipt_item_qs.all():
             if receipt_item.get_predicted_product_name():
                 receipt_item.price.product_name = (
                     receipt_item.get_predicted_product_name()
