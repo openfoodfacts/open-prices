@@ -9,6 +9,7 @@ from openfoodfacts import Flavor
 from open_prices.api.locations.serializers import LocationSerializer
 from open_prices.api.prices.serializers import PriceSerializer
 from open_prices.api.proofs.serializers import ProofSerializer
+from open_prices.challenges.models import Challenge
 from open_prices.common.openfoodfacts import import_product_db
 from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
@@ -111,6 +112,12 @@ def moderation_tasks():
     moderation_rules.cleanup_products_with_invalid_barcodes()
 
 
+def challenge_tasks():
+    for challenge in Challenge.objects.all():
+        challenge.set_price_tags()
+        challenge.set_proof_tags()
+
+
 def dump_db_task():
     """
     Dump the database as JSONL files to the data directory
@@ -134,6 +141,7 @@ CRON_SCHEDULES = {
     "update_total_stats_task": "0 1 * * *",  # daily at 01:00
     "fix_proof_fields_task": "10 1 * * *",  # daily at 01:10
     "moderation_tasks": "20 1 * * *",  # daily at 01:20
+    "challenge_tasks": "20 1 * * *",  # daily at 01:30
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
     "update_location_counts_task": "10 2 * * 1",  # every start of the week
     "update_product_counts_task": "20 2 * * 1",  # every start of the week
