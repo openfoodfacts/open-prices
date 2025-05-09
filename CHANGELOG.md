@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.78.0](https://github.com/openfoodfacts/open-prices/compare/v1.77.0...v1.78.0) (2025-05-09)
+
+
+### Features
+
+* **Challenges:** new task to set Price & Proof tag every night ([#837](https://github.com/openfoodfacts/open-prices/issues/837)) ([20beab1](https://github.com/openfoodfacts/open-prices/commit/20beab1b2a10486b553b25f217e96abb93996074))
+* **Price Tags:** API: new filter by tags (contains) ([#835](https://github.com/openfoodfacts/open-prices/issues/835)) ([5a9e049](https://github.com/openfoodfacts/open-prices/commit/5a9e049075f9695d605c35c44367159699eba7b4))
+* **Price Tags:** new tags field (arrayfield) ([#834](https://github.com/openfoodfacts/open-prices/issues/834)) ([5ccd096](https://github.com/openfoodfacts/open-prices/commit/5ccd0968dfb5b958b755cd5e9b55752352e6a316))
+
+
+### Bug Fixes
+
+* **Prices:** also look at category_tag for in_challenge checks ([#832](https://github.com/openfoodfacts/open-prices/issues/832)) ([5501cbe](https://github.com/openfoodfacts/open-prices/commit/5501cbeb1a52714dafaa393a6b5b0e2da7f0bb1e))
+
+
+### Technical
+
+* **Prices:** add extra prints in product_name script. ref [#829](https://github.com/openfoodfacts/open-prices/issues/829) ([82708f4](https://github.com/openfoodfacts/open-prices/commit/82708f4a5188e5f5781e23d2a2128ebf4ac8886e))
+* **Proofs:** improve PriceTag & ReceiptItem matching script performance ([#836](https://github.com/openfoodfacts/open-prices/issues/836)) ([4f57374](https://github.com/openfoodfacts/open-prices/commit/4f57374f077b78feafe4d55f7e5947897621afc9))
+* **Proofs:** use existing product for tests ([682e854](https://github.com/openfoodfacts/open-prices/commit/682e8542d73ac1b5180ae338e467843894edb207))
+
 ## [1.77.0](https://github.com/openfoodfacts/open-prices/compare/v1.76.1...v1.77.0) (2025-05-06)
 
 
