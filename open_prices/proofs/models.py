@@ -70,7 +70,14 @@ class ProofQuerySet(models.QuerySet):
         )
 
     def with_stats(self):
-        return self.annotate(price_count_annotated=Count("prices", distinct=True))
+        return (
+            self.prefetch_related("prices", "price_tags", "receipt_items")
+            .annotate(price_count_annotated=Count("prices", distinct=True))
+            .annotate(price_tag_count_annotated=Count("price_tags", distinct=True))
+            .annotate(
+                receipt_item_count_annotated=Count("receipt_items", distinct=True)
+            )
+        )
 
     def has_tag(self, tag: str):
         return self.filter(tags__contains=[tag])

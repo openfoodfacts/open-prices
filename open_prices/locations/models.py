@@ -22,7 +22,9 @@ class LocationQuerySet(models.QuerySet):
         return self.filter(price_count__gt=0)
 
     def with_stats(self):
-        return self.annotate(price_count_annotated=Count("prices", distinct=True))
+        return self.prefetch_related("prices").annotate(
+            price_count_annotated=Count("prices", distinct=True)
+        )
 
 
 class Location(models.Model):
