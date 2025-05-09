@@ -87,9 +87,11 @@ class ProofQuerySetTest(TestCase):
         cls.proof_without_price_1 = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG, source="Open Prices Web App"
         )
+        PriceTagFactory(proof=cls.proof_without_price_1)
         cls.proof_without_price_2 = ProofFactory(
             type=proof_constants.TYPE_RECEIPT, source="Open Prices Web App"
         )
+        ReceiptItemFactory(proof=cls.proof_without_price_2)
         cls.proof_without_price_3 = ProofFactory(
             type=proof_constants.TYPE_RECEIPT,
             owner_consumption=True,
@@ -138,9 +140,18 @@ class ProofQuerySetTest(TestCase):
         proof = Proof.objects.with_stats().get(id=self.proof_without_price_1.id)
         self.assertEqual(proof.price_count_annotated, 0)
         self.assertEqual(proof.price_count, 0)
+        self.assertEqual(proof.price_tag_count_annotated, 1)
+        self.assertEqual(proof.receipt_item_count_annotated, 0)
+        proof = Proof.objects.with_stats().get(id=self.proof_without_price_2.id)
+        self.assertEqual(proof.price_count_annotated, 0)
+        self.assertEqual(proof.price_count, 0)
+        self.assertEqual(proof.price_tag_count_annotated, 0)
+        self.assertEqual(proof.receipt_item_count_annotated, 1)
         proof = Proof.objects.with_stats().get(id=self.proof_with_price.id)
         self.assertEqual(proof.price_count_annotated, 1)
         self.assertEqual(proof.price_count, 1)
+        self.assertEqual(proof.price_tag_count_annotated, 0)
+        self.assertEqual(proof.receipt_item_count_annotated, 0)
 
     def test_has_tag(self):
         self.assertEqual(Proof.objects.count(), 4)
