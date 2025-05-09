@@ -1,5 +1,6 @@
 import decimal
 
+import openfoodfacts
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -758,6 +759,29 @@ class PriceTagPrediction(models.Model):
 
     def __str__(self):
         return f"{self.price_tag} - {self.model_name} - {self.model_version}"
+
+    def has_predicted_barcode_valid(self):
+        if self.data.get("barcode"):
+            barcode = self.data.get("barcode")
+            if openfoodfacts.barcode.has_valid_check_digit(barcode):
+                return True
+        return False
+
+    def has_predicted_barcode_valid_and_product_exists(self):
+        from open_prices.products.models import Product
+
+        if self.has_predicted_barcode_valid():
+            barcode = self.data.get("barcode")
+            if Product.objects.filter(code=barcode).exists():
+                return True
+        return False
+
+    def has_predicted_product_valid(self):
+        if self.data.get("product"):
+            category_tag = self.data.get("product")
+            if category_tag.startswith("en:"):
+                return True
+        return False
 
 
 @receiver(signals.post_save, sender=PriceTagPrediction)
