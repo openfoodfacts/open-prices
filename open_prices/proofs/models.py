@@ -1,6 +1,5 @@
 import decimal
 
-import openfoodfacts
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -12,7 +11,9 @@ from django.utils import timezone
 from django_q.tasks import async_task
 
 from open_prices.challenges.models import Challenge
-from open_prices.common import constants, utils
+from open_prices.common import constants
+from open_prices.common import openfoodfacts as common_openfoodfacts
+from open_prices.common import utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
 
@@ -778,7 +779,7 @@ class PriceTagPrediction(models.Model):
     def has_predicted_barcode_valid(self):
         if self.data.get("barcode"):
             barcode = self.data.get("barcode")
-            if openfoodfacts.barcode.has_valid_check_digit(barcode):
+            if common_openfoodfacts.barcode_is_valid(barcode):
                 return True
         return False
 
