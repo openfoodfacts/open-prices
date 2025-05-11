@@ -698,6 +698,20 @@ class PriceTag(models.Model):
             return True
         return False
 
+    def update_tags(self):
+        changes = False
+        # prediction tags
+        if self.predictions.exists():
+            prediction = self.predictions.first()
+            if prediction.has_predicted_barcode_valid():
+                changes = self.set_tag("prediction-barcode-valid", save=False)
+            if prediction.has_predicted_product_exists():
+                changes = self.set_tag("prediction-product-exists", save=False)
+            if prediction.has_predicted_category_tag_valid():
+                changes = self.set_tag("prediction-category-tag-valid", save=False)
+        if changes:
+            self.save(update_fields=["tags"])
+
     def get_predicted_price(self):
         if self.predictions.exists():
             return self.predictions.first().data.get("price")
@@ -810,12 +824,7 @@ def price_tag_prediction_post_create_update_price_tag_tags(
 ):
     if created:
         if instance.price_tag_id:
-            if instance.has_predicted_barcode_valid():
-                instance.price_tag.set_tag("prediction-barcode-valid", save=True)
-            if instance.has_predicted_product_exists():
-                instance.price_tag.set_tag("prediction-product-exists", save=True)
-            if instance.has_predicted_category_tag_valid():
-                instance.price_tag.set_tag("prediction-category-tag-valid", save=True)
+            instance.price_tag.update_tags()
 
 
 class ReceiptItemQuerySet(models.QuerySet):
