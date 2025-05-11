@@ -1058,7 +1058,7 @@ class PriceTagPropertyTest(TestCase):
             data={
                 "price": 2.5,
                 "barcode": "",
-                "product": "en:tomatoes",
+                "product": "en:tomatoes",  # category_tag
                 "product_name": "TOMATES",
             },
         )
@@ -1100,6 +1100,79 @@ class PriceTagPropertyTest(TestCase):
         self.assertEqual(self.price_tag_empty.get_predicted_product_name(), None)
 
 
+class PriceTagPredictionPropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        ProductFactory(**PRODUCT_8001505005707)
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price_tag_product = PriceTagFactory(
+            bounding_box=[0.1, 0.1, 0.2, 0.2],
+            proof=cls.proof,
+        )
+        cls.price_tag_product_prediction = PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_product,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={
+                "price": 10,
+                "barcode": "8001505005707",
+                "product": "other",
+                "product_name": "NOCCIOLATA 700G",
+            },
+        )
+        cls.price_tag_category = PriceTagFactory(
+            bounding_box=[0.2, 0.2, 0.3, 0.3],
+            proof=cls.proof,
+        )
+        cls.price_tag_category_prediction = PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_category,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={
+                "price": 2.5,
+                "barcode": "",
+                "product": "en:tomatoes",  # category_tag
+                "product_name": "TOMATES",
+            },
+        )
+        cls.price_tag_empty = PriceTagFactory(
+            bounding_box=[0.3, 0.3, 0.4, 0.4],
+            proof=cls.proof,
+        )
+        cls.price_tag_empty_prediction = PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_category,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            data={},
+        )
+
+    def test_has_predicted_barcode_valid(self):
+        self.assertTrue(self.price_tag_product_prediction.has_predicted_barcode_valid())
+        self.assertFalse(
+            self.price_tag_category_prediction.has_predicted_barcode_valid()
+        )
+        self.assertFalse(self.price_tag_empty_prediction.has_predicted_barcode_valid())
+
+    def test_has_predicted_barcode_valid_and_product_exists(self):
+        self.assertTrue(
+            self.price_tag_product_prediction.has_predicted_barcode_valid_and_product_exists()
+        )
+        self.assertFalse(
+            self.price_tag_category_prediction.has_predicted_barcode_valid_and_product_exists()
+        )
+        self.assertFalse(
+            self.price_tag_empty_prediction.has_predicted_barcode_valid_and_product_exists()
+        )
+
+    def test_has_predicted_category_tag_valid(self):
+        self.assertFalse(
+            self.price_tag_product_prediction.has_predicted_category_tag_valid()
+        )
+        self.assertTrue(
+            self.price_tag_category_prediction.has_predicted_category_tag_valid()
+        )
+        self.assertFalse(
+            self.price_tag_empty_prediction.has_predicted_category_tag_valid()
+        )
+
+
 class PriceTagMatchingUtilsTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -1127,7 +1200,12 @@ class PriceTagMatchingUtilsTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-            data={"price": 2.5, "barcode": "", "product": "en:tomatoes"},
+            data={
+                "price": 2.5,
+                "barcode": "",
+                "product": "en:tomatoes",  # category_tag
+                "product_name": "TOMATES",
+            },
         )
         cls.price_category = PriceFactory(
             type=price_constants.TYPE_CATEGORY,
