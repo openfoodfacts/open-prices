@@ -1,10 +1,10 @@
 """
 A list of rules, to clean up the data
 """
-import openfoodfacts
 from django.db.models import Q
 from django.db.models.functions import Length
 
+from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.prices import constants as price_constants
 from open_prices.products.models import Product
 
@@ -64,7 +64,7 @@ def cleanup_products_with_invalid_barcodes():
     product_code_invalid_list = [
         code
         for code in product_code_list
-        if not openfoodfacts.barcode.has_valid_check_digit(code)
+        if not common_openfoodfacts.barcode_is_valid(code)
     ]
     product_queryset = Product.objects.filter(code__in=product_code_invalid_list)
     print(f"Found {product_queryset.count()} products with invalid barcodes")

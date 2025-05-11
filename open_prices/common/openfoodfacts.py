@@ -1,5 +1,6 @@
 import datetime
 
+import openfoodfacts
 import requests
 import tqdm
 from django.conf import settings
@@ -268,3 +269,11 @@ def import_product_db(
         fields=OFF_UPDATE_FIELDS,
     )
     print(f"Products: {added_count} added, {updated_count} updated. Done!")
+
+
+def barcode_is_valid(barcode: str) -> bool:
+    return (
+        barcode.isnumeric()
+        and len(barcode) >= 6
+        and openfoodfacts.barcode.has_valid_check_digit(barcode)
+    )
