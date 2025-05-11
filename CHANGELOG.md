@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.79.1](https://github.com/openfoodfacts/open-prices/compare/v1.79.0...v1.79.1) (2025-05-11)
+
+
+### Technical
+
+* **OpenFoodFacts:** create a dedicated barcode_is_valid method ([#844](https://github.com/openfoodfacts/open-prices/issues/844)) ([6b9aa55](https://github.com/openfoodfacts/open-prices/commit/6b9aa55451e97568f99c8cba1e959eefbb16743d))
+
 ## [1.79.0](https://github.com/openfoodfacts/open-prices/compare/v1.78.0...v1.79.0) (2025-05-11)
 
 
