@@ -795,6 +795,20 @@ def price_tag_prediction_post_create_increment_counts(
             )
 
 
+@receiver(signals.post_save, sender=PriceTagPrediction)
+def price_tag_prediction_post_create_update_price_tag_tags(
+    sender, instance, created, **kwargs
+):
+    if created:
+        if instance.price_tag_id:
+            if instance.has_predicted_barcode_valid():
+                instance.price_tag.set_tag("prediction-barcode-valid", save=True)
+                if instance.has_predicted_barcode_valid_and_product_exists():
+                    instance.price_tag.set_tag("prediction-product-exists", save=True)
+            if instance.has_predicted_category_tag_valid():
+                instance.price_tag.set_tag("prediction-category-tag-valid", save=True)
+
+
 class ReceiptItemQuerySet(models.QuerySet):
     def status_unknown(self):
         return self.filter(status=None)
