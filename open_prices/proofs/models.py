@@ -709,6 +709,7 @@ class PriceTag(models.Model):
                 changes = self.set_tag("prediction-product-exists", save=False)
             if prediction.has_predicted_category_tag_valid():
                 changes = self.set_tag("prediction-category-tag-valid", save=False)
+        # save
         if changes:
             self.save(update_fields=["tags"])
 

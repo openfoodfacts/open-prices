@@ -614,6 +614,24 @@ class Price(models.Model):
             return True
         return False
 
+    def update_tags(self):
+        changes = False
+        # challenge tags (only if ongoing)
+        challenge_qs = Challenge.objects.is_ongoing()
+        if challenge_qs.exists():
+            for challenge in challenge_qs:
+                if self.in_challenge(challenge):
+                    # update the price
+                    success = self.set_tag(challenge.tag, save=False)
+                    if success:
+                        changes = True
+                    # update the price's proof
+                    if self.proof:
+                        self.proof.set_tag(challenge.tag, save=True)  # important
+        # save
+        if changes:
+            self.save(update_fields=["tags"])
+
     def has_category_tag(self, category_tag_list: list):
         if (
             self.type == price_constants.TYPE_CATEGORY
