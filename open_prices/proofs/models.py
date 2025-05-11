@@ -710,7 +710,7 @@ class PriceTag(models.Model):
 
     def get_predicted_product(self):
         if self.predictions.exists():
-            return self.predictions.first().data.get("product")
+            return self.predictions.first().data.get("product")  # category_tag
         return None
 
     def get_predicted_product_name(self):
@@ -767,6 +767,15 @@ class PriceTagPrediction(models.Model):
                 return True
         return False
 
+    def has_predicted_product_exists(self):
+        from open_prices.products.models import Product
+
+        if self.data.get("barcode"):
+            barcode = self.data.get("barcode")
+            if Product.objects.filter(code=barcode).exists():
+                return True
+        return False
+
     def has_predicted_barcode_valid_and_product_exists(self):
         from open_prices.products.models import Product
 
@@ -803,8 +812,8 @@ def price_tag_prediction_post_create_update_price_tag_tags(
         if instance.price_tag_id:
             if instance.has_predicted_barcode_valid():
                 instance.price_tag.set_tag("prediction-barcode-valid", save=True)
-                if instance.has_predicted_barcode_valid_and_product_exists():
-                    instance.price_tag.set_tag("prediction-product-exists", save=True)
+            if instance.has_predicted_product_exists():
+                instance.price_tag.set_tag("prediction-product-exists", save=True)
             if instance.has_predicted_category_tag_valid():
                 instance.price_tag.set_tag("prediction-category-tag-valid", save=True)
 

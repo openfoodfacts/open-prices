@@ -1176,6 +1176,15 @@ class PriceTagPredictionTest(TestCase):
         )
         self.assertFalse(self.price_tag_empty_prediction.has_predicted_barcode_valid())
 
+    def test_has_predicted_product_exists(self):
+        self.assertTrue(
+            self.price_tag_product_prediction.has_predicted_product_exists()
+        )
+        self.assertFalse(
+            self.price_tag_category_prediction.has_predicted_product_exists()
+        )
+        self.assertFalse(self.price_tag_empty_prediction.has_predicted_product_exists())
+
     def test_has_predicted_barcode_valid_and_product_exists(self):
         self.assertTrue(
             self.price_tag_product_prediction.has_predicted_barcode_valid_and_product_exists()
