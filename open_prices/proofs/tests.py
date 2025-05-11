@@ -1033,6 +1033,7 @@ class PriceTagModelTest(TestCase):
 class PriceTagPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        ProductFactory(**PRODUCT_8001505005707)
         cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
         cls.price_tag_product = PriceTagFactory(
             bounding_box=[0.1, 0.1, 0.2, 0.2],
@@ -1100,7 +1101,7 @@ class PriceTagPropertyTest(TestCase):
         self.assertEqual(self.price_tag_empty.get_predicted_product_name(), None)
 
 
-class PriceTagPredictionPropertyTest(TestCase):
+class PriceTagPredictionTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         ProductFactory(**PRODUCT_8001505005707)
@@ -1138,10 +1139,35 @@ class PriceTagPredictionPropertyTest(TestCase):
             proof=cls.proof,
         )
         cls.price_tag_empty_prediction = PriceTagPrediction.objects.create(
-            price_tag=cls.price_tag_category,
+            price_tag=cls.price_tag_empty,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             data={},
         )
+        cls.price_tag_without = PriceTagFactory(
+            bounding_box=[0.4, 0.4, 0.5, 0.5],
+            proof=cls.proof,
+        )
+
+    def test_on_create_signal(self):
+        # price_tag.prediction_count
+        for price_tag in PriceTag.objects.all():  # refresh_from_db
+            if price_tag in [self.price_tag_without]:
+                self.assertEqual(price_tag.prediction_count, 0)
+            else:
+                self.assertEqual(price_tag.prediction_count, 1)
+        # price_tag.tags
+        self.assertIn("prediction-barcode-valid", self.price_tag_product.tags)
+        self.assertIn("prediction-product-exists", self.price_tag_product.tags)
+        self.assertNotIn("prediction-category-tag-valid", self.price_tag_product.tags)
+        self.assertNotIn("prediction-barcode-valid", self.price_tag_category.tags)
+        self.assertNotIn("prediction-product-exists", self.price_tag_category.tags)
+        self.assertIn("prediction-category-tag-valid", self.price_tag_category.tags)
+        self.assertNotIn("prediction-barcode-valid", self.price_tag_empty.tags)
+        self.assertNotIn("prediction-product-exists", self.price_tag_empty.tags)
+        self.assertNotIn("prediction-category-tag-valid", self.price_tag_empty.tags)
+        self.assertNotIn("prediction-barcode-valid", self.price_tag_without.tags)
+        self.assertNotIn("prediction-product-exists", self.price_tag_without.tags)
+        self.assertNotIn("prediction-category-tag-valid", self.price_tag_without.tags)
 
     def test_has_predicted_barcode_valid(self):
         self.assertTrue(self.price_tag_product_prediction.has_predicted_barcode_valid())
@@ -1149,6 +1175,15 @@ class PriceTagPredictionPropertyTest(TestCase):
             self.price_tag_category_prediction.has_predicted_barcode_valid()
         )
         self.assertFalse(self.price_tag_empty_prediction.has_predicted_barcode_valid())
+
+    def test_has_predicted_product_exists(self):
+        self.assertTrue(
+            self.price_tag_product_prediction.has_predicted_product_exists()
+        )
+        self.assertFalse(
+            self.price_tag_category_prediction.has_predicted_product_exists()
+        )
+        self.assertFalse(self.price_tag_empty_prediction.has_predicted_product_exists())
 
     def test_has_predicted_barcode_valid_and_product_exists(self):
         self.assertTrue(
