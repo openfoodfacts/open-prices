@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.79.0](https://github.com/openfoodfacts/open-prices/compare/v1.78.0...v1.79.0) (2025-05-11)
+
+
+### Features
+
+* **Price Tag:** predictions: helper methods to know if the detected data is "valid" ([#838](https://github.com/openfoodfacts/open-prices/issues/838)) ([4c6d8a7](https://github.com/openfoodfacts/open-prices/commit/4c6d8a7e8c22b4aa98665a6fc35c52af7a629c13))
+* **Price Tag:** predictions: set price_tag tags on prediction creation ([#843](https://github.com/openfoodfacts/open-prices/issues/843)) ([345d876](https://github.com/openfoodfacts/open-prices/commit/345d876a2df18cc2dcc940b08406a5fed1b8a5fe))
+
+
+### Bug Fixes
+
+* **Products:** remove off_pro from source choice list ([#842](https://github.com/openfoodfacts/open-prices/issues/842)) ([0ae11c9](https://github.com/openfoodfacts/open-prices/commit/0ae11c985a28037beaddf51e416a849a1b011de5))
+
+
+### Technical
+
+* **Price Tag:** move post_save signal logic in a dedicated method. ref [#843](https://github.com/openfoodfacts/open-prices/issues/843) ([5693d4e](https://github.com/openfoodfacts/open-prices/commit/5693d4eb78faac956a165d89824a6a85b7375edc))
+* **Prices:** move update_tags logic to a model helper method. ref [#811](https://github.com/openfoodfacts/open-prices/issues/811) ([0688163](https://github.com/openfoodfacts/open-prices/commit/068816363176af2f8fe0df483c0e77e091999fbb))
+
 ## [1.78.0](https://github.com/openfoodfacts/open-prices/compare/v1.77.0...v1.78.0) (2025-05-09)
 
 
