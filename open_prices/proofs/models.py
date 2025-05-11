@@ -776,7 +776,7 @@ class PriceTagPrediction(models.Model):
                 return True
         return False
 
-    def has_predicted_product_valid(self):
+    def has_predicted_category_tag_valid(self):
         if self.data.get("product"):
             category_tag = self.data.get("product")
             if category_tag.startswith("en:"):

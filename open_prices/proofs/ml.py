@@ -157,7 +157,7 @@ class Unit(enum.Enum):
 
 
 class Label(typing.TypedDict):
-    product: Products
+    product: Products  # category_tag
     price: float
     origin: Origin
     unit: Unit

@@ -1058,7 +1058,7 @@ class PriceTagPropertyTest(TestCase):
             data={
                 "price": 2.5,
                 "barcode": "",
-                "product": "en:tomatoes",
+                "product": "en:tomatoes",  # category_tag
                 "product_name": "TOMATES",
             },
         )
@@ -1129,7 +1129,7 @@ class PriceTagPredictionPropertyTest(TestCase):
             data={
                 "price": 2.5,
                 "barcode": "",
-                "product": "en:tomatoes",
+                "product": "en:tomatoes",  # category_tag
                 "product_name": "TOMATES",
             },
         )
@@ -1161,14 +1161,16 @@ class PriceTagPredictionPropertyTest(TestCase):
             self.price_tag_empty_prediction.has_predicted_barcode_valid_and_product_exists()
         )
 
-    def test_has_predicted_product_valid(self):
+    def test_has_predicted_category_tag_valid(self):
         self.assertFalse(
-            self.price_tag_product_prediction.has_predicted_product_valid()
+            self.price_tag_product_prediction.has_predicted_category_tag_valid()
         )
         self.assertTrue(
-            self.price_tag_category_prediction.has_predicted_product_valid()
+            self.price_tag_category_prediction.has_predicted_category_tag_valid()
         )
-        self.assertFalse(self.price_tag_empty_prediction.has_predicted_product_valid())
+        self.assertFalse(
+            self.price_tag_empty_prediction.has_predicted_category_tag_valid()
+        )
 
 
 class PriceTagMatchingUtilsTest(TestCase):
@@ -1198,7 +1200,12 @@ class PriceTagMatchingUtilsTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-            data={"price": 2.5, "barcode": "", "product": "en:tomatoes"},
+            data={
+                "price": 2.5,
+                "barcode": "",
+                "product": "en:tomatoes",  # category_tag
+                "product_name": "TOMATES",
+            },
         )
         cls.price_category = PriceFactory(
             type=price_constants.TYPE_CATEGORY,
