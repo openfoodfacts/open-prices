@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
+from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.common.utils import (
     is_float,
     match_decimal_with_float,
@@ -9,6 +10,25 @@ from open_prices.common.utils import (
     url_add_missing_https,
     url_keep_only_domain,
 )
+
+
+class OpenFoodFactsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        pass
+
+    def test_barcode_is_valid(self):
+        for BARCODE_OK in ["8001505005707"]:
+            self.assertTrue(common_openfoodfacts.barcode_is_valid(BARCODE_OK))
+        for BARCODE_NOT_OK in [
+            "",
+            " ",
+            "a",
+            "1234",
+            "377247/3560071227302/480",
+            "632461L236",
+        ]:
+            self.assertFalse(common_openfoodfacts.barcode_is_valid(BARCODE_NOT_OK))
 
 
 class UtilsTest(TestCase):
