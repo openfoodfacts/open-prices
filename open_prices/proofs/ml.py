@@ -457,14 +457,17 @@ def run_and_save_price_tag_extraction(
         )
         cropped_image = image.crop((left, top, right, bottom))
         label = extract_from_price_tag(cropped_image)
-        prediction = PriceTagPrediction.objects.create(
-            price_tag=price_tag,
-            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-            model_name=common_google.GEMINI_MODEL_NAME,
-            model_version=common_google.GEMINI_MODEL_VERSION,
-            data=label,
-        )
-        predictions.append(prediction)
+        try:
+            prediction = PriceTagPrediction.objects.create(
+                price_tag=price_tag,
+                type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+                model_name=common_google.GEMINI_MODEL_NAME,
+                model_version=common_google.GEMINI_MODEL_VERSION,
+                data=label,
+            )
+            predictions.append(prediction)
+        except Exception as e:
+            logger.exception(e)
 
     return predictions
 
