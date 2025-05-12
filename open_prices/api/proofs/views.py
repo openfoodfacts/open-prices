@@ -101,6 +101,7 @@ class ProofViewSet(
                 {"file": ["This field is required."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # NOTE: image will be stored even if the proof serializer fails...
         file_path, mimetype, image_thumb_path = store_file(request.data.get("file"))
         proof_create_data = {
             "file_path": file_path,

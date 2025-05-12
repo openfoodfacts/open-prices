@@ -1,3 +1,5 @@
+import os
+import shutil
 from decimal import Decimal
 from io import BytesIO
 
@@ -211,10 +213,16 @@ class ProofCreateApiTest(TestCase):
             "source": "test",
         }
 
-    def tearDown(self):
-        """Clean delete to remove images"""
-        [p.delete() for p in Proof.objects.all()]
-        return super().tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        """Remove all images created during the test."""
+        for file_name in os.listdir(settings.IMAGES_DIR):
+            file_path = os.path.join(settings.IMAGES_DIR, file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+            else:
+                shutil.rmtree(file_path)
+        super().tearDownClass()
 
     def test_proof_create_anonymous(self):
         # wrong endpoint
@@ -291,6 +299,7 @@ class ProofCreateApiTest(TestCase):
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["location"]["id"], location_online.id)
 
     def test_proof_create_with_app_name(self):
         for params, result in [
