@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.79.2](https://github.com/openfoodfacts/open-prices/compare/v1.79.1...v1.79.2) (2025-05-12)
+
+
+### Bug Fixes
+
+* **ML:** catch error returned when price_tag not found during prediction (Sentry) ([2992877](https://github.com/openfoodfacts/open-prices/commit/299287796ae0356b677a4c4582257029bdb022d0))
+* **Proofs:** Tests: better tear down tests creating image files ([706bd89](https://github.com/openfoodfacts/open-prices/commit/706bd89f8fe0fbc500090a89db85dc475498b154))
+
 ## [1.79.1](https://github.com/openfoodfacts/open-prices/compare/v1.79.0...v1.79.1) (2025-05-11)
 
 
