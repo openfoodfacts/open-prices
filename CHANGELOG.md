@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.79.3](https://github.com/openfoodfacts/open-prices/compare/v1.79.2...v1.79.3) (2025-05-16)
+
+
+### Technical
+
+* generate schema (update) ([#849](https://github.com/openfoodfacts/open-prices/issues/849)) ([ed4affb](https://github.com/openfoodfacts/open-prices/commit/ed4affb3657ed20c5afcc268c89985dbe8d17164))
+
 ## [1.79.2](https://github.com/openfoodfacts/open-prices/compare/v1.79.1...v1.79.2) (2025-05-12)
 
 
