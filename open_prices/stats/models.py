@@ -60,6 +60,7 @@ class TotalStats(SingletonModel):
         "price_tag_status_linked_to_price_count",
     ]
     USER_COUNT_FIELDS = ["user_count", "user_with_price_count"]
+    CHALLENGE_COUNT_FIELDS = ["challenge_count"]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
         + PRODUCT_COUNT_FIELDS
@@ -67,6 +68,7 @@ class TotalStats(SingletonModel):
         + PROOF_COUNT_FIELDS
         + PRICE_TAG_COUNT_FIELDS
         + USER_COUNT_FIELDS
+        + CHALLENGE_COUNT_FIELDS
     )
 
     price_count = models.PositiveIntegerField(default=0)
@@ -114,6 +116,7 @@ class TotalStats(SingletonModel):
     price_tag_status_linked_to_price_count = models.PositiveIntegerField(default=0)
     user_count = models.PositiveIntegerField(default=0)
     user_with_price_count = models.PositiveIntegerField(default=0)
+    challenge_count = models.PositiveIntegerField(default=0)
 
     # Ideas
     # - price count per discount type
@@ -240,3 +243,9 @@ class TotalStats(SingletonModel):
         self.user_with_price_count = User.objects.has_prices().count()
         # self.user_with_price_count = User.objects.values_list("owner", flat=True).distinct().count()  # noqa
         self.save(update_fields=self.USER_COUNT_FIELDS + ["updated"])
+
+    def update_challenge_stats(self):
+        from open_prices.challenges.models import Challenge
+
+        self.challenge_count = Challenge.objects.published().count()
+        self.save(update_fields=self.CHALLENGE_COUNT_FIELDS + ["updated"])
