@@ -20,6 +20,7 @@ class TotalStats(SingletonModel):
         "price_source_mobile_count",
         "price_source_api_count",
         "price_source_other_count",
+        "price_in_challenge_count",
     ]
     PRODUCT_COUNT_FIELDS = [
         "product_count",
@@ -53,6 +54,7 @@ class TotalStats(SingletonModel):
         "proof_source_mobile_count",
         "proof_source_api_count",
         "proof_source_other_count",
+        "proof_in_challenge_count",
     ]
     PRICE_TAG_COUNT_FIELDS = [
         "price_tag_count",
@@ -84,6 +86,7 @@ class TotalStats(SingletonModel):
     price_source_mobile_count = models.PositiveIntegerField(default=0)
     price_source_api_count = models.PositiveIntegerField(default=0)
     price_source_other_count = models.PositiveIntegerField(default=0)
+    price_in_challenge_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
     product_source_off_count = models.PositiveIntegerField(default=0)
     product_source_obf_count = models.PositiveIntegerField(default=0)
@@ -111,6 +114,7 @@ class TotalStats(SingletonModel):
     proof_source_mobile_count = models.PositiveIntegerField(default=0)
     proof_source_api_count = models.PositiveIntegerField(default=0)
     proof_source_other_count = models.PositiveIntegerField(default=0)
+    proof_in_challenge_count = models.PositiveIntegerField(default=0)
     price_tag_count = models.PositiveIntegerField(default=0)
     price_tag_status_unknown_count = models.PositiveIntegerField(default=0)
     price_tag_status_linked_to_price_count = models.PositiveIntegerField(default=0)
@@ -164,6 +168,9 @@ class TotalStats(SingletonModel):
                 .filter(source_annotated=source)
                 .count(),
             )
+        self.price_in_challenge_count = Price.objects.filter(
+            tags__icontains="challenge"
+        ).count()
         self.save(update_fields=self.PRICE_COUNT_FIELDS + ["updated"])
 
     def update_product_stats(self):
@@ -224,6 +231,9 @@ class TotalStats(SingletonModel):
                 .filter(source_annotated=source)
                 .count(),
             )
+        self.proof_in_challenge_count = Proof.objects.filter(
+            tags__icontains="challenge"
+        ).count()
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
 
     def update_price_tag_stats(self):
