@@ -688,20 +688,23 @@ def run_and_save_proof_type_prediction(
 
     max_confidence = max(prediction, key=lambda x: x[1])[1]
     proof_type = max(prediction, key=lambda x: x[1])[0]
-    return ProofPrediction.objects.create(
-        proof=proof,
-        type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
-        model_name=PROOF_CLASSIFICATION_MODEL_NAME,
-        model_version=PROOF_CLASSIFICATION_MODEL_VERSION,
-        data={
-            "prediction": [
-                {"label": label, "score": confidence}
-                for label, confidence in prediction
-            ]
-        },
-        value=proof_type,
-        max_confidence=max_confidence,
-    )
+    try:
+        return ProofPrediction.objects.create(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
+            model_name=PROOF_CLASSIFICATION_MODEL_NAME,
+            model_version=PROOF_CLASSIFICATION_MODEL_VERSION,
+            data={
+                "prediction": [
+                    {"label": label, "score": confidence}
+                    for label, confidence in prediction
+                ]
+            },
+            value=proof_type,
+            max_confidence=max_confidence,
+        )
+    except Exception as e:
+        logger.exception(e)
 
 
 def run_and_save_receipt_extraction_prediction(
