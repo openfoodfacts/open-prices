@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.79.4](https://github.com/openfoodfacts/open-prices/compare/v1.79.3...v1.79.4) (2025-06-11)
+
+
+### Bug Fixes
+
+* **ML:** catch error returned when proof not found during prediction (Sentry) ([438e2d3](https://github.com/openfoodfacts/open-prices/commit/438e2d37e97c1b1748b2cadd4a268655befb3778))
+
 ## [1.79.3](https://github.com/openfoodfacts/open-prices/compare/v1.79.2...v1.79.3) (2025-05-20)
 
 
