@@ -742,15 +742,18 @@ def run_and_save_receipt_extraction_prediction(
 
     prediction = extract_from_receipt(image)
 
-    proof_prediction = ProofPrediction.objects.create(
-        proof=proof,
-        type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
-        model_name=common_google.GEMINI_MODEL_NAME,
-        model_version=common_google.GEMINI_MODEL_VERSION,
-        data=prediction,
-    )
-    create_receipt_items_from_proof_prediction(proof, proof_prediction)
-    return proof_prediction
+    try:
+        proof_prediction = ProofPrediction.objects.create(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
+            model_name=common_google.GEMINI_MODEL_NAME,
+            model_version=common_google.GEMINI_MODEL_VERSION,
+            data=prediction,
+        )
+        create_receipt_items_from_proof_prediction(proof, proof_prediction)
+        return proof_prediction
+    except Exception as e:
+        logger.exception(e)
 
 
 def run_and_save_proof_prediction(
