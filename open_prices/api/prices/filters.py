@@ -56,6 +56,9 @@ class PriceFilter(django_filters.FilterSet):
     created__lte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="lte"
     )
+    location_osm_name__contains = django_filters.CharFilter(
+        field_name="location__osm_name", lookup_expr="icontains"
+    )
 
     def filter_kind(self, queryset, name, value):
         if value == constants.KIND_COMMUNITY:
@@ -70,6 +73,7 @@ class PriceFilter(django_filters.FilterSet):
             "type",
             "product_code",
             "product_id",
+            "product_name",
             "category_tag",
             "location_osm_id",
             "location_osm_type",
