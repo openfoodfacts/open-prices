@@ -56,7 +56,7 @@ class PriceFilter(django_filters.FilterSet):
     created__lte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="lte"
     )
-    location_osm_name__contains = django_filters.CharFilter(
+    location__osm_name__contains = django_filters.CharFilter(
         field_name="location__osm_name", lookup_expr="icontains"
     )
 
