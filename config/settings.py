@@ -194,6 +194,61 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [],
 }
 
+# Build server URLs dynamically for OpenAPI documentation
+def get_api_servers():
+    """
+    Generate server configuration for OpenAPI schema based on environment.
+    This ensures that Fumadocs and other API documentation tools have proper
+    server endpoints for testing the API.
+    """
+    servers = []
+    
+    # Get the API port configuration
+    api_port = os.getenv("API_PORT", "127.0.0.1:8000")
+    
+    if DEBUG:
+        # Development servers
+        if ":" in api_port:
+            host, port = api_port.split(":")
+            dev_url = f"http://{host}:{port}/api"
+        else:
+            dev_url = f"http://localhost:{api_port}/api"
+        
+        servers.append({
+            "url": dev_url,
+            "description": "Development server"
+        })
+        
+        # Also add localhost variant for Docker development
+        servers.append({
+            "url": "http://localhost:8000/api",
+            "description": "Local Docker development server"
+        })
+    else:
+        # Production server
+        production_url = os.getenv("PRODUCTION_API_URL")
+        if production_url:
+            servers.append({
+                "url": production_url,
+                "description": "Production server"
+            })
+        else:
+            # Default production URL for Open Food Facts
+            servers.append({
+                "url": "https://prices.openfoodfacts.org/api",
+                "description": "Production server"
+            })
+    
+    # Add staging server if specified
+    staging_url = os.getenv("STAGING_API_URL")
+    if staging_url:
+        servers.append({
+            "url": staging_url,
+            "description": "Staging server"
+        })
+    
+    return servers
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Open Food Facts open-prices REST API",
     "DESCRIPTION": "Open Prices API allows you to add product prices",
@@ -210,6 +265,7 @@ SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "LocationOsmTypeEnum": "open_prices.locations.constants.OSM_TYPE_CHOICES"
     },
+    "SERVERS": get_api_servers(),
 }
 
 
