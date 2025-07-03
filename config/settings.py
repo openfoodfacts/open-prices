@@ -194,6 +194,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [],
 }
 
+
 # Build server URLs dynamically for OpenAPI documentation
 def get_api_servers():
     """
@@ -202,10 +203,10 @@ def get_api_servers():
     server endpoints for testing the API.
     """
     servers = []
-    
+
     # Get the API port configuration
     api_port = os.getenv("API_PORT", "127.0.0.1:8000")
-    
+
     if DEBUG:
         # Development servers
         if ":" in api_port:
@@ -213,41 +214,37 @@ def get_api_servers():
             dev_url = f"http://{host}:{port}/api"
         else:
             dev_url = f"http://localhost:{api_port}/api"
-        
-        servers.append({
-            "url": dev_url,
-            "description": "Development server"
-        })
-        
+
+        servers.append({"url": dev_url, "description": "Development server"})
+
         # Also add localhost variant for Docker development
-        servers.append({
-            "url": "http://localhost:8000/api",
-            "description": "Local Docker development server"
-        })
+        servers.append(
+            {
+                "url": "http://localhost:8000/api",
+                "description": "Local Docker development server",
+            }
+        )
     else:
         # Production server
         production_url = os.getenv("PRODUCTION_API_URL")
         if production_url:
-            servers.append({
-                "url": production_url,
-                "description": "Production server"
-            })
+            servers.append({"url": production_url, "description": "Production server"})
         else:
             # Default production URL for Open Food Facts
-            servers.append({
-                "url": "https://prices.openfoodfacts.org/api",
-                "description": "Production server"
-            })
-    
+            servers.append(
+                {
+                    "url": "https://prices.openfoodfacts.org/api",
+                    "description": "Production server",
+                }
+            )
+
     # Add staging server if specified
     staging_url = os.getenv("STAGING_API_URL")
     if staging_url:
-        servers.append({
-            "url": staging_url,
-            "description": "Staging server"
-        })
-    
+        servers.append({"url": staging_url, "description": "Staging server"})
+
     return servers
+
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Open Food Facts open-prices REST API",
