@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.80.0](https://github.com/openfoodfacts/open-prices/compare/v1.79.4...v1.80.0) (2025-07-04)
+
+
+### Features
+
+* **API:** Prices: Add filter on location__osm_name__contains & product_name ([#862](https://github.com/openfoodfacts/open-prices/issues/862)) ([b484345](https://github.com/openfoodfacts/open-prices/commit/b48434513145f1b194f838ee6c03f97f6d87fff9))
+
+
+### Bug Fixes
+
+* fix bug in Redis update listener ([#870](https://github.com/openfoodfacts/open-prices/issues/870)) ([70b0c8e](https://github.com/openfoodfacts/open-prices/commit/70b0c8e7d12f29eb28e67d3e5fcf1a3d867bd388))
+* **ML:** catch error returned when proof not found during receipt prediction (Sentry) ([5f4f74a](https://github.com/openfoodfacts/open-prices/commit/5f4f74a0b149064e3b90ffea9e748e949418bfc3))
+
 ## [1.79.4](https://github.com/openfoodfacts/open-prices/compare/v1.79.3...v1.79.4) (2025-06-11)
 
 
