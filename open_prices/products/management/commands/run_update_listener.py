@@ -20,7 +20,7 @@ class UpdateListener(BaseUpdateListener):
         if redis_update.product_type == "food":
             flavor = Flavor.off
         elif redis_update.product_type == "beauty":
-            redis_update.obf
+            flavor = Flavor.obf
         elif redis_update.product_type == "petfood":
             flavor = Flavor.opff
         elif redis_update.product_type == "product":
