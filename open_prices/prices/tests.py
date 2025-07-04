@@ -365,6 +365,32 @@ class PriceModelSaveTest(TestCase):
             )
             self.assertEqual(price.origins_tags, expected_origin_tags)
 
+    def test_price_label_validation(self):
+        for input_labels_tags, expected_labels_tags in [
+            (
+                [
+                    "fr: Nutriscore A",
+                    "fr: Bio",
+                    "es: Comercio justo y orgánico",
+                    "en: Tag To be Created",
+                ],
+                [
+                    "en:nutriscore-grade-a",
+                    "en:organic",
+                    "en:fair-trade-organic",
+                    "en:tag-to-be-created",
+                ],
+            ),
+        ]:
+            price = PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:tomatoes",
+                labels_tags=input_labels_tags,
+                price=3,
+                price_per=price_constants.PRICE_PER_KILOGRAM,
+            )
+            self.assertEqual(price.labels_tags, expected_labels_tags)
+
     def test_price_price_validation(self):
         for PRICE_OK in [0, 5, Decimal("1.5")]:
             PriceFactory(price=PRICE_OK)
