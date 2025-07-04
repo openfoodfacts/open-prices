@@ -79,7 +79,7 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        raise Response(
+        return Response(
             {"detail": "Server error"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
