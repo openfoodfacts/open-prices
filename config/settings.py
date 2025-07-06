@@ -196,7 +196,7 @@ REST_FRAMEWORK = {
 
 
 # Build server URLs dynamically for OpenAPI documentation
-def get_api_servers():
+def get_api_servers() -> list[dict[str, str]]:
     """
     Generate server configuration for OpenAPI schema based on environment.
     This ensures that Fumadocs and other API documentation tools have proper
@@ -226,7 +226,7 @@ def get_api_servers():
         )
     else:
         # Production server
-        production_url = os.getenv("PRODUCTION_API_URL")
+        production_url = "https://prices.openfoodfacts.org/api"
         if production_url:
             servers.append({"url": production_url, "description": "Production server"})
         else:
@@ -239,7 +239,7 @@ def get_api_servers():
             )
 
     # Add staging server if specified
-    staging_url = os.getenv("STAGING_API_URL")
+    staging_url = "https://prices.openfoodfacts.net/api"
     if staging_url:
         servers.append({"url": staging_url, "description": "Staging server"})
 
