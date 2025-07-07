@@ -225,23 +225,12 @@ def get_api_servers() -> list[dict[str, str]]:
             }
         )
     else:
-        # Production server
-        production_url = "https://prices.openfoodfacts.org/api"
-        if production_url:
-            servers.append({"url": production_url, "description": "Production server"})
-        else:
-            # Default production URL for Open Food Facts
-            servers.append(
-                {
-                    "url": "https://prices.openfoodfacts.org/api",
-                    "description": "Production server",
-                }
-            )
-
-    # Add staging server if specified
-    staging_url = "https://prices.openfoodfacts.net/api"
-    if staging_url:
-        servers.append({"url": staging_url, "description": "Staging server"})
+        servers.append(
+            {
+                "url": "https://prices.openfoodfacts.org/api",
+                "description": "Production server",
+            }
+        )
 
     return servers
 
