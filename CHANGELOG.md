@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.80.1](https://github.com/openfoodfacts/open-prices/compare/v1.80.0...v1.80.1) (2025-07-08)
+
+
+### Bug Fixes
+
+* fix livecheck command ([#874](https://github.com/openfoodfacts/open-prices/issues/874)) ([c1176f2](https://github.com/openfoodfacts/open-prices/commit/c1176f2c9811211d64b0424b3eb2d8b8e15f774c))
+* normalize `price.label_tags` taxonomized values ([#868](https://github.com/openfoodfacts/open-prices/issues/868)) ([bf6cf93](https://github.com/openfoodfacts/open-prices/commit/bf6cf93214046779b249e19442e28aac2bea46fc))
+* we should return but not raise Response ([#872](https://github.com/openfoodfacts/open-prices/issues/872)) ([eb6acbd](https://github.com/openfoodfacts/open-prices/commit/eb6acbd12df04cd56cdea123a0e20f8e2c7c769c))
+
+
+### Technical
+
+* create merge-conflicts-autolabel.yml ([470bc8b](https://github.com/openfoodfacts/open-prices/commit/470bc8b51570eb31d031c94ef4ae7a4d53621857))
+* Update github-projects.yml for PRs ([ab1dbb2](https://github.com/openfoodfacts/open-prices/commit/ab1dbb2c510310e3fffe0917d9de3ddff9729d28))
+
 ## [1.80.0](https://github.com/openfoodfacts/open-prices/compare/v1.79.4...v1.80.0) (2025-07-04)
 
 
