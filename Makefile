@@ -43,7 +43,7 @@ test:
 livecheck:
 	@echo "🥫 livecheck services…" ; \
 	exit_code=0; \
-	services=`${DOCKER_COMPOSE} config  --service | tr '\n' ' '`; \
+	services=`${DOCKER_COMPOSE} config  --services | tr '\n' ' '`; \
 	for service in $$services; do \
 	if [ -z `docker compose ps -q $$service` ] || [ -z `docker ps -q --no-trunc | grep $$(${DOCKER_COMPOSE} ps -q $$service)` ]; then \
 		echo "$$service: DOWN"; \
