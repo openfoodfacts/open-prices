@@ -63,6 +63,7 @@ def update_total_stats_task():
     total_stats.update_proof_stats()
     total_stats.update_price_tag_stats()
     total_stats.update_user_stats()
+    total_stats.update_challenge_stats()
 
 
 def update_product_counts_task():

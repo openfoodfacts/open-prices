@@ -1,6 +1,7 @@
 from django.db import IntegrityError
 from django.test import TestCase
 
+from open_prices.challenges.factories import ChallengeFactory
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
@@ -107,6 +108,10 @@ class TotalStatsTest(TestCase):
             price=cls.price,
             status=proof_constants.PriceTagStatus.linked_to_price.value,
         )
+        ChallengeFactory(
+            start_date="2025-07-01", end_date="2025-08-31", is_published=True
+        )
+        ChallengeFactory(is_published=False)
 
     def test_update_price_stats(self):
         self.assertEqual(self.total_stats.price_count, 0)
@@ -205,3 +210,9 @@ class TotalStatsTest(TestCase):
         self.total_stats.update_user_stats()
         self.assertEqual(self.total_stats.user_count, 2)
         self.assertEqual(self.total_stats.user_with_price_count, 2)
+
+    def update_challenge_stats(self):
+        self.assertEqual(self.total_stats.challenge_count, 0)
+        # update_challenge_stats() will update challenge_counts
+        self.total_stats.update_challenge_stats()
+        self.assertEqual(self.total_stats.challenge_count, 1)
