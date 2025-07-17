@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.80.2](https://github.com/openfoodfacts/open-prices/compare/v1.80.1...v1.80.2) (2025-07-17)
+
+
+### Bug Fixes
+
+* **Stats:** fix update of challenge_count. ref [#852](https://github.com/openfoodfacts/open-prices/issues/852) ([856d318](https://github.com/openfoodfacts/open-prices/commit/856d318317e1816661cfbdee43ed84f2c04ac4d1))
+
 ## [1.80.1](https://github.com/openfoodfacts/open-prices/compare/v1.80.0...v1.80.1) (2025-07-08)
 
 
