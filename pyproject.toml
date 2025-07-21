@@ -43,7 +43,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "~3.11"
 Babel = "~2.13.1"
-openfoodfacts = { version = "~2.6.0", extras = ["ml", "redis"] }
+openfoodfacts = { version = "~2.8.0", extras = ["ml", "redis"] }
 psycopg2-binary = "~2.9.9"
 python-multipart = "~0.0.7"
 requests = "~2.31.0"
@@ -65,12 +65,12 @@ ipython = "^8.26.0"
 gunicorn = "^22.0.0"
 sentry-sdk = {extras = ["django"], version = "^2.13.0"}
 pillow = "^10.4.0"
-google-generativeai = "^0.8.3"
+google-genai = "~1.26.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "~23.12.1"
 flake8 = "^7.0.0"
-httpx = "^0.25.1"
+httpx = "<1.0.0"
 isort = "^5.12.0"
 mdx-truly-sane-lists = "^1.3"
 mkdocs = "~1.5.3"
