@@ -145,7 +145,8 @@ jobs:
           echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
           echo "ENVIRONMENT=${{ env.ENVIRONMENT }}" >> .env
           echo "GOOGLE_CLOUD_VISION_API_KEY=${{ secrets.GOOGLE_CLOUD_VISION_API_KEY }}" >> .env
-          echo "GOOGLE_GEMINI_API_KEY=${{ secrets.GOOGLE_GEMINI_API_KEY }}" >> .env
+          echo "GOOGLE_GENAI_USE_VERTEXAI=true" >> .env
+          echo "GOOGLE_CLOUD_LOCATION=europe-west9" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
           echo "ENABLE_ML_PREDICTIONS=True" >> .env
           # echo "ENABLE_IMPORT_OFF_DB_TASK=True" >> .env  # disabled because we have the REDIS live updates

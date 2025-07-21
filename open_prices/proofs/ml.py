@@ -193,7 +193,7 @@ def extract_from_price_tag(image: Image.Image) -> Label:
     :param image: the input Pillow image
     :return: the extracted information as a dictionary
     """
-
+    client = common_google.get_genai_client()
     # Gemini model max payload size is 20MB
     # To prevent the payload from being too large, we resize the images
     max_size = 1024
@@ -209,12 +209,13 @@ def extract_from_price_tag(image: Image.Image) -> Label:
         "I expect a single JSON in your reply, no more, no less. "
         "If you cannot decode an attribute, set it to an empty string."
     )
-    response = common_google.gemini_model.generate_content(
-        [
+    response = client.models.generate_content(
+        model=common_google.GEMINI_MODEL_VERSION,
+        contents=[
             prompt,
             image,
         ],
-        generation_config=common_google.get_generation_config(Label),
+        config=common_google.get_generation_config(Label),
     )
     return json.loads(response.text)
 
@@ -249,9 +250,11 @@ def extract_from_price_tags(images: Image.Image) -> Labels:
         f"I expect a list of {len(image_list)} labels in your reply, no more, no less. "
         "If you cannot decode an attribute, set it to an empty string"
     )
-    response = common_google.gemini_model.generate_content(
-        [prompt] + image_list,
-        generation_config=common_google.get_generation_config(Labels),
+    client = common_google.get_genai_client()
+    response = client.models.generate_content(
+        model=common_google.GEMINI_MODEL_VERSION,
+        contents=[prompt] + image_list,
+        config=common_google.get_generation_config(Labels),
     )
     return json.loads(response.text)
 
@@ -267,12 +270,14 @@ def extract_from_receipt(image: Image.Image) -> Receipt:
         image.thumbnail((max_size, max_size))
 
     prompt = "Extract all relevent information, use empty strings for unknown values."
-    response = common_google.gemini_model.generate_content(
-        [
+    client = common_google.get_genai_client()
+    response = client.models.generate_content(
+        model=common_google.GEMINI_MODEL_VERSION,
+        contents=[
             prompt,
             image,
         ],
-        generation_config=common_google.get_generation_config(Receipt),
+        config=common_google.get_generation_config(Receipt),
     )
     return json.loads(response.text)
 

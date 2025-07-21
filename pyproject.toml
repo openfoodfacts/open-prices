@@ -20,14 +20,13 @@ strict = true
 disable_error_code = ["no-untyped-call", "no-any-return"]
 python_version = "3.11"
 plugins = [
-  "sqlalchemy.ext.mypy.plugin",
   "pydantic.mypy"
 ]
 
 [[tool.mypy.overrides]]
 module = [
-    "OSMPythonTools.nominatim",
-    "apscheduler.*"
+  "OSMPythonTools.nominatim",
+  "apscheduler.*"
 ]
 ignore_missing_imports = true
 warn_return_any = false
@@ -43,7 +42,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "~3.11"
 Babel = "~2.13.1"
-openfoodfacts = { version = "~2.6.0", extras = ["ml", "redis"] }
+openfoodfacts = {version = "~2.8.0", extras = ["ml", "redis"]}
 psycopg2-binary = "~2.9.9"
 python-multipart = "~0.0.7"
 requests = "~2.31.0"
@@ -65,12 +64,12 @@ ipython = "^8.26.0"
 gunicorn = "^22.0.0"
 sentry-sdk = {extras = ["django"], version = "^2.13.0"}
 pillow = "^10.4.0"
-google-generativeai = "^0.8.3"
+google-genai = "~1.26.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "~23.12.1"
 flake8 = "^7.0.0"
-httpx = "^0.25.1"
+httpx = "<1.0.0"
 isort = "^5.12.0"
 mdx-truly-sane-lists = "^1.3"
 mkdocs = "~1.5.3"
@@ -83,7 +82,6 @@ pytest-cov = "^4.1.0"
 toml-sort = "^0.23.1"
 types-requests = "^2.31.0.20240125"
 types-tqdm = "^4.66.0.20240106"
-types-sqlalchemy-utils = "^1.0.1"
 pyparsing = "^3.1.4"
 pydot = "^3.0.1"
 freezegun = "^1.5.1"
