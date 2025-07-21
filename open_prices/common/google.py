@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+from functools import lru_cache
 from pathlib import Path
 
 from django.conf import settings
@@ -51,8 +52,10 @@ def check_google_credentials() -> None:
             )
 
 
-check_google_credentials()
-genai_client = genai.Client()
+@lru_cache(maxsize=1)
+def get_genai_client() -> genai.Client:
+    check_google_credentials()
+    return genai.Client()
 
 
 def get_generation_config(response_schema) -> types.GenerateContentConfig:

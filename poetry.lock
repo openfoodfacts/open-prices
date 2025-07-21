@@ -3688,21 +3688,6 @@ files = [
 urllib3 = ">=2"
 
 [[package]]
-name = "types-sqlalchemy-utils"
-version = "1.1.0"
-description = "Type Stubs for sqlalchemy-utils"
-optional = false
-python-versions = "<4,>=3.7"
-groups = ["dev"]
-files = [
-    {file = "types_sqlalchemy_utils-1.1.0-py3-none-any.whl", hash = "sha256:60b28fe3453f67fc90bb0a106063025cffc1efa6eedb59a7ea5b043644c3d16a"},
-    {file = "types_sqlalchemy_utils-1.1.0.tar.gz", hash = "sha256:af9d92992687c9e7c920b9a1b814fd10915b9b3a7b1f731b7fd2fff8ce2f3bfb"},
-]
-
-[package.extras]
-dev = ["mypy (==1.10.0)", "pipenv-setup (==3.2.0)", "sqlalchemy-utils (==0.41.2)", "sqlalchemy2-stubs (==0.0.2a38)", "twine (==5.0.0)"]
-
-[[package]]
 name = "types-tqdm"
 version = "4.67.0.20241119"
 description = "Typing stubs for tqdm"
@@ -4058,4 +4043,4 @@ viz = ["cartopy", "matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "21d70e552449cccf214e4640c370af1c680a0694b3f1394d0ae62d4271c1df7b"
+content-hash = "82b2424fe121ff176b7e9f64da2db557b7d85bb6660d8ff8940d1f1be1b11547"
