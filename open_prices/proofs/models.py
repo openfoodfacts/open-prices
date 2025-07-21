@@ -297,6 +297,17 @@ class Proof(models.Model):
                     "receipt_online_delivery_costs",
                     "Can only be set if type RECEIPT",
                 )
+
+        if (
+            self.type in proof_constants.TYPE_GROUP_CONSUMPTION_LIST
+            and self.owner_consumption is None
+        ):
+            # If `owner_consumption` is not set for GDPR or receipt proofs, we
+            # assume that it's a consumption proof. Not many users upload
+            # proofs that are not theirs, and we should have reasonable
+            # defaults.
+            self.owner_consumption = True
+
         # consumption specific rules
         if self.type not in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
             if self.owner_consumption is not None:

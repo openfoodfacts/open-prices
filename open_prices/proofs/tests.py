@@ -110,11 +110,11 @@ class ProofQuerySetTest(TestCase):
 
     def test_has_kind_community(self):
         self.assertEqual(Proof.objects.count(), 4)
-        self.assertEqual(Proof.objects.has_kind_community().count(), 2)
+        self.assertEqual(Proof.objects.has_kind_community().count(), 1)
 
     def test_has_kind_consumption(self):
         self.assertEqual(Proof.objects.count(), 4)
-        self.assertEqual(Proof.objects.has_kind_consumption().count(), 2)
+        self.assertEqual(Proof.objects.has_kind_consumption().count(), 3)
 
     def test_has_prices(self):
         self.assertEqual(Proof.objects.count(), 4)
