@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.80.2](https://github.com/openfoodfacts/open-prices/compare/v1.80.1...v1.80.2) (2025-07-23)
+
+
+### Bug Fixes
+
+* **Stats:** fix update of challenge_count. ref [#852](https://github.com/openfoodfacts/open-prices/issues/852) ([856d318](https://github.com/openfoodfacts/open-prices/commit/856d318317e1816661cfbdee43ed84f2c04ac4d1))
+* use google-genai instead of google-generativeai package ([#883](https://github.com/openfoodfacts/open-prices/issues/883)) ([5f248ad](https://github.com/openfoodfacts/open-prices/commit/5f248ad3e820817efa7d53bc00d32e7187cde096))
+
+
+### Technical
+
+* add GOOGLE_CREDENTIALS from secrets to .env ([#884](https://github.com/openfoodfacts/open-prices/issues/884)) ([390415b](https://github.com/openfoodfacts/open-prices/commit/390415b3e5f4c619e47522aa8cc62d572f3e55b2))
+* **Price tags:** Add new statuses 'no_barcode' (5) & 'other' (10) ([#879](https://github.com/openfoodfacts/open-prices/issues/879)) ([55e1ab0](https://github.com/openfoodfacts/open-prices/commit/55e1ab064d4e134169637646e23c13f07a82e20b))
+* **Prices:** new source url following changes in the frontend (price tag assistant) ([50f1608](https://github.com/openfoodfacts/open-prices/commit/50f1608f687e32dad81f594a6979e931b96107f0))
+
 ## [1.80.1](https://github.com/openfoodfacts/open-prices/compare/v1.80.0...v1.80.1) (2025-07-08)
 
 
