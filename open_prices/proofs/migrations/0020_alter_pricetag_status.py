@@ -21,6 +21,7 @@ class Migration(migrations.Migration):
                     (3, "truncated"),
                     (4, "not_price_tag"),
                     (5, "no_barcode"),
+                    (10, "other"),
                 ],
                 help_text="The annotation status",
                 null=True,
