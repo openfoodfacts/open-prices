@@ -838,8 +838,8 @@ def run_and_save_price_tag_extraction(
                 type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
                 model_name=common_google.GEMINI_MODEL_NAME,
                 model_version=common_google.GEMINI_MODEL_VERSION,
-                data=response.parsed.model_dump(),
                 schema_version=LABEL_SCHEMA_VERSION,
+                data=response.parsed.model_dump(),
                 thought_tokens=common_google.extract_thought_tokens(response),
             )
             predictions.append(prediction)
@@ -887,10 +887,10 @@ def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction | None:
     )
     cropped_image = image.crop((left, top, right, bottom))
     gemini_response = extract_from_price_tag(cropped_image)
-    price_tag_prediction.data = gemini_response.parsed.model_dump()
     price_tag_prediction.model_name = common_google.GEMINI_MODEL_NAME
     price_tag_prediction.model_version = common_google.GEMINI_MODEL_VERSION
     price_tag_prediction.schema_version = LABEL_SCHEMA_VERSION
+    price_tag_prediction.data = gemini_response.parsed.model_dump()
     price_tag_prediction.thought_tokens = common_google.extract_thought_tokens(
         gemini_response
     )

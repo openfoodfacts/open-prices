@@ -97,9 +97,9 @@ class PriceTagPredictionSerializer(serializers.ModelSerializer):
             "type",
             "model_name",
             "model_version",
+            "schema_version",
             "data",
             "created",
-            "schema_version",
         ]
 
 
