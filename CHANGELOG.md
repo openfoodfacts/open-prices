@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.81.0](https://github.com/openfoodfacts/open-prices/compare/v1.80.2...v1.81.0) (2025-07-24)
+
+
+### Features
+
+* **Price tags:** improve price tag extraction using Gemini (new schema, async, store thought tokens) ([#885](https://github.com/openfoodfacts/open-prices/issues/885)) ([6a8ebfb](https://github.com/openfoodfacts/open-prices/commit/6a8ebfb90fc9eb8b9cb96ac1748ae3c689ab2c2c))
+
 ## [1.80.2](https://github.com/openfoodfacts/open-prices/compare/v1.80.1...v1.80.2) (2025-07-23)
 
 
