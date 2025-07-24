@@ -25,9 +25,14 @@ from PIL import Image
 from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
-
-from . import constants as proof_constants
-from .models import PriceTag, PriceTagPrediction, Proof, ProofPrediction, ReceiptItem
+from open_prices.proofs import constants as proof_constants
+from open_prices.proofs.models import (
+    PriceTag,
+    PriceTagPrediction,
+    Proof,
+    ProofPrediction,
+    ReceiptItem,
+)
 
 logger = logging.getLogger(__name__)
 
