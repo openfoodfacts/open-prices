@@ -75,3 +75,16 @@ def get_generation_config(
             thinking_budget=thinking_budget, include_thoughts=True
         ),
     )
+
+
+def extract_thought_tokens(
+    gemini_response: types.GenerateContentResponse,
+) -> str | None:
+    """Extract thought tokens from a Gemini response."""
+    if gemini_response.candidates:
+        # If there are candidates, we take the first one
+        candidate = gemini_response.candidates[0]
+
+        if candidate.content and candidate.content.parts:
+            return next((p.text for p in candidate.content.parts if p.thought), None)
+    return None
