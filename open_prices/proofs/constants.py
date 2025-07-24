@@ -55,6 +55,8 @@ class PriceTagStatus(enum.IntEnum):
     not_readable = 2
     truncated = 3
     not_price_tag = 4
+    no_barcode = 5
+    other = 10
 
 
 PRICE_TAG_STATUS_CHOICES = [(item.value, item.name) for item in PriceTagStatus]
