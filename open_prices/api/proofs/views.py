@@ -138,7 +138,10 @@ class ProofViewSet(
     def process_with_gemini(self, request: Request) -> Response:
         files = request.FILES.getlist("files")
         sample_files = [PIL.Image.open(file.file) for file in files]
-        labels = [extract_from_price_tag(sample_file) for sample_file in sample_files]
+        labels = [
+            extract_from_price_tag(sample_file).parsed.model_dump()
+            for sample_file in sample_files
+        ]
         return Response({"labels": labels}, status=status.HTTP_200_OK)
 
 

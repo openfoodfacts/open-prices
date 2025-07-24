@@ -5,6 +5,7 @@ Proof ML/AI
 - extract data from PriceTags with Gemini
 """
 
+import asyncio
 import base64
 import enum
 import gzip
@@ -12,19 +13,26 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import typing_extensions as typing
+from asgiref.sync import async_to_sync
 from django.conf import settings
 from openfoodfacts.ml.image_classification import ImageClassifier
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDetector
 from openfoodfacts.utils import http_session
 from PIL import Image
+from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
-
-from . import constants as proof_constants
-from .models import PriceTag, PriceTagPrediction, Proof, ProofPrediction, ReceiptItem
+from open_prices.proofs import constants as proof_constants
+from open_prices.proofs.models import (
+    PriceTag,
+    PriceTagPrediction,
+    Proof,
+    ProofPrediction,
+    ReceiptItem,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +56,8 @@ PRICE_TAG_DETECTOR_IMAGE_SIZE = 960
 
 
 # TODO: what about other categories?
+# We keep the Products here for now to keep the compatibility with the
+# ReceiptItem model
 class Products(enum.Enum):
     OTHER = "other"
     APPLES = "en:apples"
@@ -135,8 +145,95 @@ class Products(enum.Enum):
     ZUCCHINI = "en:zucchini"
 
 
+class RawCategory(enum.StrEnum):
+    APPLES = "en:apples"
+    APRICOTS = "en:apricots"
+    ARTICHOKES = "en:artichokes"
+    ASPARAGUS = "en:asparagus"
+    AUBERGINES = "en:aubergines"
+    AVOCADOS = "en:avocados"
+    BANANAS = "en:bananas"
+    BEETROOT = "en:beetroot"
+    BERRIES = "en:berries"
+    BLACKBERRIES = "en:blackberries"
+    BLUEBERRIES = "en:blueberries"
+    BOK_CHOY = "en:bok-choy"
+    BROCCOLI = "en:broccoli"
+    CABBAGES = "en:cabbages"
+    CARROTS = "en:carrots"
+    CAULIFLOWERS = "en:cauliflowers"
+    CELERY = "en:celery"
+    CELERIAC = "en:celeriac"
+    CELERY_STALK = "en:celery-stalk"
+    CEP_MUSHROOMS = "en:cep-mushrooms"
+    CHANTERELLES = "en:chanterelles"
+    CHARDS = "en:chards"
+    CHERRIES = "en:cherries"
+    CHERRY_TOMATOES = "en:cherry-tomatoes"
+    CHICKPEAS = "en:chickpeas"
+    CHIVES = "en:chives"
+    CLEMENTINES = "en:clementines"
+    COCONUTS = "en:coconuts"
+    CRANBERRIES = "en:cranberries"
+    CUCUMBERS = "en:cucumbers"
+    DATES = "en:dates"
+    ENDIVES = "en:endives"
+    FENNEL_BULBS = "en:fennel-bulbs"
+    FIGS = "en:figs"
+    GARLIC = "en:garlic"
+    GINGER = "en:ginger"
+    GRAPEFRUITS = "en:grapefruits"
+    GRAPES = "en:grapes"
+    GREEN_BEANS = "en:green-beans"
+    GREEN_SWEET_PEPPERS = "en:green-sweet-peppers"
+    KIWIS = "en:kiwis"
+    KAKIS = "en:kakis"
+    LEEKS = "en:leeks"
+    LEMONS = "en:lemons"
+    LETTUCES = "en:lettuces"
+    LIMES = "en:limes"
+    LYCHEES = "en:lychees"
+    MANDARIN_ORANGES = "en:mandarin-oranges"
+    MANGOES = "en:mangoes"
+    MELONS = "en:melons"
+    MUSHROOMS = "en:mushrooms"
+    NECTARINES = "en:nectarines"
+    ONIONS = "en:onions"
+    ORANGES = "en:oranges"
+    PAPAYAS = "en:papayas"
+    PARSNIP = "en:parsnip"
+    PASSION_FRUITS = "en:passion-fruits"
+    PEACHES = "en:peaches"
+    PEARS = "en:pears"
+    PEAS = "en:peas"
+    PEPPERS = "en:peppers"
+    PINEAPPLE = "en:pineapple"
+    PLUMS = "en:plums"
+    POMEGRANATES = "en:pomegranates"
+    POMELOS = "en:pomelos"
+    POTATOES = "en:potatoes"
+    PUMPKINS = "en:pumpkins"
+    RADISHES = "en:radishes"
+    RASPBERRIES = "en:raspberries"
+    RED_BELL_PEPPERS = "en:red-bell-peppers"
+    RED_ONIONS = "en:red-onions"
+    RHUBARBS = "en:rhubarbs"
+    SCALLIONS = "en:scallions"
+    SHALLOTS = "en:shallots"
+    SPINACHS = "en:spinachs"
+    SPROUTS = "en:sprouts"
+    STRAWBERRIES = "en:strawberries"
+    TOMATOES = "en:tomatoes"
+    TURNIP = "en:turnip"
+    WATERMELONS = "en:watermelons"
+    WALNUTS = "en:walnuts"
+    YELLOW_ONIONS = "en:yellow-onions"
+    ZUCCHINI = "en:zucchini"
+    OTHER = "other"
+
+
 # TODO: what about other origins?
-class Origin(enum.Enum):
+class Origin(enum.StrEnum):
     FRANCE = "en:france"
     ITALY = "en:italy"
     SPAIN = "en:spain"
@@ -151,23 +248,263 @@ class Origin(enum.Enum):
     UNKNOWN = "unknown"
 
 
-class Unit(enum.Enum):
+class Unit(enum.StrEnum):
     KILOGRAM = "KILOGRAM"
+    LITER = "LITER"
     UNIT = "UNIT"
 
 
-class Label(typing.TypedDict):
-    product: Products  # category_tag
-    price: float
-    origin: Origin
-    unit: Unit
-    organic: bool
-    barcode: str
-    product_name: str
+class DiscountType(enum.StrEnum):
+    QUANTITY = "QUANTITY"  # example: buy 1 get 1 free
+    SALE = "SALE"  # example: 50% off
+    SEASONAL = "SEASONAL"  # example: Christmas sale
+    LOYALTY_PROGRAM = "LOYALTY_PROGRAM"  # example: 10% off for members
+    EXPIRES_SOON = "EXPIRES_SOON"  # example: 30% off expiring soon
+    PICK_IT_YOURSELF = "PICK_IT_YOURSELF"  # example: 5% off for pick-up
+    SECOND_HAND = "SECOND_HAND"  # example: second hand books or clothes
+    OTHER = "OTHER"
+    NO_DISCOUNT = "NO_DISCOUNT"  # no discount applied
 
 
-class Labels(typing.TypedDict):
-    labels: list[Label]
+class SelectedPrice(BaseModel):
+    price: float = Field(..., description="Price in the local currency")
+    currency: str | None = Field(
+        ...,
+        description="Currency of the price.",
+    )
+    price_per: Unit = Field(..., description="Unit of the price")
+    price_is_discounted: bool = Field(
+        False, description="true if the price is discounted, false otherwise"
+    )
+    price_without_discount: float | None = Field(
+        ...,
+        description="The price without discount, if the price is discounted. "
+        "If the price is not discounted, this should be set to None.",
+    )
+    discount_type: DiscountType | None = Field(
+        None,
+        description="The type of discount applied to the price, if any. "
+        "If no discount is applied, this should be set to None.",
+    )
+    with_vat: bool = Field(
+        True,
+        description="True if the price includes VAT (Value Added Tax), false otherwise.",
+    )
+
+
+class LabelPrice(BaseModel):
+    """One of the price displayed on a price tag.
+
+    For raw products (without barcode), if the price is indicated per weight
+    but is not per kilogram (example: per 100g or per 500g), the price per
+    kilogram should be calculated.
+    """
+
+    price: float = Field(..., description="Price in the local currency")
+    with_vat: bool = Field(
+        True,
+        description="True if the price includes VAT (Value Added Tax), false otherwise. "
+        "If there are no VAT in the country, set to false. In most cases, this should be set to true.",
+    )
+    currency: str | None = Field(
+        ...,
+        description="Currency of the price. Set to null if unknown. Examples: 'EUR', 'USD', 'GBP'",
+    )
+    price_per: Unit = Field(..., description="Unit of the price")
+    price_is_discounted: bool = Field(
+        False, description="true if the price is discounted, false otherwise"
+    )
+    discount_type: DiscountType = Field(
+        DiscountType.NO_DISCOUNT,
+        description="The type of discount applied to the price, if any. "
+        "If no discount is applied, this should be set to NO_DISCOUNT.",
+    )
+
+
+# The schema version must be changed every time we introduce a breaking change
+# in the Label model.
+LABEL_SCHEMA_VERSION = "2.0"
+
+
+class Label(BaseModel):
+    """A label (also called price tag) indicates in a store the price of the
+    product and possibly other information such as the category, price per kg,
+    origin, etc.
+
+    We distinguish between two types of labels:
+
+    - Labels for packaged products, with barcode (type: PRODUCT): these are
+    products that have a barcode, which is usually displayed on the price tag.
+    For this type of label, the category should be set to NO_CATEGORY, the
+    origin should be set to NO_ORIGIN.
+    - Raw products, without barcode (type: CATEGORY): these are usually fruits
+    and vegetables, but it can also be any product sold per weight (kg, 100g,
+    etc.). For this type of label, the category should be set to the
+    corresponding RawCategory, the origin should be set to the country of
+    origin of the product (if indicated) and the barcode should be empty.
+    """
+
+    type: Literal["PRODUCT", "CATEGORY"] = Field(
+        ...,
+        description="The type of product the label is referring to. It should be "
+        "`PRODUCT` for packaged products with barcode, and `CATEGORY` for raw "
+        "products without barcode.",
+    )
+    category: RawCategory | None = Field(
+        None,
+        description="The category of the product. "
+        "If type=PRODUCT, this should be set to the null.",
+    )  # category_tag
+    prices: list[LabelPrice] = Field(
+        ...,
+        description="All prices found on the label. Depending on the type of "
+        "price tag, there can be multiple prices displayed. "
+        "For packaged products (type=PRODUCT), the price per unit is the most common one. "
+        "The price per kg is also often included as well. "
+        "For raw products (type=CATEGORY), the price per kg is the most common one. "
+        "There can also be a discount applied to the price. In such case, both "
+        "the original price and the discounted price should be included in the list.",
+    )
+    origin: Origin | None = Field(
+        ...,
+        description="The country of origin of the product. "
+        "If type=PRODUCT, this should be set to null. If type=CATEGORY, this should "
+        "be set to the country of origin of the product, such as France, Italy, Spain, etc.",
+    )
+    organic: bool = Field(
+        ...,
+        description="true if the product is organic, false otherwise. If true, "
+        "there should be evidence on the label suggesting that the product is "
+        "organic, such as the EU organic logo.",
+    )
+    barcode: str = Field(
+        ...,
+        description="The barcode of the product, if available. "
+        "The barcode are usually numbers with 13 (EAN13) or 8 (EAN8) digits. You should "
+        "*NOT* try to decode the barcode stripe (also called modules), but use the "
+        "barcode number displayed on the label. "
+        "If type=CATEGORY, this should be empty.",
+    )
+    product_name: str = Field(
+        ...,
+        description="The name of the product, as displayed on the label. "
+        "For raw products (type=CATEGORY), this is usually the name of the fruit or vegetable. "
+        "For products with barcode (type=PRODUCT), it usually includes the brand, a short "
+        "description of the product, and eventually the quantity. "
+        "examples: 'NOCCIOLATA BIO 650G', 'Simpson Donuts', 'GERBLE BISCUIT PIST ABRICOT160G', "
+        "'Radis Blanc', 'Concombre lisse', 'Courget Butternut', 'Tomatoes', 'Organic Bananas'",
+    )
+    blurriness: float = Field(
+        0.0,
+        description="The blurriness of the label image, from 0.0 (not blurry) to 1.0 (very blurry).",
+        ge=0.0,
+        le=1.0,
+    )
+    truncated: bool = Field(
+        False,
+        description="true if the photo of the price tag is truncated, false otherwise. A photo of a price tag is considered truncated if any of these occurs:\n"
+        "- the barcode (for packaged products) or the product name (for raw products) is not fully visible on the photo\n"
+        "- the price is not fully visible on the photo\n",
+    )
+    is_price_tag: bool = Field(
+        True,
+        description="true if the image is a price tag, false otherwise. If the image seems to come from a receipt or a catalogue, this should be set to false.",
+    )
+
+    @computed_field
+    @property
+    def selected_price(self) -> SelectedPrice | None:
+        """From all individual price reference on the price tag, construct a
+        Price ready to be added to Open Prices.
+
+        In case
+        """
+        if not self.prices:
+            return None
+
+        # sort prices to have prices with VAT first
+        sorted_prices = sorted(self.prices, key=lambda p: p.with_vat, reverse=True)
+
+        price_grouped_by_per = {unit: [] for unit in Unit}
+        for price in sorted_prices:
+            # Convert price_per to Unit.KILOGRAM if it is LITER
+            price_per = (
+                price.price_per if price.price_per != Unit.LITER else Unit.KILOGRAM
+            )
+            price_grouped_by_per[price_per].append(price)
+
+        if self.type == "CATEGORY":
+            # We first consider the price per KILOGRAM for raw products then
+            # per UNIT
+            selected_units = [Unit.KILOGRAM, Unit.UNIT]
+        else:
+            # We only consider the price per UNIT for packaged products.
+            selected_units = [Unit.UNIT]
+
+        for selected_unit in selected_units:
+            prices_per_selected_unit = price_grouped_by_per[selected_unit]
+            # Get the first occurence of a price with the selected unit and
+            # without discount. If there are one price with VAT and one without
+            # VAT, we take the one with VAT (thanks to sorting).
+            no_discount_price = next(
+                (
+                    p
+                    for p in prices_per_selected_unit
+                    if p.discount_type is DiscountType.NO_DISCOUNT
+                ),
+                None,
+            )
+            discounted_price = next(
+                (
+                    p
+                    for p in prices_per_selected_unit
+                    # We only consider the discount types SALE and SEASONAL as
+                    # these are the only ones that applies to any client.
+                    if p.discount_type in (DiscountType.SALE, DiscountType.SEASONAL)
+                ),
+                None,
+            )
+            if discounted_price:
+                # There is a discounted price displayed on the price tag.
+
+                # We search again for a price without discount, but with the
+                # same VAT status as the discounted price (otherwise the two
+                # prices cannot be compared).
+                no_discount_price = next(
+                    (
+                        p
+                        for p in prices_per_selected_unit
+                        if p.discount_type is DiscountType.NO_DISCOUNT
+                        and p.with_vat == discounted_price.with_vat
+                    ),
+                    None,
+                )
+                return SelectedPrice(
+                    price=discounted_price.price,
+                    with_vat=discounted_price.with_vat,
+                    currency=discounted_price.currency,
+                    price_per=selected_unit,
+                    price_is_discounted=True,
+                    # If we didn't find a price without discount, we set the
+                    # price_without_discount to null (as it's unknown).
+                    price_without_discount=(
+                        no_discount_price.price if no_discount_price else None
+                    ),
+                    discount_type=discounted_price.discount_type,
+                )
+            elif no_discount_price:
+                # This is a regular price, without discount
+                return SelectedPrice(
+                    price=no_discount_price.price,
+                    with_vat=no_discount_price.with_vat,
+                    currency=no_discount_price.currency,
+                    price_per=selected_unit,
+                    price_is_discounted=False,
+                    price_without_discount=None,
+                    discount_type=DiscountType.NO_DISCOUNT,
+                )
+
+        return None
 
 
 class ReceiptItemType(typing.TypedDict):
@@ -187,76 +524,106 @@ class Receipt(typing.TypedDict):
     items: list[ReceiptItemType]
 
 
-def extract_from_price_tag(image: Image.Image) -> Label:
-    """Extract price tag information from an image.
-
-    :param image: the input Pillow image
-    :return: the extracted information as a dictionary
-    """
-    client = common_google.get_genai_client()
+def preprocess_price_tag(image: Image.Image) -> Image.Image:
     # Gemini model max payload size is 20MB
     # To prevent the payload from being too large, we resize the images
     max_size = 1024
     if image.width > max_size or image.height > max_size:
         image = image.copy()
         image.thumbnail((max_size, max_size))
+    return image
 
-    prompt = (
-        "Here is one picture containing a label. "
-        "Please extract all the following attributes: "
-        "the product category matching product name, the origin category matching country of origin, the price, "
-        "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode (valid EAN-13 usually). "
-        "I expect a single JSON in your reply, no more, no less. "
-        "If you cannot decode an attribute, set it to an empty string."
-    )
+
+EXTRACT_PRICE_TAG_PROMPT = (
+    "Here is one picture containing a price label, extract information "
+    "from it. If you cannot decode an attribute, set it to an empty string."
+)
+
+
+def extract_from_price_tag(
+    image: Image.Image, thinking_budget: int = -1
+) -> common_google.types.GenerateContentResponse:
+    """Extract price tag information from an image.
+
+    :param image: the input Pillow image. Image preprocessing is done
+        automatically to resize the image if it is too large.
+    :param thinking_budget: the thinking budget for the Gemini model, in
+        tokens. 0 is DISABLED. -1 is AUTOMATIC.
+    :return: the Gemini response
+    """
+    client = common_google.get_genai_client()
+    preprocessed_image = preprocess_price_tag(image)
+
     response = client.models.generate_content(
         model=common_google.GEMINI_MODEL_VERSION,
         contents=[
-            prompt,
+            EXTRACT_PRICE_TAG_PROMPT,
+            preprocessed_image,
+        ],
+        config=common_google.get_generation_config(
+            Label, thinking_budget=thinking_budget
+        ),
+    )
+    return response
+
+
+async def extract_from_price_tag_async(
+    image: Image.Image, thinking_budget: int = -1
+) -> common_google.types.GenerateContentResponse:
+    """Asynchronous version of extract_from_price_tag.
+
+    Image preprocessing (resizing to maximum size) must be done before calling
+    this function.
+
+    :param image: the input Pillow image, already preprocessed.
+    :param thinking_budget: the thinking budget for the Gemini model, in
+        tokens. 0 is DISABLED. -1 is AUTOMATIC.
+    :return: the Gemini response
+    """
+    # We get the uncached version of the client because otherwise
+    # the event loop configuration done during the client initialization
+    # leads to an exception when reusing the client in an async context
+    # (due to the event loop being closed)
+    client = common_google.get_genai_client.__wrapped__()
+    response = await client.aio.models.generate_content(
+        model=common_google.GEMINI_MODEL_VERSION,
+        contents=[
+            EXTRACT_PRICE_TAG_PROMPT,
             image,
         ],
-        config=common_google.get_generation_config(Label),
+        config=common_google.get_generation_config(
+            Label, thinking_budget=thinking_budget
+        ),
     )
-    return json.loads(response.text)
+    return response
 
 
-def extract_from_price_tags(images: Image.Image) -> Labels:
+async def extract_from_price_tag_batch(
+    images: list[Image.Image], thinking_budget: int = -1
+) -> list[common_google.types.GenerateContentResponse]:
+    """Extract price tag information from a batch of images.
+
+    This function processes multiple images in parallel using asyncio.
+
+    :param images: a list of Pillow images, already preprocessed (resized).
+    :param thinking_budget: the thinking budget for the Gemini model, in
+        tokens. 0 is DISABLED. -1 is AUTOMATIC.
+    :return: a list of Gemini responses, one for each image
     """
-    Extract price tag information from a list of images.
+    responses = []
+    tasks = [
+        extract_from_price_tag_async(image, thinking_budget=thinking_budget)
+        for image in images
+    ]
+    responses = await asyncio.gather(*tasks)
+    return responses
 
-    Warning:
-    Gemini sometimes skips some images when prediction price tag labels,
-    leading to mismatch between price tag and predictions.
-    Use extract_from_price_tag instead.
-    """
 
-    # Gemini model max payload size is 20MB
-    # To prevent the payload from being too large, we resize the images
-    image_list = []
-    max_size = 1024
-    for image in images:
-        if image.width > max_size or image.height > max_size:
-            resized_image = image.copy()
-            resized_image.thumbnail((max_size, max_size))
-            image_list.append(resized_image)
-        else:
-            image_list.append(image)
-
-    prompt = (
-        f"Here are {len(image_list)} pictures containing a label. "
-        "For each picture of a label, please extract all the following attributes: "
-        "the product category matching product name, the origin category matching country of origin, the price, "
-        "is the product organic, the unit (per KILOGRAM or per UNIT) and the barcode (valid EAN-13 usually). "
-        f"I expect a list of {len(image_list)} labels in your reply, no more, no less. "
-        "If you cannot decode an attribute, set it to an empty string"
-    )
-    client = common_google.get_genai_client()
-    response = client.models.generate_content(
-        model=common_google.GEMINI_MODEL_VERSION,
-        contents=[prompt] + image_list,
-        config=common_google.get_generation_config(Labels),
-    )
-    return json.loads(response.text)
+# We use async_to_sync to make the function synchronous for compatibility
+# with the rest of the codebase that expects synchronous functions.
+# See
+# https://docs.djangoproject.com/en/5.2/topics/async/#async-adapter-functions
+sync_extract_from_price_tag_batch = async_to_sync(extract_from_price_tag_batch)
 
 
 def extract_from_receipt(image: Image.Image) -> Receipt:
@@ -451,6 +818,7 @@ def run_and_save_price_tag_extraction(
         return []
 
     predictions = []
+    preprocessed_images = []
     for price_tag in price_tags:
         y_min, x_min, y_max, x_max = price_tag.bounding_box
         image = Image.open(proof.file_path_full)
@@ -461,14 +829,23 @@ def run_and_save_price_tag_extraction(
             y_max * image.height,
         )
         cropped_image = image.crop((left, top, right, bottom))
-        label = extract_from_price_tag(cropped_image)
+        preprocessed_images.append(preprocess_price_tag(cropped_image))
+
+    # We send requests to Gemini in parallel using asyncio
+    # to speed up the extraction process.
+    responses = sync_extract_from_price_tag_batch(
+        preprocessed_images, thinking_budget=-1
+    )
+    for price_tag, response in zip(price_tags, responses):
         try:
             prediction = PriceTagPrediction.objects.create(
                 price_tag=price_tag,
                 type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
                 model_name=common_google.GEMINI_MODEL_NAME,
                 model_version=common_google.GEMINI_MODEL_VERSION,
-                data=label,
+                schema_version=LABEL_SCHEMA_VERSION,
+                data=response.parsed.model_dump(),
+                thought_tokens=common_google.extract_thought_tokens(response),
             )
             predictions.append(prediction)
         except Exception as e:
@@ -477,7 +854,7 @@ def run_and_save_price_tag_extraction(
     return predictions
 
 
-def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction:
+def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction | None:
     """Update the price tag extraction prediction using the Gemini model.
 
     :param price_tag: the PriceTag instance associated with the prediction
@@ -514,10 +891,14 @@ def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction:
         y_max * image.height,
     )
     cropped_image = image.crop((left, top, right, bottom))
-    gemini_output = extract_from_price_tag(cropped_image)
-    price_tag_prediction.data = gemini_output
+    gemini_response = extract_from_price_tag(cropped_image)
     price_tag_prediction.model_name = common_google.GEMINI_MODEL_NAME
     price_tag_prediction.model_version = common_google.GEMINI_MODEL_VERSION
+    price_tag_prediction.schema_version = LABEL_SCHEMA_VERSION
+    price_tag_prediction.data = gemini_response.parsed.model_dump()
+    price_tag_prediction.thought_tokens = common_google.extract_thought_tokens(
+        gemini_response
+    )
     price_tag_prediction.save()
     return price_tag_prediction
 

@@ -93,7 +93,14 @@ class ProofProcessWithGeminiSerializer(serializers.Serializer):
 class PriceTagPredictionSerializer(serializers.ModelSerializer):
     class Meta:
         model = PriceTagPrediction
-        fields = ["type", "model_name", "model_version", "data", "created"]
+        fields = [
+            "type",
+            "model_name",
+            "model_version",
+            "schema_version",
+            "data",
+            "created",
+        ]
 
 
 class PriceTagFullSerializer(serializers.ModelSerializer):

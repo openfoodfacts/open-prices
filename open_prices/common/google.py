@@ -58,7 +58,33 @@ def get_genai_client() -> genai.Client:
     return genai.Client()
 
 
-def get_generation_config(response_schema) -> types.GenerateContentConfig:
+def get_generation_config(
+    response_schema: type, thinking_budget: int = -1
+) -> types.GenerateContentConfig:
+    """Return a generation configuration for the Gemini model.
+
+    :param response_schema: The schema for the response. It can be a Pydantic
+        model or a TypeDict.
+    :param thinking_budget: The budget for the thinking process, in tokens.
+        0 is DISABLED. -1 is AUTOMATIC.
+    """
     return types.GenerateContentConfig(
-        response_mime_type="application/json", response_schema=response_schema
+        response_mime_type="application/json",
+        response_schema=response_schema,
+        thinking_config=types.ThinkingConfig(
+            thinking_budget=thinking_budget, include_thoughts=True
+        ),
     )
+
+
+def extract_thought_tokens(
+    gemini_response: types.GenerateContentResponse,
+) -> str | None:
+    """Extract thought tokens from a Gemini response."""
+    if gemini_response.candidates:
+        # If there are candidates, we take the first one
+        candidate = gemini_response.candidates[0]
+
+        if candidate.content and candidate.content.parts:
+            return next((p.text for p in candidate.content.parts if p.thought), None)
+    return None
