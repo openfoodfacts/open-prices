@@ -18,6 +18,7 @@ from typing import Any, Literal
 import typing_extensions as typing
 from asgiref.sync import async_to_sync
 from django.conf import settings
+from google import genai
 from openfoodfacts.ml.image_classification import ImageClassifier
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDetector
 from openfoodfacts.utils import http_session
@@ -568,23 +569,19 @@ def extract_from_price_tag(
 
 
 async def extract_from_price_tag_async(
-    image: Image.Image, thinking_budget: int = -1
+    client: genai.Client, image: Image.Image, thinking_budget: int = -1
 ) -> common_google.types.GenerateContentResponse:
     """Asynchronous version of extract_from_price_tag.
 
     Image preprocessing (resizing to maximum size) must be done before calling
     this function.
 
+    :param client: the genai.Client instance to use for the request.
     :param image: the input Pillow image, already preprocessed.
     :param thinking_budget: the thinking budget for the Gemini model, in
         tokens. 0 is DISABLED. -1 is AUTOMATIC.
     :return: the Gemini response
     """
-    # We get the uncached version of the client because otherwise
-    # the event loop configuration done during the client initialization
-    # leads to an exception when reusing the client in an async context
-    # (due to the event loop being closed)
-    client = common_google.get_genai_client.__wrapped__()
     response = await client.aio.models.generate_content(
         model=common_google.GEMINI_MODEL_VERSION,
         contents=[
@@ -611,8 +608,13 @@ async def extract_from_price_tag_batch(
     :return: a list of Gemini responses, one for each image
     """
     responses = []
+    # We get the uncached version of the client because otherwise
+    # the event loop configuration done during the client initialization
+    # leads to an exception when reusing the client in an async context
+    # (due to the event loop being closed)
+    client = common_google.get_genai_client.__wrapped__()
     tasks = [
-        extract_from_price_tag_async(image, thinking_budget=thinking_budget)
+        extract_from_price_tag_async(client, image, thinking_budget=thinking_budget)
         for image in images
     ]
     responses = await asyncio.gather(*tasks)
