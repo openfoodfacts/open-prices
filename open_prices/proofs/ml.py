@@ -12,6 +12,7 @@ import gzip
 import json
 import logging
 import time
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Literal
 
@@ -26,6 +27,7 @@ from PIL import Image
 from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
+from open_prices.common.taxonomy import normalize_taxonomized_tags
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import (
     PriceTag,
@@ -146,109 +148,6 @@ class Products(enum.Enum):
     ZUCCHINI = "en:zucchini"
 
 
-class RawCategory(enum.StrEnum):
-    APPLES = "en:apples"
-    APRICOTS = "en:apricots"
-    ARTICHOKES = "en:artichokes"
-    ASPARAGUS = "en:asparagus"
-    AUBERGINES = "en:aubergines"
-    AVOCADOS = "en:avocados"
-    BANANAS = "en:bananas"
-    BEETROOT = "en:beetroot"
-    BERRIES = "en:berries"
-    BLACKBERRIES = "en:blackberries"
-    BLUEBERRIES = "en:blueberries"
-    BOK_CHOY = "en:bok-choy"
-    BROCCOLI = "en:broccoli"
-    CABBAGES = "en:cabbages"
-    CARROTS = "en:carrots"
-    CAULIFLOWERS = "en:cauliflowers"
-    CELERY = "en:celery"
-    CELERIAC = "en:celeriac"
-    CELERY_STALK = "en:celery-stalk"
-    CEP_MUSHROOMS = "en:cep-mushrooms"
-    CHANTERELLES = "en:chanterelles"
-    CHARDS = "en:chards"
-    CHERRIES = "en:cherries"
-    CHERRY_TOMATOES = "en:cherry-tomatoes"
-    CHICKPEAS = "en:chickpeas"
-    CHIVES = "en:chives"
-    CLEMENTINES = "en:clementines"
-    COCONUTS = "en:coconuts"
-    CRANBERRIES = "en:cranberries"
-    CUCUMBERS = "en:cucumbers"
-    DATES = "en:dates"
-    ENDIVES = "en:endives"
-    FENNEL_BULBS = "en:fennel-bulbs"
-    FIGS = "en:figs"
-    GARLIC = "en:garlic"
-    GINGER = "en:ginger"
-    GRAPEFRUITS = "en:grapefruits"
-    GRAPES = "en:grapes"
-    GREEN_BEANS = "en:green-beans"
-    GREEN_SWEET_PEPPERS = "en:green-sweet-peppers"
-    KIWIS = "en:kiwis"
-    KAKIS = "en:kakis"
-    LEEKS = "en:leeks"
-    LEMONS = "en:lemons"
-    LETTUCES = "en:lettuces"
-    LIMES = "en:limes"
-    LYCHEES = "en:lychees"
-    MANDARIN_ORANGES = "en:mandarin-oranges"
-    MANGOES = "en:mangoes"
-    MELONS = "en:melons"
-    MUSHROOMS = "en:mushrooms"
-    NECTARINES = "en:nectarines"
-    ONIONS = "en:onions"
-    ORANGES = "en:oranges"
-    PAPAYAS = "en:papayas"
-    PARSNIP = "en:parsnip"
-    PASSION_FRUITS = "en:passion-fruits"
-    PEACHES = "en:peaches"
-    PEARS = "en:pears"
-    PEAS = "en:peas"
-    PEPPERS = "en:peppers"
-    PINEAPPLE = "en:pineapple"
-    PLUMS = "en:plums"
-    POMEGRANATES = "en:pomegranates"
-    POMELOS = "en:pomelos"
-    POTATOES = "en:potatoes"
-    PUMPKINS = "en:pumpkins"
-    RADISHES = "en:radishes"
-    RASPBERRIES = "en:raspberries"
-    RED_BELL_PEPPERS = "en:red-bell-peppers"
-    RED_ONIONS = "en:red-onions"
-    RHUBARBS = "en:rhubarbs"
-    SCALLIONS = "en:scallions"
-    SHALLOTS = "en:shallots"
-    SPINACHS = "en:spinachs"
-    SPROUTS = "en:sprouts"
-    STRAWBERRIES = "en:strawberries"
-    TOMATOES = "en:tomatoes"
-    TURNIP = "en:turnip"
-    WATERMELONS = "en:watermelons"
-    WALNUTS = "en:walnuts"
-    YELLOW_ONIONS = "en:yellow-onions"
-    ZUCCHINI = "en:zucchini"
-    OTHER = "other"
-
-
-# TODO: what about other origins?
-class Origin(enum.StrEnum):
-    FRANCE = "en:france"
-    ITALY = "en:italy"
-    SPAIN = "en:spain"
-    POLAND = "en:poland"
-    CHINA = "en:china"
-    BELGIUM = "en:belgium"
-    MOROCCO = "en:morocco"
-    PERU = "en:peru"
-    PORTUGAL = "en:portugal"
-    MEXICO = "en:mexico"
-    OTHER = "other"
-    UNKNOWN = "unknown"
-
-
 class Unit(enum.StrEnum):
     KILOGRAM = "KILOGRAM"
     LITER = "LITER"
@@ -351,9 +250,12 @@ class Label(BaseModel):
         "`PRODUCT` for packaged products with barcode, and `CATEGORY` for raw "
         "products without barcode.",
     )
-    category: RawCategory | None = Field(
+    category: str | None = Field(
         None,
-        description="The category of the product. "
+        description="The category of the product. If type=CATEGORY, this should be set to the "
+        "category of the product, such as Apples, Bananas, Tomatoes, etc. The category must be in English, "
+        "even if the category is displayed in another language on the price tag. "
+        "If unknown, this should be set to null. "
         "If type=PRODUCT, this should be set to the null.",
     )  # category_tag
     prices: list[LabelPrice] = Field(
@@ -366,11 +268,12 @@ class Label(BaseModel):
         "There can also be a discount applied to the price. In such case, both "
         "the original price and the discounted price should be included in the list.",
     )
-    origin: Origin | None = Field(
+    origin: str | None = Field(
         ...,
-        description="The country of origin of the product. "
+        description="The country of origin of the product, in English. "
         "If type=PRODUCT, this should be set to null. If type=CATEGORY, this should "
-        "be set to the country of origin of the product, such as France, Italy, Spain, etc.",
+        "be set to the country of origin of the product, such as France, Italy, Spain, etc. "
+        "If type=CATEGORY and the origin is unknown, it should be set to null.",
     )
     organic: bool = Field(
         ...,
@@ -411,6 +314,82 @@ class Label(BaseModel):
         True,
         description="true if the image is a price tag, false otherwise. If the image seems to come from a receipt or a catalogue, this should be set to false.",
     )
+
+    @computed_field
+    @cached_property
+    def origin_tag(self) -> str | None:
+        """Return the taggified version of the origin, or None if the origin
+        is not set or if it could not be mapped to a canonical ID.
+
+        Examples:
+
+        - if the origin is "Spain", the tag will be "en:spain".
+        - if the origin is not set (None), this will return None.
+        - if the origin does not exist in the taxonomy (ex: "Unknown Country"),
+          this will return None.
+        """
+        if self.origin is None:
+            return None
+
+        return normalize_taxonomized_tags(
+            "origin",
+            # we add the "en:" prefix as Gemini returns the origin without
+            # prefix, in English
+            [f"en:{self.origin}"],
+            # we force the match to return None if the origin does not exist
+            # in the taxonomy, instead of returning the tag version of the
+            # value (ex: "en:unknown-country")
+            force_match=True,
+        )[0]
+
+    @computed_field
+    @cached_property
+    def category_tag(self) -> str | None:
+        """Return the taggified version of the category, or None if the
+        category is not set or if it could not be mapped to a canonical ID.
+
+        Examples:
+
+        - if the category is "Apples", the tag will be "en:apples".
+        - if the category is not set (None), this will return None.
+        - if the category does not exist in the taxonomy (ex: "Unknown
+          Category"), this will return None
+        """
+        if self.category is None:
+            return None
+
+        # The canonical ID in the category taxonomy is usually the plural
+        # form of the category, but it can also be the singular form.
+        # We first try the category as it is.
+        # We then try the plural form of the category if it does not end with
+        # an 's'.
+        # Finally, we try the singular form of the category if it ends with an
+        # 's'.
+        # We return the first one that exists in the taxonomy.
+        # If none of the forms exists in the taxonomy, we return None.
+        candidates = [self.category]
+        if self.category.endswith("s") and len(self.category) > 1:
+            # If the category ends with an 's', we also try the singular form
+            candidates.append(self.category[:-1])
+        else:
+            # If the category does not end with an 's', we try the plural form
+            candidates.append(f"{self.category}s")
+
+        for category in candidates:
+            normalized_tag = normalize_taxonomized_tags(
+                "category",
+                # we add the "en:" prefix as Gemini returns the category
+                # without prefix, in English
+                [f"en:{category}"],
+                # we force the match to return None if the category does not
+                # exist in the taxonomy, instead of returning the tag version
+                # of the value (ex: "en:unknown-category")
+                force_match=True,
+            )[0]
+            if normalized_tag is not None:
+                return normalized_tag
+
+        return None
 
     @computed_field
     @property
