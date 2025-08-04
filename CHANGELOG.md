@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.81.1](https://github.com/openfoodfacts/open-prices/compare/v1.81.0...v1.81.1) (2025-08-04)
+
+
+### Bug Fixes
+
+* upgrade certifi version ([#889](https://github.com/openfoodfacts/open-prices/issues/889)) ([9159bfd](https://github.com/openfoodfacts/open-prices/commit/9159bfd3e141dd09b3dbaeadd48bd3ccfd684b02))
+
 ## [1.81.0](https://github.com/openfoodfacts/open-prices/compare/v1.80.2...v1.81.0) (2025-07-24)
 
 
