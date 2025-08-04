@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.81.2](https://github.com/openfoodfacts/open-prices/compare/v1.81.1...v1.81.2) (2025-08-04)
+
+
+### Bug Fixes
+
+* only create once the Google genai client ([#891](https://github.com/openfoodfacts/open-prices/issues/891)) ([5dc9230](https://github.com/openfoodfacts/open-prices/commit/5dc9230dbb81184f1df2fd8a66231c646ef4031c))
+
 ## [1.81.1](https://github.com/openfoodfacts/open-prices/compare/v1.81.0...v1.81.1) (2025-08-04)
 
 
