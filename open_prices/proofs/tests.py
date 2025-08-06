@@ -920,10 +920,11 @@ class PriceTagQuerySetTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
                 "price": 1.5,
                 "barcode": "0123456789100",
-                "product": "other",
+                "category": "other",
                 "product_name": "NAME",
             },
         )
@@ -1042,10 +1043,11 @@ class PriceTagPropertyTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
                 "price": 10,
                 "barcode": "8001505005707",
-                "product": "other",
+                "category": "other",
                 "product_name": "NOCCIOLATA 700G",
             },
         )
@@ -1056,10 +1058,11 @@ class PriceTagPropertyTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
                 "price": 2.5,
                 "barcode": "",
-                "product": "en:tomatoes",  # category_tag
+                "category": "en:tomatoes",
                 "product_name": "TOMATES",
             },
         )
@@ -1070,6 +1073,7 @@ class PriceTagPropertyTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={},
         )
 
@@ -1085,10 +1089,12 @@ class PriceTagPropertyTest(TestCase):
         self.assertEqual(self.price_tag_category.get_predicted_barcode(), "")
         self.assertEqual(self.price_tag_empty.get_predicted_barcode(), None)
 
-    def test_get_predicted_product(self):
-        self.assertEqual(self.price_tag_product.get_predicted_product(), "other")
-        self.assertEqual(self.price_tag_category.get_predicted_product(), "en:tomatoes")
-        self.assertEqual(self.price_tag_empty.get_predicted_product(), None)
+    def test_get_predicted_category(self):
+        self.assertEqual(self.price_tag_product.get_predicted_category(), "other")
+        self.assertEqual(
+            self.price_tag_category.get_predicted_category(), "en:tomatoes"
+        )
+        self.assertEqual(self.price_tag_empty.get_predicted_category(), None)
 
     def test_get_predicted_product_name(self):
         self.assertEqual(
@@ -1117,7 +1123,7 @@ class PriceTagPredictionTest(TestCase):
             data={
                 "price": 10,
                 "barcode": "8001505005707",
-                "product": "other",
+                "category": "other",
                 "product_name": "NOCCIOLATA 700G",
             },
         )
@@ -1222,7 +1228,8 @@ class PriceTagMatchingUtilsTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-            data={"price": 1.5, "barcode": "0123456789100", "product": "other"},
+            schema_version="2.0",
+            data={"price": 1.5, "barcode": "0123456789100", "category": "other"},
         )
         cls.price_product = PriceFactory(
             type=price_constants.TYPE_PRODUCT,
@@ -1238,10 +1245,11 @@ class PriceTagMatchingUtilsTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
                 "price": 2.5,
                 "barcode": "",
-                "product": "en:tomatoes",  # category_tag
+                "category": "en:tomatoes",
                 "product_name": "TOMATES",
             },
         )
