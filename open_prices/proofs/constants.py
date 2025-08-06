@@ -61,6 +61,10 @@ class PriceTagStatus(enum.IntEnum):
 
 PRICE_TAG_STATUS_CHOICES = [(item.value, item.name) for item in PriceTagStatus]
 
+PRICE_TAG_PREDICTION_TAG_BARCODE_VALID = "prediction-barcode-valid"
+PRICE_TAG_PREDICTION_TAG_PRODUCT_EXISTS = "prediction-product-exists"
+PRICE_TAG_PREDICTION_TAG_CATEGORY_TAG_VALID = "prediction-category-tag-valid"
+
 
 class ReceiptItemStatus(enum.IntEnum):
     deleted = 0
