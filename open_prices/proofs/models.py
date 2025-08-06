@@ -11,9 +11,7 @@ from django.utils import timezone
 from django_q.tasks import async_task
 
 from open_prices.challenges.models import Challenge
-from open_prices.common import constants
-from open_prices.common import openfoodfacts as common_openfoodfacts
-from open_prices.common import utils
+from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
 
@@ -702,14 +700,27 @@ class PriceTag(models.Model):
     def update_tags(self):
         changes = False
         # prediction tags
+        from open_prices.proofs.ml import (
+            price_tag_prediction_has_predicted_barcode_valid,
+            price_tag_prediction_has_predicted_category_tag_valid,
+            price_tag_prediction_has_predicted_product_exists,
+        )
+
         if self.predictions.exists():
             prediction = self.predictions.first()
-            if prediction.has_predicted_barcode_valid():
-                changes = self.set_tag("prediction-barcode-valid", save=False)
-            if prediction.has_predicted_product_exists():
-                changes = self.set_tag("prediction-product-exists", save=False)
-            if prediction.has_predicted_category_tag_valid():
-                changes = self.set_tag("prediction-category-tag-valid", save=False)
+            if price_tag_prediction_has_predicted_barcode_valid(prediction):
+                changes = self.set_tag(
+                    proof_constants.PRICE_TAG_PREDICTION_TAG_BARCODE_VALID, save=False
+                )
+            if price_tag_prediction_has_predicted_product_exists(prediction):
+                changes = self.set_tag(
+                    proof_constants.PRICE_TAG_PREDICTION_TAG_PRODUCT_EXISTS, save=False
+                )
+            if price_tag_prediction_has_predicted_category_tag_valid(prediction):
+                changes = self.set_tag(
+                    proof_constants.PRICE_TAG_PREDICTION_TAG_CATEGORY_TAG_VALID,
+                    save=False,
+                )
         # save
         if changes:
             self.save(update_fields=["tags"])
@@ -790,36 +801,27 @@ class PriceTagPrediction(models.Model):
         return f"{self.price_tag} - {self.model_name} - {self.model_version}"
 
     def has_predicted_barcode_valid(self):
-        if self.data.get("barcode"):
-            barcode = self.data.get("barcode")
-            if common_openfoodfacts.barcode_is_valid(barcode):
-                return True
-        return False
+        return (
+            proof_constants.PRICE_TAG_PREDICTION_TAG_BARCODE_VALID
+            in self.price_tag.tags
+        )
 
     def has_predicted_product_exists(self):
-        from open_prices.products.models import Product
-
-        if self.data.get("barcode"):
-            barcode = self.data.get("barcode")
-            if Product.objects.filter(code=barcode).exists():
-                return True
-        return False
+        return (
+            proof_constants.PRICE_TAG_PREDICTION_TAG_PRODUCT_EXISTS
+            in self.price_tag.tags
+        )
 
     def has_predicted_barcode_valid_and_product_exists(self):
-        from open_prices.products.models import Product
-
-        if self.has_predicted_barcode_valid():
-            barcode = self.data.get("barcode")
-            if Product.objects.filter(code=barcode).exists():
-                return True
-        return False
+        return (
+            self.has_predicted_barcode_valid() and self.has_predicted_product_exists()
+        )
 
     def has_predicted_category_tag_valid(self):
-        if self.data.get("product"):
-            category_tag = self.data.get("product")
-            if category_tag.startswith("en:"):
-                return True
-        return False
+        return (
+            proof_constants.PRICE_TAG_PREDICTION_TAG_CATEGORY_TAG_VALID
+            in self.price_tag.tags
+        )
 
 
 @receiver(signals.post_save, sender=PriceTagPrediction)

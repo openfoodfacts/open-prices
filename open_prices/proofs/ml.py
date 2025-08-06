@@ -26,6 +26,7 @@ from PIL import Image
 from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
+from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import (
     PriceTag,
@@ -1179,3 +1180,55 @@ def run_and_save_proof_prediction(
     )
     if run_receipt_extraction:
         run_and_save_receipt_extraction_prediction(image, proof)
+
+
+def price_tag_prediction_has_predicted_barcode_valid(
+    price_tag_prediction: PriceTagPrediction,
+) -> bool:
+    """
+    proof_constants.PRICE_TAG_PREDICTION_TAG_BARCODE_VALID
+    Differences between schema versions: No
+    """
+    if price_tag_prediction.data.get("barcode"):
+        barcode = price_tag_prediction.data.get("barcode")
+        if common_openfoodfacts.barcode_is_valid(barcode):
+            return True
+    return False
+
+
+def price_tag_prediction_has_predicted_product_exists(
+    price_tag_prediction: PriceTagPrediction,
+) -> bool:
+    """
+    proof_constants.PRICE_TAG_PREDICTION_TAG_PRODUCT_EXISTS
+    Differences between schema versions: No
+    """
+    from open_prices.products.models import Product
+
+    if price_tag_prediction.data.get("barcode"):
+        barcode = price_tag_prediction.data.get("barcode")
+        if Product.objects.filter(code=barcode).exists():
+            return True
+    return False
+
+
+def price_tag_prediction_has_predicted_category_tag_valid(
+    price_tag_prediction: PriceTagPrediction,
+) -> bool:
+    """
+    proof_constants.PRICE_TAG_PREDICTION_TAG_CATEGORY_TAG_VALID
+    Differences between schema versions:
+    - schema v1: category_tag is stored in data['product']
+    - schema v2: category_tag is stored in data['category']
+    """
+    if price_tag_prediction.schema_version == "1.0":
+        if price_tag_prediction.data.get("product"):
+            category_tag = price_tag_prediction.data.get("product")
+            if category_tag.startswith("en:"):
+                return True
+    elif price_tag_prediction.schema_version == "2.0":
+        if price_tag_prediction.data.get("category"):
+            category_tag = price_tag_prediction.data.get("category")
+            if category_tag.startswith("en:"):
+                return True
+    return False
