@@ -159,7 +159,7 @@ def match_product_price_tag_with_product_price(
     price_tag: PriceTag, price: Price
 ) -> bool:
     """
-    Match on product_code ("barcode") and price.
+    Match on product_code and price.
     """
     price_tag_prediction_barcode = price_tag.get_predicted_barcode()
     price_tag_prediction_barcode = cleanup_price_tag_prediction_barcode(
@@ -177,13 +177,13 @@ def match_category_price_tag_with_category_price(
     price_tag: PriceTag, price: Price
 ) -> bool:
     """
-    Match on category_tag ("product") and price.
+    Match on category_tag and price.
     """
-    price_tag_prediction_product = price_tag.get_predicted_product()
+    price_tag_prediction_category = price_tag.get_predicted_category()
     price_tag_prediction_price = price_tag.get_predicted_price()
     return (
         price.type == price_constants.TYPE_CATEGORY
-        and (price.category_tag == price_tag_prediction_product)
+        and (price.category_tag == price_tag_prediction_category)
         and utils.match_decimal_with_float(price.price, price_tag_prediction_price)
     )
 

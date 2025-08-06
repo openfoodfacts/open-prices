@@ -727,17 +727,23 @@ class PriceTag(models.Model):
 
     def get_predicted_price(self):
         if self.predictions.exists():
-            return self.predictions.first().data.get("price")
+            prediction = self.predictions.first()
+            return prediction.data.get("price")
         return None
 
     def get_predicted_barcode(self):
         if self.predictions.exists():
-            return self.predictions.first().data.get("barcode")
+            prediction = self.predictions.first()
+            return prediction.data.get("barcode")
         return None
 
-    def get_predicted_product(self):
+    def get_predicted_category(self):  # category_tag
         if self.predictions.exists():
-            return self.predictions.first().data.get("product")  # category_tag
+            prediction = self.predictions.first()
+            if prediction.schema_version == "1.0":
+                return prediction.data.get("product")
+            elif prediction.schema_version == "2.0":
+                return prediction.data.get("category")
         return None
 
     def get_predicted_product_name(self):

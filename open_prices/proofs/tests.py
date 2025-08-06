@@ -1085,10 +1085,12 @@ class PriceTagPropertyTest(TestCase):
         self.assertEqual(self.price_tag_category.get_predicted_barcode(), "")
         self.assertEqual(self.price_tag_empty.get_predicted_barcode(), None)
 
-    def test_get_predicted_product(self):
-        self.assertEqual(self.price_tag_product.get_predicted_product(), "other")
-        self.assertEqual(self.price_tag_category.get_predicted_product(), "en:tomatoes")
-        self.assertEqual(self.price_tag_empty.get_predicted_product(), None)
+    def test_get_predicted_category(self):
+        self.assertEqual(self.price_tag_product.get_predicted_category(), "other")
+        self.assertEqual(
+            self.price_tag_category.get_predicted_category(), "en:tomatoes"
+        )
+        self.assertEqual(self.price_tag_empty.get_predicted_category(), None)
 
     def test_get_predicted_product_name(self):
         self.assertEqual(
