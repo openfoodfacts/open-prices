@@ -1128,11 +1128,11 @@ class PriceTagPredictionTest(TestCase):
         cls.price_tag_category_prediction = PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-            schema_version="1.0",
+            schema_version="2.0",
             data={
                 "price": 2.5,
                 "barcode": "",
-                "product": "en:tomatoes",  # category_tag
+                "category": "en:tomatoes",  # product in schema_version 1.0
                 "product_name": "TOMATES",
             },
         )

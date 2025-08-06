@@ -1207,7 +1207,7 @@ def price_tag_prediction_has_predicted_product_exists(
         barcode = price_tag_prediction.data.get("barcode")
         if Product.objects.filter(code=barcode).exists():
             return True
-        return False
+    return False
 
 
 def price_tag_prediction_has_predicted_category_tag_valid(
@@ -1217,7 +1217,7 @@ def price_tag_prediction_has_predicted_category_tag_valid(
     proof_constants.PRICE_TAG_PREDICTION_TAG_CATEGORY_TAG_VALID
     Differences between schema versions:
     - schema v1: category_tag is stored in data['product']
-    - schema v2: category_tag is stored in data['category_tag']
+    - schema v2: category_tag is stored in data['category']
     """
     if price_tag_prediction.schema_version == "1.0":
         if price_tag_prediction.data.get("product"):
@@ -1225,8 +1225,8 @@ def price_tag_prediction_has_predicted_category_tag_valid(
             if category_tag.startswith("en:"):
                 return True
     elif price_tag_prediction.schema_version == "2.0":
-        if price_tag_prediction.data.get("category_tag"):
-            category_tag = price_tag_prediction.data.get("category_tag")
+        if price_tag_prediction.data.get("category"):
+            category_tag = price_tag_prediction.data.get("category")
             if category_tag.startswith("en:"):
                 return True
     return False
