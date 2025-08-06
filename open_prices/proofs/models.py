@@ -14,11 +14,6 @@ from open_prices.challenges.models import Challenge
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.ml import (
-    price_tag_prediction_has_predicted_barcode_valid,
-    price_tag_prediction_has_predicted_category_tag_valid,
-    price_tag_prediction_has_predicted_product_exists,
-)
 
 
 class ProofQuerySet(models.QuerySet):
@@ -705,17 +700,23 @@ class PriceTag(models.Model):
     def update_tags(self):
         changes = False
         # prediction tags
+        from open_prices.proofs.ml import (
+            price_tag_prediction_has_predicted_barcode_valid,
+            price_tag_prediction_has_predicted_category_tag_valid,
+            price_tag_prediction_has_predicted_product_exists,
+        )
+
         if self.predictions.exists():
             prediction = self.predictions.first()
-            if prediction.has_predicted_barcode_valid():
+            if price_tag_prediction_has_predicted_barcode_valid(prediction):
                 changes = self.set_tag(
                     proof_constants.PRICE_TAG_PREDICTION_TAG_BARCODE_VALID, save=False
                 )
-            if prediction.has_predicted_product_exists():
+            if price_tag_prediction_has_predicted_product_exists(prediction):
                 changes = self.set_tag(
                     proof_constants.PRICE_TAG_PREDICTION_TAG_PRODUCT_EXISTS, save=False
                 )
-            if prediction.has_predicted_category_tag_valid():
+            if price_tag_prediction_has_predicted_category_tag_valid(prediction):
                 changes = self.set_tag(
                     proof_constants.PRICE_TAG_PREDICTION_TAG_CATEGORY_TAG_VALID,
                     save=False,
@@ -800,10 +801,16 @@ class PriceTagPrediction(models.Model):
         return f"{self.price_tag} - {self.model_name} - {self.model_version}"
 
     def has_predicted_barcode_valid(self):
-        return price_tag_prediction_has_predicted_barcode_valid(self)
+        return (
+            proof_constants.PRICE_TAG_PREDICTION_TAG_BARCODE_VALID
+            in self.price_tag.tags
+        )
 
     def has_predicted_product_exists(self):
-        return price_tag_prediction_has_predicted_product_exists(self)
+        return (
+            proof_constants.PRICE_TAG_PREDICTION_TAG_PRODUCT_EXISTS
+            in self.price_tag.tags
+        )
 
     def has_predicted_barcode_valid_and_product_exists(self):
         return (
@@ -811,7 +818,10 @@ class PriceTagPrediction(models.Model):
         )
 
     def has_predicted_category_tag_valid(self):
-        return price_tag_prediction_has_predicted_category_tag_valid(self)
+        return (
+            proof_constants.PRICE_TAG_PREDICTION_TAG_CATEGORY_TAG_VALID
+            in self.price_tag.tags
+        )
 
 
 @receiver(signals.post_save, sender=PriceTagPrediction)
