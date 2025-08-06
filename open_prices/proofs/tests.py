@@ -1113,6 +1113,7 @@ class PriceTagPredictionTest(TestCase):
         cls.price_tag_product_prediction = PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
                 "price": 10,
                 "barcode": "8001505005707",
@@ -1127,6 +1128,7 @@ class PriceTagPredictionTest(TestCase):
         cls.price_tag_category_prediction = PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="1.0",
             data={
                 "price": 2.5,
                 "barcode": "",
@@ -1141,6 +1143,7 @@ class PriceTagPredictionTest(TestCase):
         cls.price_tag_empty_prediction = PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_empty,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={},
         )
         cls.price_tag_without = PriceTagFactory(
