@@ -1,8 +1,10 @@
 import argparse
+import datetime
 
 import tqdm
 from django.core.management.base import BaseCommand
 from django.db.models import Q
+from django.utils import timezone
 from openfoodfacts.utils import get_logger
 
 from open_prices.proofs import constants as proof_constants
@@ -37,6 +39,12 @@ class Command(BaseCommand):
             help="Type of model to run. Supported values are `proof_classification` "
             "and `price_tag_detection`",
         )
+        parser.add_argument(
+            "--delay",
+            type=int,
+            default=120,
+            help="Only process proofs that were created before this delay (in seconds) from now.",
+        )
 
     def handle(self, *args, **options) -> None:  # type: ignore
         self.stdout.write(
@@ -44,6 +52,8 @@ class Command(BaseCommand):
         )
         limit = options["limit"]
         types_str = options["types"]
+        delay = options["delay"]
+        self.stdout.write(f"limit: {limit}, types: {types_str}, delay: {delay} seconds")
 
         if types_str:
             types = types_str.split(",")
@@ -56,12 +66,14 @@ class Command(BaseCommand):
             )
 
         if "proof_classification" in types or "price_tag_detection" in types:
-            self.handle_proof_prediction_job(types, limit)
+            self.handle_proof_prediction_job(types, limit, delay)
 
         if "price_tag_extraction" in types:
-            self.handle_price_tag_extraction_job(limit)
+            self.handle_price_tag_extraction_job(limit, delay)
 
-    def handle_proof_prediction_job(self, types: list[str], limit: int) -> None:
+    def handle_proof_prediction_job(
+        self, types: list[str], limit: int, delay: int
+    ) -> None:
         exclusion_filters_list = []
         if "proof_classification" in types:
             exclusion_filters_list.append(
@@ -81,7 +93,10 @@ class Command(BaseCommand):
         # outer join on the Proof and Prediction tables.
         proofs = (
             (
-                Proof.objects.filter(predictions__model_name__isnull=True)
+                Proof.objects.filter(
+                    created__lt=timezone.now() - datetime.timedelta(seconds=delay),
+                    predictions__model_name__isnull=True,
+                )
                 | Proof.objects.exclude(exclusion_filter)
             ).distinct()
             # Order by -id to process the most recent proofs first
@@ -96,11 +111,12 @@ class Command(BaseCommand):
             run_and_save_proof_prediction(proof)
             self.stdout.write("Done.")
 
-    def handle_price_tag_extraction_job(self, limit: int) -> None:
+    def handle_price_tag_extraction_job(self, limit: int, delay: int) -> None:
         # Get all proofs of type PRICE_TAG
-        proofs = Proof.objects.filter(type=proof_constants.TYPE_PRICE_TAG).order_by(
-            "-id"
-        )
+        proofs = Proof.objects.filter(
+            created__lt=timezone.now() - datetime.timedelta(seconds=delay),
+            type=proof_constants.TYPE_PRICE_TAG,
+        ).order_by("-id")
 
         added = 0
         for proof in tqdm.tqdm(proofs):
