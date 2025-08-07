@@ -725,10 +725,13 @@ class PriceTag(models.Model):
         if changes:
             self.save(update_fields=["tags"])
 
-    def get_predicted_price(self):
+    def get_predicted_price(self) -> float | None:
         if self.predictions.exists():
             prediction = self.predictions.first()
-            return prediction.data.get("price")
+            if prediction.schema_version == "1.0":
+                return prediction.data.get("price")
+            elif prediction.schema_version == "2.0":
+                return prediction.data.get("selected_price", {}).get("price")
         return None
 
     def get_predicted_barcode(self):
