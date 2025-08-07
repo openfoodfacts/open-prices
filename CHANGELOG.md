@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.81.3](https://github.com/openfoodfacts/open-prices/compare/v1.81.2...v1.81.3) (2025-08-07)
+
+
+### Bug Fixes
+
+* don't process proofs that were just uploaded ([#901](https://github.com/openfoodfacts/open-prices/issues/901)) ([95f587a](https://github.com/openfoodfacts/open-prices/commit/95f587ac04a5af8418914893c9d3c0f596a9615d))
+
+
+### Technical
+
+* add a script to detect duplicated prices ([#900](https://github.com/openfoodfacts/open-prices/issues/900)) ([5e37adc](https://github.com/openfoodfacts/open-prices/commit/5e37adc7355eceb2e4a2b1727d9c6ad7c58715e0))
+* **Price Tag:** predictions: move the tags helper methods to ml. Adapt to schema v2 ([#897](https://github.com/openfoodfacts/open-prices/issues/897)) ([937d1e4](https://github.com/openfoodfacts/open-prices/commit/937d1e4fff6a977489041d0b22de80fff45379aa))
+* **Price Tags:** predictions: update the matching script logic following changes in the schema ([#898](https://github.com/openfoodfacts/open-prices/issues/898)) ([fd92aa4](https://github.com/openfoodfacts/open-prices/commit/fd92aa421ea2915ed68bcb347e2da375c35c05da))
+
 ## [1.81.2](https://github.com/openfoodfacts/open-prices/compare/v1.81.1...v1.81.2) (2025-08-04)
 
 
