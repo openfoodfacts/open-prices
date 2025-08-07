@@ -922,7 +922,13 @@ class PriceTagQuerySetTest(TestCase):
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             schema_version="2.0",
             data={
-                "price": 1.5,
+                "selected_price": {
+                    "price": 1.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
                 "barcode": "0123456789100",
                 "category": "other",
                 "product_name": "NAME",
@@ -1045,7 +1051,13 @@ class PriceTagPropertyTest(TestCase):
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             schema_version="2.0",
             data={
-                "price": 10,
+                "selected_price": {
+                    "price": 10,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
                 "barcode": "8001505005707",
                 "category": "other",
                 "product_name": "NOCCIOLATA 700G",
@@ -1060,7 +1072,13 @@ class PriceTagPropertyTest(TestCase):
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             schema_version="2.0",
             data={
-                "price": 2.5,
+                "selected_price": {
+                    "price": 2.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "KILOGRAM",
+                    "price_is_discounted": False,
+                },
                 "barcode": "",
                 "category": "en:tomatoes",
                 "product_name": "TOMATES",
@@ -1121,7 +1139,13 @@ class PriceTagPredictionTest(TestCase):
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             schema_version="2.0",
             data={
-                "price": 10,
+                "selected_price": {
+                    "price": 10,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
                 "barcode": "8001505005707",
                 "category": "other",
                 "product_name": "NOCCIOLATA 700G",
@@ -1136,7 +1160,13 @@ class PriceTagPredictionTest(TestCase):
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             schema_version="2.0",
             data={
-                "price": 2.5,
+                "selected_price": {
+                    "price": 2.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "KILOGRAM",
+                    "price_is_discounted": False,
+                },
                 "barcode": "",
                 "category": "en:tomatoes",  # product in schema_version 1.0
                 "product_name": "TOMATES",
@@ -1229,7 +1259,17 @@ class PriceTagMatchingUtilsTest(TestCase):
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             schema_version="2.0",
-            data={"price": 1.5, "barcode": "0123456789100", "category": "other"},
+            data={
+                "selected_price": {
+                    "price": 1.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
+                "barcode": "0123456789100",
+                "category": "other",
+            },
         )
         cls.price_product = PriceFactory(
             type=price_constants.TYPE_PRODUCT,
@@ -1247,7 +1287,13 @@ class PriceTagMatchingUtilsTest(TestCase):
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
             schema_version="2.0",
             data={
-                "price": 2.5,
+                "selected_price": {
+                    "price": 2.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "KILOGRAM",
+                    "price_is_discounted": False,
+                },
                 "barcode": "",
                 "category": "en:tomatoes",
                 "product_name": "TOMATES",
