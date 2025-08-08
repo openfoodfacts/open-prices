@@ -629,7 +629,7 @@ async def extract_from_price_tag_batch(
 sync_extract_from_price_tag_batch = async_to_sync(extract_from_price_tag_batch)
 
 
-def extract_from_receipt(image: Image.Image) -> Receipt:
+def extract_from_receipt(image: Image.Image) -> Receipt | None:
     """Extract receipt information from an image."""
     # Gemini model max payload size is 20MB
     # To prevent the payload from being too large, we resize the images before
@@ -649,7 +649,7 @@ def extract_from_receipt(image: Image.Image) -> Receipt:
         ],
         config=common_google.get_generation_config(Receipt),
     )
-    return json.loads(response.text)
+    return response.parsed
 
 
 def predict_proof_type(
@@ -1137,7 +1137,8 @@ def run_and_save_receipt_extraction_prediction(
             type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
             model_name=common_google.GEMINI_MODEL_NAME,
             model_version=common_google.GEMINI_MODEL_VERSION,
-            data=prediction,
+            # prediction may be None if the model failed to extract
+            data=prediction or {},
         )
         create_receipt_items_from_proof_prediction(proof, proof_prediction)
         return proof_prediction
