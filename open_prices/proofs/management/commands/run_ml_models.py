@@ -27,6 +27,7 @@ class Command(BaseCommand):
         "proof_classification",
         "price_tag_detection",
         "price_tag_extraction",
+        "receipt_extraction",
     ]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
@@ -36,8 +37,9 @@ class Command(BaseCommand):
         parser.add_argument(
             "--types",
             type=str,
-            help="Type of model to run. Supported values are `proof_classification` "
-            "and `price_tag_detection`",
+            help="Type of model to run. Supported values are `proof_classification`, "
+            "`price_tag_detection` and `price_tag_extraction`. To pass multiple types, "
+            "separate them with commas (e.g. `proof_classification,price_tag_detection`).",
         )
         parser.add_argument(
             "--delay",
@@ -65,7 +67,11 @@ class Command(BaseCommand):
                 f"Invalid type(s) provided: '{types}', allowed: {self._allowed_types}"
             )
 
-        if "proof_classification" in types or "price_tag_detection" in types:
+        if (
+            "proof_classification" in types
+            or "price_tag_detection" in types
+            or "receipt_extraction" in types
+        ):
             self.handle_proof_prediction_job(types, limit, delay)
 
         if "price_tag_extraction" in types:
@@ -79,10 +85,15 @@ class Command(BaseCommand):
             exclusion_filters_list.append(
                 Q(predictions__model_name=PROOF_CLASSIFICATION_MODEL_NAME)
             )
-
         if "price_tag_detection" in types:
             exclusion_filters_list.append(
                 Q(predictions__model_name=PRICE_TAG_DETECTOR_MODEL_NAME)
+            )
+        if "receipt_extraction" in types:
+            exclusion_filters_list.append(
+                Q(
+                    predictions__type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE
+                )
             )
 
         exclusion_filter = exclusion_filters_list.pop()
@@ -108,7 +119,11 @@ class Command(BaseCommand):
 
         for proof in tqdm.tqdm(proofs):
             self.stdout.write(f"Processing proof {proof.id}...")
-            run_and_save_proof_prediction(proof)
+            run_and_save_proof_prediction(
+                proof,
+                run_price_tag_extraction=False,
+                run_receipt_extraction="receipt_extraction" in types,
+            )
             self.stdout.write("Done.")
 
     def handle_price_tag_extraction_job(self, limit: int, delay: int) -> None:
