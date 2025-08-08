@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.81.5](https://github.com/openfoodfacts/open-prices/compare/v1.81.4...v1.81.5) (2025-08-08)
+
+
+### Bug Fixes
+
+* fix proof extraction script and extract_from_receipt function ([#911](https://github.com/openfoodfacts/open-prices/issues/911)) ([fb69a0f](https://github.com/openfoodfacts/open-prices/commit/fb69a0f5bc207bbd5d6438950a2ee07d8d9c7752))
+
 ## [1.81.4](https://github.com/openfoodfacts/open-prices/compare/v1.81.3...v1.81.4) (2025-08-08)
 
 
