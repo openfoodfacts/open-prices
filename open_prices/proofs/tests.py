@@ -1268,7 +1268,7 @@ class PriceTagMatchingUtilsTest(TestCase):
                     "price_is_discounted": False,
                 },
                 "barcode": "0123456789100",
-                "category": "other",
+                "category": "",
             },
         )
         cls.price_product = PriceFactory(
@@ -1323,6 +1323,27 @@ class PriceTagMatchingUtilsTest(TestCase):
             match_product_price_tag_with_product_price(
                 self.price_tag_category, self.price_category
             )
+        )
+        self.assertFalse(
+            match_product_price_tag_with_product_price(
+                self.price_tag_category, self.price_product
+            )
+        )
+
+        # Test when the selected_price field is null
+        price_tag_2 = PriceTagFactory(
+            bounding_box=[0.1, 0.1, 0.2, 0.2],
+            proof=self.proof,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=price_tag_2,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
+            data={
+                "selected_price": None,
+                "barcode": "0123456789100",
+                "category": "",
+            },
         )
         self.assertFalse(
             match_product_price_tag_with_product_price(
