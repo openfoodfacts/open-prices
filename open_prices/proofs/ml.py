@@ -21,6 +21,7 @@ from django.conf import settings
 from google import genai
 from openfoodfacts.ml.image_classification import ImageClassifier
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDetector
+from openfoodfacts.types import JSONType
 from openfoodfacts.utils import http_session
 from PIL import Image
 from pydantic import BaseModel, Field, computed_field
@@ -629,7 +630,7 @@ async def extract_from_price_tag_batch(
 sync_extract_from_price_tag_batch = async_to_sync(extract_from_price_tag_batch)
 
 
-def extract_from_receipt(image: Image.Image) -> Receipt | None:
+def extract_from_receipt(image: Image.Image) -> JSONType | None:
     """Extract receipt information from an image."""
     # Gemini model max payload size is 20MB
     # To prevent the payload from being too large, we resize the images before
@@ -649,7 +650,7 @@ def extract_from_receipt(image: Image.Image) -> Receipt | None:
         ],
         config=common_google.get_generation_config(Receipt),
     )
-    return response.parsed
+    return json.loads(response.text) if response.text else None
 
 
 def predict_proof_type(
@@ -964,7 +965,7 @@ def create_receipt_items_from_proof_prediction(
         return []
 
     created = []
-    for index, predicted_item in enumerate(proof_prediction.data["items"]):
+    for index, predicted_item in enumerate(proof_prediction.data.get("items", [])):
         receipt_item = ReceiptItem.objects.create(
             proof=proof,
             proof_prediction=proof_prediction,
