@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.81.4](https://github.com/openfoodfacts/open-prices/compare/v1.81.3...v1.81.4) (2025-08-08)
+
+
+### Bug Fixes
+
+* fix `get_predicted_price` method ([#904](https://github.com/openfoodfacts/open-prices/issues/904)) ([973ea75](https://github.com/openfoodfacts/open-prices/commit/973ea75f6017a9f9cf08f012b292ac43213ff400))
+* fix AttributeError in get_predicted_price ([#907](https://github.com/openfoodfacts/open-prices/issues/907)) ([70fdc73](https://github.com/openfoodfacts/open-prices/commit/70fdc73787e370b8819e6ac6d7aaeb7325b974fc))
+* fix JSONDecodeError when parsing receipt prediction ([#910](https://github.com/openfoodfacts/open-prices/issues/910)) ([f76882e](https://github.com/openfoodfacts/open-prices/commit/f76882e2f21101bc947fc4a88671ec4ed03e4f42))
+
+
+### Technical
+
+* add script to remove duplicate proofs ([#902](https://github.com/openfoodfacts/open-prices/issues/902)) ([b4d6e6b](https://github.com/openfoodfacts/open-prices/commit/b4d6e6b14db7a7557cb4d367f57ac00e84574122))
+
 ## [1.81.3](https://github.com/openfoodfacts/open-prices/compare/v1.81.2...v1.81.3) (2025-08-07)
 
 
