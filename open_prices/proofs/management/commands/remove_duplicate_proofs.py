@@ -10,9 +10,14 @@ class Command(BaseCommand):
     """Remove duplicated proofs, based on the provided filters.
 
     This script removes all prices and proofs (excluding the reference proof
-    and associated prices) that have the same owner, date, and location ID as
-    the reference proof. It is useful to clean up the database from duplicate
-    proofs that may have been created by mistake.
+    and associated prices) that have the same owner, date, type and location ID
+    as the reference proof. It is useful to clean up the database from
+    duplicate proofs that may have been created by mistake.
+
+    Before running this script, you should ensure that no other valid proof
+    was uploaded by the same user on the same date, with the same type and
+    location ID. This script will delete all proofs and prices that match
+    these criteria, except for the reference proof provided by the user.
     """
 
     help = "Remove duplicated proofs, based on a reference proof."
@@ -39,7 +44,7 @@ class Command(BaseCommand):
 
         self.stdout.write("=== Running script to remove duplicate proofs...")
         self.stdout.write(
-            f"Owner: {proof.owner}, Date: {proof.date}, Proof ID: {proof_id}, Location ID: {proof.location_id}"
+            f"Owner: {proof.owner}, Date: {proof.date}, Proof ID: {proof_id}, Type: {proof.type}, Location ID: {proof.location_id}"
         )
         if not apply:
             self.stdout.write("Running in dry run mode. Use --apply to apply changes.")
@@ -54,6 +59,7 @@ class Command(BaseCommand):
             Price.objects.filter(
                 proof__owner=ref_proof.owner,
                 proof__date=ref_proof.date,
+                proof__type=ref_proof.type,
                 proof__location_id=ref_proof.location_id,
             )
             .exclude(proof__id=ref_proof.id)

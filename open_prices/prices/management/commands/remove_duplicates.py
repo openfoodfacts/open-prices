@@ -3,8 +3,9 @@ from itertools import groupby
 
 from django.core.management.base import BaseCommand
 
-from open_prices.prices import constants
+from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import PriceTag
 
 
@@ -44,27 +45,35 @@ class Command(BaseCommand):
         if not apply:
             self.stdout.write("Running in dry run mode. Use --apply to apply changes.")
 
-        for price_type in constants.TYPE_LIST:
+        for price_type in price_constants.TYPE_LIST:
             self.remove_duplicates(price_type=price_type, apply=apply)
 
     def remove_duplicates(self, price_type: str, apply: bool = False) -> None:
-        if price_type not in constants.TYPE_LIST:
+        if price_type not in (
+            price_constants.TYPE_PRODUCT,
+            price_constants.TYPE_CATEGORY,
+        ):
             self.stdout.write(
-                f"Price type {price_type} is not valid. Valid types are: {constants.TYPE_LIST}"
+                f"Price type {price_type} is not supported. Supported types are: {price_constants.TYPE_LIST}"
             )
             return
 
         self.stdout.write(f"Removing duplicates for price type: {price_type}")
-        self.stdout.write("Number of prices before cleanup: %d" % Price.objects.count())
+        self.stdout.write(
+            "Number of prices (with proof of type PRICE_TAG) before cleanup: %d"
+            % Price.objects.filter(proof__type=proof_constants.TYPE_PRICE_TAG).count()
+        )
 
         # Create a CTE to find duplicate prices. We use a raw SQL query
         # to find duplicates based on product_code (or category_tag), price,
         # and proof_id.
 
-        # we store the product identifier either in `product_code` or
-        # `category_tag` depending on the price type.
+        # we store the product identifier either in `product_code` (for
+        # PRODUCT type) or `category_tag` (for CATEGORY type).
         comparison_field = (
-            "product_code" if price_type == constants.TYPE_PRODUCT else "category_tag"
+            "product_code"
+            if price_type == price_constants.TYPE_PRODUCT
+            else "category_tag"
         )
         duplicate_prices = Price.objects.raw(
             f"""WITH
@@ -182,4 +191,7 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Updated {price_tag_updated} price tags to point to the first price."
         )
-        self.stdout.write("Number of prices after cleanup: %d" % Price.objects.count())
+        self.stdout.write(
+            "Number of prices (with proof of type PRICE_TAG) after cleanup: %d"
+            % Price.objects.filter(proof__type=proof_constants.TYPE_PRICE_TAG).count()
+        )
