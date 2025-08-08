@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 from PIL import Image
 
+from open_prices.api.proofs.views import is_smoothie_app_version_4_20
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
@@ -773,3 +774,24 @@ class PriceTagDeleteApiTest(TestCase):
             PriceTag.objects.get(id=self.price_tag.id).status,
             proof_constants.PriceTagStatus.deleted,
         )
+
+
+class TestFunctions(TestCase):
+    def test_is_smoothie_app_version_4_20(self):
+        for source, expected_result in [
+            (None, False),
+            ("", False),
+            ("Open Prices Web App - /proofs/add/single", False),
+            ("API", False),
+            (
+                "Smoothie - OpenFoodFacts (4.20.0+1478) (android+U1TLS34.115-16-1-7-4)",
+                True,
+            ),
+            ("Smoothie - OpenFoodFacts (4.20.1+1481) (android+2025070800)", True),
+            (
+                "Smoothie - OpenFoodFacts (4.21.0+1500) (ios+Version 18.5 (Build 22F76))",
+                False,
+            ),
+        ]:
+            result = is_smoothie_app_version_4_20(source)
+            self.assertEqual(result, expected_result)
