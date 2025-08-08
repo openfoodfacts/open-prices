@@ -731,7 +731,7 @@ class PriceTag(models.Model):
             if prediction.schema_version == "1.0":
                 return prediction.data.get("price")
             elif prediction.schema_version == "2.0":
-                return prediction.data.get("selected_price", {}).get("price")
+                return (prediction.data.get("selected_price") or {}).get("price")
         return None
 
     def get_predicted_barcode(self):
