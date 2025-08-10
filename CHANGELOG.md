@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.81.5](https://github.com/openfoodfacts/open-prices/compare/v1.81.4...v1.81.5) (2025-08-10)
+
+
+### Bug Fixes
+
+* fix proof extraction script and extract_from_receipt function ([#911](https://github.com/openfoodfacts/open-prices/issues/911)) ([fb69a0f](https://github.com/openfoodfacts/open-prices/commit/fb69a0f5bc207bbd5d6438950a2ee07d8d9c7752))
+* improve cleanup scripts ([#906](https://github.com/openfoodfacts/open-prices/issues/906)) ([0f08eec](https://github.com/openfoodfacts/open-prices/commit/0f08eecf7f3bbdc2e4ff6b97485861e649116f58))
+
+
+### Technical
+
+* **Proofs:** add admin integration for prediction models ([#913](https://github.com/openfoodfacts/open-prices/issues/913)) ([3e19a4d](https://github.com/openfoodfacts/open-prices/commit/3e19a4d6378339e5e171633ec41f50976e45c56f))
+
 ## [1.81.4](https://github.com/openfoodfacts/open-prices/compare/v1.81.3...v1.81.4) (2025-08-08)
 
 
