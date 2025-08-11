@@ -58,6 +58,18 @@ def generate_relative_path(
     return f"{current_dir_id_str}/{file_stem}{extension}"
 
 
+def crop_image(image_file_path_full, bounding_box):
+    y_min, x_min, y_max, x_max = bounding_box
+    image = Image.open(image_file_path_full)
+    (left, right, top, bottom) = (
+        x_min * image.width,
+        x_max * image.width,
+        y_min * image.height,
+        y_max * image.height,
+    )
+    return image.crop((left, top, right, bottom))
+
+
 def generate_thumbnail(
     current_dir: Path,
     current_dir_id_str: str,
