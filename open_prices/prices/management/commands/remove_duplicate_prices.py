@@ -73,41 +73,9 @@ class Command(BaseCommand):
             .count()
         )
 
-        # Create a CTE to find duplicate prices. We use a raw SQL query
-        # to find duplicates based on product_code (or category_tag), price,
+        # Find duplicates based on product_code (or category_tag), price,
         # and proof_id.
-        duplicate_prices = Price.objects.raw(
-            f"""WITH
-                duplicated_products AS (
-                    SELECT
-                    t1.{comparison_field},
-                    t1.price,
-                    t1.proof_id,
-                    COUNT(t1.id) AS count
-                    FROM
-                    prices as t1
-                    JOIN proofs as t2 ON (t1.proof_id = t2.id)
-                    WHERE
-                    t1.type = '{price_type}'
-                    AND t2.type = 'PRICE_TAG'
-                    GROUP BY
-                    (t1.{comparison_field}, t1.price, t1.proof_id)
-                    HAVING
-                    COUNT(t1.id) > 1
-                )
-                SELECT
-                    t1.proof_id, t1.{comparison_field}, t1.id
-                FROM
-                    prices as t1
-                JOIN duplicated_products as t2 ON (
-                    t1.{comparison_field} = t2.{comparison_field}
-                    AND t1.price = t2.price
-                    AND t1.proof_id = t2.proof_id
-                )
-                ORDER BY
-                    (t1.proof_id, t1.{comparison_field}, t1.id) ASC;
-                """
-        )
+        duplicate_prices = Price.objects.duplicates(comparison_field)
 
         deleted = 0
         price_tag_updated = 0

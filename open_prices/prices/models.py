@@ -1,10 +1,23 @@
 import decimal
 import functools
 
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import Avg, Case, Count, F, Max, Min, Q, Value, When, signals
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    F,
+    Func,
+    Max,
+    Min,
+    Q,
+    Value,
+    When,
+    signals,
+)
 from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
 from django.utils import timezone
@@ -121,6 +134,17 @@ class PriceQuerySet(models.QuerySet):
                     product__categories_tags__overlap=challenge.categories,
                 )
             )
+        )
+
+    def duplicates(self, comparison_field: str):
+        return (
+            self.select_related("proof")
+            .exclude(**{comparison_field: None})
+            .values(comparison_field, "price", "proof_id")
+            .annotate(ids=ArrayAgg("id"))  # duplicates with a list of ids
+            .filter(ids__len__gt=1)
+            .annotate(id=Func("ids", function="unnest"))  # flatten
+            .order_by("proof_id", "id")
         )
 
 
