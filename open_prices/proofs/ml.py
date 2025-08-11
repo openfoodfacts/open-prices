@@ -36,6 +36,7 @@ from open_prices.proofs.models import (
     ProofPrediction,
     ReceiptItem,
 )
+from open_prices.proofs.utils import crop_image
 
 logger = logging.getLogger(__name__)
 
@@ -824,15 +825,7 @@ def run_and_save_price_tag_extraction(
     predictions = []
     preprocessed_images = []
     for price_tag in price_tags:
-        y_min, x_min, y_max, x_max = price_tag.bounding_box
-        image = Image.open(proof.file_path_full)
-        (left, right, top, bottom) = (
-            x_min * image.width,
-            x_max * image.width,
-            y_min * image.height,
-            y_max * image.height,
-        )
-        cropped_image = image.crop((left, top, right, bottom))
+        cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
         preprocessed_images.append(preprocess_price_tag(cropped_image))
 
     # We send requests to Gemini in parallel using asyncio
@@ -886,15 +879,7 @@ def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction | None:
         )
         return None
 
-    y_min, x_min, y_max, x_max = price_tag.bounding_box
-    image = Image.open(proof.file_path_full)
-    (left, right, top, bottom) = (
-        x_min * image.width,
-        x_max * image.width,
-        y_min * image.height,
-        y_max * image.height,
-    )
-    cropped_image = image.crop((left, top, right, bottom))
+    cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
     gemini_response = extract_from_price_tag(cropped_image)
     price_tag_prediction.model_name = common_google.GEMINI_MODEL_NAME
     price_tag_prediction.model_version = common_google.GEMINI_MODEL_VERSION
