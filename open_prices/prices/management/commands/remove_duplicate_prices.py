@@ -57,32 +57,25 @@ class Command(BaseCommand):
         self.remove_duplicates(price_type=price_constants.TYPE_PRODUCT, apply=apply)
 
     def remove_duplicates(self, price_type: str, apply: bool = False) -> None:
-        if price_type not in (
-            price_constants.TYPE_PRODUCT,
-            price_constants.TYPE_CATEGORY,
-        ):
+        if price_type not in price_constants.TYPE_LIST:
             self.stdout.write(
                 f"Price type {price_type} is not supported. Supported types are: {price_constants.TYPE_LIST}"
             )
             return
 
+        comparison_field = price_constants.TYPE_FIELD_MAPPING[price_type]
+
         self.stdout.write(f"Removing duplicates for price type: {price_type}")
         self.stdout.write(
             "Number of prices (with proof of type PRICE_TAG) before cleanup: %d"
-            % Price.objects.filter(proof__type=proof_constants.TYPE_PRICE_TAG).count()
+            % Price.objects.select_related("proof")
+            .filter(proof__type=proof_constants.TYPE_PRICE_TAG)
+            .count()
         )
 
         # Create a CTE to find duplicate prices. We use a raw SQL query
         # to find duplicates based on product_code (or category_tag), price,
         # and proof_id.
-
-        # we store the product identifier either in `product_code` (for
-        # PRODUCT type) or `category_tag` (for CATEGORY type).
-        comparison_field = (
-            "product_code"
-            if price_type == price_constants.TYPE_PRODUCT
-            else "category_tag"
-        )
         duplicate_prices = Price.objects.raw(
             f"""WITH
                 duplicated_products AS (
@@ -128,7 +121,7 @@ class Command(BaseCommand):
             price_list = list(price_group)
             proof_id, value = key
             self.stdout.write(
-                f"Found {len(price_list)} duplicate prices for proof {proof_id} with value {value}"
+                f"Found {len(price_list)} duplicate prices for proof {proof_id} with {comparison_field} {value}"
             )
             if len(price_list) > 1:
                 # We always keep the first uploaded price (price with the
@@ -183,12 +176,12 @@ class Command(BaseCommand):
 
                 if to_remove:
                     self.stdout.write(
-                        f"Removing {len(to_remove)} duplicate prices for proof {proof_id} with value {value}"
+                        f"Removing {len(to_remove)} duplicate prices for proof {proof_id} with {comparison_field} {value}"
                     )
                     deleted += len(to_remove)
                     for price in to_remove:
                         self.stdout.write(
-                            f"Removing price {price.id} for proof {proof_id} with product value {value}"
+                            f"Removing price {price.id} for proof {proof_id} with {comparison_field} {value}"
                         )
                     if apply:
                         Price.objects.filter(
