@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.81.6](https://github.com/openfoodfacts/open-prices/compare/v1.81.5...v1.81.6) (2025-08-11)
+
+
+### Bug Fixes
+
+* fix INVALID_ARGUMENT when calling Gemini ([#918](https://github.com/openfoodfacts/open-prices/issues/918)) ([de36a0a](https://github.com/openfoodfacts/open-prices/commit/de36a0a9a73ed4c55826b4383505b799451e2bb0))
+* override `ready_for_validation_price_tag` to False for Smoothie ([#908](https://github.com/openfoodfacts/open-prices/issues/908)) ([f9e234f](https://github.com/openfoodfacts/open-prices/commit/f9e234f8a9814de5e5027388a941581a764b8de7))
+
+
+### Technical
+
+* **Proofs:** move cropping logic to utils ([#914](https://github.com/openfoodfacts/open-prices/issues/914)) ([b89c98a](https://github.com/openfoodfacts/open-prices/commit/b89c98a94d2d96a8f4f6d6d64f2d0ed36d8a032d))
+* use `europe-west1` location ([#919](https://github.com/openfoodfacts/open-prices/issues/919)) ([b366ba4](https://github.com/openfoodfacts/open-prices/commit/b366ba419c0ae70aaa2e3a87bd9f3f817e315650))
+
 ## [1.81.5](https://github.com/openfoodfacts/open-prices/compare/v1.81.4...v1.81.5) (2025-08-10)
 
 
