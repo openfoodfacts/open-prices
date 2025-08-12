@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.81.7](https://github.com/openfoodfacts/open-prices/compare/v1.81.6...v1.81.7) (2025-08-12)
+
+
+### Bug Fixes
+
+* add an envvar to control async requests to Gemini for price tags ([#921](https://github.com/openfoodfacts/open-prices/issues/921)) ([605f043](https://github.com/openfoodfacts/open-prices/commit/605f043aa0aecfc35025a3d3fa6eba36dc6723d4))
+
 ## [1.81.6](https://github.com/openfoodfacts/open-prices/compare/v1.81.5...v1.81.6) (2025-08-11)
 
 
