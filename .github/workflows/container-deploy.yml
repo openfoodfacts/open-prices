@@ -148,6 +148,7 @@ jobs:
           echo "GOOGLE_GENAI_USE_VERTEXAI=true" >> .env
           echo "GOOGLE_CLOUD_LOCATION=europe-west1" >> .env
           echo "GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}" >> .env
+          echo "PRICE_TAG_EXTRACTION_ASYNC_REQUESTS=False" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
           echo "ENABLE_ML_PREDICTIONS=True" >> .env
           # echo "ENABLE_IMPORT_OFF_DB_TASK=True" >> .env  # disabled because we have the REDIS live updates
