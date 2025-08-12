@@ -10,23 +10,28 @@ from open_prices.proofs.models import PriceTag
 
 
 class Command(BaseCommand):
-    """Remove duplicated prices, only for prices associated with proof of type
+    """Remove duplicate prices, only for prices associated with proof of type
     PRICE_TAG.
 
-    This command currently only removes duplicated prices coming from the
-    same proof, duplicated proofs are not handled yet.
+    This command currently only removes duplicate prices coming from the
+    same proof, duplicate proofs are not handled yet.
 
     We first create a CTE (temporary Common Table Expression) to find all
-    duplicate prices. Prices are considered as duplicated if their have the
+    duplicate prices. Prices are considered as duplicates if their have the
     same (`product_code`/`category_tag`, `price`, `proof_id`).
 
     We then loop on each group of duplicate prices, keeping the first one
     (the one with the lowest ID) and removing the others. If any of the
     duplicate prices is linked to a price tag, we update the price tag to
     point to the first price instead of the removed one.
+
+    This script currently only runs for prices of type PRODUCT, as there
+    are valid cases where a proof has several prices for the same
+    `category_tag` (e.g., several types of apple, and we don't have all
+    varieties in Open Food Facts taxonomy).
     """
 
-    help = "Remove duplicated prices, only for prices with proof of type PRICE_TAG."
+    help = "Remove duplicate prices, only for prices with proof of type PRICE_TAG."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
@@ -45,8 +50,11 @@ class Command(BaseCommand):
         if not apply:
             self.stdout.write("Running in dry run mode. Use --apply to apply changes.")
 
-        for price_type in price_constants.TYPE_LIST:
-            self.remove_duplicates(price_type=price_type, apply=apply)
+        # For the moment, only run it for PRODUCT prices, as there are valid
+        # cases where a proof has several prices for the same
+        # category_tag (ex: several types of apple, and we don't have all
+        # varieties in Open Food Facts taxonomy).
+        self.remove_duplicates(price_type=price_constants.TYPE_PRODUCT, apply=apply)
 
     def remove_duplicates(self, price_type: str, apply: bool = False) -> None:
         if price_type not in (
