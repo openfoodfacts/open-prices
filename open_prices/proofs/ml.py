@@ -828,11 +828,18 @@ def run_and_save_price_tag_extraction(
         cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
         preprocessed_images.append(preprocess_price_tag(cropped_image))
 
-    # We send requests to Gemini in parallel using asyncio
-    # to speed up the extraction process.
-    responses = sync_extract_from_price_tag_batch(
-        preprocessed_images, thinking_budget=-1
-    )
+    # Sending requests in parallel using asyncio was responsible to network
+    # exceptions in production, so we added here a setting to control
+    # whether to use async requests or not.
+    # See https://github.com/openfoodfacts/open-prices/issues/893
+    if settings.PRICE_TAG_EXTRACTION_ASYNC_REQUESTS:
+        # We send requests to Gemini in parallel using asyncio
+        # to speed up the extraction process.
+        responses = sync_extract_from_price_tag_batch(
+            preprocessed_images, thinking_budget=-1
+        )
+    else:
+        responses = [extract_from_price_tag(image) for image in preprocessed_images]
     for price_tag, response in zip(price_tags, responses):
         try:
             prediction = PriceTagPrediction.objects.create(
