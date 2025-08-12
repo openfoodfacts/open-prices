@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../add-multiple-prices/">
       
       
-        <link rel="next" href="../add-multiple-prices/">
+        <link rel="next" href="../maintenance/">
       
       
       <link rel="icon" href="https://static.openfoodfacts.org/images/logos/off-logo-favicon-light.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Contribute by adding prices - Open Prices</title>
+        <title>Local development - Open Prices</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contribute-by-adding-prices" class="md-skip">
+        <a href="#local-development" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Contribute by adding prices
+              Local development
             
           </span>
         </div>
@@ -269,7 +269,7 @@
   
   
     <li class="md-nav__item">
-      <a href="." class="md-nav__link">
+      <a href="../add-a-price" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -329,59 +329,11 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#single-price-mode" class="md-nav__link">
+  <a href="#work-with-ml-models" class="md-nav__link">
     <span class="md-ellipsis">
-      Single price mode
+      Work with ML models
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Single price mode">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#step-1-identify-the-product" class="md-nav__link">
-    <span class="md-ellipsis">
-      Step 1: Identify the product
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#step-2-add-the-price-with-a-proof" class="md-nav__link">
-    <span class="md-ellipsis">
-      Step 2: Add the price (with a proof)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Step 2: Add the price (with a proof)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#proof-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Proof examples
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#step-3-add-the-location-date" class="md-nav__link">
-    <span class="md-ellipsis">
-      Step 3: Add the location &amp; date
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -400,7 +352,7 @@
                   
 
   
-    <a href="https://github.com/openfoodfacts/open-prices/blob/main/docs/add-a-price.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/openfoodfacts/open-prices/blob/main/docs/local-development.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
     </a>
@@ -408,43 +360,29 @@
   
 
 
-<h1 id="contribute-by-adding-prices">Contribute by adding prices</h1>
-<h2 id="single-price-mode">Single price mode</h2>
-<p>This tutorial is a step-by-step guide to add a price using <a href="https://prices.openfoodfacts.org">the web interface</a>. If you have any questions, please ask us on <a href="https://openfoodfacts.slack.com">Slack</a>, on the #prices channel!</p>
-<p>To add a price, we need some information, such as the product price, the location (=store), a proof photo, etc.</p>
-<p>Only the prices of food products are currently accepted.</p>
-<h3 id="step-1-identify-the-product">Step 1: Identify the product</h3>
-<p>Identifing the product helps users know if they have scanned the right product to start with. We'll display info from Open Food Facts database, as well as the number of prices already available in the Open Prices database.</p>
-<p>The steps to add a product differ depending on whether the product is:
-- with a barcode
-- or raw (fruits, vegetables)</p>
-<p>If it doesn't have a barcode (raw products), you should select the category among the dropdown list. Not all categories are available yet, so if you can't find the right one, please let us know. Support for other units (e.g. 1 apple) is not yet available, but will be added soon.</p>
-<h3 id="step-2-add-the-price-with-a-proof">Step 2: Add the price (with a proof)</h3>
-<p>For raw products, the price for 1 kg is expected.</p>
-<p>If the price is discounted, we currently expect the full price to be provided (improvements coming soon).</p>
-<p>We need a picture of the price tag that acts as a proof so that the data can be verified independently. Ideally, the image should contain both the price tag and the product. The product should be clearly visible, and the price tag should be readable.</p>
-<h4 id="proof-examples">Proof examples</h4>
-<table>
-<thead>
-<tr>
-<th>Good</th>
-<th>Bad</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><img alt="image" src="../assets/img/proof-example-good.png" /></td>
-<td><img alt="image" src="../assets/img/proof-example-bad.png" /></td>
-</tr>
-<tr>
-<td>Both the price tag and the product are visible</td>
-<td>Here it's difficult to recognize the product using the photo alone</td>
-</tr>
-</tbody>
-</table>
-<h3 id="step-3-add-the-location-date">Step 3: Add the location &amp; date</h3>
-<p>The location is the store where the product was found. This can be a supermarket, a local store, a farmer's market, etc. The only requirement is that it is a physical location where you can buy food. The location needs to be registered in OpenStreetMap, otherwise you won't be able to select it. If your store is not in OpenStreetMap, you can add it there first (ask for help if you're not familiar with OpenStreetMap!).</p>
-<p>The date is when you found the price. It can be different from the date you actually add the price. This is important because prices change over time, and we want to be able to track these changes.</p>
+<h1 id="local-development">Local development</h1>
+<h2 id="work-with-ml-models">Work with ML models</h2>
+<p>When uploading a proof, machine learning models are run asynchronously in the background, thanks to Django Q2.</p>
+<p>However, it still requires a Triton server to be running, as well as a Gemini API key to be set in the environment variables.</p>
+<p>Triton is used to:</p>
+<ul>
+<li>detect the proof type (<code>proof_classification</code>)</li>
+<li>detect price tags on the proof (<code>price_tag_detection</code>)</li>
+</ul>
+<p>Gemini is used to:
+- extract information from receipts (<code>receipt_extraction</code>)
+- extract information from price tags (<code>price_tag_extraction</code>)</p>
+<p>To run Triton, you should first clone the Robotoff repository.</p>
+<p>Then, download the object detection models:
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>dl-object-detection-models
+</code></pre></div></p>
+<p>Then, run the Triton server:</p>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>up<span class="w"> </span><span class="nv">service</span><span class="o">=</span>triton
+</code></pre></div>
+<p>You can check with <code>docker logs triton</code> that the server is running correctly.</p>
+<p>For Gemini, the easiest way to set it up is to use the Gemini API. You can set your API key by overriding the <code>GEMINI_API_KEY</code> environment variable in your <code>.envrc</code> file:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">GEMINI_API_KEY</span><span class="o">=</span>your_api_key_here
+</code></pre></div>
 
 
 
