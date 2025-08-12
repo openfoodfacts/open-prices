@@ -4,4 +4,4 @@ nav:
     - "Tutorial: add multiple prices": "add-multiple-prices"
     - "Maintenance": "maintenance"
     - "Local development": "local-development"
-    - "Install": "INSTALL"
+    - "Install": "../INSTALL"
