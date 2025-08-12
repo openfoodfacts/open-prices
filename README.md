@@ -4,10 +4,10 @@ A REST API designed to interact with the Open Food Facts _Open Prices_ database.
 
 ## Links
 
-- Backend API Swagger: https://prices.openfoodfacts.org/api/docs
-- Frontend app: https://prices.openfoodfacts.org
-- Frontend repo: https://github.com/openfoodfacts/open-prices-frontend
-- Documentation: https://openfoodfacts.github.io/open-prices/
+- Backend API Swagger: <https://prices.openfoodfacts.org/api/docs>
+- Frontend app: <https://prices.openfoodfacts.org>
+- Frontend repo: <https://github.com/openfoodfacts/open-prices-frontend>
+- Documentation: <https://openfoodfacts.github.io/open-prices/>
 
 ## 🎨 Design & User interface
 - The Open Prices server is exposed through the Mobile App and the Open Prices frontend (and probably elsewhere in the future, thanks to web components)
@@ -23,12 +23,11 @@ A REST API designed to interact with the Open Food Facts _Open Prices_ database.
 * [Django](https://www.djangoproject.com/) framework
 * PostgreSQL database
 
-## How to install on your local machine
+## How to install on your local machine and help develop Open Prices
 
-Follow the steps in [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.md)
+Follow the steps in [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.md), [local-development.md](https://github.com/openfoodfacts/open-prices/blob/main/docs/local-development.md and [maintenance.md](https://github.com/openfoodfacts/open-prices/blob/main/docs/maintenance.md
 
 ## Contribute
-
 See [CONTRIBUTING.md](https://github.com/openfoodfacts/open-prices/blob/main/CONTRIBUTING.md)
 
 <details><summary><h2>Weekly meetings</h2></summary>
