@@ -208,6 +208,65 @@ class ProofChallengeQuerySetAndPropertyTest(TestCase):
         )
 
 
+class ProofDuplicatesQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        location_osm = LocationFactory()
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        cls.proof_1_1 = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-01",
+            owner="user_1",
+        )
+        cls.proof_1_2 = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-01",
+            owner="user_1",
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,  # changed
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-01",
+            owner="user_1",
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_online.id,  # changed
+            date="2024-01-01",
+            owner="user_1",
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-02",  # changed
+            owner="user_1",
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-01",
+            owner="user_2",  # changed
+        )
+
+    def test_duplicates(self):
+        self.assertEqual(Proof.objects.count(), 6)
+        duplicates = Proof.objects.duplicates(self.proof_1_1)
+        self.assertEqual(duplicates.count(), 1)
+        self.assertEqual(duplicates.first().id, self.proof_1_2.id)
+
+
 class ProofModelSaveTest(TestCase):
     @classmethod
     def setUpTestData(cls):

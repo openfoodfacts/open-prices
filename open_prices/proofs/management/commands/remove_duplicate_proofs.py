@@ -84,16 +84,7 @@ class Command(BaseCommand):
         self.stdout.write("Number of prices before cleanup: %d" % Price.objects.count())
         self.stdout.write(f"MD5 check enabled: {md5_check}")
 
-        proofs_to_delete = list(
-            Proof.objects.filter(
-                owner=ref_proof.owner,
-                date=ref_proof.date,
-                type=ref_proof.type,
-                location_id=ref_proof.location_id,
-            )
-            .exclude(id=ref_proof.id)
-            .all()
-        )
+        proofs_to_delete = list(Proof.objects.duplicates(ref_proof))
 
         self.stdout.write(
             f"Found {len(proofs_to_delete)} proofs to delete (excluding the reference proof)."
