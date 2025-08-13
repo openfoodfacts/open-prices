@@ -87,6 +87,19 @@ class ProofQuerySet(models.QuerySet):
             prices__tags__contains=[challenge.tag]
         )
 
+    def duplicates(self, ref_proof):
+        """
+        Input: a reference proof
+        Output: all proofs that have the same owner, date, type, and location_id  # noqa
+        """
+        return self.filter(
+            type=ref_proof.type,
+            location_id=ref_proof.location_id,
+            date=ref_proof.date,
+            owner=ref_proof.owner,
+        ).exclude(id=ref_proof.id)
+        # TODO: add md5 check
+
 
 class Proof(models.Model):
     FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
