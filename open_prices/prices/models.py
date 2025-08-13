@@ -137,6 +137,10 @@ class PriceQuerySet(models.QuerySet):
         )
 
     def duplicates(self, proof_type: str, comparison_field: str):
+        """
+        Input: proof_type: e.g. "PRICE_TAG" ; comparison_field: e.g. "product_code" or "category_tag"  # noqa
+        Output: [{'product_code': '4823096005089', 'price': Decimal('169.90'), 'proof_id': 22657, 'ids': [96111, 96115], 'id': 96111}]  # noqa
+        """
         return (
             self.select_related("proof")
             .filter(proof__type=proof_type)

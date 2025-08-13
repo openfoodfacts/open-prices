@@ -148,16 +148,16 @@ class PriceQuerySetTest(TestCase):
 class PriceDuplicatesQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.proof_1 = ProofFactory()
-        cls.proof_2 = ProofFactory()
-        PriceFactory(
+        cls.proof_1 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.proof_2 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.price_2_1 = PriceFactory(
             type=price_constants.TYPE_PRODUCT,
             product_code="8001505005707",
             price=5,
             price_is_discounted=False,
             proof_id=cls.proof_2.id,
         )
-        PriceFactory(
+        cls.price_2_2 = PriceFactory(
             type=price_constants.TYPE_PRODUCT,
             product_code="8001505005707",
             price=5,
@@ -165,14 +165,14 @@ class PriceDuplicatesQuerySetTest(TestCase):
             price_without_discount=10,
             proof_id=cls.proof_2.id,
         )
-        PriceFactory(
+        cls.price_1_1 = PriceFactory(
             type=price_constants.TYPE_PRODUCT,
             product_code="8001505005707",
             price=5,
             price_is_discounted=False,
             proof_id=cls.proof_1.id,
         )
-        PriceFactory(
+        cls.price_1_2 = PriceFactory(
             type=price_constants.TYPE_PRODUCT,
             product_code="8001505005707",
             price=5,
@@ -180,7 +180,7 @@ class PriceDuplicatesQuerySetTest(TestCase):
             price_without_discount=10,
             proof_id=cls.proof_1.id,
         )
-        PriceFactory(
+        cls.price_1_3 = PriceFactory(
             type=price_constants.TYPE_CATEGORY,
             category_tag="en:breakfasts",
             price=5,  # same price, different type
@@ -191,9 +191,14 @@ class PriceDuplicatesQuerySetTest(TestCase):
 
     def test_duplicates(self):
         self.assertEqual(Price.objects.count(), 5)
-        qs = Price.objects.duplicates(comparison_field="product_code")
+        qs = Price.objects.duplicates(
+            proof_type=proof_constants.TYPE_PRICE_TAG, comparison_field="product_code"
+        )
         self.assertEqual(len(qs), 4)
         self.assertEqual(qs[0]["proof_id"], self.proof_1.id)  # order by proof_id
+        self.assertEqual(qs[0]["product_code"], "8001505005707")
+        self.assertEqual(qs[0]["ids"], [self.price_1_1.id, self.price_1_2.id])
+        self.assertEqual(qs[0]["id"], self.price_1_1.id)  # order by price_id
 
 
 class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
