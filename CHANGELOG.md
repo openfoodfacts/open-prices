@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.81.8](https://github.com/openfoodfacts/open-prices/compare/v1.81.7...v1.81.8) (2025-08-13)
+
+
+### Bug Fixes
+
+* associate prices to ref proof (remove_duplicate_proofs) ([#935](https://github.com/openfoodfacts/open-prices/issues/935)) ([87cc1ac](https://github.com/openfoodfacts/open-prices/commit/87cc1aca18b51c573cf1799f4dd711efcb7e12f3))
+* check raw image MD5 in script to delete duplicate proofs ([#920](https://github.com/openfoodfacts/open-prices/issues/920)) ([055eea2](https://github.com/openfoodfacts/open-prices/commit/055eea250bb8fa7d9636f50532cfa06e6a83d3f8))
+* update `remove_duplicates` script ([#928](https://github.com/openfoodfacts/open-prices/issues/928)) ([6736354](https://github.com/openfoodfacts/open-prices/commit/6736354ef22d4f7666c8c424db73df859d9a66e2))
+
+
+### Technical
+
+* add new documentation pages ([#925](https://github.com/openfoodfacts/open-prices/issues/925)) ([a518104](https://github.com/openfoodfacts/open-prices/commit/a518104b5549ee8e8ff9b0a14fdb1b40ace3f4b1))
+* add new pages to menu ([#927](https://github.com/openfoodfacts/open-prices/issues/927)) ([ab1df90](https://github.com/openfoodfacts/open-prices/commit/ab1df90bb76fc36fbbe5ebe06e70f747dbe62c13))
+* fix missing line return in local-development.md ([#932](https://github.com/openfoodfacts/open-prices/issues/932)) ([5cb3cab](https://github.com/openfoodfacts/open-prices/commit/5cb3caba814e97bdf12098de2a092f20ee231335))
+* Update README.md ([#929](https://github.com/openfoodfacts/open-prices/issues/929)) ([fe31c3b](https://github.com/openfoodfacts/open-prices/commit/fe31c3b2bb885c06de275d256392a2cdda470dfe))
+
 ## [1.81.7](https://github.com/openfoodfacts/open-prices/compare/v1.81.6...v1.81.7) (2025-08-12)
 
 
