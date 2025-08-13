@@ -136,9 +136,10 @@ class PriceQuerySet(models.QuerySet):
             )
         )
 
-    def duplicates(self, comparison_field: str):
+    def duplicates(self, proof_type: str, comparison_field: str):
         return (
             self.select_related("proof")
+            .filter(proof__type=proof_type)
             .exclude(**{comparison_field: None})
             .values(comparison_field, "price", "proof_id")
             .annotate(ids=ArrayAgg("id"))  # duplicates with a list of ids

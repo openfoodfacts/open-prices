@@ -75,7 +75,9 @@ class Command(BaseCommand):
 
         # Find duplicates based on product_code (or category_tag), price,
         # and proof_id.
-        duplicate_prices = Price.objects.duplicates(comparison_field)
+        duplicate_prices = Price.objects.duplicates(
+            proof_constants.TYPE_PRICE_TAG, comparison_field
+        )
 
         deleted = 0
         price_tag_updated = 0
@@ -84,12 +86,12 @@ class Command(BaseCommand):
         # and id (ascending), so we can use groupby to group them.
         for key, price_group in groupby(
             duplicate_prices,
-            key=lambda x: (x.proof_id, getattr(x, comparison_field)),
+            key=lambda x: (x["proof_id"], x[comparison_field]),
         ):
             price_list = list(price_group)
             proof_id, value = key
             self.stdout.write(
-                f"Found {len(price_list)} duplicate prices for proof {proof_id} with {comparison_field} {value}"
+                f"Proof {proof_id}: found {len(price_list)} duplicate prices with {comparison_field} {value}"
             )
             if len(price_list) > 1:
                 # We always keep the first uploaded price (price with the
@@ -102,7 +104,7 @@ class Command(BaseCommand):
                 # duplicate prices. This is useful to update the price_id
                 # of the price tags to the first price if needed.
                 price_tags = PriceTag.objects.filter(
-                    price_id__in=[price.id for price in price_list]
+                    price_id__in=[price["id"] for price in price_list]
                 ).all()
 
                 for price in price_list:
@@ -132,11 +134,11 @@ class Command(BaseCommand):
                         if price_tag.price_id == price_linked_to_price_tag.id
                     ][0]
                     self.stdout.write(
-                        f"Updating price tag {price_tag.id} to point to the first price {first_price.id} (previously {price_tag.price_id})"
+                        f"Updating price tag {price_tag.id} to point to the first price {first_price['id']} (previously {price_tag.price_id})"
                     )
 
                     if apply:
-                        price_tag.price_id = first_price.id
+                        price_tag.price_id = first_price["id"]
                         price_tag.save()
 
                     to_remove.append(price_linked_to_price_tag)
@@ -144,16 +146,16 @@ class Command(BaseCommand):
 
                 if to_remove:
                     self.stdout.write(
-                        f"Removing {len(to_remove)} duplicate prices for proof {proof_id} with {comparison_field} {value}"
+                        f"Proof {proof_id}: removing {len(to_remove)} duplicate prices with {comparison_field} {value}"
                     )
                     deleted += len(to_remove)
                     for price in to_remove:
                         self.stdout.write(
-                            f"Removing price {price.id} for proof {proof_id} with {comparison_field} {value}"
+                            f"Proof {proof_id}: removing price {price['id']} for with {comparison_field} {value}"
                         )
                     if apply:
                         Price.objects.filter(
-                            id__in=[price.id for price in to_remove]
+                            id__in=[price["id"] for price in to_remove]
                         ).delete()
 
         self.stdout.write(f"Deleted {deleted} duplicate prices.")
