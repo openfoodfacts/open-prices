@@ -12,6 +12,7 @@ Triton is used to:
 - detect price tags on the proof (`price_tag_detection`)
 
 Gemini is used to:
+
 - extract information from receipts (`receipt_extraction`)
 - extract information from price tags (`price_tag_extraction`)
 
