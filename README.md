@@ -10,6 +10,7 @@ A REST API designed to interact with the Open Food Facts _Open Prices_ database.
 - Documentation: <https://openfoodfacts.github.io/open-prices/>
 
 ## 🎨 Design & User interface
+
 - The Open Prices server is exposed through the Mobile App and the Open Prices frontend (and probably elsewhere in the future, thanks to web components)
 - We strive to thoughtfully design every feature before we move on to implementation, so that we respect Open Food Facts' graphic charter and nascent design system, while having efficient user flows.
 - [![Figma](https://img.shields.io/badge/figma-%23F24E1E.svg?logo=figma&logoColor=white) Mockups for Open Prices](https://www.figma.com/design/cIB7CInl2BfueMzWnz09t6/Open-Prices?node-id=0-1&p=f&t=LC7UvPjngw57NGSs-0)
@@ -25,13 +26,14 @@ A REST API designed to interact with the Open Food Facts _Open Prices_ database.
 
 ## How to install on your local machine and help develop Open Prices
 
-Follow the steps in [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.md), [local-development.md](https://github.com/openfoodfacts/open-prices/blob/main/docs/local-development.md and [maintenance.md](https://github.com/openfoodfacts/open-prices/blob/main/docs/maintenance.md
+Follow the steps in [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.md), [local-development.md](https://github.com/openfoodfacts/open-prices/blob/main/docs/local-development.md) and [maintenance.md](https://github.com/openfoodfacts/open-prices/blob/main/docs/maintenance.md)
 
 ## Contribute
+
 See [CONTRIBUTING.md](https://github.com/openfoodfacts/open-prices/blob/main/CONTRIBUTING.md)
 
-<details><summary><h2>Weekly meetings</h2></summary>
-
+<details>
+<summary><h2>Weekly meetings</h2></summary>
 * We e-meet Wednesdays at 14:00 Paris Time
 * ![Google Meet](https://img.shields.io/badge/Google%20Meet-00897B?logo=google-meet&logoColor=white) Video call link: https://meet.google.com/oin-hiqp-tmd
 * Join by phone: https://tel.meet/oin-hiqp-tmd?pin=5784334159966
