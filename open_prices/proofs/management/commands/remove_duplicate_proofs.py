@@ -19,20 +19,20 @@ def compute_image_md5(file_path: str) -> str:
 class Command(BaseCommand):
     """Remove duplicated proofs, based on the provided filters.
 
-    This script removes all prices and proofs (excluding the reference proof
-    and associated prices) that have the same owner, date, type and location ID
-    as the reference proof. It is useful to clean up the database from
-    duplicate proofs that may have been created by mistake.
+    This script removes proofs that have the same owner, date,
+    type and location as the provided proof: only the reference proof
+    of the group is kept.
+
+    All prices associated with these proofs are also updated to point to the
+    reference proof.
+
+    It is useful to clean up the database from duplicate proofs that may have
+    been created by mistake.
 
     By default, it checks the MD5 hash of the images to ensure that only
     identical images are considered duplicates. If you want to remove
-    duplicates based on metadata only (owner, date, type, location ID), you
+    duplicates based on metadata only (owner, date, type, location), you
     can disable the MD5 check with the `--no-md5-check` option.
-
-    Before running this script, you should ensure that no other valid proof
-    was uploaded by the same user on the same date, with the same type and
-    location ID. This script will delete all proofs and prices that match
-    these criteria, except for the reference proof provided by the user.
     """
 
     help = "Remove duplicated proofs, based on a reference proof."
@@ -46,7 +46,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--proof-id",
-            help="The proof ID to keep as a reference.",
+            help="ID of the reference proof.",
             type=int,
             required=True,
         )
@@ -65,16 +65,17 @@ class Command(BaseCommand):
         proof_id = options["proof_id"]
         md5_check = options["md5_check"]
 
-        proof = Proof.objects.get(pk=proof_id)
-
+        ref_proof = Proof.objects.get(pk=proof_id)
         self.stdout.write("=== Running script to remove duplicate proofs...")
         self.stdout.write(
-            f"Owner: {proof.owner}, Date: {proof.date}, Proof ID: {proof_id}, Type: {proof.type}, Location ID: {proof.location_id}"
+            f"Owner: {ref_proof.owner}, Date: {ref_proof.date}, "
+            f"ref proof ID: {ref_proof.id}, Type: {ref_proof.type}, Location ID: "
+            f"{ref_proof.location_id}"
         )
         if not apply:
             self.stdout.write("Running in dry run mode. Use --apply to apply changes.")
 
-        self.remove_duplicates(ref_proof=proof, apply=apply, md5_check=md5_check)
+        self.remove_duplicates(ref_proof=ref_proof, apply=apply, md5_check=md5_check)
 
     def remove_duplicates(
         self, ref_proof: Proof, apply: bool = False, md5_check: bool = True
@@ -83,7 +84,7 @@ class Command(BaseCommand):
         self.stdout.write("Number of prices before cleanup: %d" % Price.objects.count())
         self.stdout.write(f"MD5 check enabled: {md5_check}")
 
-        proofs_to_delete = (
+        proofs_to_delete = list(
             Proof.objects.filter(
                 owner=ref_proof.owner,
                 date=ref_proof.date,
@@ -92,6 +93,10 @@ class Command(BaseCommand):
             )
             .exclude(id=ref_proof.id)
             .all()
+        )
+
+        self.stdout.write(
+            f"Found {len(proofs_to_delete)} proofs to delete (excluding the reference proof)."
         )
 
         if md5_check:
@@ -107,10 +112,10 @@ class Command(BaseCommand):
                 f"After MD5 check, {len(proofs_to_delete)} proofs remain to be deleted."
             )
 
-        prices_to_delete = Price.objects.filter(proof__in=proofs_to_delete).all()
+        prices_to_move = Price.objects.filter(proof__in=proofs_to_delete).all()
 
         self.stdout.write(
-            f"Found {len(prices_to_delete)} prices to delete associated with {len(proofs_to_delete)} proofs."
+            f"Found {len(prices_to_move)} prices to move and {len(proofs_to_delete)} proofs to delete."
         )
 
         self.stdout.write(
@@ -118,14 +123,16 @@ class Command(BaseCommand):
             % ", ".join(map(str, [proof.id for proof in proofs_to_delete]))
         )
         self.stdout.write(
-            "Prices to delete: %s"
-            % ", ".join(map(str, prices_to_delete.values_list("id", flat=True)))
+            "Prices to move: %s"
+            % ", ".join(map(str, prices_to_move.values_list("id", flat=True)))
         )
 
         if apply:
-            # Delete prices first to avoid foreign key constraints
-            prices_to_delete.delete()
-            self.stdout.write("Deleted %d prices." % prices_to_delete.count())
+            # Update proof_id for each price to point to the reference proof
+            for price in prices_to_move:
+                price.proof = ref_proof
+                price.save()
+            self.stdout.write("Updated prices: %d." % prices_to_move.count())
 
             # Now delete the proofs
             for proof in proofs_to_delete:
