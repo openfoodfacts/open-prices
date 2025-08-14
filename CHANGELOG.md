@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.81.9](https://github.com/openfoodfacts/open-prices/compare/v1.81.8...v1.81.9) (2025-08-14)
+
+
+### Technical
+
+* **Proofs:** move duplicate queryset to model + test ([#937](https://github.com/openfoodfacts/open-prices/issues/937)) ([542832a](https://github.com/openfoodfacts/open-prices/commit/542832a7ca028ae80b0c2b543e47630fe0e8dd2f))
+
 ## [1.81.8](https://github.com/openfoodfacts/open-prices/compare/v1.81.7...v1.81.8) (2025-08-13)
 
 
