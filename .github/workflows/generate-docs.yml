@@ -22,7 +22,7 @@
             python-version: [3.11]
         steps:
           - name: Check out the repo
-            uses: actions/checkout@v4
+            uses: actions/checkout@v5
 
           - name: Setup Python version
             uses: actions/setup-python@v5
