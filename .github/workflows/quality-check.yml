@@ -32,6 +32,7 @@ jobs:
           # align user id
           echo "USER_UID=$UID" >> .env
           echo "PYTHON_VERSION=${{ matrix.python-version }}" >> .env
+          echo "Q2_SYNC=True" >> .env
 
       - name: Launch tests
         run: |
