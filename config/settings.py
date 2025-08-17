@@ -228,7 +228,8 @@ Q_CLUSTER = {
     "queue_limit": 50,
     "bulk": 10,
     "orm": "default",
-    "sync": True if DEBUG else False,
+    # if True, tasks will be executed synchronously. set to False in production
+    "sync": os.getenv("Q2_SYNC") == "True",
 }
 
 
