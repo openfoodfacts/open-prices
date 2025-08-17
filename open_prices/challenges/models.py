@@ -54,6 +54,11 @@ class Challenge(models.Model):
 
     is_published = models.BooleanField(default=False)
 
+    stats = models.JSONField(
+        null=True,
+        blank=True,
+    )
+
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
