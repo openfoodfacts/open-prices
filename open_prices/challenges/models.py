@@ -54,6 +54,11 @@ class Challenge(models.Model):
 
     is_published = models.BooleanField(default=False)
 
+    stats = models.JSONField(
+        null=True,
+        blank=True,
+    )
+
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
@@ -145,3 +150,21 @@ class Challenge(models.Model):
         # TODO: manage cases where prices/proofs are removed from the challenge
         for proof in challenge_proofs.exclude(tags__contains=[self.tag]):
             proof.set_tag(self.tag, save=True)
+
+    def calculate_stats(self):
+        from open_prices.prices.models import Price
+        from open_prices.proofs.models import Proof
+
+        price_count = Price.objects.has_tag(self.tag).count()
+        proof_count = Proof.objects.has_tag(self.tag).count()
+        user_price_count = Price.objects.has_tag(self.tag).distinct("owner").count()
+        user_proof_count = Proof.objects.has_tag(self.tag).distinct("owner").count()
+
+        self.stats = {
+            "price_count": price_count,
+            "proof_count": proof_count,
+            "user_price_count": user_price_count,
+            "user_proof_count": user_proof_count,
+            "updated": timezone.now().isoformat().replace("+00:00", "Z"),
+        }
+        self.save(update_fields=["stats"])
