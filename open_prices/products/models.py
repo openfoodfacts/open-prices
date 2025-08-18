@@ -6,6 +6,8 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
 
+# Import custom lookups so that they are registered
+from open_prices.common import lookups  # noqa: F401
 from open_prices.products import constants as product_constants
 
 

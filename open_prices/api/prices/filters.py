@@ -10,7 +10,7 @@ class PriceFilter(django_filters.FilterSet):
         field_name="product_id", lookup_expr="isnull"
     )
     product__categories_tags__contains = django_filters.CharFilter(
-        field_name="product__categories_tags", lookup_expr="icontains"
+        field_name="product__categories_tags", lookup_expr="any"
     )
     product__categories_tags__overlap = django_filters.BaseInFilter(
         field_name="product__categories_tags",
