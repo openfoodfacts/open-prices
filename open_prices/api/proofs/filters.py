@@ -35,9 +35,7 @@ class ProofFilter(django_filters.FilterSet):
     prediction_count__lte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="lte"
     )
-    tags__contains = django_filters.CharFilter(
-        field_name="tags", lookup_expr="icontains"
-    )
+    tags__contains = django_filters.CharFilter(field_name="tags", lookup_expr="any")
     created__gte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="gte"
     )
@@ -77,9 +75,7 @@ class PriceTagFilter(django_filters.FilterSet):
     prediction_count__lte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="lte"
     )
-    tags__contains = django_filters.CharFilter(
-        field_name="tags", lookup_expr="icontains"
-    )
+    tags__contains = django_filters.CharFilter(field_name="tags", lookup_expr="any")
     created__gte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="gte"
     )

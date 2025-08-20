@@ -11,6 +11,9 @@ from django.utils import timezone
 from django_q.tasks import async_task
 
 from open_prices.challenges.models import Challenge
+
+# Import custom lookups so that they are registered
+from open_prices.common import lookups  # noqa: F401
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
