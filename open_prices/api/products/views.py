@@ -18,7 +18,7 @@ class ProductViewSet(
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProductFilter
     ordering_fields = (
-        Product.OFF_SCORE_FIELDS + Product.COUNT_FIELDS + ["created", "id"]
+        Product.OFF_SCORE_FIELDS + Product.COUNT_FIELDS + ["id", "created"]
     )
     ordering = ["id"]
 
