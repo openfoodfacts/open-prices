@@ -157,14 +157,29 @@ class Challenge(models.Model):
 
         price_count = Price.objects.has_tag(self.tag).count()
         proof_count = Proof.objects.has_tag(self.tag).count()
-        user_price_count = Price.objects.has_tag(self.tag).distinct("owner").count()
-        user_proof_count = Proof.objects.has_tag(self.tag).distinct("owner").count()
+        price_user_count = Price.objects.has_tag(self.tag).distinct("owner").count()
+        proof_user_count = Proof.objects.has_tag(self.tag).distinct("owner").count()
+        proof_location_count = (
+            Proof.objects.has_tag(self.tag).distinct("location_id").count()
+        )
+        price_product_count = (
+            Price.objects.has_tag(self.tag)
+            .has_type_product()
+            .distinct("product_code")
+            .count()
+            + Price.objects.has_tag(self.tag)
+            .has_type_category()
+            .distinct("category_tag")
+            .count()
+        )
 
         self.stats = {
             "price_count": price_count,
             "proof_count": proof_count,
-            "user_price_count": user_price_count,
-            "user_proof_count": user_proof_count,
+            "price_user_count": price_user_count,
+            "proof_user_count": proof_user_count,
+            "proof_location_count": proof_location_count,
+            "price_product_count": price_product_count,
             "updated": timezone.now().isoformat().replace("+00:00", "Z"),
         }
         self.save(update_fields=["stats"])
