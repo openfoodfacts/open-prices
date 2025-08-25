@@ -57,63 +57,26 @@ class Command(BaseCommand):
         self.remove_duplicates(price_type=price_constants.TYPE_PRODUCT, apply=apply)
 
     def remove_duplicates(self, price_type: str, apply: bool = False) -> None:
-        if price_type not in (
-            price_constants.TYPE_PRODUCT,
-            price_constants.TYPE_CATEGORY,
-        ):
+        if price_type not in price_constants.TYPE_LIST:
             self.stdout.write(
                 f"Price type {price_type} is not supported. Supported types are: {price_constants.TYPE_LIST}"
             )
             return
 
+        comparison_field = price_constants.TYPE_FIELD_MAPPING[price_type]
+
         self.stdout.write(f"Removing duplicates for price type: {price_type}")
         self.stdout.write(
             "Number of prices (with proof of type PRICE_TAG) before cleanup: %d"
-            % Price.objects.filter(proof__type=proof_constants.TYPE_PRICE_TAG).count()
+            % Price.objects.select_related("proof")
+            .filter(proof__type=proof_constants.TYPE_PRICE_TAG)
+            .count()
         )
 
-        # Create a CTE to find duplicate prices. We use a raw SQL query
-        # to find duplicates based on product_code (or category_tag), price,
+        # Find duplicates based on product_code (or category_tag), price,
         # and proof_id.
-
-        # we store the product identifier either in `product_code` (for
-        # PRODUCT type) or `category_tag` (for CATEGORY type).
-        comparison_field = (
-            "product_code"
-            if price_type == price_constants.TYPE_PRODUCT
-            else "category_tag"
-        )
-        duplicate_prices = Price.objects.raw(
-            f"""WITH
-                duplicated_products AS (
-                    SELECT
-                    t1.{comparison_field},
-                    t1.price,
-                    t1.proof_id,
-                    COUNT(t1.id) AS count
-                    FROM
-                    prices as t1
-                    JOIN proofs as t2 ON (t1.proof_id = t2.id)
-                    WHERE
-                    t1.type = '{price_type}'
-                    AND t2.type = 'PRICE_TAG'
-                    GROUP BY
-                    (t1.{comparison_field}, t1.price, t1.proof_id)
-                    HAVING
-                    COUNT(t1.id) > 1
-                )
-                SELECT
-                    t1.proof_id, t1.{comparison_field}, t1.id
-                FROM
-                    prices as t1
-                JOIN duplicated_products as t2 ON (
-                    t1.{comparison_field} = t2.{comparison_field}
-                    AND t1.price = t2.price
-                    AND t1.proof_id = t2.proof_id
-                )
-                ORDER BY
-                    (t1.proof_id, t1.{comparison_field}, t1.id) ASC;
-                """
+        duplicate_prices = Price.objects.duplicates(
+            proof_constants.TYPE_PRICE_TAG, comparison_field
         )
 
         deleted = 0
@@ -123,12 +86,12 @@ class Command(BaseCommand):
         # and id (ascending), so we can use groupby to group them.
         for key, price_group in groupby(
             duplicate_prices,
-            key=lambda x: (x.proof_id, getattr(x, comparison_field)),
+            key=lambda x: (x["proof_id"], x[comparison_field]),
         ):
             price_list = list(price_group)
             proof_id, value = key
             self.stdout.write(
-                f"Found {len(price_list)} duplicate prices for proof {proof_id} with value {value}"
+                f"Proof {proof_id}: found {len(price_list)} duplicate prices with {comparison_field} {value}"
             )
             if len(price_list) > 1:
                 # We always keep the first uploaded price (price with the
@@ -141,7 +104,7 @@ class Command(BaseCommand):
                 # duplicate prices. This is useful to update the price_id
                 # of the price tags to the first price if needed.
                 price_tags = PriceTag.objects.filter(
-                    price_id__in=[price.id for price in price_list]
+                    price_id__in=[price["id"] for price in price_list]
                 ).all()
 
                 for price in price_list:
@@ -171,11 +134,11 @@ class Command(BaseCommand):
                         if price_tag.price_id == price_linked_to_price_tag.id
                     ][0]
                     self.stdout.write(
-                        f"Updating price tag {price_tag.id} to point to the first price {first_price.id} (previously {price_tag.price_id})"
+                        f"Updating price tag {price_tag.id} to point to the first price {first_price['id']} (previously {price_tag.price_id})"
                     )
 
                     if apply:
-                        price_tag.price_id = first_price.id
+                        price_tag.price_id = first_price["id"]
                         price_tag.save()
 
                     to_remove.append(price_linked_to_price_tag)
@@ -183,16 +146,16 @@ class Command(BaseCommand):
 
                 if to_remove:
                     self.stdout.write(
-                        f"Removing {len(to_remove)} duplicate prices for proof {proof_id} with value {value}"
+                        f"Proof {proof_id}: removing {len(to_remove)} duplicate prices with {comparison_field} {value}"
                     )
                     deleted += len(to_remove)
                     for price in to_remove:
                         self.stdout.write(
-                            f"Removing price {price.id} for proof {proof_id} with product value {value}"
+                            f"Proof {proof_id}: removing price {price['id']} for with {comparison_field} {value}"
                         )
                     if apply:
                         Price.objects.filter(
-                            id__in=[price.id for price in to_remove]
+                            id__in=[price["id"] for price in to_remove]
                         ).delete()
 
         self.stdout.write(f"Deleted {deleted} duplicate prices.")
