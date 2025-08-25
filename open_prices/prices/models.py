@@ -16,9 +16,6 @@ from openfoodfacts.taxonomy import (
 )
 
 from open_prices.challenges.models import Challenge
-
-# Import custom lookups so that they are registered
-from open_prices.common import lookups  # noqa: F401
 from open_prices.common import constants, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
