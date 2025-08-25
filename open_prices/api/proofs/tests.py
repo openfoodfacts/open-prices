@@ -160,7 +160,7 @@ class ProofListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
 
-    def test_price_list_filter_by_tags(self):
+    def test_proof_list_filter_by_tags(self):
         self.assertEqual(Proof.objects.count(), 3)
         # tags
         url = self.url + "?tags__contains=challenge-1"
@@ -490,7 +490,7 @@ class PriceTagListApiTest(TestCase):
         # price tag 2 is returned
         self.assertEqual(response.data["items"][0]["id"], self.price_tag_2.id)
 
-    def test_price_list_filter_by_tags(self):
+    def test_proof_list_filter_by_tags(self):
         url = self.url + "?tags__contains=prediction-found-product"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
