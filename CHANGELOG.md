@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.82.2](https://github.com/openfoodfacts/open-prices/compare/v1.82.1...v1.82.2) (2025-08-25)
+
+
+### Technical
+
+* **Challenges:** add extra stats: proof_location_count & price_product_count ([#960](https://github.com/openfoodfacts/open-prices/issues/960)) ([f032172](https://github.com/openfoodfacts/open-prices/commit/f0321724296407d0c4722175e64be21943ec909b))
+* remove ref to latest release please hash ([#955](https://github.com/openfoodfacts/open-prices/issues/955)) ([54785f3](https://github.com/openfoodfacts/open-prices/commit/54785f3f98ee59489a32930dc6049bc5b2ae4431))
+
 ## [1.82.1](https://github.com/openfoodfacts/open-prices/compare/v1.82.0...v1.82.1) (2025-08-25)
 
 
