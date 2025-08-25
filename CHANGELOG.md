@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.82.1](https://github.com/openfoodfacts/open-prices/compare/v1.82.0...v1.82.1) (2025-08-25)
+
+
+### Bug Fixes
+
+* **API:** Products: order by ID by default instead of `created` ([#947](https://github.com/openfoodfacts/open-prices/issues/947)) ([25db18f](https://github.com/openfoodfacts/open-prices/commit/25db18f9dc9582e159428a23f96ccac2066e0eb8))
+* **API:** use ANY instead if ILIKE queries for Postgres ARRAY fields filters ([#945](https://github.com/openfoodfacts/open-prices/issues/945)) ([0b91004](https://github.com/openfoodfacts/open-prices/commit/0b9100465e4e7a10c8aceda6fecc4d9660a5c21e))
+
+
+### Technical
+
+* update to release please v4.3 ([#953](https://github.com/openfoodfacts/open-prices/issues/953)) ([13d9c09](https://github.com/openfoodfacts/open-prices/commit/13d9c095c346e62cb6bab29d35172db6dada859e))
+
 ## [1.82.0](https://github.com/openfoodfacts/open-prices/compare/v1.81.8...v1.82.0) (2025-08-17)
 
 
