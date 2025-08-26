@@ -1,3 +1,4 @@
+from django.core.validators import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
@@ -37,20 +38,16 @@ class LocationViewSet(
         serializer.is_valid(raise_exception=True)
         # get source
         source = get_source_from_request(self.request)
-        # before save: check if location already exists. If so, return it
-        try:
-            location = Location.objects.get(**serializer.validated_data)
-            return Response(
-                self.serializer_class(location).data, status=status.HTTP_200_OK
-            )
-        except Location.DoesNotExist:
-            pass
         # save
-        location = serializer.save(source=source)
-        # return full location
-        return Response(
-            self.serializer_class(location).data, status=status.HTTP_201_CREATED
-        )
+        try:
+            location = serializer.save(source=source)
+            response_status = status.HTTP_201_CREATED
+        # avoid duplicates: return existing location instead
+        except ValidationError as e:
+            if "Constraint" in e.messages[0]:
+                location = Location.objects.get(**serializer.validated_data)
+                response_status = status.HTTP_200_OK
+        return Response(self.serializer_class(location).data, status=response_status)
 
     @action(
         detail=False, methods=["GET"], url_path=r"osm/(?P<osm_type>\w+)/(?P<osm_id>\d+)"
