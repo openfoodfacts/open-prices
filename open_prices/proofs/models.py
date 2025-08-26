@@ -192,6 +192,8 @@ class Proof(models.Model):
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
+    md5_hash = models.CharField(max_length=32, blank=True, null=True)
+
     objects = models.Manager.from_queryset(ProofQuerySet)()
 
     class Meta:
@@ -199,6 +201,9 @@ class Proof(models.Model):
         db_table = "proofs"
         verbose_name = "Proof"
         verbose_name_plural = "Proofs"
+        indexes = [
+            models.Index(fields=["md5_hash"]),
+        ]
 
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors

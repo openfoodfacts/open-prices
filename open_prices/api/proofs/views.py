@@ -34,7 +34,7 @@ from open_prices.common.authentication import CustomAuthentication
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
-from open_prices.proofs.utils import store_file
+from open_prices.proofs.utils import compute_file_md5, store_file
 
 
 def is_smoothie_app_version_4_20(source: str | None) -> bool:
@@ -124,7 +124,9 @@ class ProofViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # NOTE: image will be stored even if the proof serializer fails...
-        file_path, mimetype, image_thumb_path = store_file(request.data.get("file"))
+        file = request.data.get("file")
+        file_path, mimetype, image_thumb_path = store_file(file)
+        md5_hash = compute_file_md5(file)
         proof_create_data = {
             "file_path": file_path,
             "mimetype": mimetype,
@@ -148,6 +150,7 @@ class ProofViewSet(
         save_kwargs = {
             "source": source,
             "owner": owner,
+            "md5_hash": md5_hash,
         }
         # Smoothie sets incorrectly the ready_for_price_tag_validation flag
         # when uploading price tag proofs on version 4.20.

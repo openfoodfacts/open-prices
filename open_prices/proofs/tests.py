@@ -1,4 +1,6 @@
 import gzip
+import hashlib
+import io
 import json
 import tempfile
 import unittest
@@ -7,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
@@ -41,6 +44,7 @@ from open_prices.proofs.ml import (
 )
 from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
 from open_prices.proofs.utils import (
+    compute_file_md5,
     match_category_price_tag_with_category_price,
     match_price_tag_with_price,
     match_product_price_tag_with_product_price,
@@ -1566,3 +1570,23 @@ class ReceiptItemMatchingUtilsTest(TestCase):
             location=self.proof.location,
         )
         self.assertFalse(match_receipt_item_with_price(self.receipt_item, self.price))
+
+
+class TestComputeFileMd5(TestCase):
+    def test_compute_file_md5(self):
+        # Create a temporary file with known content
+        content = b"Hello, world!"
+        expected_md5 = hashlib.md5(content).hexdigest()
+        f = io.BytesIO(content)
+        f.seek(0)
+        django_file = InMemoryUploadedFile(
+            file=f,
+            field_name="file",
+            name="test.txt",
+            content_type="text/plain",
+            size=len(content),
+            charset=None,
+        )
+        # Compute MD5 using the function
+        computed_md5 = compute_file_md5(django_file)
+        self.assertEqual(computed_md5, expected_md5)
