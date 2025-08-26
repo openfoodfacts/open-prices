@@ -146,6 +146,29 @@ class ProofViewSet(
             if self.request.user.is_authenticated
             else settings.ANONYMOUS_USER_ID
         )
+
+        # We check if a proof with the same MD5 hash already exists,
+        # uploaded by the same user, with the same type, location and date.
+        # If yes, we return it instead of creating a new one
+        duplicate_proof = Proof.objects.filter(
+            md5_hash=md5_hash,
+            owner=owner,
+            type=serializer.validated_data["type"],
+            # location OSM id/type can be null (for online stores)
+            location_osm_id=serializer.validated_data.get("location_osm_id"),
+            location_osm_type=serializer.validated_data.get("location_osm_type"),
+            date=serializer.validated_data["date"],
+        ).first()
+
+        if duplicate_proof:
+            # We remove the uploaded file as it's a duplicate
+            (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
+
+            return Response(
+                ProofFullSerializer(duplicate_proof).data,
+                status=status.HTTP_200_OK,
+            )
+
         source = get_source_from_request(self.request)
         save_kwargs = {
             "source": source,
