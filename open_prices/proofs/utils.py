@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import random
 import string
@@ -134,6 +135,20 @@ def store_file(
     # Build file_path
     file_path = generate_relative_path(current_dir.name, file_stem, extension)
     return (file_path, mimetype, image_thumb_path)
+
+
+def compute_file_md5(file: InMemoryUploadedFile | TemporaryUploadedFile) -> str:
+    """Compute the MD5 hash of the Django uploaded file.
+
+    :param file: the file to compute the MD5 hash for
+    :return: the MD5 hash of the file as a hexadecimal string
+    """
+
+    md5_hash = hashlib.md5()
+    # Read the file in chunks to avoid using too much memory
+    for chunk in file.chunks():
+        md5_hash.update(chunk)
+    return md5_hash.hexdigest()
 
 
 def select_proof_image_dir(images_dir: Path, max_images_per_dir: int = 1_000) -> Path:

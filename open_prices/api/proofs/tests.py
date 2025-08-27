@@ -11,6 +11,7 @@ from PIL import Image
 from open_prices.api.proofs.views import is_smoothie_app_version_4_20
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
+from open_prices.locations.models import Location
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
@@ -49,9 +50,9 @@ PROOF_RECEIPT = {
 }
 
 
-def create_fake_image() -> bytes:
+def create_fake_image(color: float | tuple[float] | str | None = "black") -> bytes:
     fp = BytesIO()
-    image = Image.new("RGB", (100, 100))
+    image = Image.new("RGB", (100, 100), color=color)
     image.save(fp, format="WEBP")
     fp.seek(0)
     return fp
@@ -208,7 +209,7 @@ class ProofCreateApiTest(TestCase):
         cls.url = reverse("api:proofs-upload")
         cls.user_session = SessionFactory()
         cls.data = {
-            "file": create_fake_image(),  # open("filename.webp", "rb"),
+            "file": create_fake_image(color="black"),  # open("filename.webp", "rb"),
             **PROOF_RECEIPT,
             "price_count": 15,
             "source": "test",
@@ -216,7 +217,8 @@ class ProofCreateApiTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """Remove all images created during the test."""
+        """Remove all images created during the test and all proofs/locations
+        in DB."""
         for file_name in os.listdir(settings.IMAGES_DIR):
             file_path = os.path.join(settings.IMAGES_DIR, file_name)
             if os.path.isfile(file_path):
@@ -224,6 +226,9 @@ class ProofCreateApiTest(TestCase):
             else:
                 shutil.rmtree(file_path)
         super().tearDownClass()
+
+        Proof.objects.all().delete()
+        Location.objects.all().delete()
 
     def test_proof_create_anonymous(self):
         # wrong endpoint
@@ -241,7 +246,8 @@ class ProofCreateApiTest(TestCase):
         # wrong token
         response = self.client.post(
             self.url,
-            self.data,
+            # Create a different image to avoid duplicate detection
+            {**self.data, "file": create_fake_image(color="blue")},
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
         )
         self.assertEqual(response.status_code, 201)  # 403 ?
@@ -303,13 +309,14 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(response.data["location"]["id"], location_online.id)
 
     def test_proof_create_with_app_name(self):
-        for params, result in [
-            ("?", "API"),
-            ("?app_name=", ""),
-            ("?app_name=test app&app_version=", "test app"),
-            ("?app_name=mobile&app_version=1.0", "mobile (1.0)"),
+        for params, image_color, result in [
+            ("?", "black", "API"),
+            ("?app_name=", "blue", ""),
+            ("?app_name=test app&app_version=", "red", "test app"),
+            ("?app_name=mobile&app_version=1.0", "yellow", "mobile (1.0)"),
             (
                 "?app_name=web&app_version=&app_page=/prices/add/multiple",
+                "green",
                 "web - /prices/add/multiple",
             ),
         ]:
@@ -317,12 +324,66 @@ class ProofCreateApiTest(TestCase):
                 # with empty app_name
                 response = self.client.post(
                     self.url + params,
-                    self.data,
+                    {**self.data, "file": create_fake_image(color=image_color)},
                     headers={"Authorization": f"Bearer {self.user_session.token}"},
                 )
                 self.assertEqual(response.status_code, 201)
                 self.assertEqual(response.data["source"], result)
                 self.assertEqual(Proof.objects.last().source, result)
+
+    def test_proof_create_duplicate(self):
+        data_1 = self.data.copy()
+        # We need to create again the image so that it's a different file
+        # object
+        data_2 = {**data_1, "file": create_fake_image(color="black")}  # same image
+        data_3 = {
+            **data_1,
+            "file": create_fake_image(color="black"),
+            "date": "2024-01-02",
+        }  # different date
+        data_4 = {
+            **data_1,
+            "file": create_fake_image(color="black"),
+            "type": proof_constants.TYPE_PRICE_TAG,
+        }  # different type
+        # Remove receipt fields for price tag proof
+        data_4.pop("receipt_price_count")
+        data_4.pop("receipt_price_total")
+        data_4.pop("owner_consumption")
+        response = self.client.post(
+            self.url,
+            data_1,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        proof_id = response.data["id"]
+
+        # This image is a duplicate (same MD5 hash, same owner, same type,
+        # same date, same location)
+        # We should get a HTTP 200 with the existing proof
+        response = self.client.post(
+            self.url,
+            data_2,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], proof_id)
+
+        # Different date => create a new proof
+        response = self.client.post(
+            self.url,
+            data_3,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+
+        # Different type => create a new proof
+        response = self.client.post(
+            self.url,
+            data_4,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
 
 
 class ProofUpdateApiTest(TestCase):

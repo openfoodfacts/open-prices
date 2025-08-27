@@ -34,7 +34,7 @@ from open_prices.common.authentication import CustomAuthentication
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
-from open_prices.proofs.utils import store_file
+from open_prices.proofs.utils import compute_file_md5, store_file
 
 
 def is_smoothie_app_version_4_20(source: str | None) -> bool:
@@ -124,7 +124,9 @@ class ProofViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # NOTE: image will be stored even if the proof serializer fails...
-        file_path, mimetype, image_thumb_path = store_file(request.data.get("file"))
+        file = request.data.get("file")
+        file_path, mimetype, image_thumb_path = store_file(file)
+        image_md5_hash = compute_file_md5(file)
         proof_create_data = {
             "file_path": file_path,
             "mimetype": mimetype,
@@ -144,10 +146,34 @@ class ProofViewSet(
             if self.request.user.is_authenticated
             else settings.ANONYMOUS_USER_ID
         )
+
+        # We check if a proof with the same MD5 hash already exists,
+        # uploaded by the same user, with the same type, location and date.
+        # If yes, we return it instead of creating a new one
+        duplicate_proof = Proof.objects.filter(
+            image_md5_hash=image_md5_hash,
+            owner=owner,
+            type=serializer.validated_data["type"],
+            # location OSM id/type can be null (for online stores)
+            location_osm_id=serializer.validated_data.get("location_osm_id"),
+            location_osm_type=serializer.validated_data.get("location_osm_type"),
+            date=serializer.validated_data["date"],
+        ).first()
+
+        if duplicate_proof:
+            # We remove the uploaded file as it's a duplicate
+            (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
+
+            return Response(
+                ProofFullSerializer(duplicate_proof).data,
+                status=status.HTTP_200_OK,
+            )
+
         source = get_source_from_request(self.request)
         save_kwargs = {
             "source": source,
             "owner": owner,
+            "image_md5_hash": image_md5_hash,
         }
         # Smoothie sets incorrectly the ready_for_price_tag_validation flag
         # when uploading price tag proofs on version 4.20.
