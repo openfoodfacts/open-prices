@@ -260,7 +260,6 @@ class Price(models.Model):
     objects = models.Manager.from_queryset(PriceQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "prices"
         verbose_name = "Price"
         verbose_name_plural = "Prices"

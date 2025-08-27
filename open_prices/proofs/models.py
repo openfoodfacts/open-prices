@@ -198,7 +198,6 @@ class Proof(models.Model):
     objects = models.Manager.from_queryset(ProofQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "proofs"
         verbose_name = "Proof"
         verbose_name_plural = "Proofs"
