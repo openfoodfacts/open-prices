@@ -92,7 +92,6 @@ class Location(models.Model):
     objects = models.Manager.from_queryset(LocationQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "locations"
         constraints = [
             UniqueConstraint(

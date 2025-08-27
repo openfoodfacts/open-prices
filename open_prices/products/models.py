@@ -74,7 +74,6 @@ class Product(models.Model):
     objects = models.Manager.from_queryset(ProductQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "products"
         verbose_name = "Product"
         verbose_name_plural = "Products"
