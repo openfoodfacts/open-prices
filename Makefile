@@ -134,7 +134,9 @@ tests: django-tests
 django-tests:
 	@echo "🥫 Running tests …"
 	# change project name to run in isolation
-	${DOCKER_COMPOSE_TEST} run --rm api poetry run python3 manage.py test
+	# Override Q2_SYNC to make sure that async tasks are run synchronously during tests
+	# See https://github.com/openfoodfacts/open-prices/issues/962
+	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api poetry run python3 manage.py test -v 2
 
 
 django-tests-single: guard-args
