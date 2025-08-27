@@ -251,6 +251,7 @@ class ProofCreateApiTest(TestCase):
             self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
         )
+        self.assertEqual(response.status_code, 403)  # 405 ?
         # wrong token
         response = self.client.post(
             self.url,

@@ -144,6 +144,20 @@ class ProofViewSet(
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
 
+        # get owner (we allow anonymous upload, only if token is not present)
+        if self.request.user.is_authenticated:
+            owner = self.request.user.user_id
+        else:
+            if has_token_from_cookie_or_header(self.request):
+                return Response(
+                    {
+                        "detail": "Authentication failed. Please pass a valid token, or remove it to upload the proof anonymously."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                owner = settings.ANONYMOUS_USER_ID
+
         # We check if a proof with the same MD5 hash already exists,
         # uploaded by the same user, with the same type, location and date.
         # If yes, we return it instead of creating a new one
@@ -164,24 +178,11 @@ class ProofViewSet(
                 status=status.HTTP_200_OK,
             )
 
-        # get owner (we allow anonymous upload, only if token is not present)
-        if self.request.user.is_authenticated:
-            owner = self.request.user.user_id
-        else:
-            if has_token_from_cookie_or_header(self.request):
-                return Response(
-                    {
-                        "detail": "Authentication failed. Please pass a valid token, or remove it to upload the proof anonymously."
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            else:
-                owner = settings.ANONYMOUS_USER_ID
         # get source
         source = get_source_from_request(self.request)
         save_kwargs = {
-            "image_md5_hash": image_md5_hash,
             "owner": owner,
+            "image_md5_hash": image_md5_hash,
             "source": source,
         }
         # Smoothie sets incorrectly the ready_for_price_tag_validation flag
