@@ -243,6 +243,14 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(response.data["price_count"], 0)  # ignored
         self.assertEqual(response.data["owner"], settings.ANONYMOUS_USER_ID)
         self.assertEqual(Proof.objects.last().source, "API")  # default value
+
+    def test_proof_create_wrong_token(self):
+        # wrong endpoint
+        response = self.client.post(
+            reverse("api:proofs-list"),
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}X"},
+        )
         # wrong token
         response = self.client.post(
             self.url,
@@ -250,8 +258,7 @@ class ProofCreateApiTest(TestCase):
             {**self.data, "file": create_fake_image(color="blue")},
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
         )
-        self.assertEqual(response.status_code, 201)  # 403 ?
-        self.assertEqual(response.data["owner"], settings.ANONYMOUS_USER_ID)
+        self.assertEqual(response.status_code, 400)
 
     def test_proof_create_authenticated(self):
         # wrong endpoint

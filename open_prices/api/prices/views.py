@@ -68,12 +68,12 @@ class PriceViewSet(
             if serializer.validated_data.get("product_code")
             else price_constants.TYPE_CATEGORY
         )
+        # get owner
+        owner = self.request.user.user_id
         # get source
         source = get_source_from_request(self.request)
         # save
-        price = serializer.save(
-            owner=self.request.user.user_id, type=type, source=source
-        )
+        price = serializer.save(type=type, owner=owner, source=source)
         # return full price
         return Response(
             self.serializer_class(price).data, status=status.HTTP_201_CREATED

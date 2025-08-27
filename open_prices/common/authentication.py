@@ -13,22 +13,32 @@ def create_token(user_id: str) -> str:
     return f"{user_id}__U{str(uuid.uuid4())}"
 
 
-def get_authorization_token(authorization: str) -> str:
-    return authorization.split(" ")[1]
+def get_token_from_cookie(request: Request) -> str | None:
+    return request.COOKIES.get(settings.SESSION_COOKIE_NAME)
+
+
+def get_token_from_header(request: Request) -> str | None:
+    authorization = request.META.get("HTTP_AUTHORIZATION")  # "Bearer <token>"
+    if authorization and "__U" in authorization:
+        return authorization.split(" ")[1]
+    return None
+
+
+def has_token_from_cookie_or_header(request: Request) -> bool:
+    return get_token_from_cookie(request) or get_token_from_header(request)
 
 
 def get_request_session(request: Request):
-    authorization = request.META.get("HTTP_AUTHORIZATION")  # "Bearer <token>"
-    session_cookie = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
-
     try:
-        # If a session cookie is present, use that instead of the
-        # Authorization header
+        # If a session cookie is present, use that instead of the header
+        session_cookie = get_token_from_cookie(request)
         if session_cookie:
             return get_session(token=session_cookie)
 
-        if authorization and "__U" in authorization:
-            return get_session(token=get_authorization_token(authorization))
+        session_header = get_token_from_header(request)
+        if session_header:
+            return get_session(token=session_header)
+
     except:  # noqa
         pass
 
