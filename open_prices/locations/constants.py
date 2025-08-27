@@ -23,3 +23,11 @@ WEBSITE_URL_OK_TUPLE_LIST = [
     ("www.ekosport.fr/produit/1234", "https://www.ekosport.fr"),
     ("auvieuxcampeur.fr", "https://auvieuxcampeur.fr"),
 ]
+
+
+TYPE_OSM_UNIQUE_CONSTRAINT_NAME = "unique_osm_constraint"
+TYPE_ONLINE_UNIQUE_CONSTRAINT_NAME = "unique_online_constraint"
+UNIQUE_CONSTRAINT_NAME_LIST = [
+    TYPE_OSM_UNIQUE_CONSTRAINT_NAME,
+    TYPE_ONLINE_UNIQUE_CONSTRAINT_NAME,
+]

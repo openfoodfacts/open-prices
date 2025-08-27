@@ -11,6 +11,7 @@ from open_prices.api.locations.serializers import (
     LocationSerializer,
 )
 from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
+from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 
 
@@ -44,7 +45,10 @@ class LocationViewSet(
             response_status = status.HTTP_201_CREATED
         # avoid duplicates: return existing location instead
         except ValidationError as e:
-            if "Constraint" in e.messages[0]:
+            if any(
+                constraint_name in e.messages[0]
+                for constraint_name in location_constants.UNIQUE_CONSTRAINT_NAME_LIST
+            ):
                 location = Location.objects.get(**serializer.validated_data)
                 response_status = status.HTTP_200_OK
         return Response(self.serializer_class(location).data, status=response_status)
