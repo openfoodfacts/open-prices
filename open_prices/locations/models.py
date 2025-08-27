@@ -51,7 +51,7 @@ class Location(models.Model):
 
     type = models.CharField(max_length=20, choices=location_constants.TYPE_CHOICES)
 
-    # type: OSM
+    # type OSM
     osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     osm_type = models.CharField(
         max_length=10,
@@ -76,7 +76,7 @@ class Location(models.Model):
     )
     osm_version = models.PositiveIntegerField(blank=True, null=True)
 
-    # type: ONLINE
+    # type ONLINE
     website_url = models.URLField(blank=True, null=True)
 
     price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
