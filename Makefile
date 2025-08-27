@@ -172,7 +172,7 @@ cli: guard-args
 	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py ${args}
 
 
-makemigrations: guard-args
+makemigrations:
 	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py makemigrations ${args}
 
 #---------#
