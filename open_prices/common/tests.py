@@ -1,8 +1,16 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.test import TestCase
+from django.urls import reverse
+from rest_framework.test import APIRequestFactory
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
+from open_prices.common.authentication import (
+    get_token_from_cookie,
+    get_token_from_header,
+    has_token_from_cookie_or_header,
+)
 from open_prices.common.utils import (
     is_float,
     match_decimal_with_float,
@@ -10,6 +18,79 @@ from open_prices.common.utils import (
     url_add_missing_https,
     url_keep_only_domain,
 )
+from open_prices.users.factories import SessionFactory
+
+PRICE_8001505005707 = {
+    "product_code": "8001505005707",
+    "price": 15,
+    "currency": "EUR",
+    "date": "2024-01-01",
+}
+
+
+class AuthenticationTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:prices-list")
+        cls.user_session = SessionFactory()
+
+    def test_get_token_from_cookie(self):
+        # wrong format & wrong token
+        request = APIRequestFactory().get(self.url)
+        request.COOKIES["Test"] = "Test"
+        self.assertEqual(get_token_from_cookie(request), None)
+        # wrong format & valid token
+        request = APIRequestFactory().get(self.url)
+        request.COOKIES["Test"] = self.user_session.token
+        self.assertEqual(get_token_from_cookie(request), None)
+        # valid format & wrong token
+        request = APIRequestFactory().get(self.url)
+        request.COOKIES[settings.SESSION_COOKIE_NAME] = "Test"
+        self.assertEqual(get_token_from_cookie(request), "Test")
+        # valid format & valid token
+        request = APIRequestFactory().get(self.url)
+        request.COOKIES[settings.SESSION_COOKIE_NAME] = self.user_session.token
+        self.assertEqual(get_token_from_cookie(request), self.user_session.token)
+
+    def test_get_token_from_header(self):
+        # wrong format & wrong token
+        request = APIRequestFactory().get(
+            self.url,
+            headers={"Authorization": "Test"},
+        )
+        self.assertEqual(get_token_from_header(request), None)
+        # wrong format & valid token
+        request = APIRequestFactory().get(
+            self.url,
+            headers={"Authorization": f"{self.user_session.token}"},  # "Bearer" missing
+        )
+        self.assertEqual(get_token_from_header(request), None)
+        # valid format & wrong token
+        request = APIRequestFactory().get(
+            self.url,
+            headers={"Authorization": "Bearer Test"},
+        )
+        self.assertEqual(get_token_from_header(request), "Test")
+        # valid format & valid token
+        request = APIRequestFactory().get(
+            self.url,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(get_token_from_header(request), self.user_session.token)
+
+    def test_has_token_from_cookie_or_header(self):
+        # no token
+        request = APIRequestFactory().get(self.url)
+        self.assertFalse(has_token_from_cookie_or_header(request))
+        # token in cookie
+        request = APIRequestFactory().get(self.url)
+        request.COOKIES[settings.SESSION_COOKIE_NAME] = "Test"
+        self.assertTrue(has_token_from_cookie_or_header(request))
+        # token in header
+        request = APIRequestFactory().get(
+            self.url, headers={"Authorization": "Bearer Test"}
+        )
+        self.assertTrue(has_token_from_cookie_or_header(request))
 
 
 class OpenFoodFactsTest(TestCase):

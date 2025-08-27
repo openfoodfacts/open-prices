@@ -30,7 +30,10 @@ from open_prices.api.proofs.serializers import (
     ReceiptItemFullSerializer,
 )
 from open_prices.api.utils import get_source_from_request
-from open_prices.common.authentication import CustomAuthentication
+from open_prices.common.authentication import (
+    CustomAuthentication,
+    has_token_from_cookie_or_header,
+)
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
@@ -140,12 +143,20 @@ class ProofViewSet(
         # validate
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
-        # get owner & source
-        owner = (
-            self.request.user.user_id
-            if self.request.user.is_authenticated
-            else settings.ANONYMOUS_USER_ID
-        )
+
+        # get owner (we allow anonymous upload, only if token is not present)
+        if self.request.user.is_authenticated:
+            owner = self.request.user.user_id
+        else:
+            if has_token_from_cookie_or_header(self.request):
+                return Response(
+                    {
+                        "detail": "Authentication failed. Please pass a valid token, or remove it to upload the proof anonymously."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                owner = settings.ANONYMOUS_USER_ID
 
         # We check if a proof with the same MD5 hash already exists,
         # uploaded by the same user, with the same type, location and date.
@@ -159,21 +170,20 @@ class ProofViewSet(
             location_osm_type=serializer.validated_data.get("location_osm_type"),
             date=serializer.validated_data["date"],
         ).first()
-
         if duplicate_proof:
             # We remove the uploaded file as it's a duplicate
             (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
-
             return Response(
                 ProofFullSerializer(duplicate_proof).data,
                 status=status.HTTP_200_OK,
             )
 
+        # get source
         source = get_source_from_request(self.request)
         save_kwargs = {
-            "source": source,
             "owner": owner,
             "image_md5_hash": image_md5_hash,
+            "source": source,
         }
         # Smoothie sets incorrectly the ready_for_price_tag_validation flag
         # when uploading price tag proofs on version 4.20.
@@ -182,10 +192,9 @@ class ProofViewSet(
         # (see https://github.com/openfoodfacts/smooth-app/pull/6794)
         if is_smoothie_app_version_4_20(source):
             save_kwargs["ready_for_price_tag_validation"] = False
-
         # save
         proof = serializer.save(**save_kwargs)
-        # return the full proof
+        # return full proof
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(request=ProofProcessWithGeminiSerializer)
@@ -236,9 +245,7 @@ class PriceTagViewSet(
             # We need to prefetch the price object if it exists to validate the
             # price_id field, and the proof object to validate the proof_id
             # field
-            return (
-                PriceTag.objects.select_related("proof").select_related("price").all()
-            )
+            return PriceTag.objects.select_related("proof", "price").all()
         return super().get_queryset()
 
     def get_serializer_class(self):
