@@ -135,6 +135,9 @@ class Proof(models.Model):
     mimetype = models.CharField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=proof_constants.TYPE_CHOICES)
 
+    image_md5_hash = models.CharField(
+        max_length=32, blank=True, null=True, db_index=True
+    )
     image_thumb_path = models.CharField(blank=True, null=True)
 
     location_osm_id = models.PositiveBigIntegerField(blank=True, null=True)
@@ -192,8 +195,6 @@ class Proof(models.Model):
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
-    md5_hash = models.CharField(max_length=32, blank=True, null=True)
-
     objects = models.Manager.from_queryset(ProofQuerySet)()
 
     class Meta:
@@ -201,9 +202,6 @@ class Proof(models.Model):
         db_table = "proofs"
         verbose_name = "Proof"
         verbose_name_plural = "Proofs"
-        indexes = [
-            models.Index(fields=["md5_hash"]),
-        ]
 
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors

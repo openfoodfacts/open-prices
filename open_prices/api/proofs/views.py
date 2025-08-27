@@ -126,7 +126,7 @@ class ProofViewSet(
         # NOTE: image will be stored even if the proof serializer fails...
         file = request.data.get("file")
         file_path, mimetype, image_thumb_path = store_file(file)
-        md5_hash = compute_file_md5(file)
+        image_md5_hash = compute_file_md5(file)
         proof_create_data = {
             "file_path": file_path,
             "mimetype": mimetype,
@@ -151,7 +151,7 @@ class ProofViewSet(
         # uploaded by the same user, with the same type, location and date.
         # If yes, we return it instead of creating a new one
         duplicate_proof = Proof.objects.filter(
-            md5_hash=md5_hash,
+            image_md5_hash=image_md5_hash,
             owner=owner,
             type=serializer.validated_data["type"],
             # location OSM id/type can be null (for online stores)
@@ -173,7 +173,7 @@ class ProofViewSet(
         save_kwargs = {
             "source": source,
             "owner": owner,
-            "md5_hash": md5_hash,
+            "image_md5_hash": image_md5_hash,
         }
         # Smoothie sets incorrectly the ready_for_price_tag_validation flag
         # when uploading price tag proofs on version 4.20.
