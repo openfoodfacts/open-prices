@@ -28,6 +28,8 @@ from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
 from open_prices.common import openfoodfacts as common_openfoodfacts
+from open_prices.prices import constants as price_constants
+from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import (
     PriceTag,
@@ -947,8 +949,15 @@ def create_receipt_items_from_proof_prediction(
     proof: Proof, proof_prediction: ProofPrediction
 ) -> list[ReceiptItem]:
     """Create receipt items from a proof prediction containing receipt item
-    detections."""
+    detections.
+    Also looks up Prices table for similar product name and location to try to
+    extract the product code.
 
+    :param proof: the Proof instance to associate the ReceiptItems with
+    :param proof_prediction: the ProofPrediction instance containing the
+        receipt items detections
+    :return: the list of ReceiptItem instances created
+    """
     if proof_prediction.model_name != common_google.GEMINI_MODEL_NAME:
         logger.error(
             "Proof prediction model %s is not a receipt extraction",
@@ -956,8 +965,38 @@ def create_receipt_items_from_proof_prediction(
         )
         return []
 
+    # For every predicted item product name, look up a corresponding Price
+    product_names = [
+        item.get("product_name")
+        for item in proof_prediction.data.get("items", [])
+        if item.get("product_name")
+    ]
+    matching_prices = Price.objects.filter(
+        product_name__in=product_names,
+        location=proof.location,
+        type=price_constants.TYPE_PRODUCT,
+    )
+    # Using the prices data, create a lookup table matching product names
+    # and product codes
+    product_lookup = {}
+    for price in matching_prices:
+        if (
+            price.product_name in product_lookup
+            and product_lookup[price.product_name] != price.product_code
+        ):
+            logger.warning(
+                "Multiple products with the same name found: %s", price.product_name
+            )
+        product_lookup[price.product_name] = price.product_code
+
     created = []
     for index, predicted_item in enumerate(proof_prediction.data.get("items", [])):
+        # Check if we have a matching product code
+        # for the predicted product name
+        matching_product_code = product_lookup.get(predicted_item.get("product_name"))
+        if matching_product_code:
+            predicted_item["predicted_product_code"] = matching_product_code
+
         receipt_item = ReceiptItem.objects.create(
             proof=proof,
             proof_prediction=proof_prediction,
