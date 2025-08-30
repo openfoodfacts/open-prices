@@ -28,6 +28,7 @@ from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
 from open_prices.common import openfoodfacts as common_openfoodfacts
+from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import (
@@ -949,7 +950,7 @@ def create_receipt_items_from_proof_prediction(
 ) -> list[ReceiptItem]:
     """Create receipt items from a proof prediction containing receipt item
     detections.
-    Also looks up Prices with similar product name and location to try to
+    Also looks up Prices table for similar product name and location to try to
     extract the product code.
 
     :param proof: the Proof instance to associate the ReceiptItems with
@@ -973,12 +974,20 @@ def create_receipt_items_from_proof_prediction(
     matching_prices = Price.objects.filter(
         product_name__in=product_names,
         location=proof.location,
+        type=price_constants.TYPE_PRODUCT,
     )
     # Using the prices data, create a lookup table matching product names
     # and product codes
-    product_lookup = {
-        price.product_name: price.product_code for price in matching_prices
-    }
+    product_lookup = {}
+    for price in matching_prices:
+        if (
+            price.product_name in product_lookup
+            and product_lookup[price.product_name] != price.product_code
+        ):
+            logger.warning(
+                "Multiple products with the same name found: %s", price.product_name
+            )
+        product_lookup[price.product_name] = price.product_code
 
     created = []
     for index, predicted_item in enumerate(proof_prediction.data.get("items", [])):
