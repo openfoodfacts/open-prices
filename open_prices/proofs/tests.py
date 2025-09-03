@@ -277,10 +277,15 @@ class ProofModelSaveTest(TestCase):
         pass
 
     def test_proof_date_validation(self):
-        for DATE_OK in [None, "2024-01-01"]:
+        for DATE_OK in [None, "2024-01-01", "20240101", "2024-1-1", "1000-01-01"]:
             ProofFactory(date=DATE_OK)
         for DATE_NOT_OK in ["3000-01-01", "01-01-2000"]:
-            self.assertRaises(ValidationError, ProofFactory, date=DATE_NOT_OK)
+            with self.subTest(DATE_NOT_OK=DATE_NOT_OK):
+                self.assertRaises(ValidationError, ProofFactory, date=DATE_NOT_OK)
+        with freeze_time("2025-01-01"):
+            ProofFactory(date="2025-01-01")  # today
+            ProofFactory(date="2025-01-02")  # tomorrow accepted as well
+            self.assertRaises(ValidationError, ProofFactory, date="2025-01-03")
 
     def test_proof_location_validation(self):
         location_osm = LocationFactory()
