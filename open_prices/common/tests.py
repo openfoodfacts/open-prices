@@ -77,6 +77,12 @@ class AuthenticationTest(TestCase):
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(get_token_from_header(request), self.user_session.token)
+        # token is case-insensitive
+        request = APIRequestFactory().get(
+            self.url,
+            headers={"Authorization": f"beAreR {self.user_session.token}"},
+        )
+        self.assertEqual(get_token_from_header(request), self.user_session.token)
 
     def test_has_token_from_cookie_or_header(self):
         # no token
