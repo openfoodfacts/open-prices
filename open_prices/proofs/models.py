@@ -1,3 +1,4 @@
+import datetime
 import decimal
 
 from django.conf import settings
@@ -206,7 +207,8 @@ class Proof(models.Model):
         # dict to store all ValidationErrors
         validation_errors = dict()
         # proof rules
-        # - date should have the right format & not be in the future
+        # - date should have the right format
+        # - not be in the future (we accept 1 day leniency for users in future time zones)  # noqa
         if self.date:
             if type(self.date) is str:
                 validation_errors = utils.add_validation_error(
@@ -214,7 +216,7 @@ class Proof(models.Model):
                     "date",
                     "Parsing error. Expected format: YYYY-MM-DD",
                 )
-            elif self.date > timezone.now().date():
+            elif self.date > timezone.now().date() + datetime.timedelta(days=1):
                 validation_errors = utils.add_validation_error(
                     validation_errors,
                     "date",
