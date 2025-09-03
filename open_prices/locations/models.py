@@ -95,12 +95,12 @@ class Location(models.Model):
         db_table = "locations"
         constraints = [
             UniqueConstraint(
-                name="unique_osm_constraint",
+                name=location_constants.TYPE_OSM_UNIQUE_CONSTRAINT_NAME,
                 fields=["osm_id", "osm_type"],
                 condition=Q(type=location_constants.TYPE_OSM),
             ),
             UniqueConstraint(
-                name="unique_online_constraint",
+                name=location_constants.TYPE_ONLINE_UNIQUE_CONSTRAINT_NAME,
                 fields=["website_url"],
                 condition=Q(type=location_constants.TYPE_ONLINE),
             ),

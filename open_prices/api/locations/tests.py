@@ -171,7 +171,7 @@ class LocationCreateApiTest(TestCase):
         self.assertEqual(response.data["website_url"], "https://www.decathlon.fr")
         self.assertEqual(response.data["price_count"], 0)  # ignored
 
-    def test_location_create_existing(self):
+    def test_location_create_duplicate(self):
         LocationFactory(**LOCATION_OSM_NODE_652825274)
         LocationFactory(**LOCATION_ONLINE_DECATHLON)
         for location in [LOCATION_OSM_NODE_652825274, LOCATION_ONLINE_DECATHLON]:
