@@ -207,8 +207,8 @@ class Proof(models.Model):
         # dict to store all ValidationErrors
         validation_errors = dict()
         # proof rules
-        # - date should have the right format
-        # - not be in the future (we accept 1 day leniency for users in future time zones)  # noqa
+        # - should have the right format
+        # - should not be in the future (we accept 1 day leniency for users in future time zones)  # noqa
         if self.date:
             if type(self.date) is str:
                 validation_errors = utils.add_validation_error(
