@@ -166,7 +166,7 @@ class Proof(models.Model):
     receipt_price_total = models.DecimalField(
         verbose_name="Receipt's total amount (user input)",
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
@@ -174,7 +174,7 @@ class Proof(models.Model):
     receipt_online_delivery_costs = models.DecimalField(
         verbose_name="Receipt's online delivery costs (user input)",
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
