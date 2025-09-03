@@ -22,7 +22,7 @@ def get_token_from_header(request: Request) -> str | None:
     Expected format: "Bearer <user_id>__U<uuid>"
     """
     authorization = request.META.get("HTTP_AUTHORIZATION")
-    if authorization and "Bearer " in authorization:
+    if authorization and "bearer " in authorization.lower():
         return authorization.split(" ")[1]
     return None
 
