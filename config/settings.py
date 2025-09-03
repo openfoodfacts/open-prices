@@ -189,7 +189,7 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "ORDERING_PARAM": "order_by",
     "DEFAULT_PAGINATION_CLASS": "open_prices.api.pagination.CustomPagination",
-    "COERCE_DECIMAL_TO_STRING": False,
+    "COERCE_DECIMAL_TO_STRING": False,  # return floats instead
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
 }

@@ -87,7 +87,7 @@ class PriceListApiTest(TestCase):
             self.assertEqual(response.data["total"], 3)
             self.assertEqual(len(response.data["items"]), 3)
             self.assertTrue("id" in response.data["items"][0])
-            self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
+            self.assertEqual(response.data["items"][0]["price"], 15)  # default order
             self.assertTrue("proof" in response.data["items"][0])
             self.assertTrue("location" in response.data["items"][0])
 
@@ -111,7 +111,7 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 10)  # default
-        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
+        self.assertEqual(response.data["items"][0]["price"], 15)  # default order
         # size=150
         url = self.url + "?size=150"
         response = self.client.get(url)
@@ -120,7 +120,7 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 100)  # max to 100
-        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
+        self.assertEqual(response.data["items"][0]["price"], 15)  # default order
         # size=1
         url = self.url + "?size=1"
         response = self.client.get(url)
@@ -129,7 +129,7 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 3)
         self.assertEqual(response.data["size"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
+        self.assertEqual(response.data["items"][0]["price"], 15)  # default order
 
 
 class PriceListOrderApiTest(TestCase):
@@ -144,7 +144,7 @@ class PriceListOrderApiTest(TestCase):
         url = self.url + "?order_by=-price"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
-        self.assertEqual(response.data["items"][0]["price"], 50.00)
+        self.assertEqual(response.data["items"][0]["price"], 50)
 
 
 class PriceListFilterApiTest(TestCase):
@@ -276,21 +276,21 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?price=15"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 15.00)
+        self.assertEqual(response.data["items"][0]["price"], 15)
         # lte / gte
         url = self.url + "?price__gte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 50.00)
+        self.assertEqual(response.data["items"][0]["price"], 50)
         url = self.url + "?price__lte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
-        self.assertEqual(response.data["items"][0]["price"], 15.00)
+        self.assertEqual(response.data["items"][0]["price"], 15)
         # price_is_discounted
         url = self.url + "?price_is_discounted=true"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 50.00)
+        self.assertEqual(response.data["items"][0]["price"], 50)
         url = self.url + "?price_is_discounted=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
@@ -490,7 +490,7 @@ class PriceCreateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["product_code"], "8001505005707")
-        self.assertEqual(response.data["price"], 15.00)
+        self.assertEqual(response.data["price"], 15)
         self.assertEqual(response.data["currency"], "EUR")
         self.assertEqual(response.data["date"], "2024-01-01")
         self.assertEqual(response.data["receipt_quantity"], 1)  # default
@@ -754,16 +754,16 @@ class PriceStatsApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["price__count"], 4)
-        self.assertEqual(response.data["price__min"], 2.00)
-        self.assertEqual(response.data["price__max"], 30.00)
-        self.assertEqual(response.data["price__avg"], Decimal(18.00))
+        self.assertEqual(response.data["price__min"], 2)
+        self.assertEqual(response.data["price__max"], 30)
+        self.assertEqual(response.data["price__avg"], 18)
         url = self.url + "?price_is_discounted=False"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["price__count"], 3)
-        self.assertEqual(response.data["price__avg"], Decimal(19.00))
+        self.assertEqual(response.data["price__avg"], 19)
         url = self.url + f"?price_is_discounted=false&product_code={self.product.code}"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["price__count"], 2)
-        self.assertEqual(response.data["price__avg"], Decimal(27.50))
+        self.assertEqual(response.data["price__avg"], Decimal(27.5))
