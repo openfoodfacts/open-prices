@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.83.0](https://github.com/openfoodfacts/open-prices/compare/v1.82.1...v1.83.0) (2025-09-05)
+
+
+### Features
+
+* **Ml,ReceiptItems:** lookup product code using product names ([#952](https://github.com/openfoodfacts/open-prices/issues/952)) ([58902c6](https://github.com/openfoodfacts/open-prices/commit/58902c67087c400c1852ce1a112ab513b876d448))
+* prevent duplicate proof upload ([#964](https://github.com/openfoodfacts/open-prices/issues/964)) ([8e6319e](https://github.com/openfoodfacts/open-prices/commit/8e6319efb13157368e4f178cb6c52826607b4125))
+
+
+### Bug Fixes
+
+* **API:** Make the Bearer token prefix case-insensitive ([#971](https://github.com/openfoodfacts/open-prices/issues/971)) ([fe57e5d](https://github.com/openfoodfacts/open-prices/commit/fe57e5d427998f386c4563013b424f997555311c))
+* **API:** Proof upload: if the token is wrong, return a 400 instead of a 201 (and creating it anonymously) ([#969](https://github.com/openfoodfacts/open-prices/issues/969)) ([1385f7b](https://github.com/openfoodfacts/open-prices/commit/1385f7bd40a458d604938b00c813b9c00dd54831))
+* **Proofs:** allow a date of tomorrow to manage users in future time zones ([#972](https://github.com/openfoodfacts/open-prices/issues/972)) ([152f456](https://github.com/openfoodfacts/open-prices/commit/152f456871027623471ccca0db0fb68013fcf6a1))
+* using 'type: ' makes mypy crashes ([#968](https://github.com/openfoodfacts/open-prices/issues/968)) ([9e0329c](https://github.com/openfoodfacts/open-prices/commit/9e0329c576ffeb1cde19027ebdcd2b5d65d556a0))
+
+
+### Technical
+
+* add `anonymize_receipts.py` script ([#970](https://github.com/openfoodfacts/open-prices/issues/970)) ([d73db67](https://github.com/openfoodfacts/open-prices/commit/d73db67b770a340e8100788aae23e89aac77ba3b))
+* **Challenges:** add extra stats: proof_location_count & price_product_count ([#960](https://github.com/openfoodfacts/open-prices/issues/960)) ([f032172](https://github.com/openfoodfacts/open-prices/commit/f0321724296407d0c4722175e64be21943ec909b))
+* **Django:** cleanup remaining comments regarding DB mgmt ([#966](https://github.com/openfoodfacts/open-prices/issues/966)) ([0c6e109](https://github.com/openfoodfacts/open-prices/commit/0c6e1096288eb5fff50c42459ce36adefc401beb))
+* **Locations:** improve the duplicate mechanism (catch the ValidationError) ([#965](https://github.com/openfoodfacts/open-prices/issues/965)) ([87da4c1](https://github.com/openfoodfacts/open-prices/commit/87da4c19d457828e9729987de50682954871b74b))
+* remove ref to latest release please hash ([#955](https://github.com/openfoodfacts/open-prices/issues/955)) ([54785f3](https://github.com/openfoodfacts/open-prices/commit/54785f3f98ee59489a32930dc6049bc5b2ae4431))
+* remove required arguments for makemigrations ([#967](https://github.com/openfoodfacts/open-prices/issues/967)) ([5ef62b8](https://github.com/openfoodfacts/open-prices/commit/5ef62b8e2a0b48085f2863ead4f1e20909f82d32))
+* use Q2_SYNC=True when running tests ([4748af5](https://github.com/openfoodfacts/open-prices/commit/4748af5a290e948692217b92cb461fde4577f337))
+
 ## [1.82.1](https://github.com/openfoodfacts/open-prices/compare/v1.82.0...v1.82.1) (2025-08-25)
 
 
