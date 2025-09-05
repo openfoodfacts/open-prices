@@ -392,10 +392,29 @@ class PriceModelSaveTest(TestCase):
             self.assertEqual(price.labels_tags, expected_labels_tags)
 
     def test_price_price_validation(self):
-        for PRICE_OK in [0, 5, Decimal("1.5")]:
-            PriceFactory(price=PRICE_OK)
-        for PRICE_NOT_OK in [-5, "test", None, "None"]:  # True
-            self.assertRaises(ValidationError, PriceFactory, price=PRICE_NOT_OK)
+        for PRICE_OK in [
+            0,
+            5,
+            Decimal("1.5"),
+            Decimal("1.55"),
+            Decimal("1.555"),  # max 3 decimals
+            1234567,  # max 7 numbers (and 3 decimals)
+            Decimal("1234567.890"),  # max 10 digits (7 numbers and 3 decimals)
+        ]:
+            with self.subTest(PRICE_OK=PRICE_OK):
+                PriceFactory(price=PRICE_OK)
+        for PRICE_NOT_OK in [
+            -5,
+            "test",
+            None,
+            "None",
+            Decimal("1.5555"),
+            12345678,
+            Decimal("12345678.90"),
+            # True
+        ]:
+            with self.subTest(PRICE_NOT_OK=PRICE_NOT_OK):
+                self.assertRaises(ValidationError, PriceFactory, price=PRICE_NOT_OK)
         # price_per
         PriceFactory(
             type=price_constants.TYPE_CATEGORY,
