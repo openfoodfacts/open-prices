@@ -14,6 +14,7 @@ from openfoodfacts.taxonomy import (
     get_taxonomy,
     map_to_canonical_id,
 )
+from simple_history.models import HistoricalRecords
 
 from open_prices.challenges.models import Challenge
 
@@ -257,6 +258,8 @@ class Price(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    history = HistoricalRecords()
 
     objects = models.Manager.from_queryset(PriceQuerySet)()
 
