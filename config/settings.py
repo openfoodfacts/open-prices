@@ -44,6 +44,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",  # drf-spectacular
     "django_q",  # django-q2
     "solo",  # django-solo
+    "simple_history",  # django-simple-history
     # "debug_toolbar",  # django-debug-toolbar (see below)
     "django_extensions",  # django-extensions
 ]
@@ -72,6 +73,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",  # django-simple-history
 ]
 
 APPEND_SLASH = False
