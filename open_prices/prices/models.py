@@ -21,7 +21,7 @@ from open_prices.challenges.models import Challenge
 
 # Import custom lookups so that they are registered
 from open_prices.common import lookups  # noqa: F401
-from open_prices.common import constants, utils
+from open_prices.common import constants, history, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
@@ -260,7 +260,12 @@ class Price(models.Model):
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        history_user_id_field=models.CharField(),  # cannot be null
+        history_user_getter=history.history_user_getter,
+        history_user_setter=history.history_user_setter,
+        # cascade_delete_history=False,  # default
+    )
 
     objects = models.Manager.from_queryset(PriceQuerySet)()
 
@@ -567,6 +572,11 @@ class Price(models.Model):
                             "receipt_quantity",
                             f"Can only be set if proof type in {proof_constants.TYPE_GROUP_CONSUMPTION_LIST}",
                         )
+        # history
+        # - on create, set the history user to the owner
+        if not self.id:
+            if not getattr(self, "_history_user", None):
+                self._history_user = self.owner
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
@@ -597,6 +607,9 @@ class Price(models.Model):
         self.get_or_create_product()
         self.get_or_create_location()
         super().save(*args, **kwargs)
+        # history: clear any history user
+        if hasattr(self, "_history_user"):
+            del self._history_user
 
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:
