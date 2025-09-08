@@ -452,7 +452,7 @@ class Migration(migrations.Migration):
                 ),
                 ("created", models.DateTimeField(default=django.utils.timezone.now)),
                 ("updated", models.DateTimeField(blank=True, editable=False)),
-                ("history_user_id", models.CharField()),
+                ("history_user_id", models.CharField(null=True)),
                 ("history_id", models.AutoField(primary_key=True, serialize=False)),
                 ("history_date", models.DateTimeField(db_index=True)),
                 ("history_change_reason", models.CharField(max_length=100, null=True)),

@@ -261,7 +261,8 @@ class Price(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     history = HistoricalRecords(
-        history_user_id_field=models.CharField(),  # cannot be null
+        get_user=history.get_history_user_from_request,
+        history_user_id_field=models.CharField(null=True),
         history_user_getter=history.history_user_getter,
         history_user_setter=history.history_user_setter,
         # cascade_delete_history=False,  # default
@@ -572,11 +573,6 @@ class Price(models.Model):
                             "receipt_quantity",
                             f"Can only be set if proof type in {proof_constants.TYPE_GROUP_CONSUMPTION_LIST}",
                         )
-        # history
-        # - on create, set the history user to the owner
-        if not self.id:
-            if not getattr(self, "_history_user", None):
-                self._history_user = self.owner
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
@@ -607,9 +603,6 @@ class Price(models.Model):
         self.get_or_create_product()
         self.get_or_create_location()
         super().save(*args, **kwargs)
-        # history: clear any history user
-        if hasattr(self, "_history_user"):
-            del self._history_user
 
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:

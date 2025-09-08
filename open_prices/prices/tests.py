@@ -2,9 +2,9 @@ import json
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from django.test import TestCase, TransactionTestCase
 from freezegun import freeze_time
+from simple_history.utils import bulk_update_with_history
 
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.common import constants
@@ -900,18 +900,14 @@ class PriceModelHistoryTest(TransactionTestCase):
         )
         self.assertEqual(price.history.count(), 1)
         self.assertEqual(price.history.first().history_type, "+")
-        self.assertEqual(price.history.first().history_user_id, price.owner)
+        self.assertEqual(price.history.first().history_user_id, None)
         # update the price
         price.price = 5
-        self.assertRaises(IntegrityError, price.save)  # no _history_user set
-        price._history_user = "moderator-1"
         price.save()
         self.assertEqual(price.history.count(), 2)
         self.assertEqual(price.history.first().history_type, "~")
-        self.assertEqual(price.history.first().history_user_id, "moderator-1")
+        self.assertEqual(price.history.first().history_user_id, None)
         # bulk update the price
-        from simple_history.utils import bulk_update_with_history
-
         price.price = 10
         bulk_update_with_history([price], Price, ["price"], default_user="moderator-2")
         self.assertEqual(price.history.count(), 3)
@@ -919,7 +915,6 @@ class PriceModelHistoryTest(TransactionTestCase):
         self.assertEqual(price.history.first().history_user_id, "moderator-2")
         # delete the price
         price_id = price.id
-        self.assertRaises(IntegrityError, price.delete)  # no _history_user set
         price._history_user = "moderator-3"
         price.delete()
         self.assertEqual(Price.history.filter(id=price_id).count(), 4)
