@@ -47,6 +47,12 @@ def is_smoothie_app_version_4_20(source: str | None) -> bool:
     where it sets the `ready_for_price_tag_validation` flag to True when
     uploading price tag proofs, even when it should not be set.
     """
+    return get_smoothie_app_version(source) == (4, 20)
+
+
+def get_smoothie_app_version(source: str | None) -> tuple[int | None, int | None]:
+    """Return the Smoothie app version (major, minor) if the request comes from
+    Smoothie app, or (None, None) otherwise."""
     if source and (
         match := re.search(r"^Smoothie - OpenFoodFacts \((\d+)\.(\d+)\.(\d+)", source)
     ):
@@ -54,10 +60,9 @@ def is_smoothie_app_version_4_20(source: str | None) -> bool:
         # "Smoothie - OpenFoodFacts (4.18.1+1434)...""
         smoothie_major = int(match.group(1))
         smoothie_minor = int(match.group(2))
+        return smoothie_major, smoothie_minor
 
-        return smoothie_major == 4 and smoothie_minor == 20
-
-    return False
+    return None, None
 
 
 class ProofViewSet(
@@ -158,6 +163,9 @@ class ProofViewSet(
             else:
                 owner = settings.ANONYMOUS_USER_ID
 
+        # get source
+        source = get_source_from_request(self.request)
+
         # We check if a proof with the same MD5 hash already exists,
         # uploaded by the same user, with the same type, location and date.
         # If yes, we return it instead of creating a new one
@@ -173,13 +181,22 @@ class ProofViewSet(
         if duplicate_proof:
             # We remove the uploaded file as it's a duplicate
             (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
+
+            # We return HTTP 200 OK if the request does not come from
+            # Smoothie app version <= 4.20, as the background task fails
+            # if the status code is not 201 Created.
+            # See for more information:
+            # https://github.com/openfoodfacts/smooth-app/issues/6855#issuecomment-3265072440
+            status_code = status.HTTP_200_OK
+            smoothie_version = get_smoothie_app_version(source)
+            if smoothie_version[0] is not None and (smoothie_version <= (4, 20)):
+                status_code = status.HTTP_201_CREATED
+
             return Response(
                 ProofFullSerializer(duplicate_proof).data,
-                status=status.HTTP_200_OK,
+                status=status_code,
             )
 
-        # get source
-        source = get_source_from_request(self.request)
         save_kwargs = {
             "owner": owner,
             "image_md5_hash": image_md5_hash,
