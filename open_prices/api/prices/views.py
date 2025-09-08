@@ -79,6 +79,19 @@ class PriceViewSet(
             self.serializer_class(price).data, status=status.HTTP_201_CREATED
         )
 
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        # history: set the authenticated user as history_user
+        if self.request.user.is_authenticated:
+            instance._history_user = self.request.user.user_id
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        # history: set the authenticated user as history_user
+        if self.request.user.is_authenticated:
+            instance._history_user = self.request.user.user_id
+        instance.delete()
+
     @extend_schema(responses=PriceStatsSerializer, filters=True)
     @action(detail=False, methods=["GET"])
     def stats(self, request: Request) -> Response:

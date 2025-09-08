@@ -616,6 +616,23 @@ class PriceCreateApiTest(TestCase):
                 self.assertEqual(response.data["source"], result)
                 self.assertEqual(Price.objects.last().source, result)
 
+    def test_price_create_history(self):
+        response = self.client.post(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Price.history.filter(id=response.data["id"]).count(), 1)
+        self.assertEqual(
+            Price.history.filter(id=response.data["id"]).first().history_type, "+"
+        )
+        self.assertEqual(
+            Price.history.filter(id=response.data["id"]).first().history_user_id,
+            self.user_session.user.user_id,
+        )
+
 
 class PriceUpdateApiTest(TestCase):
     @classmethod
@@ -692,6 +709,23 @@ class PriceUpdateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_price_update_history(self):
+        response = self.client.patch(
+            self.url_price_product,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Price.history.filter(id=self.price_product.id).count(), 2)
+        self.assertEqual(
+            Price.history.filter(id=self.price_product.id).first().history_type, "~"
+        )
+        self.assertEqual(
+            Price.history.filter(id=self.price_product.id).first().history_user_id,
+            self.user_session_1.user.user_id,
+        )
+
 
 class PriceDeleteApiTest(TestCase):
     @classmethod
@@ -727,6 +761,20 @@ class PriceDeleteApiTest(TestCase):
         self.assertEqual(response.data, None)
         self.assertEqual(
             Price.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )
+
+    def test_price_delete_history(self):
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Price.history.filter(id=self.price.id).count(), 2)
+        self.assertEqual(
+            Price.history.filter(id=self.price.id).first().history_type, "-"
+        )
+        self.assertEqual(
+            Price.history.filter(id=self.price.id).first().history_user_id,
+            self.user_session_1.user.user_id,
         )
 
 
