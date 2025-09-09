@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.83.1](https://github.com/openfoodfacts/open-prices/compare/v1.83.0...v1.83.1) (2025-09-09)
+
+
+### Bug Fixes
+
+* return HTTP 201 when uploading duplicate proof on Smooth app ([#978](https://github.com/openfoodfacts/open-prices/issues/978)) ([84e1c19](https://github.com/openfoodfacts/open-prices/commit/84e1c19a3c8f6993e2733c7a366f4c0c48a75325))
+
+
+### Technical
+
+* ignore .envrc in .gitignore ([#982](https://github.com/openfoodfacts/open-prices/issues/982)) ([354db7d](https://github.com/openfoodfacts/open-prices/commit/354db7d9b7eabb56e6593cd8da4fd8f9644f1c88))
+
 ## [1.83.0](https://github.com/openfoodfacts/open-prices/compare/v1.82.1...v1.83.0) (2025-09-05)
 
 
