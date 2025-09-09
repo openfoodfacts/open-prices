@@ -507,6 +507,47 @@ class ProofDeleteApiTest(TestCase):
         )
 
 
+class ProofCheckHashApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.image_md5_hash = "d41d8cd98f00b204e9800998ecf8427e"
+        cls.base_url = reverse("api:proofs-check-image-md5-hash")
+        cls.proof = ProofFactory(
+            **PROOF_RECEIPT,
+            price_count=15,
+            owner=cls.user_session_1.user.user_id,
+            image_md5_hash=cls.image_md5_hash,
+        )
+
+    def test_proof_check_hash(self):
+        response = self.client.get(
+            self.base_url, data={"md5_hash": self.image_md5_hash}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {"exists": True})
+
+        # Check with a non-existing hash
+        response = self.client.get(
+            self.base_url, data={"md5_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {"exists": False})
+
+        # Check with a hash that is too long
+        response = self.client.get(
+            self.base_url,
+            data={"md5_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("md5_hash", response.data)
+
+        # check with missing hash
+        response = self.client.get(self.base_url)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("md5_hash", response.data)
+
+
 class PriceTagListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):

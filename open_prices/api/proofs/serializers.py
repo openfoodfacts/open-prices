@@ -147,3 +147,7 @@ class ReceiptItemFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReceiptItem
         exclude = ["price", "proof"]
+
+
+class MD5HashSerializer(serializers.Serializer):
+    md5_hash = serializers.CharField(max_length=32)
