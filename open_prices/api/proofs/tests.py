@@ -379,6 +379,7 @@ class ProofCreateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], proof_id)
+        self.assertEqual(response.data.get("status"), "duplicate")
 
         # Different date => create a new proof
         response = self.client.post(
