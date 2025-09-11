@@ -18,6 +18,7 @@ from open_prices.api.proofs.filters import (
     ReceiptItemFilter,
 )
 from open_prices.api.proofs.serializers import (
+    MD5HashSerializer,
     PriceTagCreateSerializer,
     PriceTagFullSerializer,
     PriceTagUpdateSerializer,
@@ -229,6 +230,16 @@ class ProofViewSet(
             for sample_file in sample_files
         ]
         return Response({"labels": labels}, status=status.HTTP_200_OK)
+
+    @extend_schema(request=MD5HashSerializer)
+    @action(detail=False, methods=["GET"], url_path="check-hash")
+    def check_image_md5_hash(self, request: Request) -> Response:
+        # Get md5_hash from query params
+        serializer = MD5HashSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        md5_hash = serializer.validated_data["md5_hash"]
+        exists = Proof.objects.filter(image_md5_hash=md5_hash).exists()
+        return Response({"exists": exists}, status=status.HTTP_200_OK)
 
 
 class PriceTagViewSet(
