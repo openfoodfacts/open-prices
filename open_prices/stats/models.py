@@ -236,7 +236,7 @@ class TotalStats(SingletonModel):
         self.proof_in_challenge_count = Proof.objects.filter(
             tags__icontains="challenge"
         ).count()
-        self.proof_currency_count = (
+        self.proof_currency_count = (  # should we filter on proof with prices only?
             Proof.objects.values_list("currency", flat=True).distinct().count()
         )
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])

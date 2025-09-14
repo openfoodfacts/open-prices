@@ -178,6 +178,7 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_source_mobile_count, 0)
         self.assertEqual(self.total_stats.proof_source_api_count, 0)
         self.assertEqual(self.total_stats.proof_source_other_count, 0)
+        self.assertEqual(self.total_stats.proof_currency_count, 0)
         # update_proof_stats() will update proof_counts
         self.total_stats.update_proof_stats()
         self.assertEqual(self.total_stats.proof_count, 3)
@@ -192,6 +193,7 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_source_mobile_count, 0)
         self.assertEqual(self.total_stats.proof_source_api_count, 1)
         self.assertEqual(self.total_stats.proof_source_other_count, 1)
+        self.assertEqual(self.total_stats.proof_currency_count, 1)
 
     def test_update_price_tag_stats(self):
         self.assertEqual(self.total_stats.price_tag_count, 0)

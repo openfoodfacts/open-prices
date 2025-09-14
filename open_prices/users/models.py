@@ -173,7 +173,7 @@ class User(models.Model):
         self.proof_kind_consumption_count = (
             Proof.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
-        self.proof_currency_count = (
+        self.proof_currency_count = (  # should we filter on proof with prices only?
             Proof.objects.filter(owner=self.user_id)
             .values_list("currency", flat=True)
             .distinct()

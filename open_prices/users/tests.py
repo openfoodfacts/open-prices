@@ -169,8 +169,10 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.proof_count, 0)
         self.assertEqual(self.user_1.proof_kind_community_count, 0)
         self.assertEqual(self.user_1.proof_kind_consumption_count, 0)
+        self.assertEqual(self.user_1.proof_currency_count, 0)
         # update_proof_count() should fix proof counts
         self.user_1.update_proof_count()
         self.assertEqual(self.user_1.proof_count, 2)
         self.assertEqual(self.user_1.proof_kind_community_count, 1)
         self.assertEqual(self.user_1.proof_kind_consumption_count, 1)
+        self.assertEqual(self.user_1.proof_currency_count, 2)
