@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.83.3](https://github.com/openfoodfacts/open-prices/compare/v1.83.2...v1.83.3) (2025-09-14)
+
+
+### Technical
+
+* **Challenges:** new price_count & price_from_user_proof_count ranking stats ([#991](https://github.com/openfoodfacts/open-prices/issues/991)) ([205708e](https://github.com/openfoodfacts/open-prices/commit/205708e0fdbf677e4aad39087e0736f47ed1a45f))
+* **Challenges:** new proof_count ranking stat ([#989](https://github.com/openfoodfacts/open-prices/issues/989)) ([1c1a28c](https://github.com/openfoodfacts/open-prices/commit/1c1a28c7c2f936351f9d3d6cb26e060fe7716e42))
+
 ## [1.83.2](https://github.com/openfoodfacts/open-prices/compare/v1.83.1...v1.83.2) (2025-09-14)
 
 
