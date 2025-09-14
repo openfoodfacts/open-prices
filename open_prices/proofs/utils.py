@@ -151,6 +151,28 @@ def compute_file_md5(file: InMemoryUploadedFile | TemporaryUploadedFile) -> str:
     return md5_hash.hexdigest()
 
 
+def compute_file_md5_from_path(file_path: Path) -> str:
+    """Compute the MD5 hash of a file.
+
+    This is the same as `compute_file_md5`, but it takes a file path instead of
+    a Django uploaded file as input.
+
+    :param file_path: the path to the file
+    :return: the MD5 hash of the file as a hexadecimal string
+    """
+
+    md5_hash = hashlib.md5()
+    # Read the file in chunks to avoid using too much memory
+    with file_path.open("rb") as file:
+        while True:
+            chunk = file.read(64 * 2**10)  # 64KB, just as Django's default chunk size
+            if not chunk:
+                break
+            md5_hash.update(chunk)
+
+    return md5_hash.hexdigest()
+
+
 def select_proof_image_dir(images_dir: Path, max_images_per_dir: int = 1_000) -> Path:
     """ "Select the directory where to store the image.
 
