@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.83.2](https://github.com/openfoodfacts/open-prices/compare/v1.83.1...v1.83.2) (2025-09-14)
+
+
+### Bug Fixes
+
+* **Challenges:** forgot to call the update stats task every night ([#988](https://github.com/openfoodfacts/open-prices/issues/988)) ([e4c404a](https://github.com/openfoodfacts/open-prices/commit/e4c404a6aeef0c9b730c33573d1e973210c40c9b))
+* **Prices:** allow to create prices with 3 decimals ([#973](https://github.com/openfoodfacts/open-prices/issues/973)) ([0e946d3](https://github.com/openfoodfacts/open-prices/commit/0e946d3e0833803eade151bcbddc4d91073bd0eb))
+
+
+### Technical
+
+* **Proofs:** add a CLI command to compute the MD5 hash of image files ([#980](https://github.com/openfoodfacts/open-prices/issues/980)) ([38a48c5](https://github.com/openfoodfacts/open-prices/commit/38a48c5ce9bac2281ff0cc209257e0ae39ec1268))
+* **Stats:** User & TotalStats: new proof_currency_count ([#986](https://github.com/openfoodfacts/open-prices/issues/986)) ([53ed493](https://github.com/openfoodfacts/open-prices/commit/53ed4936a25b9959e92aebfbcb26f93094752c3b))
+
 ## [1.83.1](https://github.com/openfoodfacts/open-prices/compare/v1.83.0...v1.83.1) (2025-09-09)
 
 
