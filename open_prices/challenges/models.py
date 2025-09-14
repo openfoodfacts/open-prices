@@ -3,7 +3,7 @@ from datetime import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Case, Count, Value, When
+from django.db.models import Case, Count, F, Value, When
 from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
@@ -187,11 +187,12 @@ class Challenge(models.Model):
             .annotate(count=Count("id"))
             .order_by("-count")[:10]
         )
-        price_from_user_proof_count = list(
+        price_from_user_proof_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .select_related("proof")
             .values("proof__owner")
-            .annotate(count=Count("id"))
+            .annotate(owner=F("proof__owner"), count=Count("id"))
+            .values("owner", "count")
             .order_by("-count")[:10]
         )
 
@@ -206,7 +207,7 @@ class Challenge(models.Model):
             # rankings
             "price_count_ranking": price_count_ranking,
             "proof_count_ranking": proof_count_ranking,
-            "price_from_user_proof_count": price_from_user_proof_count,
+            "price_from_user_proof_count_ranking": price_from_user_proof_count_ranking,
             # timestamp
             "updated": timezone.now().isoformat().replace("+00:00", "Z"),
         }

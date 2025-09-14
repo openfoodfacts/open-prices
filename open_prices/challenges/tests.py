@@ -230,14 +230,14 @@ class ChallengePropertyTest(TestCase):
             is_published=True,
             start_date="2024-12-30",
             end_date="2025-01-30",
-            categories=["en:breakfasts"],
+            categories=["en:breakfasts", "en:spreads"],
         )
 
     def test_set_price_tags(self):
         self.assertEqual(Price.objects.count(), 5)
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
-        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 3)
 
     def test_set_proof_tags(self):
         self.assertEqual(Proof.objects.count(), 2)
@@ -252,21 +252,21 @@ class ChallengePropertyTest(TestCase):
         self.challenge_ongoing.set_proof_tags()  # we need to set the proof tags first
         self.challenge_ongoing.calculate_stats()
         self.assertIsNotNone(self.challenge_ongoing.stats)
-        self.assertEqual(self.challenge_ongoing.stats["price_count"], 2)
+        self.assertEqual(self.challenge_ongoing.stats["price_count"], 3)
         self.assertEqual(self.challenge_ongoing.stats["proof_count"], 1)
-        self.assertEqual(self.challenge_ongoing.stats["price_user_count"], 1)
+        self.assertEqual(self.challenge_ongoing.stats["price_user_count"], 2)
         self.assertEqual(self.challenge_ongoing.stats["proof_user_count"], 1)
-        self.assertEqual(self.challenge_ongoing.stats["price_product_count"], 1 + 1)
+        self.assertEqual(self.challenge_ongoing.stats["price_product_count"], 1 + 2)
         self.assertEqual(self.challenge_ongoing.stats["proof_location_count"], 1)
         self.assertEqual(
             self.challenge_ongoing.stats["price_count_ranking"],
-            [{"owner": self.proof_in_challenge.owner, "count": 2}],
+            [{"owner": "user_1", "count": 2}, {"owner": "user_2", "count": 1}],
         )
         self.assertEqual(
             self.challenge_ongoing.stats["proof_count_ranking"],
-            [{"owner": self.proof_in_challenge.owner, "count": 1}],
+            [{"owner": "user_1", "count": 1}],
         )
         self.assertEqual(
-            self.challenge_ongoing.stats["price_from_user_proof_count"],
-            [{"owner": self.proof_in_challenge.owner, "count": 2}],
+            self.challenge_ongoing.stats["price_from_user_proof_count_ranking"],
+            [{"owner": "user_1", "count": 3}],
         )
