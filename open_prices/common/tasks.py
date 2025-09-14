@@ -117,6 +117,7 @@ def challenge_tasks():
     for challenge in Challenge.objects.all():
         challenge.set_price_tags()
         challenge.set_proof_tags()
+        challenge.calculate_stats()
 
 
 def dump_db_task():
