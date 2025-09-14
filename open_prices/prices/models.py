@@ -183,7 +183,7 @@ class Price(models.Model):
 
     price = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
@@ -191,7 +191,7 @@ class Price(models.Model):
     price_is_discounted = models.BooleanField(default=False)
     price_without_discount = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
