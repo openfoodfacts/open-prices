@@ -55,6 +55,7 @@ class TotalStats(SingletonModel):
         "proof_source_api_count",
         "proof_source_other_count",
         "proof_in_challenge_count",
+        "proof_currency_count",
     ]
     PRICE_TAG_COUNT_FIELDS = [
         "price_tag_count",
@@ -114,6 +115,7 @@ class TotalStats(SingletonModel):
     proof_source_mobile_count = models.PositiveIntegerField(default=0)
     proof_source_api_count = models.PositiveIntegerField(default=0)
     proof_source_other_count = models.PositiveIntegerField(default=0)
+    proof_currency_count = models.PositiveIntegerField(default=0)
     proof_in_challenge_count = models.PositiveIntegerField(default=0)
     price_tag_count = models.PositiveIntegerField(default=0)
     price_tag_status_unknown_count = models.PositiveIntegerField(default=0)
@@ -234,6 +236,9 @@ class TotalStats(SingletonModel):
         self.proof_in_challenge_count = Proof.objects.filter(
             tags__icontains="challenge"
         ).count()
+        self.proof_currency_count = (
+            Proof.objects.values_list("currency", flat=True).distinct().count()
+        )
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
 
     def update_price_tag_stats(self):

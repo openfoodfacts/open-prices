@@ -23,6 +23,7 @@ class User(models.Model):
         "proof_count",
         "proof_kind_community_count",
         "proof_kind_consumption_count",
+        "proof_currency_count",
     ]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
@@ -68,6 +69,7 @@ class User(models.Model):
     proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     proof_kind_community_count = models.PositiveIntegerField(default=0)
     proof_kind_consumption_count = models.PositiveIntegerField(default=0)
+    proof_currency_count = models.PositiveIntegerField(default=0)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -170,6 +172,12 @@ class User(models.Model):
         )
         self.proof_kind_consumption_count = (
             Proof.objects.filter(owner=self.user_id).has_kind_consumption().count()
+        )
+        self.proof_currency_count = (
+            Proof.objects.filter(owner=self.user_id)
+            .values_list("currency", flat=True)
+            .distinct()
+            .count()
         )
         self.save(update_fields=self.PROOF_COUNT_FIELDS)
 
