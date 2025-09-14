@@ -9,6 +9,7 @@ from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.products.factories import ProductFactory
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 
@@ -184,39 +185,59 @@ class ChallengeStatusQuerySetAndPropertyTest(TestCase):
 class ChallengePropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.proof_in_challenge = ProofFactory()
-        cls.proof_not_in_challenge = ProofFactory()
+        cls.proof_in_challenge = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG, owner="user_1"
+        )
+        cls.proof_not_in_challenge = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG, owner="user_1"
+        )
         cls.product_8001505005707 = ProductFactory(
             **PRODUCT_8001505005707
         )  # in challenge
         # create prices before the challenge
         # (avoids setting the tag by the signal)
         with freeze_time("2025-01-01"):  # during the challenge
-            PriceFactory(proof=cls.proof_not_in_challenge)
+            PriceFactory(proof=cls.proof_not_in_challenge, owner="user_1")
             PriceFactory(
                 product_code="8001505005707",
                 product=cls.product_8001505005707,
                 proof=cls.proof_in_challenge,
+                owner="user_1",
             )
             PriceFactory(
                 type=price_constants.TYPE_CATEGORY,
                 category_tag="en:breakfasts",
                 price_per=price_constants.PRICE_PER_UNIT,
                 proof=cls.proof_in_challenge,
+                owner="user_1",
+            )
+            PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:spreads",
+                price_per=price_constants.PRICE_PER_UNIT,
+                proof=cls.proof_in_challenge,
+                owner="user_2",
+            )
+            PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:tomatoes",
+                price_per=price_constants.PRICE_PER_UNIT,
+                proof=cls.proof_in_challenge,
+                owner="user_1",
             )
         # create the challenge afterwards
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True,
             start_date="2024-12-30",
             end_date="2025-01-30",
-            categories=["en:breakfasts"],
+            categories=["en:breakfasts", "en:spreads"],
         )
 
     def test_set_price_tags(self):
-        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.count(), 5)
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
-        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 3)
 
     def test_set_proof_tags(self):
         self.assertEqual(Proof.objects.count(), 2)
@@ -231,13 +252,21 @@ class ChallengePropertyTest(TestCase):
         self.challenge_ongoing.set_proof_tags()  # we need to set the proof tags first
         self.challenge_ongoing.calculate_stats()
         self.assertIsNotNone(self.challenge_ongoing.stats)
-        self.assertEqual(self.challenge_ongoing.stats["price_count"], 2)
+        self.assertEqual(self.challenge_ongoing.stats["price_count"], 3)
         self.assertEqual(self.challenge_ongoing.stats["proof_count"], 1)
-        self.assertEqual(self.challenge_ongoing.stats["price_user_count"], 1)
+        self.assertEqual(self.challenge_ongoing.stats["price_user_count"], 2)
         self.assertEqual(self.challenge_ongoing.stats["proof_user_count"], 1)
-        self.assertEqual(self.challenge_ongoing.stats["price_product_count"], 1 + 1)
+        self.assertEqual(self.challenge_ongoing.stats["price_product_count"], 1 + 2)
         self.assertEqual(self.challenge_ongoing.stats["proof_location_count"], 1)
         self.assertEqual(
+            self.challenge_ongoing.stats["price_count_ranking"],
+            [{"owner": "user_1", "count": 2}, {"owner": "user_2", "count": 1}],
+        )
+        self.assertEqual(
             self.challenge_ongoing.stats["proof_count_ranking"],
-            [{"owner": self.proof_in_challenge.owner, "count": 1}],
+            [{"owner": "user_1", "count": 1}],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["price_from_user_proof_count_ranking"],
+            [{"owner": "user_1", "count": 3}],
         )
