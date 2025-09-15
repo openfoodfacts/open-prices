@@ -259,14 +259,14 @@ class ChallengePropertyTest(TestCase):
         self.assertEqual(self.challenge_ongoing.stats["price_product_count"], 1 + 2)
         self.assertEqual(self.challenge_ongoing.stats["proof_location_count"], 1)
         self.assertEqual(
-            self.challenge_ongoing.stats["price_count_ranking"],
+            self.challenge_ongoing.stats["user_price_count_ranking"],
             [{"owner": "user_1", "count": 2}, {"owner": "user_2", "count": 1}],
         )
         self.assertEqual(
-            self.challenge_ongoing.stats["proof_count_ranking"],
+            self.challenge_ongoing.stats["user_proof_count_ranking"],
             [{"owner": "user_1", "count": 1}],
         )
         self.assertEqual(
-            self.challenge_ongoing.stats["price_from_user_proof_count_ranking"],
+            self.challenge_ongoing.stats["user_price_from_proof_count_ranking"],
             [{"owner": "user_1", "count": 3}],
         )
