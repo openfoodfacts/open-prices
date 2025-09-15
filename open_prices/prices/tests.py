@@ -148,11 +148,19 @@ class PriceQuerySetTest(TestCase):
 class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.challenge_ongoing = ChallengeFactory(
+        cls.location = LocationFactory()
+        cls.challenge_ongoing_with_category = ChallengeFactory(
             is_published=True,
             start_date="2024-12-30",
             end_date="2025-01-30",
             categories=["en:breakfasts"],
+        )
+        cls.challenge_ongoing_with_location = ChallengeFactory(
+            is_published=True,
+            start_date="2024-12-30",
+            end_date="2025-01-30",
+            categories=[],
+            locations=[cls.location],
         )
         cls.product_8001505005707 = ProductFactory(
             **PRODUCT_8001505005707
@@ -161,7 +169,11 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
         with freeze_time("2025-01-01"):  # during the challenge
             cls.price_11 = PriceFactory()
             cls.price_12 = PriceFactory(
-                product_code="8001505005707", product=cls.product_8001505005707
+                product_code="8001505005707",
+                product=cls.product_8001505005707,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
             )
             cls.price_13 = PriceFactory(
                 product_code="8850187002197", product=cls.product_8850187002197
@@ -175,7 +187,11 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
         with freeze_time("2025-01-30 22:00:00"):  # last day of the challenge
             cls.price_21 = PriceFactory()
             cls.price_22 = PriceFactory(
-                product_code="8001505005707", product=cls.product_8001505005707
+                product_code="8001505005707",
+                product=cls.product_8001505005707,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
             )
             cls.price_23 = PriceFactory(
                 product_code="8850187002197", product=cls.product_8850187002197
@@ -184,7 +200,11 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
         with freeze_time("2025-02-01"):  # after the challenge
             cls.price_31 = PriceFactory()
             cls.price_32 = PriceFactory(
-                product_code="8001505005707", product=cls.product_8001505005707
+                product_code="8001505005707",
+                product=cls.product_8001505005707,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
             )
             cls.price_33 = PriceFactory(
                 product_code="8850187002197", product=cls.product_8850187002197
@@ -193,22 +213,101 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
     def test_in_challenge_queryset(self):
         self.assertEqual(Price.objects.count(), 10)
         self.assertEqual(
-            Price.objects.in_challenge(self.challenge_ongoing).count(), 1 + 1 + 1
+            Price.objects.in_challenge(self.challenge_ongoing_with_category).count(), 3
         )
+        self.assertEqual(
+            Price.objects.in_challenge(self.challenge_ongoing_with_location).count(), 2
+        )
+
+    def test_has_category_tag_property(self):
+        for price in Price.objects.all():
+            # challenge_ongoing_with_category
+            if price in [self.price_12, self.price_14, self.price_22, self.price_32]:
+                self.assertEqual(
+                    price.has_category_tag(
+                        self.challenge_ongoing_with_category.categories
+                    ),
+                    True,
+                )
+            else:
+                self.assertEqual(
+                    price.has_category_tag(
+                        self.challenge_ongoing_with_category.categories
+                    ),
+                    False,
+                )
+            # challenge_ongoing_with_location
+            self.assertEqual(
+                price.has_category_tag(self.challenge_ongoing_with_location.categories),
+                False,
+            )
+
+    def test_has_location_property(self):
+        for price in Price.objects.all():
+            # challenge_ongoing_with_category
+            self.assertEqual(
+                price.has_location(
+                    self.challenge_ongoing_with_category.location_id_list()
+                ),
+                False,
+            )
+            # challenge_ongoing_with_location
+            if price in [self.price_12, self.price_22, self.price_32]:
+                self.assertEqual(
+                    price.has_location(
+                        self.challenge_ongoing_with_location.location_id_list()
+                    ),
+                    True,
+                )
+            else:
+                self.assertEqual(
+                    price.has_location(
+                        self.challenge_ongoing_with_location.location_id_list()
+                    ),
+                    False,
+                )
 
     def test_in_challenge_property(self):
         for price in Price.objects.all():
-            if price in [self.price_12, self.price_22, self.price_14]:
-                self.assertEqual(price.in_challenge(self.challenge_ongoing), True)
+            # challenge_ongoing_with_category
+            if price in [self.price_12, self.price_14, self.price_22]:
+                self.assertEqual(
+                    price.in_challenge(self.challenge_ongoing_with_category), True
+                )
             else:
-                self.assertEqual(price.in_challenge(self.challenge_ongoing), False)
+                self.assertEqual(
+                    price.in_challenge(self.challenge_ongoing_with_category), False
+                )
+            # challenge_ongoing_with_location
+            if price in [self.price_12, self.price_22]:
+                self.assertEqual(
+                    price.in_challenge(self.challenge_ongoing_with_location), True
+                )
+            else:
+                self.assertEqual(
+                    price.in_challenge(self.challenge_ongoing_with_location), False
+                )
 
     def test_on_create_signal(self):
         for price in Price.objects.all():  # refresh_from_db
-            if price in [self.price_12, self.price_22, self.price_14]:
-                self.assertIn(f"challenge-{self.challenge_ongoing.id}", price.tags)
+            # challenge_ongoing_with_category
+            if price in [self.price_12, self.price_14, self.price_22]:
+                self.assertIn(
+                    f"challenge-{self.challenge_ongoing_with_category.id}", price.tags
+                )
             else:
-                self.assertNotIn(f"challenge-{self.challenge_ongoing.id}", price.tags)
+                self.assertNotIn(
+                    f"challenge-{self.challenge_ongoing_with_category.id}", price.tags
+                )
+            # challenge_ongoing_with_location
+            if price in [self.price_12, self.price_22]:
+                self.assertIn(
+                    f"challenge-{self.challenge_ongoing_with_location.id}", price.tags
+                )
+            else:
+                self.assertNotIn(
+                    f"challenge-{self.challenge_ongoing_with_location.id}", price.tags
+                )
 
 
 class PriceModelSaveTest(TestCase):

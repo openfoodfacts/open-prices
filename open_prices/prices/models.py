@@ -108,13 +108,12 @@ class PriceQuerySet(models.QuerySet):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
-        return (
-            self.select_related("product")
-            .filter(
-                created__gte=challenge.start_date_with_time,
-                created__lte=challenge.end_date_with_time,
-            )
-            .filter(
+        queryset = self.select_related("product").filter(
+            created__gte=challenge.start_date_with_time,
+            created__lte=challenge.end_date_with_time,
+        )
+        if challenge.categories:
+            queryset = queryset.filter(
                 Q(
                     type=price_constants.TYPE_CATEGORY,
                     category_tag__in=challenge.categories,
@@ -124,7 +123,9 @@ class PriceQuerySet(models.QuerySet):
                     product__categories_tags__overlap=challenge.categories,
                 )
             )
-        )
+        if challenge.locations.exists():
+            queryset = queryset.filter(location_id__in=challenge.location_id_list())
+        return queryset
 
 
 class Price(models.Model):
@@ -629,11 +630,22 @@ class Price(models.Model):
                 return True
         return False
 
+    def has_location(self, location_id_list: list):
+        if self.location_id and self.location_id in location_id_list:
+            return True
+        return False
+
     def in_challenge(self, challenge: Challenge):
         return (
             self.created >= challenge.start_date_with_time
             and self.created <= challenge.end_date_with_time
-            and self.has_category_tag(challenge.categories)
+            and (
+                not challenge.categories or self.has_category_tag(challenge.categories)
+            )
+            and (
+                not challenge.location_id_list()
+                or self.has_location(challenge.location_id_list())
+            )
         )
 
 

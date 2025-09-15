@@ -138,6 +138,9 @@ class Challenge(models.Model):
     def tag(self):
         return f"challenge-{self.id}"
 
+    def location_id_list(self):
+        return list(self.locations.values_list("id", flat=True))
+
     def set_price_tags(self):
         from open_prices.prices.models import Price
 
