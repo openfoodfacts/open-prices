@@ -175,19 +175,19 @@ class Challenge(models.Model):
         proof_location_count = (
             Proof.objects.has_tag(self.tag).distinct("location_id").count()
         )
-        price_count_ranking = list(
+        user_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .values("owner")
             .annotate(count=Count("id"))
             .order_by("-count")[:10]
         )
-        proof_count_ranking = list(
+        user_proof_count_ranking = list(
             Proof.objects.has_tag(self.tag)
             .values("owner")
             .annotate(count=Count("id"))
             .order_by("-count")[:10]
         )
-        price_from_user_proof_count_ranking = list(
+        user_price_from_proof_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .select_related("proof")
             .values("proof__owner")
@@ -205,9 +205,9 @@ class Challenge(models.Model):
             "price_product_count": price_product_count,
             "proof_location_count": proof_location_count,
             # rankings
-            "price_count_ranking": price_count_ranking,
-            "proof_count_ranking": proof_count_ranking,
-            "price_from_user_proof_count_ranking": price_from_user_proof_count_ranking,
+            "user_price_count_ranking": user_price_count_ranking,
+            "user_proof_count_ranking": user_proof_count_ranking,
+            "user_price_from_proof_count_ranking": user_price_from_proof_count_ranking,
             # timestamp
             "updated": timezone.now().isoformat().replace("+00:00", "Z"),
         }
