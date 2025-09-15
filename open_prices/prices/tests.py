@@ -171,12 +171,13 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
             cls.price_12 = PriceFactory(
                 product_code="8001505005707",
                 product=cls.product_8001505005707,
+            )
+            cls.price_13 = PriceFactory(
+                product_code="8850187002197",
+                product=cls.product_8850187002197,
                 location_id=cls.location.id,
                 location_osm_id=cls.location.osm_id,
                 location_osm_type=cls.location.osm_type,
-            )
-            cls.price_13 = PriceFactory(
-                product_code="8850187002197", product=cls.product_8850187002197
             )
             cls.price_14 = PriceFactory(
                 type=price_constants.TYPE_CATEGORY,
@@ -252,7 +253,7 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
                 False,
             )
             # challenge_ongoing_with_location
-            if price in [self.price_12, self.price_22, self.price_32]:
+            if price in [self.price_13, self.price_22, self.price_32]:
                 self.assertEqual(
                     price.has_location(
                         self.challenge_ongoing_with_location.location_id_list()
@@ -279,7 +280,7 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
                     price.in_challenge(self.challenge_ongoing_with_category), False
                 )
             # challenge_ongoing_with_location
-            if price in [self.price_12, self.price_22]:
+            if price in [self.price_13, self.price_22]:
                 self.assertEqual(
                     price.in_challenge(self.challenge_ongoing_with_location), True
                 )
@@ -300,7 +301,7 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
                     f"challenge-{self.challenge_ongoing_with_category.id}", price.tags
                 )
             # challenge_ongoing_with_location
-            if price in [self.price_12, self.price_22]:
+            if price in [self.price_13, self.price_22]:
                 self.assertIn(
                     f"challenge-{self.challenge_ongoing_with_location.id}", price.tags
                 )

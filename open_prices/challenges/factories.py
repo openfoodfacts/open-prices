@@ -16,8 +16,6 @@ class ChallengeFactory(DjangoModelFactory):
 
     @factory.post_generation
     def locations(self, create, extracted, **kwargs):
-        if not create or extracted == []:
-            return
-        if extracted:
+        if create and extracted:
             for location in extracted:
                 self.locations.add(location)
