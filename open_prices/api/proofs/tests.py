@@ -512,7 +512,7 @@ class ProofCheckHashApiTest(TestCase):
     def setUpTestData(cls):
         cls.user_session_1 = SessionFactory()
         cls.image_md5_hash = "d41d8cd98f00b204e9800998ecf8427e"
-        cls.base_url = reverse("api:proofs-check-image-md5-hash")
+        cls.base_url = reverse("api:proofs-check-image-hash")
         cls.proof = ProofFactory(
             **PROOF_RECEIPT,
             price_count=15,

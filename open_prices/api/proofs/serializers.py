@@ -149,5 +149,5 @@ class ReceiptItemFullSerializer(serializers.ModelSerializer):
         exclude = ["price", "proof"]
 
 
-class MD5HashSerializer(serializers.Serializer):
+class ImageHashSerializer(serializers.Serializer):
     md5_hash = serializers.CharField(max_length=32)
