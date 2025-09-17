@@ -65,11 +65,11 @@ class Command(BaseCommand):
                     image_md5_hash=proof_group["image_md5_hash"],
                 ).order_by("id")
             )
-            moved_price_count_, deleted_proof_count_ = self.remove_duplicates(
+            group_moved_price_count, group_deleted_proof_count = self.remove_duplicates(
                 proofs=proofs, apply=apply
             )
-            moved_price_count += moved_price_count_
-            deleted_proof_count += deleted_proof_count_
+            moved_price_count += group_moved_price_count
+            deleted_proof_count += group_deleted_proof_count
 
         self.stdout.write(
             f"Total moved prices: {moved_price_count}, total deleted proofs: {deleted_proof_count}."
