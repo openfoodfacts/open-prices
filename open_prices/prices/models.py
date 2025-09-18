@@ -171,8 +171,8 @@ class Price(models.Model):
     product_code = models.CharField(blank=True, null=True)
     product_name = models.CharField(blank=True, null=True)
     category_tag = models.CharField(blank=True, null=True)
-    labels_tags = models.JSONField(blank=True, null=True)
-    origins_tags = models.JSONField(blank=True, null=True)
+    labels_tags = ArrayField(base_field=models.CharField(), blank=True, null=True)
+    origins_tags = ArrayField(base_field=models.CharField(), blank=True, null=True)
     product = models.ForeignKey(
         "products.Product",
         on_delete=models.SET_NULL,

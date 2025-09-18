@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -282,7 +283,7 @@ class PriceModelSaveTest(TestCase):
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         self.assertRaises(
-            ValidationError,
+            json.JSONDecodeError,
             PriceFactory,
             type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
@@ -311,7 +312,7 @@ class PriceModelSaveTest(TestCase):
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
         self.assertRaises(
-            ValidationError,
+            json.JSONDecodeError,
             PriceFactory,
             type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
