@@ -28,3 +28,8 @@ Products:
 Prices:
 - changed-files:
   - any-glob-to-any-file: '**/*prices*'
+
+Challenges:
+- changed-files:
+  - any-glob-to-any-file: 'open_prices/challenges/models.py'
+  - any-glob-to-any-file: 'open_prices/challenges/tests.py'
