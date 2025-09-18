@@ -157,8 +157,15 @@ class Challenge(models.Model):
 
         price_count = Price.objects.has_tag(self.tag).count()
         proof_count = Proof.objects.has_tag(self.tag).count()
-        price_user_count = Price.objects.has_tag(self.tag).distinct("owner").count()
-        proof_user_count = Proof.objects.has_tag(self.tag).distinct("owner").count()
+        price_user_list = list(
+            Price.objects.has_tag(self.tag).values_list("owner", flat=True).distinct()
+        )
+        proof_user_list = list(
+            Proof.objects.has_tag(self.tag).values_list("owner", flat=True).distinct()
+        )
+        user_count = len(set(price_user_list + proof_user_list))
+        price_user_count = len(price_user_list)
+        proof_user_count = len(proof_user_list)
         price_product_code_count = (
             Price.objects.has_tag(self.tag)
             .has_type_product()
@@ -200,6 +207,7 @@ class Challenge(models.Model):
             # counts
             "price_count": price_count,
             "proof_count": proof_count,
+            "user_count": user_count,
             "price_user_count": price_user_count,
             "proof_user_count": proof_user_count,
             "price_product_count": price_product_count,

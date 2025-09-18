@@ -254,6 +254,7 @@ class ChallengePropertyTest(TestCase):
         self.assertIsNotNone(self.challenge_ongoing.stats)
         self.assertEqual(self.challenge_ongoing.stats["price_count"], 3)
         self.assertEqual(self.challenge_ongoing.stats["proof_count"], 1)
+        self.assertEqual(self.challenge_ongoing.stats["user_count"], 2)
         self.assertEqual(self.challenge_ongoing.stats["price_user_count"], 2)
         self.assertEqual(self.challenge_ongoing.stats["proof_user_count"], 1)
         self.assertEqual(self.challenge_ongoing.stats["price_product_count"], 1 + 2)
