@@ -166,8 +166,6 @@ class Challenge(models.Model):
         user_count = len(set(price_user_list + proof_user_list))
         price_user_count = len(price_user_list)
         proof_user_count = len(proof_user_list)
-        price_user_count = Price.objects.has_tag(self.tag).distinct("owner").count()
-        proof_user_count = Proof.objects.has_tag(self.tag).distinct("owner").count()
         price_product_code_count = (
             Price.objects.has_tag(self.tag)
             .has_type_product()
