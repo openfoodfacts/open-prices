@@ -5,6 +5,7 @@ from freezegun import freeze_time
 from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.challenges.models import Challenge
+from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
@@ -185,8 +186,13 @@ class ChallengeStatusQuerySetAndPropertyTest(TestCase):
 class ChallengePropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.location = LocationFactory()
         cls.proof_in_challenge = ProofFactory(
-            type=proof_constants.TYPE_PRICE_TAG, owner="user_1"
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=cls.location.id,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            owner="user_1",
         )
         cls.proof_not_in_challenge = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG, owner="user_1"
@@ -202,6 +208,9 @@ class ChallengePropertyTest(TestCase):
                 product_code="8001505005707",
                 product=cls.product_8001505005707,
                 proof=cls.proof_in_challenge,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
                 owner="user_1",
             )
             PriceFactory(
@@ -209,6 +218,9 @@ class ChallengePropertyTest(TestCase):
                 category_tag="en:breakfasts",
                 price_per=price_constants.PRICE_PER_UNIT,
                 proof=cls.proof_in_challenge,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
                 owner="user_1",
             )
             PriceFactory(
@@ -216,6 +228,9 @@ class ChallengePropertyTest(TestCase):
                 category_tag="en:spreads",
                 price_per=price_constants.PRICE_PER_UNIT,
                 proof=cls.proof_in_challenge,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
                 owner="user_2",
             )
             PriceFactory(
@@ -223,6 +238,9 @@ class ChallengePropertyTest(TestCase):
                 category_tag="en:tomatoes",
                 price_per=price_constants.PRICE_PER_UNIT,
                 proof=cls.proof_in_challenge,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
                 owner="user_1",
             )
         # create the challenge afterwards
@@ -270,4 +288,22 @@ class ChallengePropertyTest(TestCase):
         self.assertEqual(
             self.challenge_ongoing.stats["user_price_from_proof_count_ranking"],
             [{"owner": "user_1", "count": 3}],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["location_price_count_ranking"],
+            [{"id": self.location.id, "count": 3}],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["location_city_price_count_ranking"],
+            [
+                {
+                    "city": self.location.osm_address_city,
+                    "country": self.location.osm_address_country,
+                    "count": 3,
+                }
+            ],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["location_country_price_count_ranking"],
+            [{"country": self.location.osm_address_country, "count": 3}],
         )

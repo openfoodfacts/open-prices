@@ -202,6 +202,34 @@ class Challenge(models.Model):
             .values("owner", "count")
             .order_by("-count")[:10]
         )
+        location_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .select_related("location")
+            .values("location_id")
+            .annotate(id=F("location_id"), count=Count("id"))
+            .values("id", "count")
+            .order_by("-count")[:10]
+        )
+        location_city_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .select_related("location")
+            .values("location__osm_address_city", "location__osm_address_country")
+            .annotate(
+                city=F("location__osm_address_city"),
+                country=F("location__osm_address_country"),
+                count=Count("id"),
+            )
+            .values("city", "country", "count")
+            .order_by("-count")[:10]
+        )
+        location_country_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .select_related("location")
+            .values("location__osm_address_country")
+            .annotate(country=F("location__osm_address_country"), count=Count("id"))
+            .values("country", "count")
+            .order_by("-count")[:10]
+        )
 
         self.stats = {
             # counts
@@ -216,6 +244,9 @@ class Challenge(models.Model):
             "user_price_count_ranking": user_price_count_ranking,
             "user_proof_count_ranking": user_proof_count_ranking,
             "user_price_from_proof_count_ranking": user_price_from_proof_count_ranking,
+            "location_price_count_ranking": location_price_count_ranking,
+            "location_city_price_count_ranking": location_city_price_count_ranking,
+            "location_country_price_count_ranking": location_country_price_count_ranking,
             # timestamp
             "updated": timezone.now().isoformat().replace("+00:00", "Z"),
         }
