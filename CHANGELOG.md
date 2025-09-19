@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.84.0](https://github.com/openfoodfacts/open-prices/compare/v1.83.3...v1.84.0) (2025-09-19)
+
+
+### Features
+
+* **Challenges:** allow to restrict on a list of locations (for local challenges) ([#992](https://github.com/openfoodfacts/open-prices/issues/992)) ([0f30bf3](https://github.com/openfoodfacts/open-prices/commit/0f30bf35c275137d8450c5fa5c25631164dd9d57))
+* **Proofs:** allow to filter by `image_md5_hash` ([#984](https://github.com/openfoodfacts/open-prices/issues/984)) ([b11d5ff](https://github.com/openfoodfacts/open-prices/commit/b11d5ff0c5aac1f681634513624b1eabc8391298))
+
+
+### Technical
+
+* Add labeler rule for challenges directory ([25a39c5](https://github.com/openfoodfacts/open-prices/commit/25a39c53de8436a9c946a26aa8d225d426391727))
+* Add labeler rules for Challenges files ([49cee56](https://github.com/openfoodfacts/open-prices/commit/49cee56b568c4b5cb3168b9d768e4660d836a3bd))
+* **Challenges:** new location price count rankings (location id, city & country) ([#995](https://github.com/openfoodfacts/open-prices/issues/995)) ([7d1f0ee](https://github.com/openfoodfacts/open-prices/commit/7d1f0ee8c65d7ff18ebf49dbb63854a847f2ebfc))
+* **Challenges:** new user_count stat ([#997](https://github.com/openfoodfacts/open-prices/issues/997)) ([e909aa3](https://github.com/openfoodfacts/open-prices/commit/e909aa31509c6035a690859faa3a3f1d53f74c33))
+* **Challenges:** rename the user ranking stats to clarify ([#993](https://github.com/openfoodfacts/open-prices/issues/993)) ([d0ea8f7](https://github.com/openfoodfacts/open-prices/commit/d0ea8f799cdd6d9be6aecbcbf9b7339bd4844aba))
+* **Prices:** transform labels_tags & origins_tags from JSONField to ArrayField ([#998](https://github.com/openfoodfacts/open-prices/issues/998)) ([7318cf4](https://github.com/openfoodfacts/open-prices/commit/7318cf461f86f9544d623ed86ca6b39e00cc1347))
+* update the remove_duplicate_proofs.py script ([#981](https://github.com/openfoodfacts/open-prices/issues/981)) ([e57adb7](https://github.com/openfoodfacts/open-prices/commit/e57adb70d665fa4de36dfbc875d2387332e4b831))
+* use Triton server running on GPU for ML inference ([#1000](https://github.com/openfoodfacts/open-prices/issues/1000)) ([791ac19](https://github.com/openfoodfacts/open-prices/commit/791ac19f0041a466ac422a8e3cf62aec4e918ed9))
+
 ## [1.83.3](https://github.com/openfoodfacts/open-prices/compare/v1.83.2...v1.83.3) (2025-09-14)
 
 
