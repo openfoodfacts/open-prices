@@ -42,6 +42,7 @@ class ProofFilter(django_filters.FilterSet):
     created__lte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="lte"
     )
+    image_md5_hash = django_filters.CharFilter(field_name="image_md5_hash")
 
     def filter_kind(self, queryset, name, value):
         if value == constants.KIND_COMMUNITY:

@@ -124,8 +124,12 @@ class ProofListFilterApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:proofs-list")
         cls.user_session = SessionFactory()
+        cls.image_md5_hash = "d41d8cd98f00b204e9800998ecf8427e"
         cls.proof = ProofFactory(
-            **PROOF_RECEIPT, price_count=15, owner=cls.user_session.user.user_id
+            **PROOF_RECEIPT,
+            price_count=15,
+            owner=cls.user_session.user.user_id,
+            image_md5_hash=cls.image_md5_hash,
         )
         ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
         ProofFactory(
@@ -164,13 +168,33 @@ class ProofListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
 
-    def test_price_list_filter_by_tags(self):
+    def test_proof_list_filter_by_tags(self):
         self.assertEqual(Proof.objects.count(), 3)
         # tags
         url = self.url + "?tags__contains=challenge-1"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["tags"], ["challenge-1"])
+
+    def test_proof_filter_filter_by_image_md5_hash(self):
+        response = self.client.get(
+            self.url, data={"image_md5_hash": self.image_md5_hash}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.data.keys()), ["items", "page", "pages", "size", "total"]
+        )
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["items"][0]["id"], self.proof.id)
+
+        # Check with a non-existing hash
+        response = self.client.get(
+            self.url, data={"image_md5_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data, {"items": [], "page": 1, "pages": 1, "size": 10, "total": 0}
+        )
 
 
 class ProofDetailApiTest(TestCase):
@@ -505,47 +529,6 @@ class ProofDeleteApiTest(TestCase):
         self.assertEqual(
             Proof.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
         )
-
-
-class ProofCheckHashApiTest(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user_session_1 = SessionFactory()
-        cls.image_md5_hash = "d41d8cd98f00b204e9800998ecf8427e"
-        cls.base_url = reverse("api:proofs-check-image-hash")
-        cls.proof = ProofFactory(
-            **PROOF_RECEIPT,
-            price_count=15,
-            owner=cls.user_session_1.user.user_id,
-            image_md5_hash=cls.image_md5_hash,
-        )
-
-    def test_proof_check_hash(self):
-        response = self.client.get(
-            self.base_url, data={"md5_hash": self.image_md5_hash}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {"exists": True})
-
-        # Check with a non-existing hash
-        response = self.client.get(
-            self.base_url, data={"md5_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {"exists": False})
-
-        # Check with a hash that is too long
-        response = self.client.get(
-            self.base_url,
-            data={"md5_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
-        )
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("md5_hash", response.data)
-
-        # check with missing hash
-        response = self.client.get(self.base_url)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("md5_hash", response.data)
 
 
 class PriceTagListApiTest(TestCase):
