@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
 from open_prices.common import utils
+from open_prices.locations.models import Location
 
 
 class ChallengeQuerySet(models.QuerySet):
@@ -50,6 +51,8 @@ class Challenge(models.Model):
     end_date = models.DateField(blank=True, null=True)
 
     categories = ArrayField(base_field=models.CharField(), blank=True, default=list)
+    locations = models.ManyToManyField(Location, blank=True)
+
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)
 
     is_published = models.BooleanField(default=False)
@@ -134,6 +137,9 @@ class Challenge(models.Model):
     @property
     def tag(self):
         return f"challenge-{self.id}"
+
+    def location_id_list(self):
+        return list(self.locations.values_list("id", flat=True))
 
     def set_price_tags(self):
         from open_prices.prices.models import Price
