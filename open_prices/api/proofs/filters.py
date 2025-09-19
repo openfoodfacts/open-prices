@@ -53,6 +53,7 @@ class ProofFilter(django_filters.FilterSet):
     class Meta:
         model = Proof
         fields = [
+            "image_md5_hash",
             "location_osm_id",
             "location_osm_type",
             "location_id",
