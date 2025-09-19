@@ -293,6 +293,16 @@ class ChallengePropertyTest(TestCase):
             [{"id": self.location.id, "count": 3}],
         )
         self.assertEqual(
-            self.challenge_ongoing.stats["location_proof_count_ranking"],
-            [{"id": self.location.id, "count": 1}],
+            self.challenge_ongoing.stats["location_city_price_count_ranking"],
+            [
+                {
+                    "city": self.location.osm_address_city,
+                    "country": self.location.osm_address_country,
+                    "count": 3,
+                }
+            ],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["location_country_price_count_ranking"],
+            [{"country": self.location.osm_address_country, "count": 3}],
         )
