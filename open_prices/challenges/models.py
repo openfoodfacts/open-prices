@@ -277,7 +277,7 @@ class Challenge(models.Model):
                 image_url=F("product__image_url"),
                 product_quantity=F("product__product_quantity"),
                 product_quantity_unit=F("product__product_quantity_unit"),
-                brands_tags=F("product__brands_tags"),
+                brands=F("product__brands"),
                 count=Count("id"),
             )
             .values(
@@ -288,7 +288,7 @@ class Challenge(models.Model):
                 "image_url",
                 "product_quantity",
                 "product_quantity_unit",
-                "brands_tags",
+                "brands",
                 "count",
             )
             .order_by("-count")[:10]

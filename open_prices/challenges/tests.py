@@ -336,7 +336,7 @@ class ChallengePropertyTest(TestCase):
                     "image_url": self.product_8001505005707.image_url,
                     "product_quantity": self.product_8001505005707.product_quantity,
                     "product_quantity_unit": self.product_8001505005707.product_quantity_unit,
-                    "brands_tags": self.product_8001505005707.brands_tags,
+                    "brands": self.product_8001505005707.brands,
                     "count": 1,
                 }
             ],
