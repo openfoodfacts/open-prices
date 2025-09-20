@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.84.1](https://github.com/openfoodfacts/open-prices/compare/v1.84.0...v1.84.1) (2025-09-20)
+
+
+### Technical
+
+* **Challenges:** enrich location ranking stats with extra fields (for display in the frontend) ([#1001](https://github.com/openfoodfacts/open-prices/issues/1001)) ([3e0bc35](https://github.com/openfoodfacts/open-prices/commit/3e0bc358594ca9ea16b2fc45e760425b51b4fe48))
+* **Challenges:** new product price count ranking ([#1003](https://github.com/openfoodfacts/open-prices/issues/1003)) ([d3122d9](https://github.com/openfoodfacts/open-prices/commit/d3122d9477efe6eddc41e20c4a3073bc0d779878))
+
 ## [1.84.0](https://github.com/openfoodfacts/open-prices/compare/v1.83.3...v1.84.0) (2025-09-19)
 
 
