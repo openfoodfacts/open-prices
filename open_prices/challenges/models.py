@@ -264,6 +264,35 @@ class Challenge(models.Model):
             .values("osm_address_country", "osm_address_country_code", "count")
             .order_by("-count")[:10]
         )
+        product_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .has_type_product()
+            .select_related("product")
+            .values("product_id")
+            .annotate(
+                id=F("product_id"),
+                code=F("product__code"),
+                source=F("product__source"),
+                product_name=F("product__product_name"),
+                image_url=F("product__image_url"),
+                product_quantity=F("product__product_quantity"),
+                product_quantity_unit=F("product__product_quantity_unit"),
+                brands_tags=F("product__brands_tags"),
+                count=Count("id"),
+            )
+            .values(
+                "id",
+                "code",
+                "source",
+                "product_name",
+                "image_url",
+                "product_quantity",
+                "product_quantity_unit",
+                "brands_tags",
+                "count",
+            )
+            .order_by("-count")[:10]
+        )
 
         self.stats = {
             # counts
@@ -281,6 +310,7 @@ class Challenge(models.Model):
             "location_price_count_ranking": location_price_count_ranking,
             "location_city_price_count_ranking": location_city_price_count_ranking,
             "location_country_price_count_ranking": location_country_price_count_ranking,
+            "product_price_count_ranking": product_price_count_ranking,
             # timestamp
             "updated": timezone.now().isoformat().replace("+00:00", "Z"),
         }
