@@ -52,6 +52,7 @@ class UserPropertyTest(TestCase):
             location_osm_type=cls.location_1.osm_type,
             currency="EUR",
             owner=cls.user_1.user_id,
+            tags=["challenge-1"],
         )
         cls.proof_2 = ProofFactory(
             type=proof_constants.TYPE_GDPR_REQUEST,
@@ -67,6 +68,7 @@ class UserPropertyTest(TestCase):
             price=1.0,
             currency=cls.proof_1.currency,
             owner=cls.user_1.user_id,
+            tags=["challenge-1", "challenge-2"],
         )
         PriceFactory(
             type=price_constants.TYPE_CATEGORY,
@@ -78,6 +80,7 @@ class UserPropertyTest(TestCase):
             price=2.0,
             currency=cls.proof_2.currency,
             owner=cls.user_1.user_id,
+            tags=["test"],
         )
         PriceFactory(
             product_code="0123456789101",
@@ -174,7 +177,9 @@ class UserPropertyTest(TestCase):
         self.user_1.refresh_from_db()
         self.assertEqual(self.user_1.currency_count, 0)
         self.assertEqual(self.user_1.year_count, 0)
+        self.assertEqual(self.user_1.challenge_count, 0)
         # update_other_count() should fix other counts
         self.user_1.update_other_count()
         self.assertEqual(self.user_1.currency_count, 2)
         self.assertEqual(self.user_1.year_count, 1)
+        self.assertEqual(self.user_1.challenge_count, 2)

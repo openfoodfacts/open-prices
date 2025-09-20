@@ -136,7 +136,7 @@ class Challenge(models.Model):
 
     @property
     def tag(self):
-        return f"challenge-{self.id}"
+        return f"{challenge_constants.CHALLENGE_TAG_PREFIX}{self.id}"
 
     def location_id_list(self):
         return list(self.locations.values_list("id", flat=True))

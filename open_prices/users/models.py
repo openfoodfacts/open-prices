@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F, Func
 from django.db.models.functions import ExtractYear
 from django.utils import timezone
 
@@ -34,6 +35,7 @@ class User(models.Model):
     OTHER_COUNT_FIELDS = [
         "currency_count",
         "year_count",
+        "challenge_count",
     ]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
@@ -78,6 +80,7 @@ class User(models.Model):
     proof_kind_consumption_count = models.PositiveIntegerField(default=0)
     currency_count = models.PositiveIntegerField(default=0)
     year_count = models.PositiveIntegerField(default=0)
+    challenge_count = models.PositiveIntegerField(default=0)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -178,6 +181,8 @@ class User(models.Model):
         self.save(update_fields=self.PROOF_COUNT_FIELDS)
 
     def update_other_count(self):
+        from open_prices.challenges import constants as challenge_constants
+        from open_prices.prices.models import Price
         from open_prices.proofs.models import Proof
 
         self.currency_count = (  # should we filter on proof with prices only?
@@ -192,6 +197,29 @@ class User(models.Model):
             .values("date_year_annotated")
             .distinct()
             .count()
+        )
+        proof_in_challenge_tag_list = (
+            Proof.objects.exclude(tags=[])
+            .filter(
+                owner=self.user_id,
+                tags__icontains=challenge_constants.CHALLENGE_TAG_PREFIX,
+            )
+            .annotate(tags_unnest=Func(F("tags"), function="unnest"))
+            .values_list("tags_unnest", flat=True)
+            .distinct()
+        )
+        price_in_challenge_tag_list = (
+            Price.objects.exclude(tags=[])
+            .filter(
+                owner=self.user_id,
+                tags__icontains=challenge_constants.CHALLENGE_TAG_PREFIX,
+            )
+            .annotate(tags_unnest=Func(F("tags"), function="unnest"))
+            .values_list("tags_unnest", flat=True)
+            .distinct()
+        )
+        self.challenge_count = len(
+            set(proof_in_challenge_tag_list) | set(price_in_challenge_tag_list)
         )
         self.save(update_fields=self.OTHER_COUNT_FIELDS)
 
