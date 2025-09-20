@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.84.2](https://github.com/openfoodfacts/open-prices/compare/v1.84.1...v1.84.2) (2025-09-20)
+
+
+### Bug Fixes
+
+* **Challenges:** in product ranking stats store brands instead of brands_tags. ref [#1003](https://github.com/openfoodfacts/open-prices/issues/1003) ([dad91d4](https://github.com/openfoodfacts/open-prices/commit/dad91d41e6a36f2c705a1eeeb31206624d56c5f5))
+
+
+### Technical
+
+* **Users:** Stats: new year_count & challenge_count ([#1006](https://github.com/openfoodfacts/open-prices/issues/1006)) ([a55b4ef](https://github.com/openfoodfacts/open-prices/commit/a55b4efee84feb18f4bfd2faf94bbbc677b80f71))
+
 ## [1.84.1](https://github.com/openfoodfacts/open-prices/compare/v1.84.0...v1.84.1) (2025-09-20)
 
 
