@@ -52,6 +52,7 @@ class UserPropertyTest(TestCase):
             location_osm_type=cls.location_1.osm_type,
             currency="EUR",
             owner=cls.user_1.user_id,
+            tags=["challenge-1"],
         )
         cls.proof_2 = ProofFactory(
             type=proof_constants.TYPE_GDPR_REQUEST,
@@ -67,6 +68,7 @@ class UserPropertyTest(TestCase):
             price=1.0,
             currency=cls.proof_1.currency,
             owner=cls.user_1.user_id,
+            tags=["challenge-1", "challenge-2"],
         )
         PriceFactory(
             type=price_constants.TYPE_CATEGORY,
@@ -78,6 +80,7 @@ class UserPropertyTest(TestCase):
             price=2.0,
             currency=cls.proof_2.currency,
             owner=cls.user_1.user_id,
+            tags=["test"],
         )
         PriceFactory(
             product_code="0123456789101",
@@ -96,7 +99,6 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.price_type_category_count, 0)
         self.assertEqual(self.user_1.price_kind_community_count, 0)
         self.assertEqual(self.user_1.price_kind_consumption_count, 0)
-        self.assertEqual(self.user_1.price_currency_count, 0)
         self.assertEqual(self.user_1.price_in_proof_owned_count, 0)
         self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
         self.assertEqual(self.user_1.price_not_owned_in_proof_owned_count, 0)
@@ -107,7 +109,6 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.price_type_category_count, 1)
         self.assertEqual(self.user_1.price_kind_community_count, 1)
         self.assertEqual(self.user_1.price_kind_consumption_count, 1)
-        self.assertEqual(self.user_1.price_currency_count, 2)
         self.assertEqual(self.user_1.price_in_proof_owned_count, 2)
         self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
         self.assertEqual(self.user_1.price_not_owned_in_proof_owned_count, 1)
@@ -118,7 +119,6 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.price_type_category_count, 1)
         self.assertEqual(self.user_1.price_kind_community_count, 1)
         self.assertEqual(self.user_1.price_kind_consumption_count, 1)
-        self.assertEqual(self.user_1.price_currency_count, 2)
         self.assertEqual(self.user_1.price_in_proof_owned_count, 2)
         self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
         self.assertEqual(self.user_1.price_not_owned_in_proof_owned_count, 1)
@@ -129,7 +129,6 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.price_type_category_count, 0)
         self.assertEqual(self.user_1.price_kind_community_count, 0)
         self.assertEqual(self.user_1.price_kind_consumption_count, 0)
-        self.assertEqual(self.user_1.price_currency_count, 0)
         self.assertEqual(self.user_1.price_in_proof_owned_count, 0)
         self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
         self.assertEqual(
@@ -143,7 +142,6 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_2.price_type_category_count, 0)
         self.assertEqual(self.user_2.price_kind_community_count, 1)
         self.assertEqual(self.user_2.price_kind_consumption_count, 0)
-        self.assertEqual(self.user_2.price_currency_count, 1)
         self.assertEqual(self.user_2.price_in_proof_owned_count, 0)
         self.assertEqual(self.user_2.price_in_proof_not_owned_count, 1)
         self.assertEqual(self.user_2.price_not_owned_in_proof_owned_count, 0)
@@ -169,10 +167,19 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.proof_count, 0)
         self.assertEqual(self.user_1.proof_kind_community_count, 0)
         self.assertEqual(self.user_1.proof_kind_consumption_count, 0)
-        self.assertEqual(self.user_1.proof_currency_count, 0)
         # update_proof_count() should fix proof counts
         self.user_1.update_proof_count()
         self.assertEqual(self.user_1.proof_count, 2)
         self.assertEqual(self.user_1.proof_kind_community_count, 1)
         self.assertEqual(self.user_1.proof_kind_consumption_count, 1)
-        self.assertEqual(self.user_1.proof_currency_count, 2)
+
+    def test_update_other_count(self):
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.currency_count, 0)
+        self.assertEqual(self.user_1.year_count, 0)
+        self.assertEqual(self.user_1.challenge_count, 0)
+        # update_other_count() should fix other counts
+        self.user_1.update_other_count()
+        self.assertEqual(self.user_1.currency_count, 2)
+        self.assertEqual(self.user_1.year_count, 1)
+        self.assertEqual(self.user_1.challenge_count, 2)
