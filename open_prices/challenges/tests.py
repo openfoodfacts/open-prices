@@ -291,19 +291,37 @@ class ChallengePropertyTest(TestCase):
         )
         self.assertEqual(
             self.challenge_ongoing.stats["location_price_count_ranking"],
-            [{"id": self.location.id, "count": 3}],
+            [
+                {
+                    "id": self.location.id,
+                    "type": self.location.type,
+                    "osm_name": self.location.osm_name,
+                    "osm_address_city": self.location.osm_address_city,
+                    "osm_address_country": self.location.osm_address_country,
+                    "osm_address_country_code": self.location.osm_address_country_code,
+                    "website_url": self.location.website_url,
+                    "count": 3,
+                }
+            ],
         )
         self.assertEqual(
             self.challenge_ongoing.stats["location_city_price_count_ranking"],
             [
                 {
-                    "city": self.location.osm_address_city,
-                    "country": self.location.osm_address_country,
+                    "osm_address_city": self.location.osm_address_city,
+                    "osm_address_country": self.location.osm_address_country,
+                    "osm_address_country_code": self.location.osm_address_country_code,
                     "count": 3,
                 }
             ],
         )
         self.assertEqual(
             self.challenge_ongoing.stats["location_country_price_count_ranking"],
-            [{"country": self.location.osm_address_country, "count": 3}],
+            [
+                {
+                    "osm_address_country": self.location.osm_address_country,
+                    "osm_address_country_code": self.location.osm_address_country_code,
+                    "count": 3,
+                }
+            ],
         )

@@ -212,8 +212,26 @@ class Challenge(models.Model):
             Price.objects.has_tag(self.tag)
             .select_related("location")
             .values("location_id")
-            .annotate(id=F("location_id"), count=Count("id"))
-            .values("id", "count")
+            .annotate(
+                id=F("location_id"),
+                type=F("location__type"),
+                osm_name=F("location__osm_name"),
+                osm_address_city=F("location__osm_address_city"),
+                osm_address_country=F("location__osm_address_country"),
+                osm_address_country_code=F("location__osm_address_country_code"),
+                website_url=F("location__website_url"),
+                count=Count("id"),
+            )
+            .values(
+                "id",
+                "type",
+                "osm_name",
+                "osm_address_city",
+                "osm_address_country",
+                "osm_address_country_code",
+                "website_url",
+                "count",
+            )
             .order_by("-count")[:10]
         )
         location_city_price_count_ranking = list(
@@ -221,19 +239,29 @@ class Challenge(models.Model):
             .select_related("location")
             .values("location__osm_address_city", "location__osm_address_country")
             .annotate(
-                city=F("location__osm_address_city"),
-                country=F("location__osm_address_country"),
+                osm_address_city=F("location__osm_address_city"),
+                osm_address_country=F("location__osm_address_country"),
+                osm_address_country_code=F("location__osm_address_country_code"),
                 count=Count("id"),
             )
-            .values("city", "country", "count")
+            .values(
+                "osm_address_city",
+                "osm_address_country",
+                "osm_address_country_code",
+                "count",
+            )
             .order_by("-count")[:10]
         )
         location_country_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .select_related("location")
             .values("location__osm_address_country")
-            .annotate(country=F("location__osm_address_country"), count=Count("id"))
-            .values("country", "count")
+            .annotate(
+                osm_address_country=F("location__osm_address_country"),
+                osm_address_country_code=F("location__osm_address_country_code"),
+                count=Count("id"),
+            )
+            .values("osm_address_country", "osm_address_country_code", "count")
             .order_by("-count")[:10]
         )
 
