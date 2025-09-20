@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import ExtractYear
 from django.utils import timezone
 
 
@@ -14,7 +15,6 @@ class User(models.Model):
         "price_type_category_count",
         "price_kind_community_count",
         "price_kind_consumption_count",
-        "price_currency_count",
         "price_in_proof_owned_count",
         "price_in_proof_not_owned_count",
         "price_not_owned_in_proof_owned_count",
@@ -23,16 +23,24 @@ class User(models.Model):
         "proof_count",
         "proof_kind_community_count",
         "proof_kind_consumption_count",
-        "proof_currency_count",
+    ]
+    LOCATION_COUNT_FIELDS = [
+        "location_count",
+        "location_type_osm_country_count",
+    ]
+    PRODUCT_COUNT_FIELDS = [
+        "product_count",
+    ]
+    OTHER_COUNT_FIELDS = [
+        "currency_count",
+        "year_count",
     ]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
         + PROOF_COUNT_FIELDS
-        + [
-            "location_count",
-            "location_type_osm_country_count",
-            "product_count",
-        ]
+        + LOCATION_COUNT_FIELDS
+        + PRODUCT_COUNT_FIELDS
+        + OTHER_COUNT_FIELDS
     )
     SERIALIZED_FIELDS = [
         "user_id",
@@ -51,7 +59,6 @@ class User(models.Model):
     )
     price_kind_community_count = models.PositiveIntegerField(default=0)
     price_kind_consumption_count = models.PositiveIntegerField(default=0)
-    price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     price_in_proof_owned_count = models.PositiveIntegerField(
         default=0, blank=True, null=True
     )
@@ -69,7 +76,8 @@ class User(models.Model):
     proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     proof_kind_community_count = models.PositiveIntegerField(default=0)
     proof_kind_consumption_count = models.PositiveIntegerField(default=0)
-    proof_currency_count = models.PositiveIntegerField(default=0)
+    currency_count = models.PositiveIntegerField(default=0)
+    year_count = models.PositiveIntegerField(default=0)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -99,12 +107,6 @@ class User(models.Model):
         )
         self.price_kind_consumption_count = (
             Price.objects.filter(owner=self.user_id).has_kind_consumption().count()
-        )
-        self.price_currency_count = (
-            Price.objects.filter(owner=self.user_id)
-            .values_list("currency", flat=True)
-            .distinct()
-            .count()
         )
         self.price_in_proof_owned_count = (
             Price.objects.select_related("proof")
@@ -150,7 +152,7 @@ class User(models.Model):
             .distinct()
             .count()
         )
-        self.save(update_fields=["location_count", "location_type_osm_country_count"])
+        self.save(update_fields=self.LOCATION_COUNT_FIELDS)
 
     def update_product_count(self):
         from open_prices.prices.models import Price
@@ -161,7 +163,7 @@ class User(models.Model):
             .distinct()
             .count()
         )
-        self.save(update_fields=["product_count"])
+        self.save(update_fields=self.PRODUCT_COUNT_FIELDS)
 
     def update_proof_count(self):
         from open_prices.proofs.models import Proof
@@ -173,13 +175,25 @@ class User(models.Model):
         self.proof_kind_consumption_count = (
             Proof.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
-        self.proof_currency_count = (  # should we filter on proof with prices only?
+        self.save(update_fields=self.PROOF_COUNT_FIELDS)
+
+    def update_other_count(self):
+        from open_prices.proofs.models import Proof
+
+        self.currency_count = (  # should we filter on proof with prices only?
             Proof.objects.filter(owner=self.user_id)
             .values_list("currency", flat=True)
             .distinct()
             .count()
         )
-        self.save(update_fields=self.PROOF_COUNT_FIELDS)
+        self.year_count = (
+            Proof.objects.filter(owner=self.user_id)
+            .annotate(date_year_annotated=ExtractYear("date"))
+            .values("date_year_annotated")
+            .distinct()
+            .count()
+        )
+        self.save(update_fields=self.OTHER_COUNT_FIELDS)
 
 
 class Session(models.Model):

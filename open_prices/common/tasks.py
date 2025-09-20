@@ -86,6 +86,7 @@ def update_user_counts_task():
         user.update_location_count()
         user.update_product_count()
         user.update_proof_count()
+        user.update_other_count()
 
 
 def update_location_counts_task():
