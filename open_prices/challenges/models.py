@@ -219,21 +219,37 @@ class Challenge(models.Model):
         location_city_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .select_related("location")
-            .values("location__osm_address_city", "location__osm_address_country")
+            .values(
+                "location__osm_address_city",
+                "location__osm_address_country",
+                "location__osm_address_country_code",
+            )
             .annotate(
-                city=F("location__osm_address_city"),
-                country=F("location__osm_address_country"),
+                osm_address_city=F("location__osm_address_city"),
+                osm_address_country=F("location__osm_address_country"),
+                osm_address_country_code=F("location__osm_address_country_code"),
                 count=Count("id"),
             )
-            .values("city", "country", "count")
+            .values(
+                "osm_address_city",
+                "osm_address_country",
+                "osm_address_country_code",
+                "count",
+            )
             .order_by("-count")[:10]
         )
         location_country_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .select_related("location")
-            .values("location__osm_address_country")
-            .annotate(country=F("location__osm_address_country"), count=Count("id"))
-            .values("country", "count")
+            .values(
+                "location__osm_address_country", "location__osm_address_country_code"
+            )
+            .annotate(
+                osm_address_country=F("location__osm_address_country"),
+                osm_address_country_code=F("location__osm_address_country_code"),
+                count=Count("id"),
+            )
+            .values("osm_address_country", "osm_address_country_code", "count")
             .order_by("-count")[:10]
         )
 
