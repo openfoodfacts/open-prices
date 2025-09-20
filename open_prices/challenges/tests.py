@@ -325,3 +325,19 @@ class ChallengePropertyTest(TestCase):
                 }
             ],
         )
+        self.assertEqual(
+            self.challenge_ongoing.stats["product_price_count_ranking"],
+            [
+                {
+                    "id": self.product_8001505005707.id,
+                    "code": self.product_8001505005707.code,
+                    "source": self.product_8001505005707.source,
+                    "product_name": self.product_8001505005707.product_name,
+                    "image_url": self.product_8001505005707.image_url,
+                    "product_quantity": self.product_8001505005707.product_quantity,
+                    "product_quantity_unit": self.product_8001505005707.product_quantity_unit,
+                    "brands_tags": self.product_8001505005707.brands_tags,
+                    "count": 1,
+                }
+            ],
+        )
