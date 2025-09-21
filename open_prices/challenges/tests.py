@@ -193,6 +193,7 @@ class ChallengePropertyTest(TestCase):
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
             owner="user_1",
+            tags=["test"],
         )
         cls.proof_not_in_challenge = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG, owner="user_1"
@@ -204,7 +205,7 @@ class ChallengePropertyTest(TestCase):
         # (avoids setting the tag by the signal)
         with freeze_time("2025-01-01"):  # during the challenge
             PriceFactory(proof=cls.proof_not_in_challenge, owner="user_1")
-            PriceFactory(
+            cls.price_with_existing_tag = PriceFactory(
                 product_code="8001505005707",
                 product=cls.product_8001505005707,
                 proof=cls.proof_in_challenge,
@@ -212,6 +213,7 @@ class ChallengePropertyTest(TestCase):
                 location_osm_id=cls.location.osm_id,
                 location_osm_type=cls.location.osm_type,
                 owner="user_1",
+                tags=["test"],
             )
             PriceFactory(
                 type=price_constants.TYPE_CATEGORY,
@@ -256,6 +258,7 @@ class ChallengePropertyTest(TestCase):
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 3)
+        self.assertIn("test", self.price_with_existing_tag.tags)
 
     def test_set_proof_tags(self):
         self.assertEqual(Proof.objects.count(), 2)
@@ -263,6 +266,24 @@ class ChallengePropertyTest(TestCase):
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()
         self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.assertIn("test", self.proof_in_challenge.tags)
+
+    def test_reset_price_tags(self):
+        self.assertEqual(Price.objects.count(), 5)
+        self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 3)
+        self.challenge_ongoing.reset_price_tags()
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
+        self.assertIn("test", self.price_with_existing_tag.tags)
+
+    def test_reset_proof_tags(self):
+        self.assertEqual(Proof.objects.count(), 2)
+        self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
+        self.challenge_ongoing.set_proof_tags()
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.challenge_ongoing.reset_proof_tags()
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
+        self.assertIn("test", self.proof_in_challenge.tags)
 
     def test_calculate_stats(self):
         self.assertIsNone(self.challenge_ongoing.stats)

@@ -3,7 +3,7 @@ from datetime import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Case, Count, F, Value, When
+from django.db.models import Case, Count, F, Func, Value, When
 from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
@@ -141,21 +141,35 @@ class Challenge(models.Model):
     def location_id_list(self):
         return list(self.locations.values_list("id", flat=True))
 
+    def reset_price_tags(self):
+        from open_prices.prices.models import Price
+
+        Price.objects.filter(tags__contains=[self.tag]).update(
+            tags=Func(F("tags"), Value(self.tag), function="array_remove")
+        )
+
+    def reset_proof_tags(self):
+        from open_prices.proofs.models import Proof
+
+        Proof.objects.filter(tags__contains=[self.tag]).update(
+            tags=Func(F("tags"), Value(self.tag), function="array_remove")
+        )
+
     def set_price_tags(self):
         from open_prices.prices.models import Price
 
-        challenge_prices = Price.objects.in_challenge(self)
-        # TODO: manage cases where prices are removed from the challenge
-        for price in challenge_prices.exclude(tags__contains=[self.tag]):
-            price.set_tag(self.tag, save=True)
+        # TODO: manage cases where prices/proofs are removed from the challenge
+        Price.objects.in_challenge(self).exclude(tags__contains=[self.tag]).update(
+            tags=Func(F("tags"), Value(self.tag), function="array_append")
+        )
 
     def set_proof_tags(self):
         from open_prices.proofs.models import Proof
 
-        challenge_proofs = Proof.objects.in_challenge(self)
         # TODO: manage cases where prices/proofs are removed from the challenge
-        for proof in challenge_proofs.exclude(tags__contains=[self.tag]):
-            proof.set_tag(self.tag, save=True)
+        Proof.objects.in_challenge(self).exclude(tags__contains=[self.tag]).update(
+            tags=Func(F("tags"), Value(self.tag), function="array_append")
+        )
 
     def calculate_stats(self):
         from open_prices.prices.models import Price
