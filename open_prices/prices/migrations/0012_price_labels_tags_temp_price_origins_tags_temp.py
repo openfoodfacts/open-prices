@@ -9,8 +9,9 @@ def migrate_labels_tags_data(apps, schema_editor):
     for price in Price.objects.exclude(labels_tags=None).exclude(
         labels_tags__isnull=True
     ):
-        price.labels_tags_temp = price.labels_tags or []
-        price.save(update_fields=["labels_tags_temp"])
+        if price.labels_tags:
+            price.labels_tags_temp = price.labels_tags
+            price.save(update_fields=["labels_tags_temp"])
 
 
 def migrate_origins_tags_data(apps, schema_editor):
@@ -18,8 +19,9 @@ def migrate_origins_tags_data(apps, schema_editor):
     for price in Price.objects.exclude(origins_tags=None).exclude(
         origins_tags__isnull=True
     ):
-        price.origins_tags_temp = price.origins_tags or []
-        price.save(update_fields=["origins_tags_temp"])
+        if price.origins_tags:
+            price.origins_tags_temp = price.origins_tags
+            price.save(update_fields=["origins_tags_temp"])
 
 
 class Migration(migrations.Migration):
