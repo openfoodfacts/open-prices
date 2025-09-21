@@ -9,8 +9,9 @@ def migrate_labels_tags_data(apps, schema_editor):
     for price in Price.objects.exclude(labels_tags=None).exclude(
         labels_tags__isnull=True
     ):
-        price.labels_tags_temp = price.labels_tags
-        price.save(update_fields=["labels_tags_temp"])
+        if price.labels_tags:
+            price.labels_tags_temp = price.labels_tags
+            price.save(update_fields=["labels_tags_temp"])
 
 
 def migrate_origins_tags_data(apps, schema_editor):
@@ -18,11 +19,13 @@ def migrate_origins_tags_data(apps, schema_editor):
     for price in Price.objects.exclude(origins_tags=None).exclude(
         origins_tags__isnull=True
     ):
-        price.origins_tags_temp = price.origins_tags
-        price.save(update_fields=["origins_tags_temp"])
+        if price.origins_tags:
+            price.origins_tags_temp = price.origins_tags
+            price.save(update_fields=["origins_tags_temp"])
 
 
 class Migration(migrations.Migration):
+    atomic = False
     dependencies = [
         ("prices", "0011_alter_price_price_alter_price_price_without_discount"),
     ]
@@ -43,10 +46,14 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(
-            migrate_labels_tags_data, reverse_code=migrations.RunPython.noop
+            migrate_labels_tags_data,
+            reverse_code=migrations.RunPython.noop,
+            atomic=True,
         ),
         migrations.RunPython(
-            migrate_origins_tags_data, reverse_code=migrations.RunPython.noop
+            migrate_origins_tags_data,
+            reverse_code=migrations.RunPython.noop,
+            atomic=True,
         ),
         migrations.RemoveField(model_name="price", name="labels_tags"),
         migrations.RemoveField(model_name="price", name="origins_tags"),
