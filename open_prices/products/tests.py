@@ -294,3 +294,40 @@ class TestProcessUpdate(TestCase):
         self.assertEqual(create_product.source, Flavor.opff)
         self.assertGreater(create_product.source_last_synced, before)
         self.assertLess(create_product.source_last_synced, after)
+
+
+class TestProductModel(TestCase):
+    def test_fuzzy_barcode_search(self):
+        ProductFactory(code="0123456789100")
+        ProductFactory(code="0123456789101")
+        ProductFactory(code="0123456789102")
+        ProductFactory(code="0123456789103")
+        ProductFactory(code="1123456789100")
+        ProductFactory(code="1123456789101")
+        ProductFactory(code="1123456789102")
+        ProductFactory(code="1123456789103")
+        ProductFactory(code="2123456789100")
+        ProductFactory(code="2123456789101")
+        ProductFactory(code="2123456789102")
+        ProductFactory(code="2123456789103")
+
+        results = list(Product.fuzzy_barcode_search("0123456789100", max_distance=0))
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].code, "0123456789100")
+
+        results = list(Product.fuzzy_barcode_search("0123456789100", max_distance=1))
+        self.assertEqual(len(results), 6)
+        self.assertEqual(
+            set(p.code for p in results),
+            {
+                "0123456789100",
+                "0123456789101",
+                "0123456789102",
+                "0123456789103",
+                "1123456789100",
+                "2123456789100",
+            },
+        )
+
+        results = list(Product.fuzzy_barcode_search("0123456789100", max_distance=2))
+        self.assertEqual(len(results), 12)

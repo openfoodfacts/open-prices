@@ -30,6 +30,7 @@ from open_prices.common import google as common_google
 from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
+from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import (
     PriceTag,
@@ -513,6 +514,31 @@ class Label(BaseModel):
         return None
 
 
+class BarcodeSimilarityMatch(BaseModel):
+    barcode: str = Field(..., description="The similar barcode")
+    distance: int = Field(
+        ..., description="The Levenshtein distance between the two barcodes."
+    )
+
+
+class LabelWithSimilarBarcodes(Label):
+    """This class extends the Label class with a list of similar barcodes.
+
+    Extraction of barcode using Gemini sometimes produces incorrect results,
+    as the image is often blurry or the barcode is partially occluded.
+    To help the user find the correct barcode, we use a fuzzy search to find
+    barcodes that are similar to the extracted barcode. The similar barcodes
+    are sorted by increasing Levenshtein distance.
+    """
+
+    similar_barcodes: list[BarcodeSimilarityMatch] = Field(
+        [],
+        description="A list of suggested barcodes for the product, if any. "
+        "The suggestions are based on a fuzzy search of barcodes that are similar "
+        "to the extracted barcode. The list is sorted by increasing Levenshtein distance.",
+    )
+
+
 class ReceiptItemType(typing.TypedDict):
     product: Products
     price: float
@@ -843,6 +869,35 @@ def run_and_save_price_tag_extraction(
     else:
         responses = [extract_from_price_tag(image) for image in preprocessed_images]
     for price_tag, response in zip(price_tags, responses):
+        if response.parsed is None:
+            logger.info(
+                "Failed to extract price tag for price tag id %s: %s",
+                price_tag.id,
+                response.text,
+            )
+            continue
+
+        barcode = response.parsed.barcode
+        similar_barcodes = []
+        # barcode similarity search is quite costly (500~1000ms for 4M
+        # products), so we only run it if the barcode doesn't exist in the
+        # database
+        if barcode and not Product.objects.filter(code=barcode).exists():
+            similar_barcodes = [
+                BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
+                for p in Product.fuzzy_barcode_search(
+                    barcode,
+                    # Only return products with a levenshtein distance of 3 or
+                    # less
+                    max_distance=3,
+                    # Don't return too many results
+                    limit=10,
+                )
+                if p.distance > 0
+            ]
+        data = LabelWithSimilarBarcodes(
+            **dict(response.parsed), similar_barcodes=similar_barcodes
+        )
         try:
             prediction = PriceTagPrediction.objects.create(
                 price_tag=price_tag,
@@ -850,7 +905,7 @@ def run_and_save_price_tag_extraction(
                 model_name=common_google.GEMINI_MODEL_NAME,
                 model_version=common_google.GEMINI_MODEL_VERSION,
                 schema_version=LABEL_SCHEMA_VERSION,
-                data=response.parsed.model_dump(),
+                data=data.model_dump(),
                 thought_tokens=common_google.extract_thought_tokens(response),
             )
             predictions.append(prediction)
