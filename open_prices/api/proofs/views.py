@@ -193,7 +193,7 @@ class ProofViewSet(
                 status_code = status.HTTP_201_CREATED
 
             return Response(
-                ProofFullSerializer(duplicate_proof).data,
+                {**ProofFullSerializer(duplicate_proof).data, "detail": "duplicate"},
                 status=status_code,
             )
 
