@@ -90,6 +90,7 @@ class PriceTagFilter(django_filters.FilterSet):
             "proof_id",
             "proof__owner",
             "proof__ready_for_price_tag_validation",
+            "price_id",
             "status",
             "prediction_count",
         ]

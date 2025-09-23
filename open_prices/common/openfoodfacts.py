@@ -1,4 +1,7 @@
+import base64
 import datetime
+import io
+import os
 
 import openfoodfacts
 import requests
@@ -17,6 +20,7 @@ from openfoodfacts import (
 )
 from openfoodfacts.images import generate_image_url
 from openfoodfacts.types import JSONType
+from openfoodfacts.utils import URLBuilder
 
 OFF_CREATE_FIELDS = [
     "product_name",
@@ -108,7 +112,7 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v2,
-        environment=Environment.org,
+        environment=Environment[os.getenv("ENVIRONMENT")],
     )
     return client.product.get(code)
 
@@ -276,4 +280,42 @@ def barcode_is_valid(barcode: str) -> bool:
         barcode.isnumeric()
         and len(barcode) >= 6
         and openfoodfacts.barcode.has_valid_check_digit(barcode)
+    )
+
+
+def update_off_product(
+    code: str, flavor: str = "off", update_params: dict = {}
+) -> JSONType | None:
+    client = API(
+        user_agent=settings.OFF_USER_AGENT,
+        username=settings.OFF_DEFAULT_USER,
+        password=settings.OFF_DEFAULT_PASSWORD,
+        country=Country.world,
+        flavor=flavor,
+        version=APIVersion.v2,
+        environment=Environment[os.getenv("ENVIRONMENT")],
+    )
+    return client.product.update({"code": code, **update_params})
+
+
+def update_off_product_image(
+    code: str, flavor: str = "off", image_src: str = None, image_field: str = "front"
+) -> JSONType | None:
+    imgdata = base64.b64decode(image_src.split(",")[1])
+    image_fp = io.BytesIO(imgdata)
+
+    base_url = URLBuilder.world(Flavor(flavor), Environment[os.getenv("ENVIRONMENT")])
+    url = f"{base_url}/cgi/product_image_upload.pl"
+
+    form_data = {}
+
+    form_data["user_id"] = (None, settings.OFF_DEFAULT_USER)
+    form_data["password"] = (None, settings.OFF_DEFAULT_PASSWORD)
+    form_data["code"] = (None, code)
+    form_data["imagefield"] = (None, image_field)
+    form_data[f"imgupload_{image_field}"] = ("image.png", image_fp)
+
+    return requests.post(
+        url,
+        files=form_data,
     )
