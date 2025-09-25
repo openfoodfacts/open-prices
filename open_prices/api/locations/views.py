@@ -25,8 +25,8 @@ class LocationViewSet(
     serializer_class = LocationSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = LocationFilter
-    ordering_fields = Location.COUNT_FIELDS + ["created"]
-    ordering = ["created"]
+    ordering_fields = ["id", "created"] + Location.COUNT_FIELDS
+    ordering = ["id"]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
