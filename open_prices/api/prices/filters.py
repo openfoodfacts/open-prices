@@ -10,7 +10,7 @@ class PriceFilter(django_filters.FilterSet):
         field_name="product_id", lookup_expr="isnull"
     )
     product__categories_tags__contains = django_filters.CharFilter(
-        field_name="product__categories_tags", lookup_expr="any"
+        field_name="product__categories_tags", lookup_expr="contains"
     )
     product__categories_tags__overlap = django_filters.BaseInFilter(
         field_name="product__categories_tags",
@@ -18,10 +18,10 @@ class PriceFilter(django_filters.FilterSet):
         help_text="Provide multiple values as separate query parameters. Example: ?product__categories_tags__overlap=en:breakfasts&product__categories_tags__overlap=en:apples",
     )
     labels_tags__contains = django_filters.CharFilter(
-        field_name="labels_tags", lookup_expr="icontains"
+        field_name="labels_tags", lookup_expr="contains"
     )
     origins_tags__contains = django_filters.CharFilter(
-        field_name="origins_tags", lookup_expr="icontains"
+        field_name="origins_tags", lookup_expr="contains"
     )
     price__gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
     price__gte = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
@@ -48,7 +48,7 @@ class PriceFilter(django_filters.FilterSet):
     date__year = django_filters.NumberFilter(field_name="date", lookup_expr="year")
     date__month = django_filters.NumberFilter(field_name="date", lookup_expr="month")
     tags__contains = django_filters.CharFilter(
-        field_name="tags", lookup_expr="icontains"
+        field_name="tags", lookup_expr="contains"
     )
     created__gte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="gte"
