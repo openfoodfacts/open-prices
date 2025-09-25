@@ -34,8 +34,8 @@ class PriceViewSet(
     serializer_class = PriceFullSerializer  # see get_serializer_class
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = PriceFilter
-    ordering_fields = ["price", "date", "created"]
-    ordering = ["created"]
+    ordering_fields = ["id", "price", "date", "created"]
+    ordering = ["id"]
 
     def get_authenticators(self):
         if self.request and self.request.method in ["GET"]:
