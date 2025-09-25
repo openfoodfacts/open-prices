@@ -9,6 +9,12 @@ from open_prices.locations.models import Location
 
 
 class Command(BaseCommand):
+    """
+    Usage:
+    - python manage.py set_location_osm_brand_and_version
+    - python manage.py set_location_osm_brand_and_version --apply
+    """
+
     help = "Fill Location osm_brand, osm_version & osm_version_date fields (depending on its creation date!)."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
@@ -67,7 +73,7 @@ class Command(BaseCommand):
                         self.stdout.write(
                             f"Could not find historical data for {location}"
                         )
-                    if index % 100 == 0:
+                    if index and (index % 100 == 0):
                         print(index)
                     time.sleep(1)  # be nice to the OSM API
                 except Exception as e:
