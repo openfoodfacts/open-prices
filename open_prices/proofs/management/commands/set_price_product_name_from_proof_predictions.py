@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from simple_history.utils import update_change_reason
 
 from open_prices.prices.models import Price
 from open_prices.proofs.models import PriceTag, ReceiptItem
@@ -43,6 +44,10 @@ class Command(BaseCommand):
             if price_tag.get_predicted_product_name():
                 price_tag.price.product_name = price_tag.get_predicted_product_name()
                 price_tag.price.save(update_fields=["product_name"])
+                update_change_reason(
+                    price_tag.price,
+                    "set_price_product_name_from_proof_predictions command",
+                )
 
         # Step 2: ReceiptItem
         self.stdout.write("=== Running script on ReceiptItems...")
@@ -52,6 +57,10 @@ class Command(BaseCommand):
                     receipt_item.get_predicted_product_name()
                 )
                 receipt_item.price.save(update_fields=["product_name"])
+                update_change_reason(
+                    receipt_item.price,
+                    "set_price_product_name_from_proof_predictions command",
+                )
 
         self.stdout.write("=== Stats after ===")
         stats()
