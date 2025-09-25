@@ -16,7 +16,6 @@ from openfoodfacts.taxonomy import (
     map_to_canonical_id,
 )
 from simple_history.models import HistoricalRecords
-from simple_history.utils import update_change_reason
 
 from open_prices.challenges.models import Challenge
 
@@ -629,8 +628,8 @@ class Price(models.Model):
                         self.proof.set_tag(challenge.tag, save=True)  # important
         # save
         if changes:
+            self._change_reason = "Price.update_tags() method"
             self.save(update_fields=["tags"])
-            update_change_reason(self, "Price.update_tags() method")
 
     def has_category_tag(self, category_tag_list: list):
         if (
