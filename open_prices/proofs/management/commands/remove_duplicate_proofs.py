@@ -2,7 +2,6 @@ import argparse
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count
-from simple_history.utils import update_change_reason
 
 from open_prices.prices.models import Price
 from open_prices.proofs.models import Proof
@@ -107,8 +106,8 @@ class Command(BaseCommand):
             # Update proof_id for each price to point to the reference proof
             for price in prices_to_move:
                 price.proof = ref_proof
+                price._change_reason = "remove_duplicate_proofs command"
                 price.save()
-                update_change_reason(price, "remove_duplicate_proofs command")
 
             # Now delete the proofs
             for proof in proofs_to_delete:
