@@ -7,7 +7,12 @@ import django.core.validators
 import django.db.models.deletion
 import django.utils.timezone
 import simple_history.models
+from django.core import management
 from django.db import migrations, models
+
+
+def populate_history(apps, schema_editor):
+    management.call_command("populate_history", "--auto", "--batchsize", "1000")
 
 
 class Migration(migrations.Migration):
@@ -515,4 +520,5 @@ class Migration(migrations.Migration):
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
+        migrations.RunPython(populate_history),
     ]
