@@ -8,6 +8,7 @@ from django_q.tasks import async_task
 
 # Import custom lookups so that they are registered
 from open_prices.common import lookups  # noqa: F401
+from open_prices.common.db_func import LevenshteinLessEqual
 from open_prices.products import constants as product_constants
 
 
@@ -17,6 +18,40 @@ class ProductQuerySet(models.QuerySet):
 
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
+
+    def fuzzy_barcode_search(
+        self, code: str, max_distance: int = 3, limit: int | None = None
+    ):
+        """Use the `levenshtein_less_equal` from the fuzzystrmatch extension
+        to find Products with barcode that are similar to the given barcode.
+
+        Results are ordered by increasing Levenshtein distance.
+
+        :param code: The barcode to search for
+        :param max_distance: The maximum Levenshtein distance to consider
+        :param limit: The maximum number of results to return, or None for no
+            limit
+        :return: A queryset of Product with similar barcodes
+        """
+
+        # Easy way to prevent SQL injection and useless queries
+        if not code.isdigit():
+            return self.none()
+
+        qs = (
+            self.annotate(
+                distance=LevenshteinLessEqual(
+                    "code", code, max_distance, output_field=models.IntegerField()
+                ),
+            )
+            .filter(distance__lte=max_distance)
+            .order_by("distance")
+        )
+
+        if limit:
+            qs = qs[:limit]
+
+        return qs
 
 
 class Product(models.Model):
