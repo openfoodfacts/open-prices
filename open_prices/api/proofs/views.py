@@ -79,8 +79,8 @@ class ProofViewSet(
     serializer_class = ProofFullSerializer  # see get_serializer_class
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
-    ordering_fields = ["date", "price_count", "created"]
-    ordering = ["created"]
+    ordering_fields = ["id", "date", "price_count", "created"]
+    ordering = ["id"]
 
     def get_authenticators(self):
         if self.request and self.request.method in ["GET"]:
@@ -249,7 +249,7 @@ class PriceTagViewSet(
     serializer_class = PriceTagFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = PriceTagFilter
-    ordering_fields = ["proof_id", "created"]
+    ordering_fields = ["proof_id", "status", "created"]
     ordering = ["created"]
 
     def get_authenticators(self):
@@ -339,7 +339,7 @@ class ReceiptItemViewSet(
     http_method_names = ["get", "post", "patch", "delete"]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ReceiptItemFilter
-    ordering_fields = ["proof_id", "created", "order"]
+    ordering_fields = ["proof_id", "order", "status", "created"]
     ordering = ["order"]
 
     def get_authenticators(self):
