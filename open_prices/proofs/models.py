@@ -10,6 +10,7 @@ from django.db.models import Case, Count, F, Q, Value, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
+from simple_history.utils import update_change_reason
 
 from open_prices.challenges.models import Challenge
 
@@ -466,6 +467,7 @@ def proof_post_save_update_prices(sender, instance, created, **kwargs):
                 for field in Price.DUPLICATE_PROOF_FIELDS:
                     setattr(price, field, getattr(instance, field))
                     price.save()
+                    update_change_reason(price, "proof_post_save_update_prices signal")
 
 
 @receiver(signals.post_delete, sender=Proof)
