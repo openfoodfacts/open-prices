@@ -106,6 +106,7 @@ class Command(BaseCommand):
             # Update proof_id for each price to point to the reference proof
             for price in prices_to_move:
                 price.proof = ref_proof
+                price._change_reason = "remove_duplicate_proofs command"
                 price.save()
 
             # Now delete the proofs

@@ -465,6 +465,7 @@ def proof_post_save_update_prices(sender, instance, created, **kwargs):
             for price in instance.prices.all():
                 for field in Price.DUPLICATE_PROOF_FIELDS:
                     setattr(price, field, getattr(instance, field))
+                    price._change_reason = "Proof.update_location() method"
                     price.save()
 
 
