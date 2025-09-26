@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.85.0](https://github.com/openfoodfacts/open-prices/compare/v1.84.2...v1.85.0) (2025-09-26)
+
+
+### Features
+
+* implement a barcode similarity search feature for price tags ([#1009](https://github.com/openfoodfacts/open-prices/issues/1009)) ([da79d80](https://github.com/openfoodfacts/open-prices/commit/da79d80e627e0c9eae48826bad4006e64cf33bc8))
+
+
+### Bug Fixes
+
+* **API:** Locations: order by ID by default instead of created ([#1017](https://github.com/openfoodfacts/open-prices/issues/1017)) ([71592ea](https://github.com/openfoodfacts/open-prices/commit/71592eab519888d6f36163d389137143a4d94e9b))
+* **API:** Prices: order by ID by default instead of created ([#1015](https://github.com/openfoodfacts/open-prices/issues/1015)) ([df97f53](https://github.com/openfoodfacts/open-prices/commit/df97f53d6c76ca17bc4d18f77a86c8fe751ae254))
+* **API:** Proofs: order by ID by default instead of created ([#1014](https://github.com/openfoodfacts/open-prices/issues/1014)) ([a27a40a](https://github.com/openfoodfacts/open-prices/commit/a27a40a3ed34a8bea4f950718b8d7c30c958d3cd))
+* **Migration:** fix price migration 0012 (ArrayField) ([#1005](https://github.com/openfoodfacts/open-prices/issues/1005)) ([f6112e6](https://github.com/openfoodfacts/open-prices/commit/f6112e667a33a26aa034c0173d7842f0494cb294))
+* return "status": "duplicate" when a duplicate proof is uploaded ([#983](https://github.com/openfoodfacts/open-prices/issues/983)) ([79a8e99](https://github.com/openfoodfacts/open-prices/commit/79a8e99ad884de7a0b241949eca3b40e96b819f9))
+
+
+### Technical
+
+* **Challenges:** improve set_tags methods. new reset_tags methods ([#1007](https://github.com/openfoodfacts/open-prices/issues/1007)) ([cb61549](https://github.com/openfoodfacts/open-prices/commit/cb61549520988e47684de4d6eb4c30d340a5e038))
+* **README:** Add more info on Open Prices API & reuse ([#1013](https://github.com/openfoodfacts/open-prices/issues/1013)) ([47aba2b](https://github.com/openfoodfacts/open-prices/commit/47aba2bc74953a8c2410606cde5a4ea09f25b3b8))
+
 ## [1.84.2](https://github.com/openfoodfacts/open-prices/compare/v1.84.1...v1.84.2) (2025-09-20)
 
 
