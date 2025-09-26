@@ -195,6 +195,7 @@ class LocationCreateApiTest(TestCase):
                 self.assertEqual(
                     response.data["price_count"], location["price_count"]
                 )  # unchanged
+                self.assertEqual(response.data["detail"], "duplicate")
 
     def test_location_create_with_app_name(self):
         for index, (params, result) in enumerate(

@@ -42,7 +42,8 @@ class LocationViewSet(
         # save
         try:
             location = serializer.save(source=source)
-            response_status = status.HTTP_201_CREATED
+            response_data = self.serializer_class(location).data
+            response_status_code = status.HTTP_201_CREATED
         # avoid duplicates: return existing location instead
         except ValidationError as e:
             if any(
@@ -50,8 +51,12 @@ class LocationViewSet(
                 for constraint_name in location_constants.UNIQUE_CONSTRAINT_NAME_LIST
             ):
                 location = Location.objects.get(**serializer.validated_data)
-                response_status = status.HTTP_200_OK
-        return Response(self.serializer_class(location).data, status=response_status)
+                response_data = {
+                    **self.serializer_class(location).data,
+                    "detail": "duplicate",
+                }
+                response_status_code = status.HTTP_200_OK
+        return Response(response_data, status=response_status_code)
 
     @action(
         detail=False, methods=["GET"], url_path=r"osm/(?P<osm_type>\w+)/(?P<osm_id>\d+)"
