@@ -117,6 +117,21 @@ class OpenFoodFactsTest(TestCase):
         ]:
             self.assertFalse(common_openfoodfacts.barcode_is_valid(BARCODE_NOT_OK))
 
+    def test_barcode_fix_short_codes_from_usa(self):
+        for BARCODE_TUPLE in [
+            ("9948252990", "0099482529901"),  # 10 digits (proof_id 49190)
+            ("71627004002", "0716270040027"),  # 11 digits (proof_id 48443)
+            ("471058718081", "4710587180816"),  # 12 digits (proof_id 48849)
+            ("2006050050833", "2006050050833"),  # 13 digits valid
+        ]:
+            with self.subTest(BARCODE_TUPLE=BARCODE_TUPLE):
+                self.assertEqual(
+                    common_openfoodfacts.barcode_fix_short_codes_from_usa(
+                        BARCODE_TUPLE[0]
+                    ),
+                    BARCODE_TUPLE[1],
+                )
+
 
 class UtilsTest(TestCase):
     @classmethod

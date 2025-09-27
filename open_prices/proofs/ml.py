@@ -877,8 +877,22 @@ def run_and_save_price_tag_extraction(
             )
             continue
 
+        # barcode post-processing
+        # 1) fix barcode with some custom rules
+        # 2) if the barcode is still unknown, generate similar barcodes
         barcode = response.parsed.barcode
+        barcode_raw = barcode
         similar_barcodes = []
+        # 1) barcode fix
+        if barcode:
+            # only fix barcodes that are not valid
+            if len(barcode) < 13 and not common_openfoodfacts.barcode_is_valid(barcode):
+                # in the USA, some barcodes are not "complete"
+                if proof.currency == "USD":
+                    barcode = common_openfoodfacts.barcode_fix_short_codes_from_usa(
+                        barcode
+                    )
+
         # barcode similarity search is quite costly (500~1000ms for 4M
         # products), so we only run it if the barcode doesn't exist in the
         # database
@@ -896,7 +910,9 @@ def run_and_save_price_tag_extraction(
                 if p.distance > 0
             ]
         data = LabelWithSimilarBarcodes(
-            **dict(response.parsed), similar_barcodes=similar_barcodes
+            **dict(response.parsed),
+            barcode_raw=barcode_raw,
+            similar_barcodes=similar_barcodes,
         )
         try:
             prediction = PriceTagPrediction.objects.create(
