@@ -1,6 +1,4 @@
-import base64
 import datetime
-import io
 
 import openfoodfacts
 import requests
@@ -19,7 +17,6 @@ from openfoodfacts import (
 )
 from openfoodfacts.images import generate_image_url
 from openfoodfacts.types import JSONType
-from openfoodfacts.utils import URLBuilder
 
 OFF_CREATE_FIELDS = [
     "product_name",
@@ -323,29 +320,26 @@ def update_off_product(
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v2,
-        environment=Environment[os.getenv("ENVIRONMENT")],
+        environment=Environment[settings.OFF_ENVIRONMENT],
     )
     return client.product.update({"code": code, **update_params})
 
 
 def update_off_product_image(
-    code: str, flavor: str = "off", image_src: str = None, image_field: str = "front"
+    code: str,
+    flavor: str = "off",
+    image_data_base64: str = None,
+    selected: JSONType | None = None,
 ) -> JSONType | None:
-    imgdata = base64.b64decode(image_src.split(",")[1])
-    image_fp = io.BytesIO(imgdata)
-
-    base_url = URLBuilder.world(Flavor(flavor), Environment[os.getenv("ENVIRONMENT")])
-    url = f"{base_url}/cgi/product_image_upload.pl"
-
-    form_data = {}
-
-    form_data["user_id"] = (None, settings.OFF_DEFAULT_USER)
-    form_data["password"] = (None, settings.OFF_DEFAULT_PASSWORD)
-    form_data["code"] = (None, code)
-    form_data["imagefield"] = (None, image_field)
-    form_data[f"imgupload_{image_field}"] = ("image.png", image_fp)
-
-    return requests.post(
-        url,
-        files=form_data,
+    client = API(
+        user_agent=settings.OFF_USER_AGENT,
+        username=settings.OFF_DEFAULT_USER,
+        password=settings.OFF_DEFAULT_PASSWORD,
+        country=Country.world,
+        flavor=flavor,
+        version=APIVersion.v3,
+        environment=Environment[settings.OFF_ENVIRONMENT],
+    )
+    return client.product.upload_image(
+        code, image_data_base64=image_data_base64, selected=selected
     )

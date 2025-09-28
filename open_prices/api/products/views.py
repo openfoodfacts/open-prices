@@ -54,7 +54,7 @@ class ProductViewSet(
         result = update_off_product_image(
             code,
             flavor=request.data.get("flavor", "off"),
-            image_src=request.data.get("image_src"),
+            image_data_base64=request.data.get("image_data_base64"),
         )
         if result:
             return Response(result, status=200)
