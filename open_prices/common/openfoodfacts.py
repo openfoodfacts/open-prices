@@ -311,7 +311,7 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
 
 
 def update_off_product(
-    code: str, flavor: str = "off", update_params: dict = {}
+    code: str, flavor: str = "off", owner: str = None, update_params: dict = {}
 ) -> JSONType | None:
     client = API(
         user_agent=settings.OFF_USER_AGENT,
@@ -322,7 +322,11 @@ def update_off_product(
         version=APIVersion.v2,
         environment=Environment[settings.OFF_ENVIRONMENT],
     )
-    return client.product.update({"code": code, **update_params})
+    if owner:
+        comment = f"[Open Prices, user: {owner}]"
+    else:
+        comment = "[Open Prices]"
+    return client.product.update({"code": code, "comment": comment, **update_params})
 
 
 def update_off_product_image(
