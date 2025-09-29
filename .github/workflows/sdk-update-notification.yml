@@ -1,0 +1,138 @@
+---
+name: SDK Update Notification
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify-sdk-repos:
+    runs-on: ubuntu-latest
+    if: >
+      contains(github.event.release.body, 'API') ||
+      contains(github.event.release.name, 'API')
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create SDK update issues
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const repositories = [
+              'openfoodfacts/openfoodfacts-php',
+              'openfoodfacts/openfoodfacts-js',
+              'openfoodfacts/openfoodfacts-laravel',
+              'openfoodfacts/openfoodfacts-python',
+              'openfoodfacts/openfoodfacts-ruby',
+              'openfoodfacts/openfoodfacts-java',
+              'openfoodfacts/openfoodfacts-elixir',
+              'openfoodfacts/openfoodfacts-dart',
+              'openfoodfacts/openfoodfacts-go'
+            ];
+
+            const releaseTag = context.payload.release.tag_name;
+            const releaseName = context.payload.release.name;
+            const releaseBody = context.payload.release.body;
+            const releaseUrl = context.payload.release.html_url;
+
+            // Extract API-related changes from release notes
+            const apiChanges = [];
+            const lines = releaseBody.split('\n');
+
+            for (const line of lines) {
+              if (line.toLowerCase().includes('api') &&
+                  (line.includes('*') || line.includes('-') ||
+                   line.includes('•'))) {
+                apiChanges.push(line.trim());
+              }
+            }
+
+            const issueTitle = 'Update SDK for Open Prices API changes (' +
+                               releaseTag + ')';
+
+            // Build issue body parts separately to avoid template issues
+            const header = '## API Changes in Open Prices ' + releaseTag +
+                           '\n\n';
+            const intro = 'A new release of [Open Prices]' +
+                          '(https://github.com/openfoodfacts/open-prices) ' +
+                          'has been published that includes API changes.\n\n';
+            const releaseInfo = '**Release:** [' + (releaseName || releaseTag) +
+                                '](' + releaseUrl + ')\n\n';
+            const changesHeader = '### API Changes Detected:\n';
+            const changesList = apiChanges.length > 0
+              ? apiChanges.map(change => '- ' + change).join('\n')
+              : '- API changes mentioned in release notes';
+            const actionRequired = '\n\n### Action Required:\n' +
+                                   'Please review the changes and update ' +
+                                   'this SDK accordingly to maintain ' +
+                                   'compatibility with the Open Prices ' +
+                                   'API.\n\n';
+            const resources = '### Resources:\n- [Open Prices Release Notes](' +
+                              releaseUrl + ')\n- [Open Prices API Docs]' +
+                              '(https://prices.openfoodfacts.org/docs)\n- ' +
+                              '[Open Prices Repository]' +
+                              '(https://github.com/openfoodfacts/open-prices)\n\n';
+            const footer = '---\n*This issue was automatically created by ' +
+                           'the Open Prices SDK update notification ' +
+                           'system.*';
+
+            const issueBody = header + intro + releaseInfo + changesHeader +
+                              changesList + actionRequired + resources +
+                              footer;
+
+            for (const repo of repositories) {
+              try {
+                const [owner, repoName] = repo.split('/');
+
+                // Check if repo exists and is accessible
+                try {
+                  await github.rest.repos.get({
+                    owner: owner,
+                    repo: repoName
+                  });
+                } catch (error) {
+                  console.log('Skipping ' + repo +
+                              ': Repository not accessible or does not exist');
+                  continue;
+                }
+
+                // Check if a similar issue already exists
+                const existingIssues = await github.rest.issues.listForRepo({
+                  owner: owner,
+                  repo: repoName,
+                  state: 'open',
+                  labels: 'api-update',
+                  per_page: 10
+                });
+
+                const duplicateIssue = existingIssues.data.find(issue =>
+                  issue.title.includes(releaseTag) ||
+                  issue.title.includes('Open Prices API changes')
+                );
+
+                if (duplicateIssue) {
+                  console.log('Issue already exists for ' + repo + ': ' +
+                              duplicateIssue.html_url);
+                  continue;
+                }
+
+                // Create the issue
+                const issue = await github.rest.issues.create({
+                  owner: owner,
+                  repo: repoName,
+                  title: issueTitle,
+                  body: issueBody,
+                  labels: ['api-update', 'enhancement']
+                });
+
+                console.log('Created issue in ' + repo + ': ' +
+                            issue.data.html_url);
+
+              } catch (error) {
+                console.error('Failed to create issue in ' + repo + ':',
+                              error.message);
+              }
+            }
