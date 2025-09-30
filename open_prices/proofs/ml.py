@@ -883,17 +883,14 @@ def run_and_save_price_tag_extraction(
         # products), so we only run it if the barcode doesn't exist in the
         # database
         if barcode and not Product.objects.filter(code=barcode).exists():
+            # Only return products with a levenshtein distance between 1 and 3
+            # Don't return too many results
+            similar_barcodes_qs = Product.objects.fuzzy_barcode_search(
+                barcode, max_distance=3, limit=11
+            ).exclude(distance=0)
             similar_barcodes = [
                 BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
-                for p in Product.objects.fuzzy_barcode_search(
-                    barcode,
-                    # Only return products with a levenshtein distance of 3 or
-                    # less
-                    max_distance=3,
-                    # Don't return too many results
-                    limit=10,
-                )
-                if p.distance > 0
+                for p in similar_barcodes_qs
             ]
         data = LabelWithSimilarBarcodes(
             **dict(response.parsed), similar_barcodes=similar_barcodes
