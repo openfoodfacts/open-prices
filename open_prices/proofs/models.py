@@ -185,8 +185,8 @@ class Proof(models.Model):
     owner_consumption = models.BooleanField(blank=True, null=True)
     owner_comment = models.TextField(blank=True, null=True)
 
-    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    prediction_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    price_count = models.PositiveIntegerField(default=0)
+    prediction_count = models.PositiveIntegerField(default=0)
 
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
@@ -599,7 +599,7 @@ class PriceTag(models.Model):
         help_text="The annotation status",
     )
 
-    prediction_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    prediction_count = models.PositiveIntegerField(default=0)
 
     created_by = models.CharField(
         max_length=100,

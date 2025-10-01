@@ -52,30 +52,18 @@ class User(models.Model):
 
     is_moderator = models.BooleanField(default=False)
 
-    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    price_type_product_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    price_type_category_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
+    price_count = models.PositiveIntegerField(default=0)
+    price_type_product_count = models.PositiveIntegerField(default=0)
+    price_type_category_count = models.PositiveIntegerField(default=0)
     price_kind_community_count = models.PositiveIntegerField(default=0)
     price_kind_consumption_count = models.PositiveIntegerField(default=0)
-    price_in_proof_owned_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    price_in_proof_not_owned_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    price_not_owned_in_proof_owned_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    location_type_osm_country_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    price_in_proof_owned_count = models.PositiveIntegerField(default=0)
+    price_in_proof_not_owned_count = models.PositiveIntegerField(default=0)
+    price_not_owned_in_proof_owned_count = models.PositiveIntegerField(default=0)
+    location_count = models.PositiveIntegerField(default=0)
+    location_type_osm_country_count = models.PositiveIntegerField(default=0)
+    product_count = models.PositiveIntegerField(default=0)
+    proof_count = models.PositiveIntegerField(default=0)
     proof_kind_community_count = models.PositiveIntegerField(default=0)
     proof_kind_consumption_count = models.PositiveIntegerField(default=0)
     currency_count = models.PositiveIntegerField(default=0)
