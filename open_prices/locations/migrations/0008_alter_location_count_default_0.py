@@ -9,10 +9,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name="location",
-            unique_together=set(),
-        ),
         migrations.AlterField(
             model_name="location",
             name="price_count",
