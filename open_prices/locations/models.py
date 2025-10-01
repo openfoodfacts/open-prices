@@ -79,10 +79,10 @@ class Location(models.Model):
     # type ONLINE
     website_url = models.URLField(blank=True, null=True)
 
-    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    user_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    price_count = models.PositiveIntegerField(default=0)
+    user_count = models.PositiveIntegerField(default=0)
+    product_count = models.PositiveIntegerField(default=0)
+    proof_count = models.PositiveIntegerField(default=0)
 
     source = models.CharField(blank=True, null=True)
 
