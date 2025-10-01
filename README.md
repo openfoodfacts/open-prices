@@ -44,7 +44,7 @@ See [CONTRIBUTING.md](https://github.com/openfoodfacts/open-prices/blob/main/CON
 
 <details>
 <summary><h2>Weekly meetings</h2></summary>
-* We e-meet Wednesdays at 14:00 Paris Time
+* We e-meet Thrusdays at 14:00 Paris Time
 * ![Google Meet](https://img.shields.io/badge/Google%20Meet-00897B?logo=google-meet&logoColor=white) Video call link: https://meet.google.com/oin-hiqp-tmd
 * Join by phone: https://tel.meet/oin-hiqp-tmd?pin=5784334159966
 * Add the Event to your Calendar by [adding the Open Food Facts community calendar to your calendar](https://wiki.openfoodfacts.org/Events)
