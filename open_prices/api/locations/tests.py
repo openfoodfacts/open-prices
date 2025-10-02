@@ -4,6 +4,7 @@ from django.urls import reverse
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.users.factories import SessionFactory
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -227,21 +228,40 @@ class LocationCreateApiTest(TestCase):
 class LocationUpdateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user_session = SessionFactory()
         cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.url = reverse("api:locations-detail", args=[cls.location.id])
+        cls.data = {"osm_name": "Carrefour"}
 
     def test_location_update_not_allowed(self):
-        data = {"osm_name": "Carrefour"}
-        response = self.client.patch(self.url, data, content_type="application/json")
+        # anonymous
+        response = self.client.patch(
+            self.url, self.data, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 405)
+        # authenticated
+        response = self.client.patch(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 405)
 
 
 class LocationDeleteApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user_session = SessionFactory()
         cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.url = reverse("api:locations-detail", args=[cls.location.id])
 
     def test_location_delete_not_allowed(self):
+        # anonymous
         response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 405)
+        # authenticated
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
+        )
         self.assertEqual(response.status_code, 405)
