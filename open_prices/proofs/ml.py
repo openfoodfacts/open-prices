@@ -900,8 +900,8 @@ def run_and_save_price_tag_extraction(
             # Only return products with a levenshtein distance between 1 and 3
             # Don't return too many results
             similar_barcodes_qs = Product.objects.fuzzy_barcode_search(
-                barcode, max_distance=3, limit=11
-            ).exclude(distance=0)
+                barcode, max_distance=3, limit=10
+            )
             similar_barcodes = [
                 BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
                 for p in similar_barcodes_qs

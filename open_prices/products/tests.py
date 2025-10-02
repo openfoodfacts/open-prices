@@ -312,13 +312,17 @@ class TestProductModel(TestCase):
         ProductFactory(code="2123456789103")
 
         results = list(
-            Product.objects.fuzzy_barcode_search("0123456789100", max_distance=0)
+            Product.objects.fuzzy_barcode_search(
+                "0123456789100", max_distance=0, exclude_distance_0=False
+            )
         )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].code, "0123456789100")
 
         results = list(
-            Product.objects.fuzzy_barcode_search("0123456789100", max_distance=1)
+            Product.objects.fuzzy_barcode_search(
+                "0123456789100", max_distance=1, exclude_distance_0=False
+            )
         )
         self.assertEqual(len(results), 6)
         self.assertEqual(
@@ -334,6 +338,15 @@ class TestProductModel(TestCase):
         )
 
         results = list(
-            Product.objects.fuzzy_barcode_search("0123456789100", max_distance=2)
+            Product.objects.fuzzy_barcode_search(
+                "0123456789100", max_distance=2, exclude_distance_0=False
+            )
         )
         self.assertEqual(len(results), 12)
+
+        results = list(
+            Product.objects.fuzzy_barcode_search(
+                "0123456789100", max_distance=3, exclude_distance_0=True
+            )
+        )
+        self.assertEqual(len(results), 11)

@@ -20,7 +20,11 @@ class ProductQuerySet(models.QuerySet):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
     def fuzzy_barcode_search(
-        self, code: str, max_distance: int = 3, limit: int | None = None
+        self,
+        code: str,
+        max_distance: int = 3,
+        limit: int | None = None,
+        exclude_distance_0: bool = True,
     ):
         """Use the `levenshtein_less_equal` from the fuzzystrmatch extension
         to find Products with barcode that are similar to the given barcode.
@@ -47,6 +51,9 @@ class ProductQuerySet(models.QuerySet):
             .filter(distance__lte=max_distance)
             .order_by("distance")
         )
+
+        if exclude_distance_0:
+            qs = qs.exclude(distance=0)
 
         if limit:
             qs = qs[:limit]
