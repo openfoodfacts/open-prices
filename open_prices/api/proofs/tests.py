@@ -571,14 +571,26 @@ class PriceTagListApiTest(TestCase):
         self.assertEqual(item_2["id"], self.price_tag_2.id)
         self.assertIsNone(item_2["price_id"])
 
-    def test_price_tag_list_filter_with_status(self):
+    def test_price_tag_list_filter_by_proof(self):
+        # proof_id
+        url = self.url + f"?proof_id={self.proof.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+
+    def test_price_tag_list_filter_by_price(self):
+        # price_id
+        url = self.url + f"?price_id={self.price.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_price_tag_list_filter_by_status(self):
+        # exact
         url = self.url + "?status=0"  # deleted
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(len(response.data["items"]), 1)
         self.assertEqual(response.data["items"][0]["id"], self.price_tag_3.id)
-
-    def test_price_tag_list_filter_with_status_is_null(self):
+        # isnull True / False
         url = self.url + "?status__isnull=True"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
@@ -586,6 +598,9 @@ class PriceTagListApiTest(TestCase):
         # Price tag 1 is linked to price, price tag 3 is deleted, so only
         # price tag 2 is returned
         self.assertEqual(response.data["items"][0]["id"], self.price_tag_2.id)
+        url = self.url + "?status__isnull=False"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
 
     def test_price_list_filter_by_tags(self):
         url = self.url + "?tags__contains=prediction-found-product"
