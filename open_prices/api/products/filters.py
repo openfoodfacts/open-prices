@@ -28,6 +28,9 @@ class ProductFilter(django_filters.FilterSet):
     price_count__lte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="lte"
     )
+    source__isnull = django_filters.BooleanFilter(
+        field_name="source", lookup_expr="isnull"
+    )
 
     class Meta:
         model = Product

@@ -10,6 +10,7 @@ PRODUCT_8001505005707 = {
     "labels_tags": ["en:no-gluten", "en:organic"],
     "brands_tags": ["rigoni-di-asiago"],
     "price_count": 15,
+    "source": "off",
 }
 
 
@@ -108,6 +109,19 @@ class ProductListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
+
+    def test_product_list_filter_by_source(self):
+        # exact
+        url = self.url + "?source=off"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # isnull True / False
+        url = self.url + "?source__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?source__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
 
 class ProductDetailApiTest(TestCase):
