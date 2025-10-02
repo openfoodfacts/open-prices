@@ -94,7 +94,10 @@ def generate_main_image_url(
         image_rev = images[image_key]["rev"]
         image_id = f"{image_key}.{image_rev}.400"
         return generate_image_url(
-            code, image_id=image_id, flavor=flavor, environment=Environment.org
+            code,
+            image_id=image_id,
+            flavor=flavor,
+            environment=Environment[settings.OFF_ENVIRONMENT],
         )
 
     return None
@@ -108,7 +111,7 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v2,
-        environment=Environment.org,
+        environment=Environment[settings.OFF_ENVIRONMENT],
     )
     return client.product.get(code)
 

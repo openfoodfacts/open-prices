@@ -277,14 +277,6 @@ SHELL_PLUS_POST_IMPORTS = [
 ]
 
 
-# Authentication
-# ------------------------------------------------------------------------------
-
-OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
-SESSION_COOKIE_NAME = "opsession"
-OFF_USER_AGENT = "open-prices/0.1.0"
-
-
 # Google Cloud Vision API
 # ------------------------------------------------------------------------------
 
@@ -312,6 +304,12 @@ ENABLE_ML_PREDICTIONS = os.getenv("ENABLE_ML_PREDICTIONS") == "True"
 
 # Open Food Facts
 # ------------------------------------------------------------------------------
+
+OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
+SESSION_COOKIE_NAME = "opsession"
+OFF_USER_AGENT = "open-prices/0.1.0"
+
+OFF_ENVIRONMENT = os.getenv("OFF_ENVIRONMENT", "net")  # or "org"
 
 # https://world.openfoodfacts.org/contributor/openfoodfacts-contributors
 ANONYMOUS_USER_ID = "openfoodfacts-contributors"
