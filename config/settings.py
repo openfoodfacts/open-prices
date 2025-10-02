@@ -24,6 +24,7 @@ ALLOWED_HOSTS = [x.strip() for x in os.getenv("ALLOWED_HOSTS", "").split(",")]
 # front-end is using Vue.js and Django REST Framework
 CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
 
+
 # App config
 # ------------------------------------------------------------------------------
 
@@ -310,6 +311,9 @@ SESSION_COOKIE_NAME = "opsession"
 OFF_USER_AGENT = "open-prices/0.1.0"
 
 OFF_ENVIRONMENT = os.getenv("OFF_ENVIRONMENT", "net")  # or "org"
+
+OFF_DEFAULT_USER = os.getenv("OFF_DEFAULT_USER", "open-prices")
+OFF_DEFAULT_PASSWORD = os.getenv("OFF_DEFAULT_PASSWORD")
 
 # https://world.openfoodfacts.org/contributor/openfoodfacts-contributors
 ANONYMOUS_USER_ID = "openfoodfacts-contributors"

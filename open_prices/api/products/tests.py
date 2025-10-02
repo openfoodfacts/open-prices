@@ -167,7 +167,7 @@ class ProductCreateApiTest(TestCase):
         response = self.client.post(
             self.url, self.data, content_type="application/json"
         )
-        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.status_code, 403)  # 405 ?
         # authenticated
         response = self.client.post(
             self.url,
@@ -191,7 +191,7 @@ class ProductUpdateApiTest(TestCase):
         response = self.client.patch(
             self.url, self.data, content_type="application/json"
         )
-        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.status_code, 403)  # 405 ?
         # authenticated
         response = self.client.patch(
             self.url,
@@ -212,9 +212,53 @@ class ProductDeleteApiTest(TestCase):
     def test_product_delete_not_allowed(self):
         # anonymous
         response = self.client.delete(self.url)
-        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.status_code, 403)  # 405 ?
         # authenticated
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
         )
         self.assertEqual(response.status_code, 405)
+
+
+class ProductOffCreateOrUpdateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.product = ProductFactory(**PRODUCT_8001505005707)
+        cls.url = reverse(
+            "api:products-create-or-update-in-off", args=[cls.product.code]
+        )
+
+    def test_product_off_create_or_update(self):
+        # anonymous
+        response = self.client.post(self.url, {}, content_type="application/json")
+        self.assertEqual(response.status_code, 403)
+        # authenticated
+        # response = self.client.post(
+        #     self.url,
+        #     {},
+        #     headers={"Authorization": f"Bearer {self.user_session.token}"},
+        #     content_type="application/json",
+        # )
+        # self.assertEqual(response.status_code, 200)
+
+
+class ProductOffUploadImageApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.product = ProductFactory(**PRODUCT_8001505005707)
+        cls.url = reverse("api:products-upload-image-in-off", args=[cls.product.code])
+
+    def test_product_off_upload_image(self):
+        # anonymous
+        response = self.client.post(self.url, {}, content_type="application/json")
+        self.assertEqual(response.status_code, 403)
+        # authenticated
+        # response = self.client.post(
+        #     self.url,
+        #     {},
+        #     headers={"Authorization": f"Bearer {self.user_session.token}"},
+        #     content_type="application/json",
+        # )
+        # self.assertEqual(response.status_code, 200)

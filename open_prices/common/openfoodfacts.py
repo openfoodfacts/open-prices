@@ -310,13 +310,13 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
     return barcode
 
 
-def update_off_product(
-    code: str, flavor: str = "off", owner: str = None, update_params: dict = {}
+def create_or_update_product_in_off(
+    code: str, flavor: str = Flavor.off, owner: str = None, update_params: dict = {}
 ) -> JSONType | None:
     client = API(
-        user_agent=settings.OFF_USER_AGENT,
         username=settings.OFF_DEFAULT_USER,
         password=settings.OFF_DEFAULT_PASSWORD,
+        user_agent=settings.OFF_USER_AGENT,
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v2,
@@ -329,9 +329,9 @@ def update_off_product(
     return client.product.update({"code": code, "comment": comment, **update_params})
 
 
-def update_off_product_image(
+def upload_product_image_in_off(
     code: str,
-    flavor: str = "off",
+    flavor: str = Flavor.off,
     image_data_base64: str = None,
     selected: JSONType | None = None,
 ) -> JSONType | None:
