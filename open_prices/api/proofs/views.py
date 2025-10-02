@@ -187,14 +187,14 @@ class ProofViewSet(
             # if the status code is not 201 Created.
             # See for more information:
             # https://github.com/openfoodfacts/smooth-app/issues/6855#issuecomment-3265072440
-            status_code = status.HTTP_200_OK
+            response_status_code = status.HTTP_200_OK
             smoothie_version = get_smoothie_app_version(source)
             if smoothie_version[0] is not None and (smoothie_version <= (4, 20)):
-                status_code = status.HTTP_201_CREATED
+                response_status_code = status.HTTP_201_CREATED
 
             return Response(
                 {**ProofFullSerializer(duplicate_proof).data, "detail": "duplicate"},
-                status=status_code,
+                status=response_status_code,
             )
 
         save_kwargs = {
