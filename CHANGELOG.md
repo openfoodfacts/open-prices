@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.85.1](https://github.com/openfoodfacts/open-prices/compare/v1.85.0...v1.85.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* **Price Tags:** fix bug introduced by a small refactoring in the barcode similarity queryset ([#1032](https://github.com/openfoodfacts/open-prices/issues/1032)) ([5bab096](https://github.com/openfoodfacts/open-prices/commit/5bab0966fbb6719f901af65238a3649fb09c5c7a))
+
+
+### Technical
+
+* **Products:** API: new filter by source__isnull ([#1030](https://github.com/openfoodfacts/open-prices/issues/1030)) ([d758b78](https://github.com/openfoodfacts/open-prices/commit/d758b78535f6e8c0f3e0224e58e187b92d5d3e51))
+
 ## [1.85.0](https://github.com/openfoodfacts/open-prices/compare/v1.84.2...v1.85.0) (2025-10-02)
 
 
