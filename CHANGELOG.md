@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.85.0](https://github.com/openfoodfacts/open-prices/compare/v1.84.2...v1.85.0) (2025-10-02)
+
+
+### Features
+
+* implement a barcode similarity search feature for price tags ([#1009](https://github.com/openfoodfacts/open-prices/issues/1009)) ([da79d80](https://github.com/openfoodfacts/open-prices/commit/da79d80e627e0c9eae48826bad4006e64cf33bc8))
+* **PriceTag:** fix some barcodes post-prediction with USD-specific rules ([#1022](https://github.com/openfoodfacts/open-prices/issues/1022)) ([8cd94e9](https://github.com/openfoodfacts/open-prices/commit/8cd94e931c6606a086f25799fc4c04d345c788b9))
+
+
+### Bug Fixes
+
+* **API:** Locations: order by ID by default instead of created ([#1017](https://github.com/openfoodfacts/open-prices/issues/1017)) ([71592ea](https://github.com/openfoodfacts/open-prices/commit/71592eab519888d6f36163d389137143a4d94e9b))
+* **API:** Prices: order by ID by default instead of created ([#1015](https://github.com/openfoodfacts/open-prices/issues/1015)) ([df97f53](https://github.com/openfoodfacts/open-prices/commit/df97f53d6c76ca17bc4d18f77a86c8fe751ae254))
+* **API:** Proofs: order by ID by default instead of created ([#1014](https://github.com/openfoodfacts/open-prices/issues/1014)) ([a27a40a](https://github.com/openfoodfacts/open-prices/commit/a27a40a3ed34a8bea4f950718b8d7c30c958d3cd))
+* **Migration:** fix price migration 0012 (ArrayField) ([#1005](https://github.com/openfoodfacts/open-prices/issues/1005)) ([f6112e6](https://github.com/openfoodfacts/open-prices/commit/f6112e667a33a26aa034c0173d7842f0494cb294))
+* return "status": "duplicate" when a duplicate proof is uploaded ([#983](https://github.com/openfoodfacts/open-prices/issues/983)) ([79a8e99](https://github.com/openfoodfacts/open-prices/commit/79a8e99ad884de7a0b241949eca3b40e96b819f9))
+
+
+### Technical
+
+* **Challenges:** improve set_tags methods. new reset_tags methods ([#1007](https://github.com/openfoodfacts/open-prices/issues/1007)) ([cb61549](https://github.com/openfoodfacts/open-prices/commit/cb61549520988e47684de4d6eb4c30d340a5e038))
+* **Locations:** return "detail": "duplicate" when a duplicate location is created ([#1019](https://github.com/openfoodfacts/open-prices/issues/1019)) ([52ea4f4](https://github.com/openfoodfacts/open-prices/commit/52ea4f40f015510b679aa41ab5c5555e145b4eb4))
+* **Price Tags:** small refactoring in the barcode similarity queryset. ref [#1009](https://github.com/openfoodfacts/open-prices/issues/1009) ([83fed73](https://github.com/openfoodfacts/open-prices/commit/83fed735678783db58070e0ac9ba3cfc1df8f78e))
+* **README:** Add more info on Open Prices API & reuse ([#1013](https://github.com/openfoodfacts/open-prices/issues/1013)) ([47aba2b](https://github.com/openfoodfacts/open-prices/commit/47aba2bc74953a8c2410606cde5a4ea09f25b3b8))
+* **README:** new weekly meeting day (Thursday instead of Wednesday). closes [#1026](https://github.com/openfoodfacts/open-prices/issues/1026) ([5dd4349](https://github.com/openfoodfacts/open-prices/commit/5dd43498f0fb19e29909b9fd2c3e0229e45f9d05))
+* **Stats:** avoid count fields being None (default 0) ([#1027](https://github.com/openfoodfacts/open-prices/issues/1027)) ([c3d6791](https://github.com/openfoodfacts/open-prices/commit/c3d6791843ceb04f94fbf8d0c9c4747a8b316781))
+
 ## [1.84.2](https://github.com/openfoodfacts/open-prices/compare/v1.84.1...v1.84.2) (2025-09-20)
 
 
