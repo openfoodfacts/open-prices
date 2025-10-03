@@ -308,3 +308,42 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
         if barcode_is_valid(barcode_temp):
             return barcode_temp
     return barcode
+
+
+def create_or_update_product_in_off(
+    code: str, flavor: str = Flavor.off, owner: str = None, update_params: dict = {}
+) -> JSONType | None:
+    client = API(
+        username=settings.OFF_DEFAULT_USER,
+        password=settings.OFF_DEFAULT_PASSWORD,
+        user_agent=settings.OFF_USER_AGENT,
+        country=Country.world,
+        flavor=flavor,
+        version=APIVersion.v2,
+        environment=Environment[settings.OFF_ENVIRONMENT],
+    )
+    if owner:
+        comment = f"[Open Prices, user: {owner}]"
+    else:
+        comment = "[Open Prices]"
+    return client.product.update({"code": code, "comment": comment, **update_params})
+
+
+def upload_product_image_in_off(
+    code: str,
+    flavor: str = Flavor.off,
+    image_data_base64: str = None,
+    selected: JSONType | None = None,
+) -> JSONType | None:
+    client = API(
+        user_agent=settings.OFF_USER_AGENT,
+        username=settings.OFF_DEFAULT_USER,
+        password=settings.OFF_DEFAULT_PASSWORD,
+        country=Country.world,
+        flavor=flavor,
+        version=APIVersion.v3,
+        environment=Environment[settings.OFF_ENVIRONMENT],
+    )
+    return client.product.upload_image(
+        code, image_data_base64=image_data_base64, selected=selected
+    )
