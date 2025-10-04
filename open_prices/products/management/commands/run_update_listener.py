@@ -3,7 +3,7 @@ import time
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from openfoodfacts import Flavor
-from openfoodfacts.redis import RedisUpdate
+from openfoodfacts.redis import ProductUpdateEvent
 from openfoodfacts.redis import UpdateListener as BaseUpdateListener
 from openfoodfacts.redis import get_redis_client
 from openfoodfacts.utils import get_logger
@@ -14,7 +14,7 @@ logger = get_logger()
 
 
 class UpdateListener(BaseUpdateListener):
-    def process_redis_update(self, redis_update: RedisUpdate):
+    def process_redis_update(self, redis_update: ProductUpdateEvent):
         logger.debug("New update: %s", redis_update)
 
         if redis_update.product_type == "food":
