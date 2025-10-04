@@ -32,7 +32,7 @@ x-api-common: &api-common
     - ENABLE_REDIS_UPDATES
     - REDIS_HOST
     - REDIS_PORT
-    - REDIS_STREAM_NAME
+    - REDIS_PRODUCT_UPDATES_STREAM_NAME
     - REDIS_LATEST_ID_KEY
   networks:
     - default

@@ -53,7 +53,7 @@ class Command(BaseCommand):
         )
         listener = UpdateListener(
             redis_client=redis_client,
-            redis_stream_name=settings.REDIS_STREAM_NAME,
             redis_latest_id_key=settings.REDIS_LATEST_ID_KEY,
+            product_updates_stream_name=settings.REDIS_PRODUCT_UPDATES_STREAM_NAME,
         )
         listener.run()
