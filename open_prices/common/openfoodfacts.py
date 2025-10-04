@@ -97,7 +97,7 @@ def generate_main_image_url(
             code,
             image_id=image_id,
             flavor=flavor,
-            environment=Environment[settings.OFF_ENVIRONMENT],
+            environment=Environment[settings.ENVIRONMENT],
         )
 
     return None
@@ -111,7 +111,7 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v2,
-        environment=Environment[settings.OFF_ENVIRONMENT],
+        environment=Environment[settings.ENVIRONMENT],
     )
     return client.product.get(code)
 
@@ -320,7 +320,7 @@ def create_or_update_product_in_off(
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v2,
-        environment=Environment[settings.OFF_ENVIRONMENT],
+        environment=Environment[settings.ENVIRONMENT],
     )
     if owner:
         comment = f"[Open Prices, user: {owner}]"
@@ -342,7 +342,7 @@ def upload_product_image_in_off(
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v3,
-        environment=Environment[settings.OFF_ENVIRONMENT],
+        environment=Environment[settings.ENVIRONMENT],
     )
     return client.product.upload_image(
         code, image_data_base64=image_data_base64, selected=selected
