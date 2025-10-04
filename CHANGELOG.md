@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.86.2](https://github.com/openfoodfacts/open-prices/compare/v1.86.1...v1.86.2) (2025-10-04)
+
+
+### Bug Fixes
+
+* **deps:** fix Redis import following upgrade of openfoodfacts-python ([#1038](https://github.com/openfoodfacts/open-prices/issues/1038)) ([f63cd31](https://github.com/openfoodfacts/open-prices/commit/f63cd31671eea6852f817df9e1d550d7e85a8af9))
+* **deps:** fix Redis params following upgrade of openfoodfacts-python (2/2) ([#1040](https://github.com/openfoodfacts/open-prices/issues/1040)) ([8be9dc0](https://github.com/openfoodfacts/open-prices/commit/8be9dc04c8234484b327ab1c8af5b8e688e258cf))
+
 ## [1.86.1](https://github.com/openfoodfacts/open-prices/compare/v1.86.0...v1.86.1) (2025-10-04)
 
 
