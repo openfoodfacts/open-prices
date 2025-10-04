@@ -136,7 +136,6 @@ jobs:
           echo "CSRF_TRUSTED_ORIGINS=${{ env.CSRF_TRUSTED_ORIGINS }}" >> .env
           # Number of gunicorn workers able to handle requests
           echo "GUNICORN_WORKERS=4" >> .env
-          echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
           echo "SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
           echo "POSTGRES_EXPOSE=127.0.0.1:5433" >> .env
@@ -145,6 +144,8 @@ jobs:
           echo "POSTGRES_USER=postgres" >> .env
           echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
           echo "ENVIRONMENT=${{ env.ENVIRONMENT }}" >> .env
+          echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
+          echo "OFF_DEFAULT_PASSWORD=${{ secrets.OFF_DEFAULT_PASSWORD }}" >> .env
           echo "GOOGLE_CLOUD_VISION_API_KEY=${{ secrets.GOOGLE_CLOUD_VISION_API_KEY }}" >> .env
           echo "GOOGLE_GENAI_USE_VERTEXAI=true" >> .env
           echo "GOOGLE_CLOUD_LOCATION=europe-west1" >> .env

@@ -2,7 +2,6 @@ x-api-common: &api-common
   image: ghcr.io/openfoodfacts/open-prices/api:${TAG:-dev}
   restart: $RESTART_POLICY
   environment:
-    - ENVIRONMENT
     - POSTGRES_DB
     - POSTGRES_USER
     - POSTGRES_PASSWORD
@@ -13,7 +12,9 @@ x-api-common: &api-common
     - Q2_SYNC
     - ALLOWED_HOSTS
     - CSRF_TRUSTED_ORIGINS
+    - ENVIRONMENT
     - OAUTH2_SERVER_URL
+    - OFF_DEFAULT_PASSWORD
     - SENTRY_DSN
     - LOG_LEVEL
     - GOOGLE_CLOUD_VISION_API_KEY
