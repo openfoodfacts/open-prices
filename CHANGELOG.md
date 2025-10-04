@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.86.1](https://github.com/openfoodfacts/open-prices/compare/v1.86.0...v1.86.1) (2025-10-04)
+
+
+### Bug Fixes
+
+* **settings:** rename OFF_ENVIRONEMENT to ENVIRONMENT ([#1036](https://github.com/openfoodfacts/open-prices/issues/1036)) ([d1b4d5d](https://github.com/openfoodfacts/open-prices/commit/d1b4d5d0601929e10cf7373a6c15ffd8dda39b1a))
+
 ## [1.86.0](https://github.com/openfoodfacts/open-prices/compare/v1.85.1...v1.86.0) (2025-10-04)
 
 
