@@ -159,7 +159,7 @@ jobs:
           echo "ENABLE_IMPORT_OPF_DB_TASK=True" >> .env
           echo "REDIS_HOST=${{ env.REDIS_HOST }}" >> .env
           echo "REDIS_PORT=${{ env.REDIS_PORT }}" >> .env
-          echo "REDIS_STREAM_NAME=product_updates" >> .env
+          echo "REDIS_PRODUCT_UPDATES_STREAM_NAME=product_updates" >> .env
           echo "ENABLE_REDIS_UPDATES=True" >> .env
 
     - name: Create Docker volumes
