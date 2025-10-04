@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.86.0](https://github.com/openfoodfacts/open-prices/compare/v1.85.1...v1.86.0) (2025-10-04)
+
+
+### Features
+
+* **Products:** New API endpoints to update/add Product Opener products and images ([#1012](https://github.com/openfoodfacts/open-prices/issues/1012)) ([6851f91](https://github.com/openfoodfacts/open-prices/commit/6851f917e286fa5efe7314c4ff4b333da617daf3))
+
+
+### Technical
+
+* add missing OFF_DEFAULT_PASSWORD from secrets to .env (following [#1012](https://github.com/openfoodfacts/open-prices/issues/1012)) ([0c4eb96](https://github.com/openfoodfacts/open-prices/commit/0c4eb9638d05880e3958f89b1b512057253c4247))
+* add more tests for non-available endpoints ([c2f4104](https://github.com/openfoodfacts/open-prices/commit/c2f410463887c6c4aa144b2eaa5194fd2c07bbcf))
+* **Price Tags:** API: new filter by price_id ([#1033](https://github.com/openfoodfacts/open-prices/issues/1033)) ([7c460ba](https://github.com/openfoodfacts/open-prices/commit/7c460ba625161ba46e4c2530522adcedbf16ad79))
+* **settings:** new OFF_ENVIRONMENT env variable ([89c6899](https://github.com/openfoodfacts/open-prices/commit/89c68994ea2492355e12102a9f3783f9224fa136))
+
 ## [1.85.1](https://github.com/openfoodfacts/open-prices/compare/v1.85.0...v1.85.1) (2025-10-02)
 
 
