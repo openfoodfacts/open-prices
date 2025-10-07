@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.86.3](https://github.com/openfoodfacts/open-prices/compare/v1.86.2...v1.86.3) (2025-10-07)
+
+
+### Technical
+
+* **Products:** Automatically set the uploaded image as the selected front (english) ([#1041](https://github.com/openfoodfacts/open-prices/issues/1041)) ([981933a](https://github.com/openfoodfacts/open-prices/commit/981933a46b6ce80ddbed761681f649e949ba0d5d))
+
 ## [1.86.2](https://github.com/openfoodfacts/open-prices/compare/v1.86.1...v1.86.2) (2025-10-04)
 
 
