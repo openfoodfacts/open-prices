@@ -68,6 +68,7 @@ class ProductViewSet(
             code,
             flavor=request.data.get("flavor", Flavor.off),
             image_data_base64=request.data.get("image_data_base64"),
+            selected={"front": {"en": {}}},
         )
         if result:
             return Response(result, status=200)
