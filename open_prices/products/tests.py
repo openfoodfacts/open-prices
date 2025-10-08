@@ -94,6 +94,23 @@ class ProductModelSaveTest(TransactionTestCase):
         # full OFF object
         ProductFactory(**PRODUCT_OFF)
 
+    def test_product_code_normalization_on_save(self):
+        # barcode of length 12 gets padded to 13
+        product = ProductFactory(code="123456789100")
+        self.assertEqual(product.code, "0123456789100")
+        # barcode of length 14 with leading zero gets trimmed to 13
+        product = ProductFactory(code="00123456789101")
+        self.assertEqual(product.code, "0123456789101")
+        # EAN8 without leading 0 stays the same
+        product = ProductFactory(code="51234567")
+        self.assertEqual(product.code, "51234567")
+        # barcode of length < 8 gets padded to 8
+        product = ProductFactory(code="4567")
+        self.assertEqual(product.code, "00004567")
+        # barcode of length > 13 without leading 0 stays the same
+        product = ProductFactory(code="8658585456785867")
+        self.assertEqual(product.code, "8658585456785867")
+
 
 class ProductQuerySetTest(TestCase):
     @classmethod

@@ -9,6 +9,7 @@ from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
+from openfoodfacts.barcode import normalize_barcode
 from openfoodfacts.taxonomy import (
     create_taxonomy_mapping,
     get_taxonomy,
@@ -294,6 +295,11 @@ class Price(models.Model):
                     "product_code",
                     "Should not be a boolean or an invalid string",
                 )
+            if self.product_code.isdigit():
+                # Normalize the barcode (remove leading zeros, pad to 8 or 13
+                # digits)
+                self.product_code = normalize_barcode(self.product_code)
+
             if self.category_tag:
                 validation_errors = utils.add_validation_error(
                     validation_errors,
