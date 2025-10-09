@@ -5,6 +5,7 @@ from django.db.models import Count, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
+from openfoodfacts import normalize_barcode
 
 # Import custom lookups so that they are registered
 from open_prices.common import lookups  # noqa: F401
@@ -131,6 +132,13 @@ class Product(models.Model):
         self.set_default_values()
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def clean(self, *args, **kwargs):
+        if self.code and self.code.isdigit():
+            # Normalize the barcode (remove leading zeros, pad to 8 or 13
+            # digits)
+            self.code = normalize_barcode(self.code)
+        super().clean(*args, **kwargs)
 
     def price__min(self, exclude_discounted=False):
         if exclude_discounted:

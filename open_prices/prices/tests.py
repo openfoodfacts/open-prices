@@ -325,6 +325,23 @@ class PriceModelSaveTest(TestCase):
                 ValidationError, PriceFactory, product_code=PRODUCT_CODE_NOT_OK
             )
 
+    def test_product_code_normalization_on_save(self):
+        # barcode of length 12 gets padded to 13
+        price = PriceFactory(product_code="123456789100")
+        self.assertEqual(price.product_code, "0123456789100")
+        # barcode of length 14 with leading zero gets trimmed to 13
+        price = PriceFactory(product_code="00123456789100")
+        self.assertEqual(price.product_code, "0123456789100")
+        # EAN8 without leading 0 stays the same
+        price = PriceFactory(product_code="51234567")
+        self.assertEqual(price.product_code, "51234567")
+        # barcode of length < 8 gets padded to 8
+        price = PriceFactory(product_code="4567")
+        self.assertEqual(price.product_code, "00004567")
+        # barcode of length > 13 without leading 0 stays the same
+        price = PriceFactory(product_code="8658585456785867")
+        self.assertEqual(price.product_code, "8658585456785867")
+
     def test_price_without_product_validation(self):
         # product_code set
         self.assertRaises(

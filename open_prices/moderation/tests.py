@@ -34,7 +34,7 @@ class ModerationRulesTest(TestCase):
             product_code=cls.product_with_barcode_invalid.code,
             source="web - /experiments/price-validation-assistant",
         )
-        barcode_long_and_invalid = "01234567891000"
+        barcode_long_and_invalid = "61234567891000"
         cls.product_with_barcode_long_and_invalid = ProductFactory(
             code=barcode_long_and_invalid, source=None
         )
