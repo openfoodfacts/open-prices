@@ -621,6 +621,7 @@ class Price(models.Model):
         if tag not in self.tags:
             self.tags.append(tag)
             if save:
+                self._change_reason = "Price.set_tag() method"
                 self.save(update_fields=["tags"])
             return True
         return False

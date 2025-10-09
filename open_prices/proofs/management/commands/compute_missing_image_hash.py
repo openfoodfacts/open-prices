@@ -24,6 +24,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"Updated proof {proof.id} with MD5 {proof.image_md5_hash}"
             )
+            proof._change_reason = "compute_missing_image_hash command"
             proof.save(update_fields=["image_md5_hash"])
 
         self.stdout.write(f"Updated {updated} proofs.")
