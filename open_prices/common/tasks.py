@@ -144,7 +144,7 @@ CRON_SCHEDULES = {
     "update_total_stats_task": "0 1 * * *",  # daily at 01:00
     "fix_proof_fields_task": "10 1 * * *",  # daily at 01:10
     "moderation_tasks": "20 1 * * *",  # daily at 01:20
-    "challenge_tasks": "20 1 * * *",  # daily at 01:30
+    "challenge_tasks": "30 1 * * *",  # daily at 01:30
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
     "update_location_counts_task": "10 2 * * 1",  # every start of the week
     "update_product_counts_task": "20 2 * * 1",  # every start of the week
