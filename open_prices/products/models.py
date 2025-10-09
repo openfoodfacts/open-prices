@@ -128,7 +128,7 @@ class Product(models.Model):
         """
         Normalize the barcode (remove leading zeros, pad to 8 or 13 digits)
         """
-        if self.code and self.code.isdigit():
+        if self.code and isinstance(self.code, str) and self.code.isdigit():
             self.code = normalize_barcode(self.code)
 
     def save(self, *args, **kwargs):

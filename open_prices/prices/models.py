@@ -279,7 +279,11 @@ class Price(models.Model):
         """
         Normalize the product_code (remove leading zeros, pad to 8 or 13 digits).  # noqa
         """
-        if self.product_code and self.product_code.isdigit():
+        if (
+            self.product_code
+            and isinstance(self.product_code, str)
+            and self.product_code.isdigit()
+        ):
             self.product_code = normalize_barcode(self.product_code)
 
     def clean(self, *args, **kwargs):

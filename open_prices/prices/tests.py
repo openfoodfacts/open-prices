@@ -2,12 +2,8 @@ import json
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-<<<<<<< HEAD
-from django.test import TestCase, TransactionTestCase
-=======
 from django.core.management import call_command
-from django.test import TestCase
->>>>>>> 7459868 (add test)
+from django.test import TestCase, TransactionTestCase
 from freezegun import freeze_time
 from simple_history.utils import bulk_update_with_history
 
