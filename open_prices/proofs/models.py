@@ -10,12 +10,13 @@ from django.db.models import Case, Count, F, Q, Value, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
+from simple_history.models import HistoricalRecords
 
 from open_prices.challenges.models import Challenge
 
 # Import custom lookups so that they are registered
 from open_prices.common import lookups  # noqa: F401
-from open_prices.common import constants, utils
+from open_prices.common import constants, history, utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
 
@@ -195,6 +196,14 @@ class Proof(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    history = HistoricalRecords(
+        get_user=history.get_history_user_from_request,
+        history_user_id_field=models.CharField(null=True),
+        history_user_getter=history.history_user_getter,
+        history_user_setter=history.history_user_setter,
+        # cascade_delete_history=False,  # default
+    )
 
     objects = models.Manager.from_queryset(ProofQuerySet)()
 
