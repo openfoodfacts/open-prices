@@ -343,6 +343,10 @@ class Proof(models.Model):
             self.location = location
 
     def save(self, *args, **kwargs):
+        """
+        - run validations
+        - get or create location
+        """
         self.full_clean()
         self.set_location()
         super().save(*args, **kwargs)
@@ -709,6 +713,9 @@ class PriceTag(models.Model):
         super().clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        """
+        - run validations
+        """
         self.full_clean()
         super().save(*args, **kwargs)
 

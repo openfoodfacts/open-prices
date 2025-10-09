@@ -275,6 +275,17 @@ class Price(models.Model):
         verbose_name = "Price"
         verbose_name_plural = "Prices"
 
+    def normalize_product_code(self):
+        """
+        Normalize the product_code (remove leading zeros, pad to 8 or 13 digits).  # noqa
+        """
+        if (
+            self.product_code
+            and isinstance(self.product_code, str)
+            and self.product_code.isdigit()
+        ):
+            self.product_code = normalize_barcode(self.product_code)
+
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
         validation_errors = dict()
@@ -304,11 +315,6 @@ class Price(models.Model):
                     "product_code",
                     "Should not be a boolean or an invalid string",
                 )
-            if self.product_code.isdigit():
-                # Normalize the barcode (remove leading zeros, pad to 8 or 13
-                # digits)
-                self.product_code = normalize_barcode(self.product_code)
-
             if self.category_tag:
                 validation_errors = utils.add_validation_error(
                     validation_errors,
@@ -598,6 +604,13 @@ class Price(models.Model):
             self.location = location
 
     def save(self, *args, **kwargs):
+        """
+        - normalize product_code
+        - run validations
+        - get or create product
+        - get or create location
+        """
+        self.normalize_product_code()
         self.full_clean()
         # self.set_proof()  # should already exist
         self.get_or_create_product()

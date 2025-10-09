@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.test import TestCase, TransactionTestCase
 from freezegun import freeze_time
 from simple_history.utils import bulk_update_with_history
@@ -327,21 +328,32 @@ class PriceModelSaveTest(TestCase):
             )
 
     def test_product_code_normalization_on_save(self):
-        # barcode of length 12 gets padded to 13
-        price = PriceFactory(product_code="123456789100")
-        self.assertEqual(price.product_code, "0123456789100")
-        # barcode of length 14 with leading zero gets trimmed to 13
-        price = PriceFactory(product_code="00123456789100")
-        self.assertEqual(price.product_code, "0123456789100")
-        # EAN8 without leading 0 stays the same
-        price = PriceFactory(product_code="51234567")
-        self.assertEqual(price.product_code, "51234567")
         # barcode of length < 8 gets padded to 8
         price = PriceFactory(product_code="4567")
         self.assertEqual(price.product_code, "00004567")
+        # EAN8 without leading 0 stays the same
+        price = PriceFactory(product_code="51234567")
+        self.assertEqual(price.product_code, "51234567")
+        # barcode of length 12 gets padded to 13
+        price = PriceFactory(product_code="123456789100")
+        self.assertEqual(price.product_code, "0123456789100")
+        # barcode of length 13 with leading zero stays the same
+        price = PriceFactory(product_code="0123456789100")
+        self.assertEqual(price.product_code, "0123456789100")
+        # barcode of length 13 without leading 0 stays the same
+        price = PriceFactory(product_code="8658585456785")
+        self.assertEqual(price.product_code, "8658585456785")
+        # barcode of length 14 with leading zero gets trimmed to 13
+        price = PriceFactory(product_code="00123456789100")
+        self.assertEqual(price.product_code, "0123456789100")
         # barcode of length > 13 without leading 0 stays the same
         price = PriceFactory(product_code="8658585456785867")
         self.assertEqual(price.product_code, "8658585456785867")
+        # barcode with letters stays the same
+        price = PriceFactory(product_code="12345678910A")
+        self.assertEqual(price.product_code, "12345678910A")
+        price = PriceFactory(product_code="0012345678910A")
+        self.assertEqual(price.product_code, "0012345678910A")
 
     def test_price_without_product_validation(self):
         # product_code set
@@ -922,3 +934,39 @@ class PriceModelHistoryTest(TransactionTestCase):
         self.assertEqual(
             Price.history.filter(id=price_id).first().history_user_id, "moderator-3"
         )
+
+
+class PriceCommandTest(TestCase):
+    def test_normalize_barcodes_command(self):
+        # bulk_create to skip save() & clean()
+        Product.objects.bulk_create(
+            [
+                ProductFactory.build(code="123456789100"),  # not normalized
+                ProductFactory.build(code="0123456789100"),  # normalized
+            ]
+        )
+        self.assertEqual(Product.objects.count(), 2)
+        Price.objects.bulk_create(
+            [
+                PriceFactory.build(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="123456789100",
+                    product_id=Product.objects.get(code="123456789100").id,
+                ),
+                PriceFactory.build(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="0123456789100",
+                    product_id=Product.objects.get(code="0123456789100").id,
+                ),
+            ]
+        )
+        self.assertEqual(Price.objects.count(), 2)
+        call_command("normalize_barcodes", "--apply")
+        # products have been merged
+        self.assertEqual(Product.objects.count(), 1)
+        self.assertEqual(Product.objects.first().code, "0123456789100")
+        self.assertEqual(Price.objects.count(), 2)
+        # prices now have normalized product_code & share the same product_id
+        for price in Price.objects.all():
+            self.assertEqual(price.product_code, "0123456789100")
+            self.assertEqual(price.product_id, Product.objects.first().id)

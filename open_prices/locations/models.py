@@ -176,7 +176,8 @@ class Location(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        - truncate decimal fields
+        - OSM: cleanup lat/lon fields
+        - ONLINE: cleanup URL fields
         - run validations
         """
         if self.type == location_constants.TYPE_OSM:
