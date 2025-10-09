@@ -12,7 +12,7 @@ from django.db import migrations, models
 
 
 def populate_history(apps, schema_editor):
-    management.call_command("populate_history", "--auto", "--batchsize", "1000")
+    management.call_command("populate_history", "proofs.Proof", "--batchsize", "1000")
 
 
 class Migration(migrations.Migration):
