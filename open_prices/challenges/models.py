@@ -104,6 +104,9 @@ class Challenge(models.Model):
         super().clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        """
+        - run validations
+        """
         self.full_clean()
         super().save(*args, **kwargs)
 

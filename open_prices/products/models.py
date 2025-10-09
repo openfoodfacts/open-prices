@@ -124,21 +124,23 @@ class Product(models.Model):
             if getattr(self, field_name) is None:
                 setattr(self, field_name, [])
 
+    def normalize_code(self):
+        """
+        Normalize the barcode (remove leading zeros, pad to 8 or 13 digits)
+        """
+        if self.code and self.code.isdigit():
+            self.code = normalize_barcode(self.code)
+
     def save(self, *args, **kwargs):
         """
         - set default values
+        - normalize code
         - run validations
         """
         self.set_default_values()
+        self.normalize_code()
         self.full_clean()
         super().save(*args, **kwargs)
-
-    def clean(self, *args, **kwargs):
-        if self.code and self.code.isdigit():
-            # Normalize the barcode (remove leading zeros, pad to 8 or 13
-            # digits)
-            self.code = normalize_barcode(self.code)
-        super().clean(*args, **kwargs)
 
     def price__min(self, exclude_discounted=False):
         if exclude_discounted:
