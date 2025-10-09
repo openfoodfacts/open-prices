@@ -8,6 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 
 import numpy as np
+from django.core import management
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test import TestCase
@@ -621,6 +622,13 @@ class ProofModelHistoryTest(TestCase):
         self.assertEqual(proof.history.count(), 2)
         self.assertEqual(proof.history.first().history_type, "~")
         self.assertEqual(proof.history.first().history_user_id, None)
+        # update the proof on a field that does not trigger history
+        proof.price_count += 1
+        proof.save(update_fields=["price_count"])
+        self.assertEqual(proof.history.count(), 3)  # empty change
+        # command to cleanup historical instances with 0 changes
+        management.call_command("clean_duplicate_history", "--auto")
+        self.assertEqual(Proof.history.filter(id=proof.id).count(), 2)  # removed
         # bulk update the proof
         proof.date = "2024-08-30"
         bulk_update_with_history([proof], Proof, ["date"], default_user="moderator-2")

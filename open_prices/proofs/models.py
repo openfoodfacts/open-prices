@@ -198,6 +198,7 @@ class Proof(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     history = HistoricalRecords(
+        excluded_fields=COUNT_FIELDS,
         get_user=history.get_history_user_from_request,
         history_user_id_field=models.CharField(null=True),
         history_user_getter=history.history_user_getter,
