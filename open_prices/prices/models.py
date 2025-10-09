@@ -628,6 +628,7 @@ class Price(models.Model):
                         self.proof.set_tag(challenge.tag, save=True)  # important
         # save
         if changes:
+            self._change_reason = "Price.update_tags() method"
             self.save(update_fields=["tags"])
 
     def has_category_tag(self, category_tag_list: list):
