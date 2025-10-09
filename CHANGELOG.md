@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.86.4](https://github.com/openfoodfacts/open-prices/compare/v1.86.3...v1.86.4) (2025-10-09)
+
+
+### Bug Fixes
+
+* normalize barcodes in prices and products tables ([#1045](https://github.com/openfoodfacts/open-prices/issues/1045)) ([04cb683](https://github.com/openfoodfacts/open-prices/commit/04cb6830affdbc14e3491d2257d17c048b44b8a4))
+
 ## [1.86.3](https://github.com/openfoodfacts/open-prices/compare/v1.86.2...v1.86.3) (2025-10-07)
 
 
