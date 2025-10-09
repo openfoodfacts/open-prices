@@ -14,6 +14,7 @@ from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
 from PIL import Image
+from simple_history.utils import bulk_update_with_history
 
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.common import constants
@@ -51,6 +52,7 @@ from open_prices.proofs.utils import (
     match_receipt_item_with_price,
     select_proof_image_dir,
 )
+from open_prices.users.factories import SessionFactory
 
 PRODUCT_8001505005707 = {
     "code": "8001505005707",
@@ -596,6 +598,42 @@ class ProofModelUpdateTest(TestCase):
         self.assertEqual(
             self.proof_price_tag.prices.first().location, self.location_osm_2
         )
+
+
+class ProofModelHistoryTest(TestCase):
+    def test_proof_history(self):
+        user_session = SessionFactory()
+        location = LocationFactory()
+        # create the proof
+        proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            date="2024-01-01",
+            owner=user_session.user.user_id,
+        )
+        self.assertEqual(proof.history.count(), 1)
+        self.assertEqual(proof.history.first().history_type, "+")
+        self.assertEqual(proof.history.first().history_user_id, None)
+        # update the proof
+        proof.date = "2024-06-15"
+        proof.save()
+        self.assertEqual(proof.history.count(), 2)
+        self.assertEqual(proof.history.first().history_type, "~")
+        self.assertEqual(proof.history.first().history_user_id, None)
+        # bulk update the proof
+        proof.date = "2024-08-30"
+        bulk_update_with_history([proof], Proof, ["date"], default_user="moderator-2")
+        self.assertEqual(proof.history.count(), 3)
+        self.assertEqual(proof.history.first().history_type, "~")
+        self.assertEqual(proof.history.first().history_user_id, "moderator-2")
+        # delete the proof
+        proof_id = proof.id
+        proof._history_user_id = "moderator-3"
+        proof.delete()
+        self.assertEqual(Proof.history.filter(id=proof_id).count(), 4)
+        self.assertEqual(Proof.history.get(id=proof_id).history_type, "-")
+        self.assertEqual(Proof.history.get(id=proof_id).history_user_id, "moderator-3")
 
 
 class RunOCRTaskTest(TestCase):
