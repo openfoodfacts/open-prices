@@ -94,7 +94,7 @@ class ProductModelSaveTest(TransactionTestCase):
         # full OFF object
         ProductFactory(**PRODUCT_OFF)
 
-    def test_product_code_normalization_on_save(self):
+    def test_code_normalization_on_save(self):
         # barcode of length 12 gets padded to 13
         product = ProductFactory(code="123456789100")
         self.assertEqual(product.code, "0123456789100")
