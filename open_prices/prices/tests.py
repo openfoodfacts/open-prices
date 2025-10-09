@@ -2,7 +2,12 @@ import json
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+<<<<<<< HEAD
 from django.test import TestCase, TransactionTestCase
+=======
+from django.core.management import call_command
+from django.test import TestCase
+>>>>>>> 7459868 (add test)
 from freezegun import freeze_time
 from simple_history.utils import bulk_update_with_history
 
@@ -922,3 +927,39 @@ class PriceModelHistoryTest(TransactionTestCase):
         self.assertEqual(
             Price.history.filter(id=price_id).first().history_user_id, "moderator-3"
         )
+
+
+class PriceCommandTest(TestCase):
+    def test_normalize_barcodes_command(self):
+        # bulk_create to skip save() & clean()
+        Product.objects.bulk_create(
+            [
+                ProductFactory.build(code="123456789100"),  # not normalized
+                ProductFactory.build(code="0123456789100"),  # normalized
+            ]
+        )
+        self.assertEqual(Product.objects.count(), 2)
+        Price.objects.bulk_create(
+            [
+                PriceFactory.build(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="123456789100",
+                    product_id=Product.objects.get(code="123456789100").id,
+                ),
+                PriceFactory.build(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="0123456789100",
+                    product_id=Product.objects.get(code="0123456789100").id,
+                ),
+            ]
+        )
+        self.assertEqual(Price.objects.count(), 2)
+        call_command("normalize_barcodes", "--apply")
+        # products have been merged
+        self.assertEqual(Product.objects.count(), 1)
+        self.assertEqual(Product.objects.first().code, "0123456789100")
+        self.assertEqual(Price.objects.count(), 2)
+        # prices now have normalized product_code & share the same product_id
+        for price in Price.objects.all():
+            self.assertEqual(price.product_code, "0123456789100")
+            self.assertEqual(price.product_id, Product.objects.first().id)
