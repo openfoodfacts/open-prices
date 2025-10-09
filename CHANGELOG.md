@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.87.0](https://github.com/openfoodfacts/open-prices/compare/v1.86.4...v1.87.0) (2025-10-09)
+
+
+### Features
+
+* **Prices:** track changes in a history table ([#976](https://github.com/openfoodfacts/open-prices/issues/976)) ([df31839](https://github.com/openfoodfacts/open-prices/commit/df31839a558e31c0fd92bf1c7a6fd25993ee6c8c))
+
+
+### Bug Fixes
+
+* **Challenges:** cron: call the challenge_tasks at 1:30 instead of 1:20. ref [#988](https://github.com/openfoodfacts/open-prices/issues/988) ([4498c93](https://github.com/openfoodfacts/open-prices/commit/4498c932fcb5bbeba692ff627b1b03473acfa622))
+
+
+### Technical
+
+* following normalize PR, add test on command and additional cleanup ([#1047](https://github.com/openfoodfacts/open-prices/issues/1047)) ([3cfb39f](https://github.com/openfoodfacts/open-prices/commit/3cfb39f0e6a281733b008b4fa7a03e7ad6917321))
+* **Prices:** History: add change_reason messages for context ([#1016](https://github.com/openfoodfacts/open-prices/issues/1016)) ([9bb68fb](https://github.com/openfoodfacts/open-prices/commit/9bb68fb65c8c7d40984cbf861066173b51a85d63))
+
 ## [1.86.4](https://github.com/openfoodfacts/open-prices/compare/v1.86.3...v1.86.4) (2025-10-09)
 
 
