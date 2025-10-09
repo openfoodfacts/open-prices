@@ -629,11 +629,13 @@ class ProofModelHistoryTest(TestCase):
         self.assertEqual(proof.history.first().history_user_id, "moderator-2")
         # delete the proof
         proof_id = proof.id
-        proof._history_user_id = "moderator-3"
+        proof._history_user = "moderator-3"
         proof.delete()
         self.assertEqual(Proof.history.filter(id=proof_id).count(), 4)
-        self.assertEqual(Proof.history.get(id=proof_id).history_type, "-")
-        self.assertEqual(Proof.history.get(id=proof_id).history_user_id, "moderator-3")
+        self.assertEqual(Proof.history.filter(id=proof_id).first().history_type, "-")
+        self.assertEqual(
+            Proof.history.filter(id=proof_id).first().history_user_id, "moderator-3"
+        )
 
 
 class RunOCRTaskTest(TestCase):

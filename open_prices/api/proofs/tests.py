@@ -421,6 +421,21 @@ class ProofCreateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
+    def test_proof_create_history(self):
+        response = self.client.post(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        proof_id = response.data["id"]
+        self.assertEqual(Proof.history.filter(id=proof_id).count(), 1)
+        self.assertEqual(Proof.history.filter(id=proof_id).first().history_type, "+")
+        self.assertEqual(
+            Proof.history.filter(id=proof_id).first().history_user_id,
+            self.user_session.user.user_id,
+        )
+
 
 class ProofUpdateApiTest(TestCase):
     @classmethod
@@ -481,6 +496,23 @@ class ProofUpdateApiTest(TestCase):
         self.assertEqual(response.data["receipt_price_count"], 4)
         self.assertEqual(Proof.objects.get(id=self.proof.id).price_count, 15)  # ignored
 
+    def test_proof_update_history(self):
+        response = self.client.patch(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Proof.history.filter(id=self.proof.id).count(), 2)
+        self.assertEqual(
+            Proof.history.filter(id=self.proof.id).first().history_type, "~"
+        )
+        self.assertEqual(
+            Proof.history.filter(id=self.proof.id).first().history_user_id,
+            self.user_session_1.user.user_id,
+        )
+
 
 class ProofDeleteApiTest(TestCase):
     @classmethod
@@ -529,6 +561,21 @@ class ProofDeleteApiTest(TestCase):
         self.assertEqual(response.data, None)
         self.assertEqual(
             Proof.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )
+
+    def test_proof_delete_history(self):
+        Price.objects.filter(proof=self.proof).delete()
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Proof.history.filter(id=self.proof.id).count(), 2)
+        self.assertEqual(
+            Proof.history.filter(id=self.proof.id).first().history_type, "-"
+        )
+        self.assertEqual(
+            Proof.history.filter(id=self.proof.id).first().history_user_id,
+            self.user_session_1.user.user_id,
         )
 
 
