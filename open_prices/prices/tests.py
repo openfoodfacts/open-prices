@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.test import TestCase
 from freezegun import freeze_time
 
@@ -881,3 +882,37 @@ class PriceModelDeleteTest(TestCase):
         self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 0)
         self.assertEqual(Location.objects.get(id=location.id).price_count, 0)
         self.assertEqual(Product.objects.get(id=product.id).price_count, 0)
+
+
+class PriceCommandTest(TestCase):
+    def test_normalize_barcodes_command(self):
+        # bulk_create to skip save() & clean()
+        Product.objects.bulk_create(
+            [
+                ProductFactory.build(code="123456789100"),  # not normalized
+                ProductFactory.build(code="0123456789100"),  # normalized
+            ]
+        )
+        self.assertEqual(Product.objects.count(), 2)
+        Price.objects.bulk_create(
+            [
+                PriceFactory.build(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="123456789100",
+                    product_id=Product.objects.get(code="123456789100").id,
+                ),
+                PriceFactory.build(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="0123456789100",
+                    product_id=Product.objects.get(code="0123456789100").id,
+                ),
+            ]
+        )
+        self.assertEqual(Price.objects.count(), 2)
+        call_command("normalize_barcodes", "--apply")
+        self.assertEqual(Product.objects.count(), 1)
+        self.assertEqual(Product.objects.first().code, "0123456789100")
+        self.assertEqual(Price.objects.count(), 2)
+        for price in Price.objects.all():
+            self.assertEqual(price.product_code, "0123456789100")
+            self.assertEqual(price.product_id, Product.objects.first().id)
