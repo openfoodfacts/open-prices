@@ -12,15 +12,15 @@ from django.db import migrations, models
 
 
 def populate_history(apps, schema_editor):
-    management.call_command("populate_history", "--auto", "--batchsize", "1000")
+    management.call_command("populate_history", "prices.Price", "--batchsize", "1000")
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("locations", "0007_alter_location_osm_brand_and_osm_version"),
+        ("locations", "0008_alter_location_count_default_0"),
         ("prices", "0012_price_labels_tags_temp_price_origins_tags_temp"),
-        ("products", "0006_alter_product_source"),
-        ("proofs", "0023_alter_proof_receipt_online_delivery_costs_and_more"),
+        ("products", "0008_alter_product_count_default_0"),
+        ("proofs", "0024_alter_proof_count_default_0"),
     ]
 
     operations = [
