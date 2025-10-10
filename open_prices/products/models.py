@@ -36,6 +36,8 @@ class ProductQuerySet(models.QuerySet):
         :param max_distance: The maximum Levenshtein distance to consider
         :param limit: The maximum number of results to return, or None for no
             limit
+        :param exclude_distance_0: Whether to exclude results with distance 0
+            (i.e. exact matches)
         :return: A queryset of Product with similar barcodes
         """
 

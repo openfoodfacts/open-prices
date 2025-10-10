@@ -905,6 +905,8 @@ def run_and_save_price_tag_extraction(
             similar_barcodes = [
                 BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
                 for p in similar_barcodes_qs
+                # Check that barcode is valid (correct check digit)
+                if common_openfoodfacts.barcode_is_valid(p.code)
             ]
         data = LabelWithSimilarBarcodes(
             **dict(response.parsed),
