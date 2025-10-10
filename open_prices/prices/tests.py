@@ -950,7 +950,6 @@ class PriceModelHistoryTest(TestCase):
         self.price.save()
         history_list = self.price.get_history_list()
         self.assertEqual(len(history_list), 2)
-        print(history_list)
         self.assertEqual(history_list[0]["history_type"], "~")
         self.assertEqual(len(history_list[0]["changes"]), 1)
         self.assertEqual(history_list[0]["changes"][0]["field"], "price")
