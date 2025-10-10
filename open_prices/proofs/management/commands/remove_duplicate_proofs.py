@@ -111,6 +111,7 @@ class Command(BaseCommand):
 
             # Now delete the proofs
             for proof in proofs_to_delete:
+                proof._change_reason = "remove_duplicate_proofs command"
                 proof.delete()
 
         return len(prices_to_move), len(proofs_to_delete)

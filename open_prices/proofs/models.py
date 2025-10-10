@@ -393,6 +393,7 @@ class Proof(models.Model):
         self.location_osm_id = location_osm_id
         self.location_osm_type = location_osm_type
         self.set_location()
+        self._change_reason = "Proof.update_location() method"
         self.save()
         self.refresh_from_db()
         new_location = self.location
@@ -431,12 +432,14 @@ class Proof(models.Model):
                             proof_prices_field_list,
                         )
         if len(fields_to_update):
+            self._change_reason = "Proof.set_missing_fields_from_prices() method"
             self.save()
 
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:
             self.tags.append(tag)
             if save:
+                self._change_reason = "Proof.set_tag() method"
                 self.save(update_fields=["tags"])
             return True
         return False
