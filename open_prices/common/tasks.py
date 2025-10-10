@@ -10,6 +10,7 @@ from open_prices.api.locations.serializers import LocationSerializer
 from open_prices.api.prices.serializers import PriceSerializer
 from open_prices.api.proofs.serializers import ProofSerializer
 from open_prices.challenges.models import Challenge
+from open_prices.common.history import history_clean_duplicate_command
 from open_prices.common.openfoodfacts import import_product_db
 from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
@@ -136,11 +137,16 @@ def dump_db_task():
         export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir)
 
 
+def history_cleanup_task():
+    history_clean_duplicate_command()
+
+
 CRON_SCHEDULES = {
     "import_obf_db_task": "0 15 * * *",  # daily at 15:00
     "import_opff_db_task": "10 15 * * *",  # daily at 15:10
     "import_opf_db_task": "20 15 * * *",  # daily at 15:20
     "import_off_db_task": "30 15 * * *",  # daily at 15:30
+    "dump_db_task": "0 23 * * *",  # daily at 23:00
     "update_total_stats_task": "0 1 * * *",  # daily at 01:00
     "fix_proof_fields_task": "10 1 * * *",  # daily at 01:10
     "moderation_tasks": "20 1 * * *",  # daily at 01:20
@@ -148,7 +154,7 @@ CRON_SCHEDULES = {
     "update_user_counts_task": "0 2 * * 1",  # every start of the week
     "update_location_counts_task": "10 2 * * 1",  # every start of the week
     "update_product_counts_task": "20 2 * * 1",  # every start of the week
-    "dump_db_task": "0 23 * * *",  # daily at 23:00
+    "history_cleanup_task": "0 3 * * 1",  # every start of the week
 }
 
 for task_name, task_cron in CRON_SCHEDULES.items():

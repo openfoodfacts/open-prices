@@ -1,3 +1,6 @@
+from django.core.management import call_command
+
+
 def get_history_user_from_request(request, **kwargs):
     """
     Custom function to get the history user from the request.
@@ -25,3 +28,17 @@ def history_user_setter(instance, user_id):
     https://django-simple-history.readthedocs.io/en/stable/user_tracking.html#manually-track-user-model
     """
     instance.history_user_id = user_id
+
+
+def history_clean_duplicate_command():
+    """
+    Management command to clean duplicate history entries.
+    https://django-simple-history.readthedocs.io/en/stable/utils.html#clean-duplicate-history
+    Why? A historical record is created on every save even if 0 fields changed.
+    --auto: run on all models with HistoricalRecords
+    --minutes: how far back in history searching for duplicates
+    """
+    month_in_minutes = 30 * 24 * 60
+    call_command(
+        "clean_duplicate_history", "--auto", "", "--minutes", f"{month_in_minutes}"
+    )
