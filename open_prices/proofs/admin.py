@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
+from simple_history.admin import SimpleHistoryAdmin
 
 from open_prices.proofs.models import (
     PriceTag,
@@ -12,7 +13,7 @@ from open_prices.proofs.models import (
 
 
 @admin.register(PriceTagPrediction)
-class PriceTagPredictionAdmin(admin.ModelAdmin):
+class PriceTagPredictionAdmin(SimpleHistoryAdmin):
     list_display = (
         "id",
         "price_tag",

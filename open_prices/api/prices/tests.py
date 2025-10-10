@@ -624,12 +624,11 @@ class PriceCreateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(Price.history.filter(id=response.data["id"]).count(), 1)
+        price_id = response.data["id"]
+        self.assertEqual(Price.history.filter(id=price_id).count(), 1)
+        self.assertEqual(Price.history.filter(id=price_id).first().history_type, "+")
         self.assertEqual(
-            Price.history.filter(id=response.data["id"]).first().history_type, "+"
-        )
-        self.assertEqual(
-            Price.history.filter(id=response.data["id"]).first().history_user_id,
+            Price.history.filter(id=price_id).first().history_user_id,
             self.user_session.user.user_id,
         )
 
