@@ -607,70 +607,91 @@ class ProofModelHistoryTest(TestCase):
         cls.user_session = SessionFactory()
         cls.location_osm_1 = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.location_osm_2 = LocationFactory(**LOCATION_OSM_NODE_6509705997)
+        cls.proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location_osm_1.osm_id,
+            location_osm_type=cls.location_osm_1.osm_type,
+            date="2024-01-01",
+            owner=cls.user_session.user.user_id,
+        )
 
     def test_proof_history(self):
-        # create the proof
-        proof = ProofFactory(
-            type=proof_constants.TYPE_PRICE_TAG,
-            location_osm_id=self.location_osm_1.osm_id,
-            location_osm_type=self.location_osm_1.osm_type,
-            date="2024-01-01",
-            owner=self.user_session.user.user_id,
-        )
-        self.assertEqual(proof.history.count(), 1)
-        self.assertEqual(proof.history.first().history_type, "+")
-        self.assertEqual(proof.history.first().history_user_id, None)
+        self.assertEqual(self.proof.history.count(), 1)
+        self.assertEqual(self.proof.history.first().history_type, "+")
+        self.assertEqual(self.proof.history.first().history_user_id, None)
         # update the proof (date & location)
-        proof.date = "2024-06-15"
-        proof.location_osm_id = self.location_osm_2.osm_id
-        proof.location_osm_type = self.location_osm_2.osm_type
-        proof.save()
-        self.assertEqual(proof.history.count(), 2)
-        self.assertEqual(proof.history.first().history_type, "~")
-        self.assertEqual(proof.history.first().history_user_id, None)
+        self.proof.date = "2024-06-15"
+        self.proof.location_osm_id = self.location_osm_2.osm_id
+        self.proof.location_osm_type = self.location_osm_2.osm_type
+        self.proof.save()
+        self.assertEqual(self.proof.history.count(), 2)
+        self.assertEqual(self.proof.history.first().history_type, "~")
+        self.assertEqual(self.proof.history.first().history_user_id, None)
         fields_changed_list = [
             change.field
-            for change in proof.history.first()
-            .diff_against(proof.history.first().prev_record)
+            for change in self.proof.history.first()
+            .diff_against(self.proof.history.first().prev_record)
             .changes
         ]
         self.assertEqual(fields_changed_list, ["date", "location", "location_osm_id"])
         # update the proof on a field that does not trigger history
-        proof.price_count += 1
-        proof.save(update_fields=["price_count"])
-        self.assertEqual(proof.history.count(), 3)  # empty change
+        self.proof.price_count += 1
+        self.proof.save(update_fields=["price_count"])
+        self.assertEqual(self.proof.history.count(), 3)  # empty change
         fields_changed_list = [
             change.field
-            for change in proof.history.first()
-            .diff_against(proof.history.first().prev_record)
+            for change in self.proof.history.first()
+            .diff_against(self.proof.history.first().prev_record)
             .changes
         ]
         self.assertEqual(fields_changed_list, [])
         # command to cleanup historical instances with 0 changes
         management.call_command("clean_duplicate_history", "--auto")
-        self.assertEqual(Proof.history.filter(id=proof.id).count(), 2)  # removed
+        self.assertEqual(Proof.history.filter(id=self.proof.id).count(), 2)  # removed
         # bulk update the proof (date)
-        proof.date = "2024-08-30"
-        bulk_update_with_history([proof], Proof, ["date"], default_user="moderator-2")
-        self.assertEqual(proof.history.count(), 3)
-        self.assertEqual(proof.history.first().history_type, "~")
-        self.assertEqual(proof.history.first().history_user_id, "moderator-2")
+        self.proof.date = "2024-08-30"
+        bulk_update_with_history(
+            [self.proof], Proof, ["date"], default_user="moderator-2"
+        )
+        self.assertEqual(self.proof.history.count(), 3)
+        self.assertEqual(self.proof.history.first().history_type, "~")
+        self.assertEqual(self.proof.history.first().history_user_id, "moderator-2")
         fields_changed_list = [
             change.field
-            for change in proof.history.first()
-            .diff_against(proof.history.first().prev_record)
+            for change in self.proof.history.first()
+            .diff_against(self.proof.history.first().prev_record)
             .changes
         ]
         self.assertEqual(fields_changed_list, ["date"])
         # delete the proof
-        proof_id = proof.id
-        proof._history_user = "moderator-3"
-        proof.delete()
+        proof_id = self.proof.id
+        self.proof._history_user = "moderator-3"
+        self.proof.delete()
         self.assertEqual(Proof.history.filter(id=proof_id).count(), 4)
         self.assertEqual(Proof.history.filter(id=proof_id).first().history_type, "-")
         self.assertEqual(
             Proof.history.filter(id=proof_id).first().history_user_id, "moderator-3"
         )
+
+    def test_proof_get_history_list(self):
+        history_list = self.proof.get_history_list()
+        self.assertEqual(len(history_list), 1)
+        self.assertEqual(history_list[0]["history_type"], "+")
+        self.assertEqual(len(history_list[0]["changes"]), 0)
+        # update the proof
+        self.proof.date = "2024-06-15"
+        self.proof.save()
+        history_list = self.proof.get_history_list()
+        self.assertEqual(len(history_list), 2)
+        self.assertEqual(history_list[0]["history_type"], "~")
+        self.assertEqual(len(history_list[0]["changes"]), 1)
+        self.assertEqual(history_list[0]["changes"][0]["field"], "date")
+        self.assertEqual(str(history_list[0]["changes"][0]["old"]), "2024-01-01")
+        self.assertEqual(str(history_list[0]["changes"][0]["new"]), "2024-06-15")
+        # save the proof without changes
+        self.proof.save()
+        history_list = self.proof.get_history_list()
+        self.assertEqual(len(history_list), 2)  # empty history entry ignored
 
 
 class RunOCRTaskTest(TestCase):

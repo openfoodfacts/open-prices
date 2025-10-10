@@ -906,43 +906,45 @@ class PriceModelHistoryTest(TestCase):
         cls.location = LocationFactory()
         cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
         cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
+        cls.price = PriceFactory(
+            price=3,
+            proof_id=cls.user_proof.id,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            product_code=cls.product_8001505005707.code,
+            owner=cls.user_session.user.user_id,
+        )
 
     def test_price_history(self):
-        # create the price
-        price = PriceFactory(
-            proof_id=self.user_proof.id,
-            location_osm_id=self.location.osm_id,
-            location_osm_type=self.location.osm_type,
-            product_code=self.product_8001505005707.code,
-            owner=self.user_session.user.user_id,
-        )
-        self.assertEqual(price.history.count(), 1)
-        self.assertEqual(price.history.first().history_type, "+")
-        self.assertEqual(price.history.first().history_user_id, None)
+        self.assertEqual(self.price.history.count(), 1)
+        self.assertEqual(self.price.history.first().history_type, "+")
+        self.assertEqual(self.price.history.first().history_user_id, None)
         # update the price (date & product)
-        price.price = 5
-        price.product_code = self.product_8850187002197.code
-        price.save()
-        self.assertEqual(price.history.count(), 2)
-        self.assertEqual(price.history.first().history_type, "~")
-        self.assertEqual(price.history.first().history_user_id, None)
+        self.price.price = 5
+        self.price.product_code = self.product_8850187002197.code
+        self.price.save()
+        self.assertEqual(self.price.history.count(), 2)
+        self.assertEqual(self.price.history.first().history_type, "~")
+        self.assertEqual(self.price.history.first().history_user_id, None)
         fields_changed_list = [
             change.field
-            for change in price.history.first()
-            .diff_against(price.history.first().prev_record)
+            for change in self.price.history.first()
+            .diff_against(self.price.history.first().prev_record)
             .changes
         ]
         self.assertEqual(fields_changed_list, ["price", "product", "product_code"])
         # bulk update the price
-        price.price = 10
-        bulk_update_with_history([price], Price, ["price"], default_user="moderator-2")
-        self.assertEqual(price.history.count(), 3)
-        self.assertEqual(price.history.first().history_type, "~")
-        self.assertEqual(price.history.first().history_user_id, "moderator-2")
+        self.price.price = 10
+        bulk_update_with_history(
+            [self.price], Price, ["price"], default_user="moderator-2"
+        )
+        self.assertEqual(self.price.history.count(), 3)
+        self.assertEqual(self.price.history.first().history_type, "~")
+        self.assertEqual(self.price.history.first().history_user_id, "moderator-2")
         fields_changed_list = [
             change.field
-            for change in price.history.first()
-            .diff_against(price.history.first().prev_record)
+            for change in self.price.history.first()
+            .diff_against(self.price.history.first().prev_record)
             .changes
         ]
         self.assertEqual(fields_changed_list, ["price"])
@@ -966,7 +968,6 @@ class PriceModelHistoryTest(TestCase):
         self.price.save()
         history_list = self.price.get_history_list()
         self.assertEqual(len(history_list), 2)
-        print(history_list)
         self.assertEqual(history_list[0]["history_type"], "~")
         self.assertEqual(len(history_list[0]["changes"]), 1)
         self.assertEqual(history_list[0]["changes"][0]["field"], "price")
