@@ -947,14 +947,35 @@ class PriceModelHistoryTest(TestCase):
         ]
         self.assertEqual(fields_changed_list, ["price"])
         # delete the price
-        price_id = price.id
-        price._history_user = "moderator-3"
-        price.delete()
+        price_id = self.price.id
+        self.price._history_user = "moderator-3"
+        self.price.delete()
         self.assertEqual(Price.history.filter(id=price_id).count(), 4)
         self.assertEqual(Price.history.filter(id=price_id).first().history_type, "-")
         self.assertEqual(
             Price.history.filter(id=price_id).first().history_user_id, "moderator-3"
         )
+
+    def test_price_get_history_list(self):
+        history_list = self.price.get_history_list()
+        self.assertEqual(len(history_list), 1)
+        self.assertEqual(history_list[0]["history_type"], "+")
+        self.assertEqual(len(history_list[0]["changes"]), 0)
+        # update the price
+        self.price.price = 5
+        self.price.save()
+        history_list = self.price.get_history_list()
+        self.assertEqual(len(history_list), 2)
+        print(history_list)
+        self.assertEqual(history_list[0]["history_type"], "~")
+        self.assertEqual(len(history_list[0]["changes"]), 1)
+        self.assertEqual(history_list[0]["changes"][0]["field"], "price")
+        self.assertEqual(history_list[0]["changes"][0]["old"], Decimal("3"))
+        self.assertEqual(history_list[0]["changes"][0]["new"], Decimal("5"))
+        # save the price without changes
+        self.price.save()
+        history_list = self.price.get_history_list()
+        self.assertEqual(len(history_list), 2)  # empty history entry ignored
 
 
 class PriceCommandTest(TestCase):
