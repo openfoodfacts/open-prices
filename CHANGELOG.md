@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.88.0](https://github.com/openfoodfacts/open-prices/compare/v1.87.0...v1.88.0) (2025-10-10)
+
+
+### Features
+
+* **Proofs:** track changes in a history table ([#1048](https://github.com/openfoodfacts/open-prices/issues/1048)) ([73f28f6](https://github.com/openfoodfacts/open-prices/commit/73f28f673e95bdb459ee67a3a98b8c34ab527102))
+
+
+### Bug Fixes
+
+* **similar-barcode:** remove barcodes with invalid checksum ([#1053](https://github.com/openfoodfacts/open-prices/issues/1053)) ([1cc9c2f](https://github.com/openfoodfacts/open-prices/commit/1cc9c2fc4982113b89e84deb707e838e77306189))
+
+
+### Technical
+
+* **History:** command to cleanup duplicate entries on a weekly basis ([#1051](https://github.com/openfoodfacts/open-prices/issues/1051)) ([6b36fbf](https://github.com/openfoodfacts/open-prices/commit/6b36fbf58f433dd84125796f0063f5337bb8b4e5))
+* **Proofs:** History: add change_reason messages for context ([#1052](https://github.com/openfoodfacts/open-prices/issues/1052)) ([0db4476](https://github.com/openfoodfacts/open-prices/commit/0db4476ed5bc5be171a0db7f966bae5fb1d2152d))
+
 ## [1.87.0](https://github.com/openfoodfacts/open-prices/compare/v1.86.4...v1.87.0) (2025-10-09)
 
 
