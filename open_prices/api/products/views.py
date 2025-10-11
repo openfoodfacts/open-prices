@@ -44,7 +44,7 @@ class ProductViewSet(
 
     @action(
         detail=False,
-        methods=["POST", "PATCH"],
+        methods=["PATCH"],
         url_path=r"code/(?P<code>\d+)/off-update",
     )
     def create_or_update_in_off(self, request: Request, code):
@@ -60,7 +60,7 @@ class ProductViewSet(
 
     @action(
         detail=False,
-        methods=["POST", "PATCH"],
+        methods=["PATCH"],
         url_path=r"code/(?P<code>\d+)/off-upload-image",
     )
     def upload_image_in_off(self, request: Request, code):
