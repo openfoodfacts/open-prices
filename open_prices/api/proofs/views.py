@@ -172,11 +172,11 @@ class ProofViewSet(
         duplicate_proof = Proof.objects.filter(
             image_md5_hash=image_md5_hash,
             owner=owner,
-            type=serializer.validated_data["type"],
+            type=serializer.validated_data.get("type"),
             # location OSM id/type can be null (for online stores)
             location_osm_id=serializer.validated_data.get("location_osm_id"),
             location_osm_type=serializer.validated_data.get("location_osm_type"),
-            date=serializer.validated_data["date"],
+            date=serializer.validated_data.get("date"),
         ).first()
         if duplicate_proof:
             # We remove the uploaded file as it's a duplicate
