@@ -10,6 +10,8 @@ HISTORY_FIELDS = [
     "history_user_id",
 ]
 
+HISTORY_TYPE_CHOICES = [("+", "Created"), ("~", "Changed"), ("-", "Deleted")]
+
 
 def get_history_user_from_request(request, **kwargs):
     """
