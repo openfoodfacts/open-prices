@@ -257,11 +257,86 @@ class ProofCreateApiTest(TestCase):
         Proof.objects.all().delete()
         Location.objects.all().delete()
 
-    def test_proof_create_anonymous(self):
-        # wrong endpoint
+    def test_proof_create_wrong_endpoint(self):
+        # anonymous
         response = self.client.post(reverse("api:proofs-list"), self.data)
         self.assertEqual(response.status_code, 403)  # 405 ?
-        # anonymous
+        # wrong token
+        response = self.client.post(
+            reverse("api:proofs-list"),
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}X"},
+        )
+        self.assertEqual(response.status_code, 403)  # 405 ?
+        # authenticated
+        response = self.client.post(
+            reverse("api:proofs-list"),
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 405)
+
+    def test_proof_create_wrong_token(self):
+        response = self.client.post(
+            self.url,
+            # Create a different image to avoid duplicate detection
+            {**self.data, "file": create_fake_image(color="blue")},
+            headers={"Authorization": f"Bearer {self.user_session.token}X"},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_proof_create_without_fields(self):
+        # without file: NOK
+        data = self.data.copy()
+        del data["file"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # without type: NOK
+        data = self.data.copy()
+        del data["type"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # without currency: OK
+        data = self.data.copy()
+        del data["currency"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["currency"], None)
+        # without date: OK
+        data = self.data.copy()
+        del data["date"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["date"], None)
+        # without location data: OK
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["location"], None)
+
+    def test_proof_create_anonymous(self):
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, 201)
         self.assertTrue(response.data["file_path"] is not None)
@@ -271,32 +346,7 @@ class ProofCreateApiTest(TestCase):
         self.assertEqual(response.data["owner"], settings.ANONYMOUS_USER_ID)
         self.assertEqual(Proof.objects.last().source, "API")  # default value
 
-    def test_proof_create_wrong_token(self):
-        # wrong endpoint
-        response = self.client.post(
-            reverse("api:proofs-list"),
-            self.data,
-            headers={"Authorization": f"Bearer {self.user_session.token}X"},
-        )
-        self.assertEqual(response.status_code, 403)  # 405 ?
-        # wrong token
-        response = self.client.post(
-            self.url,
-            # Create a different image to avoid duplicate detection
-            {**self.data, "file": create_fake_image(color="blue")},
-            headers={"Authorization": f"Bearer {self.user_session.token}X"},
-        )
-        self.assertEqual(response.status_code, 400)
-
     def test_proof_create_authenticated(self):
-        # wrong endpoint
-        response = self.client.post(
-            reverse("api:proofs-list"),
-            self.data,
-            headers={"Authorization": f"Bearer {self.user_session.token}"},
-        )
-        self.assertEqual(response.status_code, 405)
-        # authenticated
         response = self.client.post(
             self.url,
             self.data,
@@ -783,7 +833,9 @@ class PriceTagUpdateApiTest(TestCase):
 
     def test_price_tag_create_unauthenticated(self):
         response = self.client.patch(
-            self.url, data={"bounding_box": self.new_bounding_box}
+            self.url,
+            data={"bounding_box": self.new_bounding_box},
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
@@ -794,12 +846,12 @@ class PriceTagUpdateApiTest(TestCase):
         self.assertNotEqual(self.price_tag.bounding_box, self.new_bounding_box)
         response = self.client.patch(
             self.url,
-            content_type="application/json",
             data={
                 "bounding_box": self.new_bounding_box,
                 "proof_id": self.proof_2.id,
             },
             headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         # Proof ID didn't change
@@ -812,9 +864,9 @@ class PriceTagUpdateApiTest(TestCase):
         self.assertEqual(self.price_tag.status, None)
         response = self.client.patch(
             self.url,
-            content_type="application/json",
             data={"price_id": self.price.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         # Price ID was set to the new value
@@ -829,10 +881,10 @@ class PriceTagUpdateApiTest(TestCase):
         self.assertEqual(self.price_tag.price_id, None)
         response = self.client.patch(
             self.url,
-            content_type="application/json",
             # Price associated with another proof
             data={"price_id": self.price_2.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
@@ -843,10 +895,10 @@ class PriceTagUpdateApiTest(TestCase):
         self.assertEqual(self.price_tag.status, None)
         response = self.client.patch(
             self.url,
-            content_type="application/json",
             # Price associated with another proof
             data={"status": proof_constants.PriceTagStatus.not_readable.value},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -857,10 +909,10 @@ class PriceTagUpdateApiTest(TestCase):
         self.assertEqual(self.price_tag.status, None)
         response = self.client.patch(
             self.url,
-            content_type="application/json",
             # Invalid status value
             data={"status": 999},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {"status": ['"999" is not a valid choice.']})
@@ -869,9 +921,9 @@ class PriceTagUpdateApiTest(TestCase):
         self.assertNotEqual(self.price_tag.bounding_box, self.new_bounding_box)
         response = self.client.patch(
             self.url,
-            content_type="application/json",
             data={"bounding_box": self.new_bounding_box},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["bounding_box"], self.new_bounding_box)
@@ -879,9 +931,9 @@ class PriceTagUpdateApiTest(TestCase):
     def test_price_tag_invalid_bounding_box(self):
         response = self.client.patch(
             self.url,
-            content_type="application/json",
             data={"bounding_box": [0.1, 0.2, 0.3]},  # only 3 values
             headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(

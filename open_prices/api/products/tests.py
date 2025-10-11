@@ -173,7 +173,6 @@ class ProductCreateApiTest(TestCase):
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 405)
 
