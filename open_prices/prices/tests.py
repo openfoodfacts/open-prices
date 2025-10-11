@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 from freezegun import freeze_time
 from simple_history.utils import bulk_update_with_history
 
@@ -896,44 +896,69 @@ class PriceModelDeleteTest(TestCase):
         self.assertEqual(Product.objects.get(id=product.id).price_count, 0)
 
 
-class PriceModelHistoryTest(TransactionTestCase):
-    def test_price_history(self):
+class PriceModelHistoryTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
         user_session = SessionFactory()
         user_proof = ProofFactory(owner=user_session.user.user_id)
         location = LocationFactory()
         product = ProductFactory()
-        # create the price
-        price = PriceFactory(
+        cls.price = PriceFactory(
+            price=3,
             proof_id=user_proof.id,
             location_osm_id=location.osm_id,
             location_osm_type=location.osm_type,
             product_code=product.code,
             owner=user_session.user.user_id,
         )
-        self.assertEqual(price.history.count(), 1)
-        self.assertEqual(price.history.first().history_type, "+")
-        self.assertEqual(price.history.first().history_user_id, None)
+
+    def test_price_history(self):
+        self.assertEqual(self.price.history.count(), 1)
+        self.assertEqual(self.price.history.first().history_type, "+")
+        self.assertEqual(self.price.history.first().history_user_id, None)
         # update the price
-        price.price = 5
-        price.save()
-        self.assertEqual(price.history.count(), 2)
-        self.assertEqual(price.history.first().history_type, "~")
-        self.assertEqual(price.history.first().history_user_id, None)
+        self.price.price = 5
+        self.price.save()
+        self.assertEqual(self.price.history.count(), 2)
+        self.assertEqual(self.price.history.first().history_type, "~")
+        self.assertEqual(self.price.history.first().history_user_id, None)
         # bulk update the price
-        price.price = 10
-        bulk_update_with_history([price], Price, ["price"], default_user="moderator-2")
-        self.assertEqual(price.history.count(), 3)
-        self.assertEqual(price.history.first().history_type, "~")
-        self.assertEqual(price.history.first().history_user_id, "moderator-2")
+        self.price.price = 10
+        bulk_update_with_history(
+            [self.price], Price, ["price"], default_user="moderator-2"
+        )
+        self.assertEqual(self.price.history.count(), 3)
+        self.assertEqual(self.price.history.first().history_type, "~")
+        self.assertEqual(self.price.history.first().history_user_id, "moderator-2")
         # delete the price
-        price_id = price.id
-        price._history_user = "moderator-3"
-        price.delete()
+        price_id = self.price.id
+        self.price._history_user = "moderator-3"
+        self.price.delete()
         self.assertEqual(Price.history.filter(id=price_id).count(), 4)
         self.assertEqual(Price.history.filter(id=price_id).first().history_type, "-")
         self.assertEqual(
             Price.history.filter(id=price_id).first().history_user_id, "moderator-3"
         )
+
+    def test_price_get_history_list(self):
+        history_list = self.price.get_history_list()
+        self.assertEqual(len(history_list), 1)
+        self.assertEqual(history_list[0]["history_type"], "+")
+        self.assertEqual(len(history_list[0]["changes"]), 0)
+        # update the price
+        self.price.price = 5
+        self.price.save()
+        history_list = self.price.get_history_list()
+        self.assertEqual(len(history_list), 2)
+        self.assertEqual(history_list[0]["history_type"], "~")
+        self.assertEqual(len(history_list[0]["changes"]), 1)
+        self.assertEqual(history_list[0]["changes"][0]["field"], "price")
+        self.assertEqual(history_list[0]["changes"][0]["old"], Decimal("3"))
+        self.assertEqual(history_list[0]["changes"][0]["new"], Decimal("5"))
+        # save the price without changes
+        self.price.save()
+        history_list = self.price.get_history_list()
+        self.assertEqual(len(history_list), 2)  # empty history entry ignored
 
 
 class PriceCommandTest(TestCase):
