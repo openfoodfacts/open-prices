@@ -424,47 +424,130 @@ class PriceCreateApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
+        cls.location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         cls.user_proof_gdpr = ProofFactory(
             type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
         )
         cls.proof_price_tag = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        cls.proof_receipt = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        cls.proof_receipt = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            currency="EUR",
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
+            date="2024-01-01",
+        )
         cls.data = {
             **PRICE_8001505005707,
-            "location_osm_id": 652825274,
-            "location_osm_type": "NODE",
+            "location_osm_id": cls.location_osm.osm_id,
+            "location_osm_type": cls.location_osm.osm_type,
             "proof_id": cls.user_proof_gdpr.id,
             "source": "test",
         }
 
-    def test_price_create_without_proof(self):
-        data = self.data.copy()
-        del data["proof_id"]
-        # anonymous
-        response = self.client.post(
-            self.url, self.data, content_type="application/json"
-        )
+    def test_price_create_anonymous(self):
+        response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, 403)
-        # wrong token
+
+    def test_price_create_wrong_token(self):
         response = self.client.post(
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
-        # proof_id field missing
+
+    def test_price_create_without_fields(self):
+        # without proof_id: NOK
         data = self.data.copy()
         del data["proof_id"]
         response = self.client.post(
             self.url,
             data,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        # without type: OK
+        data = self.data.copy()
+        self.assertTrue("type" not in data)
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["type"], price_constants.TYPE_PRODUCT)  # default
+        # without price: NOK
+        data = self.data.copy()
+        del data["price"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # without currency: OK (because proof without currency)
+        data = self.data.copy()
+        del data["currency"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["currency"], None)
+        # without currency: NOK (because proof has a currency)
+        data = self.data.copy()
+        del data["currency"]
+        response = self.client.post(
+            self.url,
+            {**data, "proof_id": self.proof_receipt.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # without location data: OK (because proof without location data)
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["location"], None)
+        # without location data: NOK (because proof has location data)
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            {**data, "proof_id": self.proof_receipt.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # without date: OK (because proof without date)
+        data = self.data.copy()
+        del data["date"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["date"], None)
+        # without date: NOK (because proof has a date)
+        data = self.data.copy()
+        del data["date"]
+        response = self.client.post(
+            self.url,
+            {**data, "proof_id": self.proof_receipt.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 400)
 
     def test_price_create_with_proof(self):
+        # without proof: see test above
         # empty proof
         response = self.client.post(
             self.url,
@@ -478,7 +561,6 @@ class PriceCreateApiTest(TestCase):
             self.url,
             {**self.data, "proof_id": 999},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
         # authenticated
@@ -486,7 +568,6 @@ class PriceCreateApiTest(TestCase):
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["product_code"], "8001505005707")
@@ -525,40 +606,34 @@ class PriceCreateApiTest(TestCase):
             self.url,
             {**self.data, "proof_id": self.proof_receipt.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        # not proof owner and proof is a PRICE_TAG: OK !
+        # not proof owner and proof is a PRICE_TAG: OK
         response = self.client.post(
             self.url,
             {**self.data, "proof_id": self.proof_price_tag.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
 
     def test_price_create_with_location_id(self):
-        location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
-        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         # with location_id, location_osm_id & location_osm_type: OK
         response = self.client.post(
             self.url,
-            {**self.data, "location_id": location_osm.id},
+            {**self.data, "location_id": self.location_osm.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["location"]["id"], location_osm.id)
+        self.assertEqual(response.data["location"]["id"], self.location_osm.id)
         # with just location_id (OSM): NOK
         data = self.data.copy()
         del data["location_osm_id"]
         del data["location_osm_type"]
         response = self.client.post(
             self.url,
-            {**data, "location_id": location_osm.id},
+            {**data, "location_id": self.location_osm.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
         # with just location_id (ONLINE): OK
@@ -567,21 +642,19 @@ class PriceCreateApiTest(TestCase):
         del data["location_osm_type"]
         response = self.client.post(
             self.url,
-            {**data, "location_id": location_online.id},
+            {**data, "location_id": self.location_online.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
 
     def test_price_create_with_type(self):
         data = self.data.copy()
-        # without type? see other tests
+        # without type? see test above
         # correct type
         response = self.client.post(
             self.url,
             {**data, "type": price_constants.TYPE_PRODUCT},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["type"], price_constants.TYPE_PRODUCT)
@@ -590,7 +663,6 @@ class PriceCreateApiTest(TestCase):
             self.url,
             {**data, "type": price_constants.TYPE_CATEGORY},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
 
@@ -610,7 +682,6 @@ class PriceCreateApiTest(TestCase):
                     self.url + params,
                     self.data,
                     headers={"Authorization": f"Bearer {self.user_session.token}"},
-                    content_type="application/json",
                 )
                 self.assertEqual(response.status_code, 201)
                 self.assertEqual(response.data["source"], result)
@@ -621,7 +692,6 @@ class PriceCreateApiTest(TestCase):
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         price_id = response.data["id"]

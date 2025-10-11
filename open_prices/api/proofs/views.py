@@ -126,13 +126,13 @@ class ProofViewSet(
     )
     def upload(self, request: Request) -> Response:
         # build proof
-        if not request.data.get("file"):
+        file = request.data.get("file")
+        if not file:
             return Response(
                 {"file": ["This field is required."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # NOTE: image will be stored even if the proof serializer fails...
-        file = request.data.get("file")
         file_path, mimetype, image_thumb_path = store_file(file)
         image_md5_hash = compute_file_md5(file)
         proof_create_data = {
