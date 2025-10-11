@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.88.1](https://github.com/openfoodfacts/open-prices/compare/v1.88.0...v1.88.1) (2025-10-11)
+
+
+### Bug Fixes
+
+* **Proofs:** API: fix 500 error if date field missing ([#1059](https://github.com/openfoodfacts/open-prices/issues/1059)) ([72e362a](https://github.com/openfoodfacts/open-prices/commit/72e362a90ec6bd168c8df5cf0c0937f594387636))
+
+
+### Technical
+
+* **API:** Price & Proof create: add more tests ([#1061](https://github.com/openfoodfacts/open-prices/issues/1061)) ([e963aaa](https://github.com/openfoodfacts/open-prices/commit/e963aaa44b02202161d0ef00f5b37713df79878f))
+* **History:** fix cleanup command. run more often (every night) ([#1055](https://github.com/openfoodfacts/open-prices/issues/1055)) ([c6df656](https://github.com/openfoodfacts/open-prices/commit/c6df656f66d6cf029b6c07f96ef1a7afeb664e40))
+* **Products:** Product Opener API endpoints: restrict to PATCH method ([#1056](https://github.com/openfoodfacts/open-prices/issues/1056)) ([b9fc9d0](https://github.com/openfoodfacts/open-prices/commit/b9fc9d0a5e3caddbd4c3615f89955868ada55e60))
+
 ## [1.88.0](https://github.com/openfoodfacts/open-prices/compare/v1.87.0...v1.88.0) (2025-10-10)
 
 
