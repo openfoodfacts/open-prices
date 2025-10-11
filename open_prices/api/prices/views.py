@@ -10,6 +10,7 @@ from open_prices.api.prices.filters import PriceFilter
 from open_prices.api.prices.serializers import (
     PriceCreateSerializer,
     PriceFullSerializer,
+    PriceHistorySerializer,
     PriceStatsSerializer,
     PriceUpdateSerializer,
 )
@@ -84,3 +85,9 @@ class PriceViewSet(
     def stats(self, request: Request) -> Response:
         qs = self.filter_queryset(self.get_queryset())
         return Response(qs.calculate_stats(), status=200)
+
+    @extend_schema(responses=PriceHistorySerializer(many=True))
+    @action(detail=True, methods=["GET"])
+    def history(self, request: Request, pk=None) -> Response:
+        price = self.get_object()
+        return Response(price.get_history_list(), status=200)
