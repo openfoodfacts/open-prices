@@ -37,8 +37,14 @@ def history_clean_duplicate_command():
     Why? A historical record is created on every save even if 0 fields changed.
     --auto: run on all models with HistoricalRecords
     --minutes: how far back in history searching for duplicates
+    --verbosity 0: no output
     """
-    month_in_minutes = 30 * 24 * 60
+    two_days_in_minutes = 2 * 24 * 60
     call_command(
-        "clean_duplicate_history", "--auto", "", "--minutes", f"{month_in_minutes}"
+        "clean_duplicate_history",
+        "--auto",
+        "--minutes",
+        f"{two_days_in_minutes}",
+        "--verbosity",
+        "0",
     )
