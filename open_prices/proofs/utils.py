@@ -80,9 +80,10 @@ def generate_thumbnail(
     thumbnail_size: tuple[int, int] = settings.THUMBNAIL_SIZE,
 ) -> str | None:
     """Generate a thumbnail for the image at the given path."""
-    image_thumb_path = None
-    if mimetype.startswith("image"):
-        file_full_path = generate_full_path(current_dir, file_stem, extension)
+    if not mimetype.startswith("image"):
+        return None
+    file_full_path = generate_full_path(current_dir, file_stem, extension)
+    try:
         with Image.open(file_full_path) as img:
             img_thumb = img.copy()
             # set any rotation info
@@ -102,7 +103,8 @@ def generate_thumbnail(
                 f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}",
                 extension,
             )
-    return image_thumb_path
+    except (OSError, Exception):
+        image_thumb_path = None
 
 
 def store_file(
