@@ -7,6 +7,7 @@ from django.db.models import Case, Count, F, Func, Value, When
 from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
+from open_prices.challenges import validators as challenge_validators
 from open_prices.common import utils
 from open_prices.locations.models import Location
 
@@ -73,31 +74,11 @@ class Challenge(models.Model):
         verbose_name_plural = "Challenges"
 
     def clean(self, *args, **kwargs):
-        validation_errors = dict()
-        # date rules
-        if self.start_date is not None and self.end_date is not None:
-            if str(self.start_date) > str(self.end_date):
-                utils.add_validation_error(
-                    validation_errors, "start_date", "Must be before end date"
-                )
-        # published rules
-        if self.is_published:
-            if self.title is None:
-                utils.add_validation_error(
-                    validation_errors, "title", "Must be set if challenge is published"
-                )
-            if self.start_date is None:
-                utils.add_validation_error(
-                    validation_errors,
-                    "start_date",
-                    "Must be set if challenge is published",
-                )
-            if self.end_date is None:
-                utils.add_validation_error(
-                    validation_errors,
-                    "end_date",
-                    "Must be set if challenge is published",
-                )
+        # store all ValidationError in a dict
+        validation_errors = utils.merge_validation_errors(
+            challenge_validators.validate_date_rules(self),
+            challenge_validators.validate_published_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
