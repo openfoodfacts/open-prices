@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.88.2](https://github.com/openfoodfacts/open-prices/compare/v1.88.1...v1.88.2) (2025-10-12)
+
+
+### Technical
+
+* **Challenges:** move validations to a seperate file ([#1064](https://github.com/openfoodfacts/open-prices/issues/1064)) ([796af93](https://github.com/openfoodfacts/open-prices/commit/796af93a4207506c0a67882696f493cc47793ab5))
+* **Locations:** move validations to a dedicated file ([#1062](https://github.com/openfoodfacts/open-prices/issues/1062)) ([1c229f3](https://github.com/openfoodfacts/open-prices/commit/1c229f3233d2e6cfd2e94828364ca84f85835256))
+* **OpenFoodFacts:** move cached taxonomy logic to common_openfoodfacts ([#1069](https://github.com/openfoodfacts/open-prices/issues/1069)) ([55ac249](https://github.com/openfoodfacts/open-prices/commit/55ac2498538f794d71fa55dbe267e11ac9764307))
+* **Price Tags:** move validations to a seperate file ([#1065](https://github.com/openfoodfacts/open-prices/issues/1065)) ([44fdc9e](https://github.com/openfoodfacts/open-prices/commit/44fdc9ec63053a4af8a47e58c8dcd5b0043cf9c2))
+* **Prices:** move validations to a seperate file ([#1067](https://github.com/openfoodfacts/open-prices/issues/1067)) ([9fdcd11](https://github.com/openfoodfacts/open-prices/commit/9fdcd11d6c097f64944494c7d9799e80baf6ccec))
+* **Proofs:** move validations to a seperate file ([#1066](https://github.com/openfoodfacts/open-prices/issues/1066)) ([b7285ea](https://github.com/openfoodfacts/open-prices/commit/b7285eafc4ba72e55485771319329141b0395f93))
+
 ## [1.88.1](https://github.com/openfoodfacts/open-prices/compare/v1.88.0...v1.88.1) (2025-10-11)
 
 
