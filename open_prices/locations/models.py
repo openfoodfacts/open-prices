@@ -131,8 +131,8 @@ class Location(models.Model):
     def clean(self, *args, **kwargs):
         # store all ValidationError in a dict
         validation_errors = utils.merge_validation_errors(
-            location_validators.validate_location_osm_rules(self),
-            location_validators.validate_location_online_rules(self),
+            location_validators.validate_location_type_osm_rules(self),
+            location_validators.validate_location_type_online_rules(self),
         )
         # return
         if bool(validation_errors):
