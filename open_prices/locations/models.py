@@ -9,6 +9,7 @@ from django_q.tasks import async_task
 from open_prices.common import utils
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
+from open_prices.locations import validators as location_validators
 
 
 class LocationQuerySet(models.QuerySet):
@@ -128,47 +129,11 @@ class Location(models.Model):
                 setattr(self, field_name, url)
 
     def clean(self, *args, **kwargs):
-        # dict to store all ValidationErrors
-        validation_errors = dict()
-        # osm rules
-        if self.type == location_constants.TYPE_OSM:
-            for field_name in self.TYPE_OSM_MANDATORY_FIELDS:
-                if not getattr(self, field_name):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        field_name,
-                        f"Should be set (type = {self.type})",
-                    )
-            if self.osm_id in [True, "true", "false", "none", "null"]:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "osm_id",
-                    "Should not be a boolean or an invalid string",
-                )
-            for field_name in self.TYPE_ONLINE_MANDATORY_FIELDS:
-                if getattr(self, field_name):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        field_name,
-                        f"Should not be set (type = {self.type})",
-                    )
-        # online rules
-        elif self.type == location_constants.TYPE_ONLINE:
-            for field_name in self.TYPE_ONLINE_MANDATORY_FIELDS:
-                if not getattr(self, field_name):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        field_name,
-                        f"Should be set (type = {self.type})",
-                    )
-            for field_name in self.TYPE_OSM_MANDATORY_FIELDS:
-                if getattr(self, field_name):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        field_name,
-                        f"Should not be set (type = {self.type})",
-                    )
-
+        # store all ValidationError in a dict
+        validation_errors = utils.merge_validation_errors(
+            location_validators.validate_osm_rules(self),
+            location_validators.validate_online_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)

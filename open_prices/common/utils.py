@@ -46,6 +46,16 @@ def add_validation_error(dict, key, value):
     return dict
 
 
+def merge_validation_errors(dict1, *args):
+    """
+    Merge multiple validation error dictionaries
+    """
+    for dict2 in args:
+        for key, value in dict2.items():
+            dict1 = add_validation_error(dict1, key, value)
+    return dict1
+
+
 def export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir):
     output_path = os.path.join(output_dir, f"{table_name}.jsonl.gz")
     with gzip.open(output_path, "wt") as f:
