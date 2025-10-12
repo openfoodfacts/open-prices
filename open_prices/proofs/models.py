@@ -1,4 +1,3 @@
-import datetime
 import decimal
 
 from django.conf import settings
@@ -215,127 +214,14 @@ class Proof(models.Model):
         verbose_name_plural = "Proofs"
 
     def clean(self, *args, **kwargs):
-        # dict to store all ValidationErrors
-        validation_errors = dict()
-        # proof rules
-        # - should have the right format
-        # - should not be in the future (we accept 1 day leniency for users in future time zones)  # noqa
-        if self.date:
-            if type(self.date) is str:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "date",
-                    "Parsing error. Expected format: YYYY-MM-DD",
-                )
-            elif self.date > timezone.now().date() + datetime.timedelta(days=1):
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "date",
-                    "Should not be in the future",
-                )
-        # location rules
-        # - allow passing a location_id
-        # - location_osm_id should be set if location_osm_type is set
-        # - location_osm_type should be set if location_osm_id is set
-        # - some location fields should match the proof fields (on create)
-        if self.location_id:
-            location = None
-            from open_prices.locations.models import Location
-
-            try:
-                location = Location.objects.get(id=self.location_id)
-            except Location.DoesNotExist:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "location",
-                    "Location not found",
-                )
-
-            if location:
-                if location.type == location_constants.TYPE_ONLINE:
-                    if self.location_osm_id:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "location_osm_id",
-                            "Can only be set if location type is OSM",
-                        )
-                    if self.location_osm_type:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "location_osm_type",
-                            "Can only be set if location type is OSM",
-                        )
-                elif location.type == location_constants.TYPE_OSM:
-                    if not self.id:  # skip these checks on update
-                        for LOCATION_FIELD in Proof.DUPLICATE_LOCATION_FIELDS:
-                            location_field_value = getattr(
-                                self.location, LOCATION_FIELD.replace("location_", "")
-                            )
-                            if location_field_value:
-                                proof_field_value = getattr(self, LOCATION_FIELD)
-                                if str(location_field_value) != str(proof_field_value):
-                                    validation_errors = utils.add_validation_error(
-                                        validation_errors,
-                                        "location",
-                                        f"Location {LOCATION_FIELD} ({location_field_value}) does not match the proof {LOCATION_FIELD} ({proof_field_value})",
-                                    )
-        else:
-            if self.location_osm_id:
-                if not self.location_osm_type:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_type",
-                        "Should be set if `location_osm_id` is filled",
-                    )
-            if self.location_osm_type:
-                if not self.location_osm_id:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_id",
-                        "Should be set if `location_osm_type` is filled",
-                    )
-                elif self.location_osm_id in [True, "true", "false", "none", "null"]:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_id",
-                        "Should not be a boolean or an invalid string",
-                    )
-        # price-tag specific rules
-        if not self.type == proof_constants.TYPE_PRICE_TAG:
-            if self.ready_for_price_tag_validation:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "ready_for_price_tag_validation",
-                    "Can only be set if type PRICE_TAG",
-                )
-        # receipt specific rules
-        if not self.type == proof_constants.TYPE_RECEIPT:
-            if self.receipt_price_count is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "receipt_price_count",
-                    "Can only be set if type RECEIPT",
-                )
-            if self.receipt_price_total is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "receipt_price_total",
-                    "Can only be set if type RECEIPT",
-                )
-            if self.receipt_online_delivery_costs is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "receipt_online_delivery_costs",
-                    "Can only be set if type RECEIPT",
-                )
-        # consumption specific rules
-        if self.type not in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
-            if self.owner_consumption is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "owner_consumption",
-                    f"Can only be set if type is consumption ({proof_constants.TYPE_GROUP_CONSUMPTION_LIST})",
-                )
+        # store all ValidationError in a dict
+        validation_errors = utils.merge_validation_errors(
+            proof_validators.validate_proof_date_rules(self),
+            proof_validators.validate_proof_location_rules(self),
+            proof_validators.validate_proof_type_price_tag_rules(self),
+            proof_validators.validate_proof_type_receipt_rules(self),
+            proof_validators.validate_proof_type_consumption_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
