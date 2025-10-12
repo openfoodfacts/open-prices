@@ -15,10 +15,11 @@ from open_prices.challenges.models import Challenge
 
 # Import custom lookups so that they are registered
 from open_prices.common import lookups  # noqa: F401
-from open_prices.common import constants, history, openfoodfacts, utils
+from open_prices.common import constants, history, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
+from open_prices.prices import validators as price_validators
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof
@@ -118,6 +119,8 @@ class PriceQuerySet(models.QuerySet):
 
 
 class Price(models.Model):
+    TYPE_PRODUCT_FIELDS = ["product_code"]
+    TYPE_CATEGORY_FIELDS = ["category_tag", "labels_tags", "origins_tags"]
     UPDATE_FIELDS = [
         "category_tag",
         "labels_tags",
@@ -275,297 +278,13 @@ class Price(models.Model):
 
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
-        validation_errors = dict()
-        # product rules
-        # - if product_code is set, then should be a valid string
-        # - if product_code is set, then category_tag/labels_tags/origins_tags should not be set  # noqa
-        if self.product_code:
-            if self.type != price_constants.TYPE_PRODUCT:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "type",
-                    "Should be set to 'PRODUCT' if `product_code` is filled",
-                )
-            if not isinstance(self.product_code, str):
-                validation_errors = utils.add_validation_error(
-                    validation_errors, "product_code", "Should be a string"
-                )
-            if not self.product_code.isalnum():
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "product_code",
-                    "Should only contain numbers (or letters)",
-                )
-            if self.product_code.lower() in ["true", "false", "none", "null"]:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "product_code",
-                    "Should not be a boolean or an invalid string",
-                )
-            if self.category_tag:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "category_tag",
-                    "Should not be set if `product_code` is filled",
-                )
-            if self.labels_tags:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "labels_tags",
-                    "Should not be set if `product_code` is filled",
-                )
-            if self.origins_tags:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "origins_tags",
-                    "Should not be set if `product_code` is filled",
-                )
-        # Tag rules:
-        # - if category_tag is set, it should be language-prefixed
-        # - if labels_tags is set, then all labels_tags should be valid taxonomy strings  # noqa
-        # - if origins_tags is set, then all origins_tags should be valid taxonomy strings  # noqa
-        elif self.category_tag:
-            if self.type != price_constants.TYPE_CATEGORY:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "type",
-                    "Should be set to 'CATEGORY' if `category_tag` is filled",
-                )
-            try:
-                self.category_tag = openfoodfacts.normalize_taxonomized_tags(
-                    "category", [self.category_tag]
-                )[0]
-            except ValueError as e:
-                # The value is not language-prefixed
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "category_tag",
-                    str(e),
-                )
-            if self.labels_tags:
-                if not isinstance(self.labels_tags, list):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "labels_tags",
-                        "Should be a list",
-                    )
-                else:
-                    try:
-                        self.labels_tags = openfoodfacts.normalize_taxonomized_tags(
-                            "label", self.labels_tags
-                        )
-                    except ValueError as e:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "labels_tags",
-                            str(e),
-                        )
-            if self.origins_tags:
-                if not isinstance(self.origins_tags, list):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "origins_tags",
-                        "Should be a list",
-                    )
-                else:
-                    try:
-                        self.origins_tags = openfoodfacts.normalize_taxonomized_tags(
-                            "origin", self.origins_tags
-                        )
-                    except ValueError as e:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "origins_tags",
-                            str(e),
-                        )
-        else:
-            validation_errors = utils.add_validation_error(
-                validation_errors,
-                "product_code",
-                "Should be set if `category_tag` is not filled",
-            )
-        # price rules
-        # - price must be set
-        # - price_is_discounted must be set if price_without_discount is set
-        # - price_without_discount must be greater or equal to price
-        # - price_per should be set if category_tag is set
-        # - discount_type can only be set if price_is_discounted is True
-        if self.price in [None, "true", "false", "none", "null"]:
-            validation_errors = utils.add_validation_error(
-                validation_errors,
-                "price",
-                "Should not be a boolean or an invalid string",
-            )
-        else:
-            if self.price_without_discount:
-                if not self.price_is_discounted:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "price_is_discounted",
-                        "Should be set to True if `price_without_discount` is filled",
-                    )
-                if (
-                    utils.is_float(self.price)
-                    and utils.is_float(self.price_without_discount)
-                    and (self.price_without_discount <= self.price)
-                ):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "price_without_discount",
-                        "Should be greater than `price`",
-                    )
-            if self.discount_type:
-                if not self.price_is_discounted:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "discount_type",
-                        "Should not be set if `price_is_discounted` is False",
-                    )
-        if self.product_code:
-            if self.price_per:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "price_per",
-                    "Should not be set if `product_code` is filled",
-                )
-        if self.category_tag:
-            if not self.price_per:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "price_per",
-                    "Should be set if `category_tag` is filled",
-                )
-        # date rules
-        # - date should have the right format & not be in the future
-        if self.date:
-            if type(self.date) is str:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "date",
-                    "Parsing error. Expected format: YYYY-MM-DD",
-                )
-            elif self.date > timezone.now().date():
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "date",
-                    "Should not be in the future",
-                )
-        # location rules
-        # - allow passing a location_id
-        # - location_osm_id should be set if location_osm_type is set
-        # - location_osm_type should be set if location_osm_id is set
-        # - some location fields should match the price fields (on create)
-        if self.location_id:
-            location = None
-            from open_prices.locations.models import Location
-
-            try:
-                location = Location.objects.get(id=self.location_id)
-            except Location.DoesNotExist:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "location",
-                    "Location not found",
-                )
-
-            if location:
-                if location.type == location_constants.TYPE_ONLINE:
-                    if self.location_osm_id:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "location_osm_id",
-                            "Can only be set if location type is OSM",
-                        )
-                    if self.location_osm_type:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "location_osm_type",
-                            "Can only be set if location type is OSM",
-                        )
-                elif location.type == location_constants.TYPE_OSM:
-                    if not self.id:  # skip these checks on update
-                        for LOCATION_FIELD in Price.DUPLICATE_LOCATION_FIELDS:
-                            location_field_value = getattr(
-                                self.location, LOCATION_FIELD.replace("location_", "")
-                            )
-                            if location_field_value:
-                                price_field_value = getattr(self, LOCATION_FIELD)
-                                if str(location_field_value) != str(price_field_value):
-                                    validation_errors = utils.add_validation_error(
-                                        validation_errors,
-                                        "location",
-                                        f"Location {LOCATION_FIELD} ({location_field_value}) does not match the price {LOCATION_FIELD} ({price_field_value})",
-                                    )
-        else:
-            if self.location_osm_id:
-                if not self.location_osm_type:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_type",
-                        "Should be set if `location_osm_id` is filled",
-                    )
-            if self.location_osm_type:
-                if not self.location_osm_id:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_id",
-                        "Should be set if `location_osm_type` is filled",
-                    )
-                elif self.location_osm_id in [True, "true", "false", "none", "null"]:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_id",
-                        "Should not be a boolean or an invalid string",
-                    )
-        # proof rules
-        # - proof must exist and belong to the price owner
-        # - some proof fields should match the price fields (on create)
-        # - receipt_quantity can only be set for receipts (default to 1)
-        if self.proof_id:
-            proof = None
-            from open_prices.proofs.models import Proof
-
-            try:
-                proof = Proof.objects.get(id=self.proof_id)
-            except Proof.DoesNotExist:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "proof",
-                    "Proof not found",
-                )
-            if proof:
-                if (
-                    proof.owner != self.owner
-                    and proof.type
-                    not in proof_constants.TYPE_GROUP_ALLOW_ANY_USER_PRICE_ADD_LIST
-                ):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "proof",
-                        f"Proof does not belong to the current user. Adding a price to a proof a user does not own is only allowed for {proof_constants.TYPE_GROUP_ALLOW_ANY_USER_PRICE_ADD_LIST} proofs",
-                    )
-                if not self.id:  # skip these checks on update
-                    if proof.type in proof_constants.TYPE_GROUP_SINGLE_SHOP_LIST:
-                        for PROOF_FIELD in Price.DUPLICATE_PROOF_FIELDS:
-                            proof_field_value = getattr(proof, PROOF_FIELD)
-                            if proof_field_value:
-                                price_field_value = getattr(self, PROOF_FIELD)
-                                if str(proof_field_value) != str(price_field_value):
-                                    validation_errors = utils.add_validation_error(
-                                        validation_errors,
-                                        "proof",
-                                        f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
-                                    )
-                if proof.type in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
-                    if not self.receipt_quantity:
-                        self.receipt_quantity = 1
-                else:
-                    if self.receipt_quantity is not None:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "receipt_quantity",
-                            f"Can only be set if proof type in {proof_constants.TYPE_GROUP_CONSUMPTION_LIST}",
-                        )
+        validation_errors = utils.merge_validation_errors(
+            price_validators.validate_price_product_code_or_category_tag_rules(self),
+            price_validators.validate_price_price_rules(self),
+            price_validators.validate_price_date_rules(self),
+            price_validators.validate_price_location_rules(self),
+            price_validators.validate_price_proof_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)

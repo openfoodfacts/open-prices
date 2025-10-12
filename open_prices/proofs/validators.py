@@ -142,7 +142,7 @@ def validate_proof_type_consumption_rules(instance):
     errors = dict()
     if instance.type not in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
         if instance.owner_consumption is not None:
-            errors = utils.add_validation_error(
+            utils.add_validation_error(
                 errors,
                 "owner_consumption",
                 f"Can only be set if type is consumption ({proof_constants.TYPE_GROUP_CONSUMPTION_LIST})",
