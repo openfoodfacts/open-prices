@@ -2,7 +2,7 @@ from open_prices.common import utils
 from open_prices.locations import constants as location_constants
 
 
-def validate_osm_rules(instance):
+def validate_location_osm_rules(instance):
     errors = dict()
     if instance.type == location_constants.TYPE_OSM:
         for field_name in instance.TYPE_OSM_MANDATORY_FIELDS:
@@ -22,7 +22,7 @@ def validate_osm_rules(instance):
     return errors
 
 
-def validate_online_rules(instance):
+def validate_location_online_rules(instance):
     errors = dict()
     if instance.type == location_constants.TYPE_ONLINE:
         for field_name in instance.TYPE_ONLINE_MANDATORY_FIELDS:
