@@ -5,6 +5,7 @@
   "shop_osm_id": "1392117416",
   "shop_osm_type": "NODE",
   "shop_currency": "EUR",
+  "shop_username": "elefan-grenoble",
   "fields": [
     {
       "open_prices": "product_code",
