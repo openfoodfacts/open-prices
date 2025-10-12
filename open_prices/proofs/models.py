@@ -19,6 +19,7 @@ from open_prices.common import lookups  # noqa: F401
 from open_prices.common import constants, history, utils
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
+from open_prices.proofs import validators as proof_validators
 
 
 class ProofQuerySet(models.QuerySet):
@@ -654,72 +655,11 @@ class PriceTag(models.Model):
         return f"{self.proof} - {self.id} - {self.status}"
 
     def clean(self, *args, **kwargs):
-        validation_errors = dict()
-        if self.bounding_box is not None:
-            if len(self.bounding_box) != 4:
-                utils.add_validation_error(
-                    validation_errors,
-                    "bounding_box",
-                    "Bounding box should have 4 values.",
-                )
-            else:
-                if not all(isinstance(value, float) for value in self.bounding_box):
-                    utils.add_validation_error(
-                        validation_errors,
-                        "bounding_box",
-                        "Bounding box values should be floats.",
-                    )
-                elif not all(value >= 0 and value <= 1 for value in self.bounding_box):
-                    utils.add_validation_error(
-                        validation_errors,
-                        "bounding_box",
-                        "Bounding box values should be between 0 and 1.",
-                    )
-                else:
-                    y_min, x_min, y_max, x_max = self.bounding_box
-                    if y_min >= y_max or x_min >= x_max:
-                        utils.add_validation_error(
-                            validation_errors,
-                            "bounding_box",
-                            "Bounding box values should be in the format [y_min, x_min, y_max, x_max].",
-                        )
-
-        # self.proof and self.price are fetched with select_related in the view
-        # when the action is "create" or "update"
-        # We therefore only check the validity of the relationship if the user
-        # tries to update the price tag
-        if self.proof:
-            if self.proof.type != proof_constants.TYPE_PRICE_TAG:
-                utils.add_validation_error(
-                    validation_errors,
-                    "proof",
-                    "Proof should have type PRICE_TAG.",
-                )
-
-        if self.proof_prediction:
-            if self.proof_prediction.proof_id != self.proof.id:
-                utils.add_validation_error(
-                    validation_errors,
-                    "proof_prediction",
-                    "Proof prediction should belong to the same proof.",
-                )
-
-        if self.price:
-            if self.proof and self.price.proof_id != self.proof.id:
-                utils.add_validation_error(
-                    validation_errors,
-                    "price",
-                    "Price should belong to the same proof.",
-                )
-            if self.status is None:
-                self.status = proof_constants.PriceTagStatus.linked_to_price.value
-            elif self.status != proof_constants.PriceTagStatus.linked_to_price.value:
-                utils.add_validation_error(
-                    validation_errors,
-                    "status",
-                    "Status should be `linked_to_price` when price_id is set.",
-                )
-
+        # store all ValidationError in a dict
+        validation_errors = utils.merge_validation_errors(
+            proof_validators.validate_price_tag_bounding_box_rules(self),
+            proof_validators.validate_price_tag_relationship_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)

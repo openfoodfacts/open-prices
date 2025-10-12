@@ -936,9 +936,7 @@ class PriceTagUpdateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data, {"bounding_box": ["Bounding box should have 4 values."]}
-        )
+        self.assertEqual(response.data, {"bounding_box": ["Should have 4 values."]})
 
 
 class PriceTagDeleteApiTest(TestCase):
