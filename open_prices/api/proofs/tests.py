@@ -887,9 +887,7 @@ class PriceTagUpdateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data, {"price": ["Price should belong to the same proof."]}
-        )
+        self.assertEqual(response.data, {"price": ["Should belong to the same proof."]})
 
     def test_price_tag_set_status(self):
         self.assertEqual(self.price_tag.status, None)
@@ -936,9 +934,7 @@ class PriceTagUpdateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data, {"bounding_box": ["Bounding box should have 4 values."]}
-        )
+        self.assertEqual(response.data, {"bounding_box": ["Should have 4 values."]})
 
 
 class PriceTagDeleteApiTest(TestCase):

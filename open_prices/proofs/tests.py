@@ -1085,7 +1085,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'bounding_box': ['Bounding box should have 4 values.']}",
+            "{'bounding_box': ['Should have 4 values.']}",
         )
 
     def test_create_price_tag_invalid_bounding_box_value(self):
@@ -1105,7 +1105,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'bounding_box': ['Bounding box values should be floats.']}",
+            "{'bounding_box': ['Values should be floats.']}",
         )
 
         with self.assertRaises(ValidationError) as cm:
@@ -1115,7 +1115,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'bounding_box': ['Bounding box values should be between 0 and 1.']}",
+            "{'bounding_box': ['Values should be between 0 and 1.']}",
         )
 
         with self.assertRaises(ValidationError) as cm:
@@ -1125,7 +1125,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'bounding_box': ['Bounding box values should be in the format [y_min, x_min, y_max, x_max].']}",
+            "{'bounding_box': ['Values should be in the format [y_min, x_min, y_max, x_max].']}",
         )
 
     def test_create_price_tag_invalid_proof_type(self):
@@ -1136,7 +1136,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'proof': ['Proof should have type PRICE_TAG.']}",
+            "{'proof': ['Should have type PRICE_TAG.']}",
         )
 
     def test_delete_price_should_update_price_tag(self):

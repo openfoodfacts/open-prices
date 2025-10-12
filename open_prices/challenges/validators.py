@@ -1,7 +1,7 @@
 from open_prices.common import utils
 
 
-def validate_date_rules(instance):
+def validate_challenge_date_rules(instance):
     errors = dict()
     if instance.start_date and instance.end_date:
         if str(instance.start_date) > str(instance.end_date):
@@ -13,7 +13,7 @@ def validate_date_rules(instance):
     return errors
 
 
-def validate_published_rules(instance):
+def validate_challenge_published_rules(instance):
     errors = dict()
     if instance.is_published:
         if not instance.title:

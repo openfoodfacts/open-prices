@@ -76,8 +76,8 @@ class Challenge(models.Model):
     def clean(self, *args, **kwargs):
         # store all ValidationError in a dict
         validation_errors = utils.merge_validation_errors(
-            challenge_validators.validate_date_rules(self),
-            challenge_validators.validate_published_rules(self),
+            challenge_validators.validate_challenge_date_rules(self),
+            challenge_validators.validate_challenge_published_rules(self),
         )
         # return
         if bool(validation_errors):
