@@ -129,7 +129,7 @@ class Location(models.Model):
                 setattr(self, field_name, url)
 
     def clean(self, *args, **kwargs):
-        # dict to store all ValidationError
+        # store all ValidationError in a dict
         validation_errors = utils.merge_validation_errors(
             location_validators.validate_osm_rules(self),
             location_validators.validate_online_rules(self),

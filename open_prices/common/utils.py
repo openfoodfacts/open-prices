@@ -47,6 +47,9 @@ def add_validation_error(dict, key, value):
 
 
 def merge_validation_errors(dict1, *args):
+    """
+    Merge multiple validation error dictionaries
+    """
     for dict2 in args:
         for key, value in dict2.items():
             dict1 = add_validation_error(dict1, key, value)
