@@ -2,6 +2,8 @@ import os
 import sys
 import time
 
+import openfoodfacts
+
 from open_prices.common import openfoodfacts as common_openfoodfacts
 from scripts.utils import create_price, is_valid_date, read_csv, read_json
 
@@ -20,13 +22,11 @@ REQUIRED_ENV_PARAMS = [
 ]
 
 
-def _get_field_from_shop_mapping(shop_price, shop_mapping, open_prices_field):
+def _get_field_from_shop_mapping_fields(
+    shop_price, shop_mapping_fields, open_prices_field
+):
     field_mapping = next(
-        (
-            f
-            for f in shop_mapping.get("fields", [])
-            if f["open_prices"] == open_prices_field
-        ),
+        (f for f in shop_mapping_fields if f["open_prices"] == open_prices_field),
         None,
     )
     if field_mapping:
@@ -34,7 +34,7 @@ def _get_field_from_shop_mapping(shop_price, shop_mapping, open_prices_field):
     return None
 
 
-def shop_filter_rules(shop_price_list, shop_mapping):
+def shop_filter_rules(shop_price_list, shop_mapping_filters):
     """
     Rules to skip some prices (on code, name...)
     """
@@ -43,9 +43,11 @@ def shop_filter_rules(shop_price_list, shop_mapping):
     for shop_price in shop_price_list:
         passes_test = True
 
-        for filter in shop_mapping.get("filters", []):
+        for filter in shop_mapping_filters:
             shop_field_value = shop_price.get(filter["shop"])
-            if not shop_field_value or shop_field_value != filter["value"]:
+            if not shop_field_value or not eval(
+                f"'{shop_field_value}' {filter['sign']} '{filter['value']}'"
+            ):
                 passes_test = False
 
         if passes_test:
@@ -54,7 +56,7 @@ def shop_filter_rules(shop_price_list, shop_mapping):
     return shop_price_list_filtered
 
 
-def map_shop_price_list_to_open_prices(shop_price_list, shop_mapping):
+def map_shop_price_list_to_open_prices(shop_price_list, shop_mapping_fields):
     """
     Map a price list from Shop format to Open Prices format
     """
@@ -63,16 +65,20 @@ def map_shop_price_list_to_open_prices(shop_price_list, shop_mapping):
     for shop_price in shop_price_list:
         open_prices_price = dict()
         # product_name
-        open_prices_price["product_name"] = _get_field_from_shop_mapping(
-            shop_price, shop_mapping, "product_name"
+        open_prices_price["product_name"] = _get_field_from_shop_mapping_fields(
+            shop_price, shop_mapping_fields, "product_name"
         )
-        # product_code
-        open_prices_price["product_code"] = _get_field_from_shop_mapping(
-            shop_price, shop_mapping, "product_code"
+        # product_code (with cleanup)
+        open_prices_price["product_code"] = _get_field_from_shop_mapping_fields(
+            shop_price, shop_mapping_fields, "product_code"
         )
-        # price
-        open_prices_price["price"] = _get_field_from_shop_mapping(
-            shop_price, shop_mapping, "price"
+        if open_prices_price["product_code"]:
+            open_prices_price["product_code"] = openfoodfacts.barcode.normalize_barcode(
+                open_prices_price["product_code"].strip()
+            )
+        # price (with cleanup)
+        open_prices_price["price"] = _get_field_from_shop_mapping_fields(
+            shop_price, shop_mapping_fields, "price"
         )
         if open_prices_price["price"]:
             open_prices_price["price"] = open_prices_price["price"].replace(",", ".")
@@ -102,6 +108,7 @@ def open_prices_filter_rules(open_prices_price_list):
     for open_prices_price in open_prices_price_list:
         passes_test = True
 
+        # product_code is mandatory and must be valid
         if not open_prices_price["product_code"]:
             passes_test = False
         elif not common_openfoodfacts.barcode_is_valid(
@@ -109,6 +116,7 @@ def open_prices_filter_rules(open_prices_price_list):
         ):
             passes_test = False
 
+        # price is mandatory
         if not open_prices_price["price"]:
             passes_test = False
 
@@ -120,11 +128,10 @@ def open_prices_filter_rules(open_prices_price_list):
 
 if __name__ == "__main__":
     """
-    How-to run:
-    > FILEPATH= poetry run python scripts/shop_import/create_prices_from_csv.py
+    How-to run: see README.md
     Required params: see REQUIRED_ENV_PARAMS
     """
-    print("Step 1.1/5: Checking env params")
+    print("===== Step 1.1/5: Checking env params")
     for env_param in REQUIRED_ENV_PARAMS:
         if not os.environ.get(env_param):
             sys.exit(f"Error: missing {env_param} env")
@@ -134,7 +141,7 @@ if __name__ == "__main__":
     print("All good :)")
 
     filepath = os.environ.get("FILEPATH")
-    print(f"Step 1.2/5: Reading {filepath}")
+    print(f"===== Step 1.2/5: Reading {filepath}")
     if os.environ.get("DELIMITER"):
         shop_price_list = read_csv(filepath, delimiter=os.environ.get("DELIMITER"))
     else:
@@ -145,20 +152,24 @@ if __name__ == "__main__":
     print(shop_price_list[0])
 
     shop_mapping_filepath = os.environ.get("MAPPING_FILEPATH")
-    print(f"Step 1.3/5: Reading {shop_mapping_filepath}")
+    print(f"===== Step 1.3/5: Reading {shop_mapping_filepath}")
     shop_mapping = read_json(shop_mapping_filepath)
+    shop_mapping_fields = shop_mapping.get("fields", [])
+    shop_mapping_filters = shop_mapping.get("filters", [])
+    print(f"Found {len(shop_mapping_fields)} field mappings")
+    print(f"Found {len(shop_mapping_filters)} shop filters")
 
-    print("Step 2/5: Applying shop filtering rules")
-    shop_price_list_filtered = shop_filter_rules(shop_price_list, shop_mapping)
+    print("===== Step 2/5: Applying shop filtering rules")
+    shop_price_list_filtered = shop_filter_rules(shop_price_list, shop_mapping_filters)
     print(len(shop_price_list_filtered))
 
-    print("Step 3/5: Mapping source file to Open Prices format")
+    print("===== Step 3/5: Mapping source file to Open Prices format")
     open_prices_price_list = map_shop_price_list_to_open_prices(
-        shop_price_list_filtered, shop_mapping
+        shop_price_list_filtered, shop_mapping_fields
     )
     print(len(open_prices_price_list))
 
-    print("Step 4/5: Applying open_prices filtering rules")
+    print("===== Step 4/5: Applying open_prices filtering rules")
     open_prices_price_list_filtered = open_prices_filter_rules(open_prices_price_list)
     print(len(open_prices_price_list_filtered))
 
@@ -166,7 +177,7 @@ if __name__ == "__main__":
     print(open_prices_price_list_filtered[0])
 
     if os.environ.get("DRY_RUN") == "False":
-        print(f"Step 5/5: Uploading data to {os.environ.get('API_ENDPOINT')}")
+        print(f"===== Step 5/5: Uploading data to {os.environ.get('API_ENDPOINT')}")
         progress = 0
         for index, price in enumerate(open_prices_price_list_filtered):
             create_price(
@@ -179,4 +190,6 @@ if __name__ == "__main__":
             if (progress % 50) == 0:
                 print(f"{progress}/{len(open_prices_price_list_filtered)}...")
     else:
-        sys.exit("Step 5/5: No prices uploaded (DRY_RUN env missing or set to 'True')")
+        sys.exit(
+            "===== Step 5/5: No prices uploaded (DRY_RUN env missing or set to 'True')"
+        )

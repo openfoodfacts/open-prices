@@ -23,5 +23,11 @@
       "example": "2,05"
     }
   ],
-  "filters": []
+  "filters": [
+    {
+      "shop": "Ventes 6 derniers mois",
+      "sign": "!=",
+      "value": "0"
+    }
+  ]
 }

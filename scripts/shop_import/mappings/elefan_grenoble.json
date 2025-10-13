@@ -26,6 +26,7 @@
   "filters": [
     {
       "shop": "Status",
+      "sign": "==",
       "value": "ACTIF"
     }
   ]
