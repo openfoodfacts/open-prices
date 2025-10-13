@@ -1,0 +1,33 @@
+{
+  "shop_name": "Coop 14",
+  "shop_address": "70 boulevard Jourdan 75014 Paris",
+  "shop_website": "https://coop14.fr",
+  "shop_osm_id": "8138785201",
+  "shop_osm_type": "NODE",
+  "shop_currency": "EUR",
+  "shop_username": "coop14-paris14",
+  "fields": [
+    {
+      "open_prices": "product_code",
+      "shop": "product_variant_ids/barcode",
+      "example": "3520831330666"
+    },
+    {
+      "open_prices": "product_name",
+      "shop": "product_variant_ids/name",
+      "example": "Bananes chips DOYPACK Philia 120g"
+    },
+    {
+      "open_prices": "price",
+      "shop": "Prix de vente TTC",
+      "example": "2,05"
+    }
+  ],
+  "filters": [
+    {
+      "shop": "Ventes 6 derniers mois",
+      "sign": "!=",
+      "value": "0"
+    }
+  ]
+}

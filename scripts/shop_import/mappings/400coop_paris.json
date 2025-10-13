@@ -1,0 +1,32 @@
+{
+  "shop_name": "Les 400 Coop",
+  "shop_address": "65 boulevard de Charonne 75011 Paris",
+  "shop_website": "https://les400coop.fr",
+  "shop_osm_id": "6015254442",
+  "shop_osm_type": "NODE",
+  "shop_currency": "EUR",
+  "shop_username": "400coop-paris11",
+  "fields": [
+    {
+      "open_prices": "product_code",
+      "shop": "Code",
+      "example": "3175681298064"
+    },
+    {
+      "open_prices": "product_name",
+      "shop": "Designation",
+      "example": "SEITAN FUME A CUISINER"
+    },
+    {
+      "open_prices": "price",
+      "shop": "Prix Vente",
+      "example": "4.8"
+    }
+  ],
+  "filters": [
+    {
+      "shop": "Status",
+      "value": "ACTIF"
+    }
+  ]
+}
