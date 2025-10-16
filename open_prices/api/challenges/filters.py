@@ -43,6 +43,6 @@ class ChallengeFilter(django_filters.FilterSet):
         fields = ["id", "is_published"]
 
     def filter_status(self, queryset, name, value):
-        return queryset.filter(
-            status_annotated=value,
-        )
+        # we call the annotated queryset again
+        # avoids issues with 'today' not correctly set
+        return queryset.with_status().filter(status_annotated=value)
