@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 from freezegun import freeze_time
 from simple_history.utils import bulk_update_with_history
 
@@ -896,35 +896,56 @@ class PriceModelDeleteTest(TestCase):
         self.assertEqual(Product.objects.get(id=product.id).price_count, 0)
 
 
-class PriceModelHistoryTest(TransactionTestCase):
+class PriceModelHistoryTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.user_proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG, owner=cls.user_session.user.user_id
+        )
+        cls.location = LocationFactory()
+        cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
+        cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
+
     def test_price_history(self):
-        user_session = SessionFactory()
-        user_proof = ProofFactory(owner=user_session.user.user_id)
-        location = LocationFactory()
-        product = ProductFactory()
         # create the price
         price = PriceFactory(
-            proof_id=user_proof.id,
-            location_osm_id=location.osm_id,
-            location_osm_type=location.osm_type,
-            product_code=product.code,
-            owner=user_session.user.user_id,
+            proof_id=self.user_proof.id,
+            location_osm_id=self.location.osm_id,
+            location_osm_type=self.location.osm_type,
+            product_code=self.product_8001505005707.code,
+            owner=self.user_session.user.user_id,
         )
         self.assertEqual(price.history.count(), 1)
         self.assertEqual(price.history.first().history_type, "+")
         self.assertEqual(price.history.first().history_user_id, None)
-        # update the price
+        # update the price (date & product)
         price.price = 5
+        price.product_code = self.product_8850187002197.code
         price.save()
         self.assertEqual(price.history.count(), 2)
         self.assertEqual(price.history.first().history_type, "~")
         self.assertEqual(price.history.first().history_user_id, None)
+        fields_changed_list = [
+            change.field
+            for change in price.history.first()
+            .diff_against(price.history.first().prev_record)
+            .changes
+        ]
+        self.assertEqual(fields_changed_list, ["price", "product", "product_code"])
         # bulk update the price
         price.price = 10
         bulk_update_with_history([price], Price, ["price"], default_user="moderator-2")
         self.assertEqual(price.history.count(), 3)
         self.assertEqual(price.history.first().history_type, "~")
         self.assertEqual(price.history.first().history_user_id, "moderator-2")
+        fields_changed_list = [
+            change.field
+            for change in price.history.first()
+            .diff_against(price.history.first().prev_record)
+            .changes
+        ]
+        self.assertEqual(fields_changed_list, ["price"])
         # delete the price
         price_id = price.id
         price._history_user = "moderator-3"
