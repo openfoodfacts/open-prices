@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.88.3](https://github.com/openfoodfacts/open-prices/compare/v1.88.2...v1.88.3) (2025-10-16)
+
+
+### Bug Fixes
+
+* **Challenges:** fix filtering by status (annotated) ([#1078](https://github.com/openfoodfacts/open-prices/issues/1078)) ([3f655a9](https://github.com/openfoodfacts/open-prices/commit/3f655a971a513dbda1a21772d76e92ead87c2672))
+
+
+### Technical
+
+* **History:** add more tests on Proof.location & Price.product changes ([#1076](https://github.com/openfoodfacts/open-prices/issues/1076)) ([0d4ffea](https://github.com/openfoodfacts/open-prices/commit/0d4ffea3e8dd4b1440afac7b676ac6041db77440))
+* **Shop Import:** move config data to a mapping file (JSON) for reuse ([#1070](https://github.com/openfoodfacts/open-prices/issues/1070)) ([278393e](https://github.com/openfoodfacts/open-prices/commit/278393e1a86aaaa120a189c3a66cd60378f45a07))
+
 ## [1.88.2](https://github.com/openfoodfacts/open-prices/compare/v1.88.1...v1.88.2) (2025-10-12)
 
 
