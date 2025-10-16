@@ -3,7 +3,8 @@ from datetime import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Case, Count, F, Func, Value, When
+from django.db.models import Case, Count, F, Func, Value, When, signals
+from django.dispatch import receiver
 from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
@@ -313,3 +314,9 @@ class Challenge(models.Model):
             "updated": timezone.now().isoformat().replace("+00:00", "Z"),
         }
         self.save(update_fields=["stats"])
+
+
+@receiver(signals.post_save, sender=Challenge)
+def location_post_create_init_stats(sender, instance, created, **kwargs):
+    if created:
+        instance.calculate_stats()
