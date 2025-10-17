@@ -384,6 +384,9 @@ class Price(models.Model):
             )
         )
 
+    def get_history_list(self):
+        return history.build_instance_history_list(self)
+
 
 @receiver(signals.post_save, sender=Price)
 def price_post_create_increment_counts(sender, instance, created, **kwargs):

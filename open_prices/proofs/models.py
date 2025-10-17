@@ -334,6 +334,9 @@ class Proof(models.Model):
     def in_challenge(self, challenge: Challenge):
         return self.prices.filter(tags__contains=[challenge.tag]).exists()
 
+    def get_history_list(self):
+        return history.build_instance_history_list(self)
+
 
 @receiver(signals.post_save, sender=Proof)
 def proof_post_save_run_ocr(sender, instance, created, **kwargs):

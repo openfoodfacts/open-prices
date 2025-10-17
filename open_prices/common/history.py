@@ -1,4 +1,14 @@
+from itertools import pairwise
+
 from django.core.management import call_command
+
+HISTORY_FIELDS = [
+    "history_id",
+    "history_date",
+    "history_change_reason",
+    "history_type",
+    "history_user_id",
+]
 
 
 def get_history_user_from_request(request, **kwargs):
@@ -48,3 +58,34 @@ def history_clean_duplicate_command():
         "--verbosity",
         "0",
     )
+
+
+def build_instance_history_list(instance):
+    history_list = []
+    instance_history = instance.history.all()  # ordered by -history_date
+
+    # iterate over pairs of consecutive history records
+    for new_record, old_record in pairwise(instance_history.iterator()):
+        delta = new_record.diff_against(old_record)
+        if delta.changes:
+            history_entry = {
+                field: getattr(new_record, field) for field in HISTORY_FIELDS
+            }
+            history_entry["changes"] = [
+                {
+                    "field": change.field,
+                    "old": change.old,
+                    "new": change.new,
+                }
+                for change in delta.changes
+            ]
+            history_list.append(history_entry)
+
+    # append the initial creation entry
+    history_entry = {
+        field: getattr(instance_history.last(), field) for field in HISTORY_FIELDS
+    }
+    history_entry["changes"] = []
+    history_list.append(history_entry)
+
+    return history_list
