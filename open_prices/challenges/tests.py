@@ -84,6 +84,10 @@ class ChallengeModelSaveTest(TestCase):
             end_date="2024-06-30",
         )
 
+    def test_challenge_stats(self):
+        c = ChallengeFactory(is_published=False, start_date=None, end_date=None)
+        self.assertIsNotNone(c.stats)
+
 
 class ChallengeQuerySetTest(TestCase):
     @classmethod
@@ -286,11 +290,10 @@ class ChallengePropertyTest(TestCase):
         self.assertIn("test", self.proof_in_challenge.tags)
 
     def test_calculate_stats(self):
-        self.assertIsNone(self.challenge_ongoing.stats)
+        self.assertEqual(self.challenge_ongoing.stats["price_count"], 0)
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()  # we need to set the proof tags first
         self.challenge_ongoing.calculate_stats()
-        self.assertIsNotNone(self.challenge_ongoing.stats)
         self.assertEqual(self.challenge_ongoing.stats["price_count"], 3)
         self.assertEqual(self.challenge_ongoing.stats["proof_count"], 1)
         self.assertEqual(self.challenge_ongoing.stats["user_count"], 2)
