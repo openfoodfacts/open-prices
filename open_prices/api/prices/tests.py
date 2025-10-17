@@ -884,3 +884,27 @@ class PriceStatsApiTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["price__count"], 2)
         self.assertEqual(response.data["price__avg"], Decimal(27.5))
+
+
+class PriceHistoryApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.price = PriceFactory(
+            **PRICE_8001505005707, owner=cls.user_session_1.user.user_id
+        )
+        cls.url = reverse("api:prices-history", args=[cls.price.id])
+
+    def test_price_history(self):
+        # 404
+        url = reverse("api:prices-history", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "No Price matches the given query.")
+        # existing price
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["history_type"], "+")
+        self.assertEqual(response.data[0]["changes"], [])
