@@ -2,7 +2,7 @@ import os
 import sys
 import time
 
-import openfoodfacts
+from openfoodfacts.barcode import normalize_barcode
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
 from scripts.utils import create_price, is_valid_date, read_csv, read_json
@@ -73,7 +73,7 @@ def map_shop_price_list_to_open_prices(shop_price_list, shop_mapping_fields):
             shop_price, shop_mapping_fields, "product_code"
         )
         if open_prices_price["product_code"]:
-            open_prices_price["product_code"] = openfoodfacts.barcode.normalize_barcode(
+            open_prices_price["product_code"] = normalize_barcode(
                 open_prices_price["product_code"].strip()
             )
         # price (with cleanup)
