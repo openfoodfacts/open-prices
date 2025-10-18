@@ -24,6 +24,7 @@ from open_prices.api.proofs.serializers import (
     ProofCreateSerializer,
     ProofFullSerializer,
     ProofHalfFullSerializer,
+    ProofHistorySerializer,
     ProofProcessWithGeminiSerializer,
     ProofUpdateSerializer,
     ProofUploadSerializer,
@@ -229,6 +230,12 @@ class ProofViewSet(
             for sample_file in sample_files
         ]
         return Response({"labels": labels}, status=status.HTTP_200_OK)
+
+    @extend_schema(responses=ProofHistorySerializer(many=True))
+    @action(detail=True, methods=["GET"])
+    def history(self, request: Request, pk=None) -> Response:
+        proof = self.get_object()
+        return Response(proof.get_history_list(), status=200)
 
 
 class PriceTagViewSet(

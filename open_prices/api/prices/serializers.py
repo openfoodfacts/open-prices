@@ -66,10 +66,5 @@ class PriceStatsSerializer(serializers.Serializer):
     price__avg = serializers.DecimalField(max_digits=10, decimal_places=2)
 
 
-class PriceHistorySerializer(serializers.Serializer):
-    history_id = serializers.IntegerField()
-    history_date = serializers.DateTimeField()
-    history_change_reason = serializers.CharField()
-    history_type = serializers.ChoiceField(choices=history.HISTORY_TYPE_CHOICES)
-    history_user_id = serializers.CharField()
-    changes = serializers.ListField()
+class PriceHistorySerializer(history.HistorySerializer):
+    pass

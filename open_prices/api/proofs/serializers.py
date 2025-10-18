@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from open_prices.api.locations.serializers import LocationSerializer
+from open_prices.common import history
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
 from open_prices.proofs.models import (
@@ -88,6 +89,10 @@ class ProofProcessWithGeminiSerializer(serializers.Serializer):
     mode = (
         serializers.CharField()
     )  # TODO: this mode param should be used to select the prompt to execute, unimplemented for now
+
+
+class ProofHistorySerializer(history.HistorySerializer):
+    pass
 
 
 class PriceTagPredictionSerializer(serializers.ModelSerializer):

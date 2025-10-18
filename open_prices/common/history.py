@@ -1,6 +1,7 @@
 from itertools import pairwise
 
 from django.core.management import call_command
+from rest_framework import serializers
 
 HISTORY_FIELDS = [
     "history_id",
@@ -91,3 +92,12 @@ def build_instance_history_list(instance):
     history_list.append(history_entry)
 
     return history_list
+
+
+class HistorySerializer(serializers.Serializer):
+    history_id = serializers.IntegerField()
+    history_date = serializers.DateTimeField()
+    history_change_reason = serializers.CharField()
+    history_type = serializers.ChoiceField(choices=HISTORY_TYPE_CHOICES)
+    history_user_id = serializers.CharField()
+    changes = serializers.ListField()
