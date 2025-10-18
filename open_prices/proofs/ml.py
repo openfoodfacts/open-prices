@@ -892,6 +892,8 @@ def run_and_save_price_tag_extraction(
                     barcode = common_openfoodfacts.barcode_fix_short_codes_from_usa(
                         barcode
                     )
+            # normalize barcode
+            barcode = common_openfoodfacts.normalize_barcode(barcode)
 
         # barcode similarity search is quite costly (500~1000ms for 4M
         # products), so we only run it if the barcode doesn't exist in the
