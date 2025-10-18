@@ -22,7 +22,7 @@ from openfoodfacts.taxonomy import (
     get_taxonomy,
     map_to_canonical_id,
 )
-from openfoodfacts.types import JSONType
+from openfoodfacts.types import COUNTRY_CODE_TO_NAME, JSONType
 
 OFF_CREATE_FIELDS = [
     "product_name",
@@ -361,18 +361,37 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
     return barcode
 
 
+def country_code_to_Country(country_code: str) -> Country:
+    try:
+        return Country[country_code]
+    except KeyError:
+        return Country.world
+
+
 def create_or_update_product_in_off(
-    code: str, flavor: str = Flavor.off, owner: str = None, update_params: dict = {}
+    code: str,
+    flavor: str = Flavor.off,
+    country_code: str = "en",
+    owner: str = None,
+    update_params: dict = {},
 ) -> JSONType | None:
     client = API(
         username=settings.OFF_DEFAULT_USER,
         password=settings.OFF_DEFAULT_PASSWORD,
         user_agent=settings.OFF_USER_AGENT,
-        country=Country.world,
+        country=country_code_to_Country(country_code),
         flavor=flavor,
         version=APIVersion.v2,
         environment=Environment[settings.ENVIRONMENT],
     )
+    countries = update_params.get("countries")
+    if countries:
+        countries_list = countries.split(",")
+        taxonomized_countries_list = [
+            COUNTRY_CODE_TO_NAME[country_code_to_Country(country_code)]
+            for country_code in countries_list
+        ]
+        update_params["countries"] = ",".join(taxonomized_countries_list)
     if owner:
         comment = f"[Open Prices, user: {owner}]"
     else:
@@ -383,6 +402,7 @@ def create_or_update_product_in_off(
 def upload_product_image_in_off(
     code: str,
     flavor: str = Flavor.off,
+    country_code: str = "en",
     image_data_base64: str = None,
     selected: JSONType | None = None,
 ) -> JSONType | None:
@@ -390,7 +410,7 @@ def upload_product_image_in_off(
         user_agent=settings.OFF_USER_AGENT,
         username=settings.OFF_DEFAULT_USER,
         password=settings.OFF_DEFAULT_PASSWORD,
-        country=Country.world,
+        country=country_code_to_Country(country_code),
         flavor=flavor,
         version=APIVersion.v3,
         environment=Environment[settings.ENVIRONMENT],

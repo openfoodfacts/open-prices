@@ -51,6 +51,7 @@ class ProductViewSet(
         result = create_or_update_product_in_off(
             code,
             flavor=request.data.get("flavor", Flavor.off),
+            country_code=request.data.get("product_language_code", "en"),
             owner=self.request.user.user_id,
             update_params=request.data.get("update_params", {}),
         )
@@ -64,11 +65,13 @@ class ProductViewSet(
         url_path=r"code/(?P<code>\d+)/off-upload-image",
     )
     def upload_image_in_off(self, request: Request, code):
+        product_language_code = request.data.get("product_language_code", "en")
         result = upload_product_image_in_off(
             code,
             flavor=request.data.get("flavor", Flavor.off),
+            country_code=product_language_code,
             image_data_base64=request.data.get("image_data_base64"),
-            selected={"front": {"en": {}}},
+            selected={"front": {product_language_code: {}}},
         )
         if result:
             return Response(result, status=200)
