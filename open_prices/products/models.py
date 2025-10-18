@@ -5,7 +5,7 @@ from django.db.models import Count, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
-from openfoodfacts import normalize_barcode
+from openfoodfacts.barcode import normalize_barcode
 
 # Import custom lookups so that they are registered
 from open_prices.common import lookups  # noqa: F401

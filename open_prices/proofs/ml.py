@@ -19,6 +19,7 @@ import typing_extensions as typing
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from google import genai
+from openfoodfacts.barcode import normalize_barcode
 from openfoodfacts.ml.image_classification import ImageClassifier
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDetector
 from openfoodfacts.types import JSONType
@@ -893,7 +894,7 @@ def run_and_save_price_tag_extraction(
                         barcode
                     )
             # normalize barcode
-            barcode = common_openfoodfacts.normalize_barcode(barcode)
+            barcode = normalize_barcode(barcode)
 
         # barcode similarity search is quite costly (500~1000ms for 4M
         # products), so we only run it if the barcode doesn't exist in the

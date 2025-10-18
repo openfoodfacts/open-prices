@@ -1,7 +1,7 @@
 import argparse
 
 from django.core.management.base import BaseCommand
-from openfoodfacts import normalize_barcode
+from openfoodfacts.barcode import normalize_barcode
 
 from open_prices.prices.models import Price
 from open_prices.products.models import Product
