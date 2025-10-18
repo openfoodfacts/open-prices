@@ -629,6 +629,30 @@ class ProofDeleteApiTest(TestCase):
         )
 
 
+class ProofHistoryApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.proof = ProofFactory(
+            **PROOF_RECEIPT, price_count=15, owner=cls.user_session_1.user.user_id
+        )
+        cls.url = reverse("api:proofs-history", args=[cls.proof.id])
+
+    def test_proof_history(self):
+        # 404
+        url = reverse("api:proofs-history", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "No Proof matches the given query.")
+        # existing proof
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["history_type"], "+")
+        self.assertEqual(response.data[0]["changes"], [])
+
+
 class PriceTagListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
