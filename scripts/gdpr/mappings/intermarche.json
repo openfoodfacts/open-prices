@@ -1,0 +1,72 @@
+{
+  "shop_name": "Intermarché",
+  "shop_website": "https://www.intermarche.com",
+  "shop_currency": "EUR",
+  "fields": [
+    {
+      "open_prices": "product_code",
+      "shop": "COD_ARTC_EAN",
+      "comments": "duplicate column with EAN_GD",
+      "example": "3033710073467"
+    },
+    {
+      "open_prices": "product_name",
+      "shop": "LB_ARTC",
+      "comments": "duplicate column with LB_COMM0",
+      "example": "NESTLE RICORE ORIGINAL 100G"
+    },
+    {
+      "open_prices": "price",
+      "shop": "CA TTC Produit",
+      "comments": "has commas instead of points",
+      "example": "2,37"
+    },
+    {
+      "open_prices": "discount",
+      "shop": "",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "receipt_quantity",
+      "shop": "Qte Vendues",
+      "comments": "",
+      "example": "1"
+    },
+    {
+      "open_prices": "date",
+      "shop": "DT_TICK",
+      "comments": "format DD/MM/YYYY",
+      "example": "21/12/2022"
+    },
+    {
+      "open_prices": "location",
+      "shop": "COD_POIN_VENT",
+      "comments": "",
+      "example": "11123"
+    }
+  ],
+  "filters": [],
+  "locations": [
+    {
+      "shop": "6994",
+      "osm_id": "9781215613",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "8177",
+      "osm_id": "5814312750",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "8556",
+      "osm_id": "9781215613",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "11123",
+      "osm_id": "",
+      "osm_type": ""
+    }
+  ]
+}
