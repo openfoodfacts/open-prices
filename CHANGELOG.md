@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.89.0](https://github.com/openfoodfacts/open-prices/compare/v1.88.3...v1.89.0) (2025-10-18)
+
+
+### Features
+
+* **Prices:** API: new endpoint to fetch a price's history ([#1058](https://github.com/openfoodfacts/open-prices/issues/1058)) ([2f785b4](https://github.com/openfoodfacts/open-prices/commit/2f785b4fff82922c0f7d67deaaf613c27dcf1ed7))
+* **Proofs:** API: new endpoint to fetch a proof's history ([#1083](https://github.com/openfoodfacts/open-prices/issues/1083)) ([6d62515](https://github.com/openfoodfacts/open-prices/commit/6d625159fd708b587560e529cde40e1833e8b82b))
+
+
+### Technical
+
+* **Challenges:** on create, init stats object ([#1079](https://github.com/openfoodfacts/open-prices/issues/1079)) ([0a4fa44](https://github.com/openfoodfacts/open-prices/commit/0a4fa44c5221970811f9d8fa8c00d912e62c9209))
+* **History:** new method to get Price & Proof instance history list ([#1057](https://github.com/openfoodfacts/open-prices/issues/1057)) ([51dc616](https://github.com/openfoodfacts/open-prices/commit/51dc6163f039d2bf533433bdd0ba2894ec2b641f))
+* **PriceTag:** post-prediction, normalize barcodes ([#1085](https://github.com/openfoodfacts/open-prices/issues/1085)) ([3fec3e5](https://github.com/openfoodfacts/open-prices/commit/3fec3e5f07465990789c3f6689b0fa926e494274))
+* **Products:** Create in Product Opener: languages and country support ([#1081](https://github.com/openfoodfacts/open-prices/issues/1081)) ([860035c](https://github.com/openfoodfacts/open-prices/commit/860035c2fb82346b586c1ba97ff9d73974067974))
+* **Users:** manage moderators ourselves. Don't sync with OFF ([#1077](https://github.com/openfoodfacts/open-prices/issues/1077)) ([11fcc66](https://github.com/openfoodfacts/open-prices/commit/11fcc666e2c0437ec31c30ba365660167e416a81))
+
 ## [1.88.3](https://github.com/openfoodfacts/open-prices/compare/v1.88.2...v1.88.3) (2025-10-16)
 
 
