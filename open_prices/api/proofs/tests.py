@@ -504,7 +504,7 @@ class ProofUpdateApiTest(TestCase):
             "price_count": 20,
         }
 
-    def test_proof_update(self):
+    def test_proof_update_authentication_errors(self):
         # anonymous
         response = self.client.patch(
             self.url, self.data, content_type="application/json"
@@ -518,14 +518,16 @@ class ProofUpdateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
-        # not proof owner
+        # not proof owner and not moderator
         response = self.client.patch(
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session_2.token}"},
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 404)  # 403 ?
+        self.assertEqual(response.status_code, 403)
+
+    def test_proof_update_ok_if_owner(self):
         # authenticated
         self.assertEqual(
             self.proof.location_osm_id, LOCATION_OSM_NODE_652825274["osm_id"]
@@ -536,6 +538,30 @@ class ProofUpdateApiTest(TestCase):
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data["location_osm_id"], LOCATION_OSM_NODE_6509705997["osm_id"]
+        )
+        self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(response.data["receipt_price_count"], 4)
+        self.assertEqual(Proof.objects.get(id=self.proof.id).price_count, 15)  # ignored
+
+    def test_proof_update_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
+        self.assertEqual(
+            self.proof.location_osm_id, LOCATION_OSM_NODE_652825274["osm_id"]
+        )
+        self.assertEqual(self.proof.currency, "EUR")
+        self.assertEqual(self.proof.receipt_price_count, 5)
+        response = self.client.patch(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
@@ -583,7 +609,7 @@ class ProofDeleteApiTest(TestCase):
         )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
 
-    def test_proof_delete(self):
+    def test_proof_delete_authentication_errors(self):
         # anonymous
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, 403)
@@ -592,20 +618,41 @@ class ProofDeleteApiTest(TestCase):
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}X"}
         )
         self.assertEqual(response.status_code, 403)
-        # not proof owner
+        # not proof owner and not moderator
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
-        self.assertEqual(response.status_code, 404)  # 403 ?
+        self.assertEqual(response.status_code, 403)
+
+    def test_proof_delete_not_ok_if_has_prices(self):
         # has prices
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
         self.assertEqual(response.status_code, 403)
-        # authenticated and no prices
+
+    def test_proof_delete_ok_if_owner(self):
+        # delete proof's prices
         Price.objects.filter(proof=self.proof).delete()
+        # authenticated and proof has no prices
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(
+            Proof.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )
+
+    def test_proof_delete_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # delete proof's prices
+        Price.objects.filter(proof=self.proof).delete()
+        # authenticated as moderator and proof has no prices
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data, None)
