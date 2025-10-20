@@ -52,8 +52,8 @@ jobs:
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.org" >> $GITHUB_ENV
         # Triton server is on Moji datacenter, so we use the stunnel client running
         # on the OVH datacenter to access it
-        # The associated Triton server (mapped with port 5507 by Stunnel) is running on GPU
-        echo "TRITON_URI=10.1.0.101:5507" >> $GITHUB_ENV
+        # The associated Triton server (mapped with port 5504 by Stunnel) is running on GPU
+        echo "TRITON_URI=10.1.0.113:5504" >> $GITHUB_ENV
         echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
