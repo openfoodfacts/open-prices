@@ -736,16 +736,16 @@ class PriceUpdateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
-        # not price owner
+        # not price owner and not moderator
         response = self.client.patch(
             self.url_price_product,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session_2.token}"},
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 404)  # 403 ?
+        self.assertEqual(response.status_code, 403)
 
-    def test_price_update_ok(self):
+    def test_price_update_ok_if_owner(self):
         # authenticated
         response = self.client.patch(
             self.url_price_product,
@@ -767,6 +767,23 @@ class PriceUpdateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["category_tag"], "en:tomatoes")
+
+    def test_price_update_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
+        response = self.client.patch(
+            self.url_price_product,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(
+            Price.objects.get(id=self.price_product.id).product_code, "8001505005707"
+        )  # ignored
 
     def test_price_update_type_mismatch(self):
         # cannot add 'category' fields to a 'product' price
@@ -815,16 +832,30 @@ class PriceDeleteApiTest(TestCase):
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}X"}
         )
         self.assertEqual(response.status_code, 403)
-        # not price owner
+        # not price owner and not moderator
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
-        self.assertEqual(response.status_code, 404)  # 403 ?
+        self.assertEqual(response.status_code, 403)
 
-    def test_price_delete_ok(self):
+    def test_price_delete_ok_if_owner(self):
         # authenticated
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(
+            Price.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )
+
+    def test_price_delete_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data, None)
