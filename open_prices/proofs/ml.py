@@ -680,7 +680,13 @@ def extract_from_receipt(image: Image.Image) -> JSONType | None:
         ],
         config=common_google.get_generation_config(Receipt),
     )
-    return json.loads(response.text) if response.text else None
+    # Sometimes the response is not valid JSON, we try to parse it and return
+    # None
+    try:
+        return json.loads(response.text) if response.text else None
+    except json.JSONDecodeError:
+        logger.warning("Error decoding receipt extraction response: %s", response.text)
+        return None
 
 
 def predict_proof_type(
