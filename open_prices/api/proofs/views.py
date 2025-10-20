@@ -35,6 +35,7 @@ from open_prices.common.authentication import (
     CustomAuthentication,
     has_token_from_cookie_or_header,
 )
+from open_prices.common.permission import OnlyOwnerOrModeratorCanEditOrDelete
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
@@ -74,7 +75,10 @@ class ProofViewSet(
     viewsets.GenericViewSet,
 ):
     authentication_classes = []  # see get_authenticators
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        IsAuthenticatedOrReadOnly,
+        OnlyOwnerOrModeratorCanEditOrDelete,
+    ]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = Proof.objects.all()
     serializer_class = ProofFullSerializer  # see get_serializer_class
@@ -95,10 +99,6 @@ class ProofViewSet(
             queryset = queryset.select_related("location")
             if self.action == "retrieve":
                 queryset = queryset.prefetch_related("predictions")
-        elif self.request.method in ["PATCH", "DELETE"]:
-            # only return proofs owned by the current user
-            if self.request.user.is_authenticated:
-                queryset = queryset.filter(owner=self.request.user.user_id)
         return queryset
 
     def get_serializer_class(self):
