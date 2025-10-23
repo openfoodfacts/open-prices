@@ -7,6 +7,8 @@ class LoginSerializer(serializers.Serializer):
 
 
 class SessionResponseSerializer(serializers.Serializer):
+    user_id = serializers.CharField()
+    is_moderator = serializers.BooleanField()
     access_token = serializers.CharField()
     token_type = serializers.CharField()
 

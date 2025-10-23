@@ -8,6 +8,7 @@ def get_or_create_session(user_id: str, token: str):
     session, session_created = Session.objects.get_or_create(user=user, token=token)
     session.last_used = timezone.now()
     session.save()
+    return session, user
 
 
 def get_session(token: str, update_last_used=True):
