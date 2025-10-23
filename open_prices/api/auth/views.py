@@ -60,9 +60,16 @@ class LoginView(APIView):
             # We also need to lowercase the user_id as it's case-insensitive
             user_id = response.json()["user_id"].lower().strip()
             token = create_token(user_id)
-            get_or_create_session(user_id=user_id, token=token)
+            session, user = get_or_create_session(user_id=user_id, token=token)
             # set the cookie if requested
-            response = Response({"access_token": token, "token_type": "bearer"})
+            response = Response(
+                {
+                    "user_id": user.user_id,
+                    "is_moderator": user.is_moderator,
+                    "access_token": token,
+                    "token_type": "bearer",
+                }
+            )
             if request.GET.get("set_cookie") == "1":
                 # Don't add httponly=True or secure=True as it's still in
                 # development phase, but it should be added once the front-end
