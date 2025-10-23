@@ -80,29 +80,31 @@ def generate_thumbnail(
     thumbnail_size: tuple[int, int] = settings.THUMBNAIL_SIZE,
 ) -> str | None:
     """Generate a thumbnail for the image at the given path."""
-    image_thumb_path = None
-    if mimetype.startswith("image"):
-        file_full_path = generate_full_path(current_dir, file_stem, extension)
-        with Image.open(file_full_path) as img:
+    if not mimetype.startswith("image"):
+        return None
+    file_full_path = generate_full_path(current_dir, file_stem, extension)
+    with Image.open(file_full_path) as img:
+        try:
             img_thumb = img.copy()
-            # set any rotation info
-            img_thumb = ImageOps.exif_transpose(img)
-            # transform into a thumbnail
-            img_thumb.thumbnail(thumbnail_size, Image.Resampling.LANCZOS)
-            image_thumb_full_path = generate_full_path(
-                current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
-            )
-            # avoid 'cannot write mode RGBA as JPEG' error
-            if mimetype in ("image/jpeg",) and img_thumb.mode in ("RGBA", "P"):
-                img_thumb = img_thumb.convert("RGB")
-            # save (exif will be stripped)
-            img_thumb.save(image_thumb_full_path)
-            image_thumb_path = generate_relative_path(
-                current_dir_id_str,
-                f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}",
-                extension,
-            )
-    return image_thumb_path
+        except OSError:
+            return None
+        # set any rotation info
+        img_thumb = ImageOps.exif_transpose(img)
+        # transform into a thumbnail
+        img_thumb.thumbnail(thumbnail_size, Image.Resampling.LANCZOS)
+        image_thumb_full_path = generate_full_path(
+            current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
+        )
+        # avoid 'cannot write mode RGBA as JPEG' error
+        if mimetype in ("image/jpeg",) and img_thumb.mode in ("RGBA", "P"):
+            img_thumb = img_thumb.convert("RGB")
+        # save (exif will be stripped)
+        img_thumb.save(image_thumb_full_path)
+        return generate_relative_path(
+            current_dir_id_str,
+            f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}",
+            extension,
+        )
 
 
 def store_file(
