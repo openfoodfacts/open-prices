@@ -1026,14 +1026,14 @@ requests = ["requests (>=2.20.0,<3.0.0.dev0)"]
 
 [[package]]
 name = "google-genai"
-version = "1.29.0"
+version = "1.46.0"
 description = "GenAI Python SDK"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "google_genai-1.29.0-py3-none-any.whl", hash = "sha256:8b64737de008d15ca4737e593913f88f656f0568544ab6901f768f0d1fd69bbf"},
-    {file = "google_genai-1.29.0.tar.gz", hash = "sha256:a6b036ab032830f668d137b198c2a5abd8951a036d7a8480b61ce837c1c7f36b"},
+    {file = "google_genai-1.46.0-py3-none-any.whl", hash = "sha256:879c4a260d630db0dcedb5cc84a9d7b47acd29e43e9dc63541b511b757ea7296"},
+    {file = "google_genai-1.46.0.tar.gz", hash = "sha256:6824c31149fe3b1c7285b25f79b924c5f89fd52466f62e30f76954f8104fe3a7"},
 ]
 
 [package.dependencies]
@@ -1048,6 +1048,7 @@ websockets = ">=13.0.0,<15.1.0"
 
 [package.extras]
 aiohttp = ["aiohttp (<4.0.0)"]
+local-tokenizer = ["protobuf", "sentencepiece (>=0.2.0)"]
 
 [[package]]
 name = "grpcio"
@@ -4058,4 +4059,4 @@ viz = ["cartopy", "matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "ee0b50cb86db361921e5f1d6cfe239ca1d5b8670dfcce4a8cbf83cce1d8f2f40"
+content-hash = "6e1c3469ee658b72f0b5c116aa59380ddd354ea09d8859a028cea2cc4eb08326"
