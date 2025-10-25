@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.90.0](https://github.com/openfoodfacts/open-prices/compare/v1.89.0...v1.90.0) (2025-10-25)
+
+
+### Features
+
+* **Prices:** allow moderators to edit & delete any price ([#1086](https://github.com/openfoodfacts/open-prices/issues/1086)) ([fde4a9c](https://github.com/openfoodfacts/open-prices/commit/fde4a9cce9cb754d7685471137f627465c8c72c0))
+* **Proofs:** allow moderators to edit & delete any proof ([#1087](https://github.com/openfoodfacts/open-prices/issues/1087)) ([97366a5](https://github.com/openfoodfacts/open-prices/commit/97366a565802d1544fe62b7d0c4f5a3380990e92))
+
+
+### Bug Fixes
+
+* increase timeout for `update_product_counts_task` ([#1100](https://github.com/openfoodfacts/open-prices/issues/1100)) ([33d2d4f](https://github.com/openfoodfacts/open-prices/commit/33d2d4f3d5ccca7b5b0e0fde30b4469d29160c70))
+* **ML:** catch JSONDecodeError in Gemini's response ([#1091](https://github.com/openfoodfacts/open-prices/issues/1091)) ([4e59d05](https://github.com/openfoodfacts/open-prices/commit/4e59d056050905b2b9fffef19c6bd644dde90b79))
+* **Proofs:** Prevent exception if there is any problem with the img thumbnail processing ([#1068](https://github.com/openfoodfacts/open-prices/issues/1068)) ([0fa9a1f](https://github.com/openfoodfacts/open-prices/commit/0fa9a1fa92369f407afedd4ee9c70028b07acbde))
+* Wait 2s before fetching data using OFF API ([#1099](https://github.com/openfoodfacts/open-prices/issues/1099)) ([142fc56](https://github.com/openfoodfacts/open-prices/commit/142fc566df4be6658651917ecbc346050e4c7816))
+
+
+### Technical
+
+* **deps:** upgrade google-genai ([#1101](https://github.com/openfoodfacts/open-prices/issues/1101)) ([38d8098](https://github.com/openfoodfacts/open-prices/commit/38d8098fa284f798f9e2eb210fcf68b6ae4013e1))
+* **Login:** return user_id & is_moderator info ([#1097](https://github.com/openfoodfacts/open-prices/issues/1097)) ([c8377ed](https://github.com/openfoodfacts/open-prices/commit/c8377ed9ed055e54142bb833741b289d6bf13073))
+* update Triton URI ([#1093](https://github.com/openfoodfacts/open-prices/issues/1093)) ([5bb9a8e](https://github.com/openfoodfacts/open-prices/commit/5bb9a8e400a95fd3101777cbb375da9e8e4a25af))
+
 ## [1.89.0](https://github.com/openfoodfacts/open-prices/compare/v1.88.3...v1.89.0) (2025-10-18)
 
 
