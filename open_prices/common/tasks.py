@@ -142,27 +142,34 @@ def history_cleanup_task():
 
 
 CRON_SCHEDULES = {
-    "import_obf_db_task": "0 15 * * *",  # daily at 15:00
-    "import_opff_db_task": "10 15 * * *",  # daily at 15:10
-    "import_opf_db_task": "20 15 * * *",  # daily at 15:20
-    "import_off_db_task": "30 15 * * *",  # daily at 15:30
-    "dump_db_task": "0 23 * * *",  # daily at 23:00
-    "update_total_stats_task": "0 1 * * *",  # daily at 01:00
-    "fix_proof_fields_task": "10 1 * * *",  # daily at 01:10
-    "moderation_tasks": "20 1 * * *",  # daily at 01:20
-    "challenge_tasks": "30 1 * * *",  # daily at 01:30
-    "history_cleanup_task": "0 3 * * 1",  # daily at 03:00
-    "update_user_counts_task": "0 2 * * 1",  # every start of the week (at 02:00)
-    "update_location_counts_task": "10 2 * * 1",  # every start of the week (at 02:10)
-    "update_product_counts_task": "20 2 * * 1",  # every start of the week (at 02:20)
+    "import_obf_db_task": ("0 15 * * *", {}),  # daily at 15:00
+    "import_opff_db_task": ("10 15 * * *", {}),  # daily at 15:10
+    "import_opf_db_task": ("20 15 * * *", {}),  # daily at 15:20
+    "import_off_db_task": ("30 15 * * *", {}),  # daily at 15:30
+    "dump_db_task": ("0 23 * * *", {}),  # daily at 23:00
+    "update_total_stats_task": ("0 1 * * *", {}),  # daily at 01:00
+    "fix_proof_fields_task": ("10 1 * * *", {}),  # daily at 01:10
+    "moderation_tasks": ("20 1 * * *", {}),  # daily at 01:20
+    "challenge_tasks": ("30 1 * * *", {}),  # daily at 01:30
+    "history_cleanup_task": ("0 3 * * 1", {}),  # daily at 03:00
+    "update_user_counts_task": ("0 2 * * 1", {}),  # every start of the week (at 02:00)
+    "update_location_counts_task": (
+        "10 2 * * 1",  # every start of the week (at 02:10)
+        {},
+    ),
+    "update_product_counts_task": (
+        "20 2 * * 1",  # every start of the week (at 02:20)
+        {"timeout": 6 * 60 * 60},  # 6 hours
+    ),
 }
 
-for task_name, task_cron in CRON_SCHEDULES.items():
+for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
     if not Schedule.objects.filter(name=task_name).exists():
         schedule(
             f"open_prices.common.tasks.{task_name}",
             name=task_name,
             schedule_type=Schedule.CRON,
             cron=task_cron,
+            q_options=q_options,
         )
         print(f"Task {task_name} scheduled with cron {task_cron}")
