@@ -1,3 +1,4 @@
+import datetime
 import time
 
 from django.conf import settings
@@ -33,6 +34,16 @@ class UpdateListener(BaseUpdateListener):
             logger.info("Product %s has been deleted", redis_update.code)
             process_delete(redis_update.code, flavor)
         elif redis_update.action == "updated":
+            now = datetime.datetime.now(datetime.timezone.utc)
+            # Often, we receive information through Redis before the info is
+            # available through the Product Opener API. We wait 2s to avoid
+            # getting out-of-date info.
+            if now - redis_update.timestamp < datetime.timedelta(seconds=2):
+                logger.debug(
+                    "Product %s has been updated less than 2s ago, sleeping 2s before processing",
+                    redis_update.code,
+                )
+                time.sleep(2)
             process_update(redis_update.code, flavor)
 
 
