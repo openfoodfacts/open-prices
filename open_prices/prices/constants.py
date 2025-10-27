@@ -3,6 +3,14 @@ TYPE_CATEGORY = "CATEGORY"  # OFF category_tag (raw product)
 TYPE_LIST = [TYPE_PRODUCT, TYPE_CATEGORY]
 TYPE_CHOICES = [(key, key) for key in TYPE_LIST]
 
+TYPE_PRODUCT_FIELD = "product_code"
+TYPE_CATEGORY_FIELD = "category_tag"
+
+TYPE_FIELD_MAPPING = {
+    TYPE_PRODUCT: TYPE_PRODUCT_FIELD,
+    TYPE_CATEGORY: TYPE_CATEGORY_FIELD,
+}
+
 
 DISCOUNT_TYPE_QUANTITY = "QUANTITY"  # example: buy 1 get 1 free
 DISCOUNT_TYPE_SALE = "SALE"  # example: 50% off
