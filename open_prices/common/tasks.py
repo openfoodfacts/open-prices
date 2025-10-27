@@ -170,6 +170,6 @@ for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
             name=task_name,
             schedule_type=Schedule.CRON,
             cron=task_cron,
-            q_options=q_options,
+            **q_options,
         )
         print(f"Task {task_name} scheduled with cron {task_cron}")
