@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.90.1](https://github.com/openfoodfacts/open-prices/compare/v1.90.0...v1.90.1) (2025-10-27)
+
+
+### Bug Fixes
+
+* set timeout properly for scheduled task ([#1102](https://github.com/openfoodfacts/open-prices/issues/1102)) ([c8d005c](https://github.com/openfoodfacts/open-prices/commit/c8d005cbd4792ac07a11b3c51c2c7f4eb214da64))
+
 ## [1.90.0](https://github.com/openfoodfacts/open-prices/compare/v1.89.0...v1.90.0) (2025-10-25)
 
 
