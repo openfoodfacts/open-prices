@@ -16,7 +16,7 @@
 
     jobs:
       publish-docs:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-slim
         strategy:
           matrix:
             python-version: [3.11]
