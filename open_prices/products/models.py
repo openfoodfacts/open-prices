@@ -90,7 +90,12 @@ class Product(models.Model):
 
     product_name = models.CharField(blank=True, null=True)
     image_url = models.CharField(blank=True, null=True)
-    product_quantity = models.IntegerField(blank=True, null=True)
+    product_quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        blank=True,
+        null=True,
+    )
     product_quantity_unit = models.CharField(blank=True, null=True)
     categories_tags = ArrayField(
         base_field=models.CharField(), blank=True, default=list
