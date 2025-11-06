@@ -38,7 +38,6 @@ class Migration(migrations.Migration):
                 (
                     "content_type",
                     models.ForeignKey(
-                        limit_choices_to={"model__in": ["Price", "Proof"]},
                         on_delete=django.db.models.deletion.CASCADE,
                         to="contenttypes.contenttype",
                     ),

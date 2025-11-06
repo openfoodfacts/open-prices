@@ -9,7 +9,6 @@ from open_prices.moderation import constants as moderation_constants
 class Flag(models.Model):
     content_type = models.ForeignKey(
         ContentType,
-        limit_choices_to={"model__in": ["Price", "Proof"]},
         on_delete=models.CASCADE,
     )
     object_id = models.PositiveBigIntegerField()
