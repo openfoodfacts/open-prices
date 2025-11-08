@@ -31,6 +31,14 @@ class Migration(migrations.Migration):
                     models.CharField(choices=[("OTHER", "OTHER")], max_length=20),
                 ),
                 ("comment", models.TextField(blank=True, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("OPEN", "OPEN"), ("CLOSED", "CLOSED")],
+                        default="OPEN",
+                        max_length=20,
+                    ),
+                ),
                 ("owner", models.CharField(blank=True, null=True)),
                 ("source", models.CharField(blank=True, null=True)),
                 ("created", models.DateTimeField(default=django.utils.timezone.now)),

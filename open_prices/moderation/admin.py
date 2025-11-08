@@ -9,9 +9,11 @@ class FlagAdmin(admin.ModelAdmin):
         "content_type",
         "object_id",
         "reason",
+        "status",
         "owner",
         "created",
     )
+    list_filter = ("status",)
 
     def has_add_permission(self, request, obj=None):
         return False

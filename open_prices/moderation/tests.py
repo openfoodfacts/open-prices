@@ -39,6 +39,7 @@ class FlagModelTest(TestCase):
         self.assertEqual(flag.content_object, self.price)
         self.assertEqual(flag.reason, moderation_constants.REASON_OTHER)
         self.assertEqual(flag.comment, "This price seems incorrect")
+        self.assertEqual(flag.status, moderation_constants.STATUS_OPEN)  # default
         self.assertEqual(flag.owner, "tester")
         self.assertEqual(flag.source, "unit-test")
         self.assertEqual(self.price.flags.count(), 1)
@@ -56,6 +57,7 @@ class FlagModelTest(TestCase):
         self.assertEqual(flag.content_object, self.proof)
         self.assertEqual(flag.reason, moderation_constants.REASON_OTHER)
         self.assertEqual(flag.comment, "This proof seems incorrect")
+        self.assertEqual(flag.status, moderation_constants.STATUS_OPEN)  # default
         self.assertEqual(flag.owner, "tester")
         self.assertEqual(flag.source, "unit-test")
         self.assertEqual(self.proof.flags.count(), 1)

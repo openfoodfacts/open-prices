@@ -19,6 +19,11 @@ class Flag(models.Model):
     )
     comment = models.TextField(blank=True, null=True)
 
+    status = models.CharField(
+        max_length=20,
+        choices=moderation_constants.STATUS_CHOICES,
+        default=moderation_constants.STATUS_OPEN,
+    )
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
 
