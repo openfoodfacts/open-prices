@@ -1,5 +1,6 @@
 import datetime
 import functools
+import re
 
 import openfoodfacts
 import requests
@@ -418,3 +419,28 @@ def upload_product_image_in_off(
     return client.product.upload_image(
         code, image_data_base64=image_data_base64, selected=selected
     )
+
+
+def is_smoothie_app_version_4_20(source: str | None) -> bool:
+    """Return True if the requests comes from Smoothie app version 4.20.
+
+    This is used to detect the Smoothie app version 4.20 which has a bug
+    where it sets the `Proof.ready_for_price_tag_validation` flag to True when
+    uploading price tag proofs, even when it should not be set.
+    """
+    return get_smoothie_app_version(source) == (4, 20)
+
+
+def get_smoothie_app_version(source: str | None) -> tuple[int | None, int | None]:
+    """Return the Smoothie app version (major, minor) if the request comes from
+    Smoothie app, or (None, None) otherwise."""
+    if source and (
+        match := re.search(r"^Smoothie - OpenFoodFacts \((\d+)\.(\d+)\.(\d+)", source)
+    ):
+        # source is in the format
+        # "Smoothie - OpenFoodFacts (4.18.1+1434)...""
+        smoothie_major = int(match.group(1))
+        smoothie_minor = int(match.group(2))
+        return smoothie_major, smoothie_minor
+
+    return None, None
