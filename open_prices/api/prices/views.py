@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from open_prices.api.moderation.serializers import FlagCreateSerializer, FlagSerializer
 from open_prices.api.prices.filters import PriceFilter
 from open_prices.api.prices.serializers import (
     PriceCreateSerializer,
@@ -92,3 +93,18 @@ class PriceViewSet(
     def history(self, request: Request, pk=None) -> Response:
         price = self.get_object()
         return Response(price.get_history_list(), status=200)
+
+    @extend_schema(request=FlagCreateSerializer, responses=FlagSerializer)
+    @action(detail=True, methods=["POST"])
+    def flag(self, request: Request, pk=None) -> Response:
+        price = self.get_object()
+        serializer = FlagSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # get owner
+        owner = self.request.user.user_id
+        # get source
+        source = get_source_from_request(self.request)
+        # save
+        print(price, owner, source)
+        serializer.save(content_object=price, owner=owner, source=source)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

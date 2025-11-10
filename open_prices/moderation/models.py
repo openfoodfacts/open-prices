@@ -24,7 +24,18 @@ class FlagStatus(models.TextChoices):
 
 
 class Flag(models.Model):
+    CREATE_FIELDS = [
+        # object_id, owner & source: set via the request
+        "reason",
+        "comment",
+        # "status"  # default
+    ]
+
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+    )
     object_id = models.PositiveBigIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 

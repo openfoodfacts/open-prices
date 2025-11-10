@@ -6,6 +6,7 @@ from django.urls import reverse
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.moderation import constants as moderation_constants
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
@@ -939,3 +940,44 @@ class PriceHistoryApiTest(TestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["history_type"], "+")
         self.assertEqual(response.data[0]["changes"], [])
+
+
+class PriceFlagApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.price = PriceFactory(
+            **PRICE_8001505005707, owner=cls.user_session_1.user.user_id
+        )
+        cls.url = reverse("api:prices-flag", args=[cls.price.id])
+
+    def test_price_flag_authentication_errors(self):
+        # anonymous
+        response = self.client.post(
+            self.url, {"reason": moderation_constants.REASON_OTHER}
+        )
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.post(
+            self.url,
+            {"reason": moderation_constants.REASON_OTHER},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_price_flag_ok_if_authenticated(self):
+        response = self.client.post(
+            self.url,
+            {
+                "reason": moderation_constants.REASON_OTHER,
+                "comment": "This price is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+        )
+        print(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["price_id"], self.price.id)
+        self.assertEqual(response.data["reason"], moderation_constants.REASON_OTHER)
+        self.assertEqual(response.data["status"], moderation_constants.STATUS_OPEN)
+        self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
