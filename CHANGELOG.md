@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.90.1](https://github.com/openfoodfacts/open-prices/compare/v1.90.0...v1.90.1) (2025-11-10)
+
+
+### Bug Fixes
+
+* **Django:** only import debug_toolbar if DEBUG (following [#1106](https://github.com/openfoodfacts/open-prices/issues/1106)) ([#1109](https://github.com/openfoodfacts/open-prices/issues/1109)) ([479aa68](https://github.com/openfoodfacts/open-prices/commit/479aa6853ee1d0056aa009b60033fd2a9bb67e3c))
+* set timeout properly for scheduled task ([#1102](https://github.com/openfoodfacts/open-prices/issues/1102)) ([c8d005c](https://github.com/openfoodfacts/open-prices/commit/c8d005cbd4792ac07a11b3c51c2c7f4eb214da64))
+
+
+### Technical
+
+* **deps:** Update dependencies ([#1106](https://github.com/openfoodfacts/open-prices/issues/1106)) ([f9c4cd3](https://github.com/openfoodfacts/open-prices/commit/f9c4cd3afbabbbb6687fbea50f706b83ea68b184))
+* **deps:** Update dependencies (partial revert of [#1106](https://github.com/openfoodfacts/open-prices/issues/1106) to fix issues) ([#1107](https://github.com/openfoodfacts/open-prices/issues/1107)) ([fb63a44](https://github.com/openfoodfacts/open-prices/commit/fb63a446ad074d26cfe5b1ff3ea3ac83ba270ba8))
+* **Github Actions:** Replace ubuntu-latest with ubuntu-slim in simple workflow runners ([#1105](https://github.com/openfoodfacts/open-prices/issues/1105)) ([ac8a60e](https://github.com/openfoodfacts/open-prices/commit/ac8a60e269f2cfebba3b0f95d787330296a628be))
+* increase the number of workers from 2 to 4 ([#1113](https://github.com/openfoodfacts/open-prices/issues/1113)) ([d049a6e](https://github.com/openfoodfacts/open-prices/commit/d049a6e1637b890dbe2b8a0d3d159ba02e2b1078))
+
 ## [1.90.0](https://github.com/openfoodfacts/open-prices/compare/v1.89.0...v1.90.0) (2025-10-25)
 
 
