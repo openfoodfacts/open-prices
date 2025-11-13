@@ -977,5 +977,6 @@ class PriceFlagApiTest(TestCase):
         self.assertEqual(response.data["object_id"], self.price.id)
         self.assertEqual(response.data["content_type_display"], "price")
         self.assertEqual(response.data["reason"], FlagReason.OTHER)
+        self.assertEqual(response.data["comment"], "This price is spam")
         self.assertEqual(response.data["status"], FlagStatus.OPEN)
         self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
