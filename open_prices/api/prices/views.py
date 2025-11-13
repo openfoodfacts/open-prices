@@ -98,13 +98,12 @@ class PriceViewSet(
     @action(detail=True, methods=["POST"])
     def flag(self, request: Request, pk=None) -> Response:
         price = self.get_object()
-        serializer = FlagSerializer(data=request.data)
+        serializer = FlagCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # get owner
         owner = self.request.user.user_id
         # get source
         source = get_source_from_request(self.request)
         # save
-        print(price, owner, source)
-        serializer.save(content_object=price, owner=owner, source=source)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        flag = serializer.save(content_object=price, owner=owner, source=source)
+        return Response(FlagSerializer(flag).data, status=status.HTTP_201_CREATED)

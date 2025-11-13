@@ -975,9 +975,8 @@ class PriceFlagApiTest(TestCase):
             },
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
         )
-        print(response.data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["price_id"], self.price.id)
+        self.assertEqual(response.data["object_id"], self.price.id)
         self.assertEqual(response.data["reason"], moderation_constants.REASON_OTHER)
         self.assertEqual(response.data["status"], moderation_constants.STATUS_OPEN)
         self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
