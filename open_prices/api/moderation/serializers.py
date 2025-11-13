@@ -13,6 +13,8 @@ class FlagCreateSerializer(serializers.ModelSerializer):
 
 
 class FlagSerializer(serializers.ModelSerializer):
+    content_type_display = serializers.ReadOnlyField()
+
     class Meta:
         model = Flag
         fields = "__all__"

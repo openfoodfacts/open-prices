@@ -28,7 +28,7 @@ class Flag(models.Model):
         # object_id, owner & source: set via the request
         "reason",
         "comment",
-        # "status"  # default
+        # "status"  # default value
     ]
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -76,3 +76,7 @@ class Flag(models.Model):
         """
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def content_type_display(self):
+        return self.content_type.model
