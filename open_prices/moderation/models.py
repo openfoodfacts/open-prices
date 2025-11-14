@@ -1,7 +1,11 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+
+from open_prices.common import utils
+from open_prices.moderation import validators as moderation_validators
 
 
 class FlagReason(models.TextChoices):
@@ -44,3 +48,20 @@ class Flag(models.Model):
         ]
         verbose_name = "Flag"
         verbose_name_plural = "Flags"
+
+    def clean(self, *args, **kwargs):
+        # dict to store all ValidationErrors
+        validation_errors = utils.merge_validation_errors(
+            moderation_validators.validate_flag_models(self),
+        )
+        # return
+        if bool(validation_errors):
+            raise ValidationError(validation_errors)
+        super().clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        """
+        - run validations
+        """
+        self.full_clean()
+        super().save(*args, **kwargs)

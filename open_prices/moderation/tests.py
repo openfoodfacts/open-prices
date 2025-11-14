@@ -1,8 +1,8 @@
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from open_prices.moderation import constants as moderation_constants
-from open_prices.moderation.models import Flag
+from open_prices.moderation.models import Flag, FlagReason, FlagStatus
 from open_prices.moderation.rules import (
     cleanup_products_with_invalid_barcodes,
     cleanup_products_with_long_barcodes,
@@ -26,41 +26,102 @@ class FlagModelTest(TestCase):
             product_code=cls.product.code, proof_id=cls.proof.id, source="mobile"
         )
 
+    def test_flag_reason_must_be_a_valid_choice(self):
+        with self.assertRaises(ValidationError):
+            Flag.objects.create(
+                content_object=self.price,
+                reason="INVALID_REASON",
+            )
+
     def test_create_flag_on_price(self):
-        flag = self.price.flags.create(
-            reason=moderation_constants.REASON_OTHER,
+        # Using Flag.objects.create()
+        flag = Flag.objects.create(
+            content_object=self.price,
+            reason=FlagReason.WRONG_PRICE_VALUE,
             comment="This price seems incorrect",
             owner="tester",
             source="unit-test",
         )
-
         self.assertEqual(Flag.objects.count(), 1)
         self.assertEqual(flag.content_type, ContentType.objects.get_for_model(Price))
-        self.assertEqual(flag.content_object, self.price)
-        self.assertEqual(flag.reason, moderation_constants.REASON_OTHER)
+        self.assertEqual(flag.object_id, self.price.id)
+        self.assertEqual(flag.reason, FlagReason.WRONG_PRICE_VALUE)
         self.assertEqual(flag.comment, "This price seems incorrect")
-        self.assertEqual(flag.status, moderation_constants.STATUS_OPEN)  # default
+        self.assertEqual(flag.status, FlagStatus.OPEN)  # default
         self.assertEqual(flag.owner, "tester")
         self.assertEqual(flag.source, "unit-test")
         self.assertEqual(self.price.flags.count(), 1)
+        # Using price.flags.create()
+        flag = self.price.flags.create(
+            reason=FlagReason.OTHER,
+            comment="This price is weird",
+            owner="tester",
+            source="unit-test",
+        )
+        self.assertEqual(Flag.objects.count(), 2)
+        self.assertEqual(flag.content_type, ContentType.objects.get_for_model(Price))
+        self.assertEqual(flag.object_id, self.price.id)
+        self.assertEqual(flag.reason, FlagReason.OTHER)
+        self.assertEqual(flag.comment, "This price is weird")
+        self.assertEqual(flag.status, FlagStatus.OPEN)  # default
+        self.assertEqual(flag.owner, "tester")
+        self.assertEqual(flag.source, "unit-test")
+        self.assertEqual(self.price.flags.count(), 2)
 
     def test_create_flag_on_proof(self):
-        flag = self.proof.flags.create(
-            reason=moderation_constants.REASON_OTHER,
+        # Using Flag.objects.create()
+        flag = Flag.objects.create(
+            content_type=ContentType.objects.get_for_model(Proof),
+            object_id=self.proof.id,
+            reason=FlagReason.WRONG_TYPE,
             comment="This proof seems incorrect",
             owner="tester",
             source="unit-test",
         )
-
         self.assertEqual(Flag.objects.count(), 1)
         self.assertEqual(flag.content_type, ContentType.objects.get_for_model(Proof))
-        self.assertEqual(flag.content_object, self.proof)
-        self.assertEqual(flag.reason, moderation_constants.REASON_OTHER)
+        self.assertEqual(flag.object_id, self.proof.id)
+        self.assertEqual(flag.reason, FlagReason.WRONG_TYPE)
         self.assertEqual(flag.comment, "This proof seems incorrect")
-        self.assertEqual(flag.status, moderation_constants.STATUS_OPEN)  # default
+        self.assertEqual(flag.status, FlagStatus.OPEN)  # default
         self.assertEqual(flag.owner, "tester")
         self.assertEqual(flag.source, "unit-test")
         self.assertEqual(self.proof.flags.count(), 1)
+        # Using proof.flags.create()
+        flag = self.proof.flags.create(
+            reason=FlagReason.OTHER,
+            comment="This proof is weird",
+            owner="tester",
+            source="unit-test",
+        )
+        self.assertEqual(Flag.objects.count(), 2)
+        self.assertEqual(flag.content_type, ContentType.objects.get_for_model(Proof))
+        self.assertEqual(flag.object_id, self.proof.id)
+        self.assertEqual(flag.reason, FlagReason.OTHER)
+        self.assertEqual(flag.comment, "This proof is weird")
+        self.assertEqual(flag.status, FlagStatus.OPEN)  # default
+        self.assertEqual(flag.owner, "tester")
+        self.assertEqual(flag.source, "unit-test")
+        self.assertEqual(self.proof.flags.count(), 2)
+
+    def test_restrict_flag_to_some_models(self):
+        # Using Flag.objects.create() on unsupported model
+        with self.assertRaises(Exception):
+            Flag.objects.create(
+                content_object=self.product,
+                reason=FlagReason.WRONG_TYPE,
+                comment="This product seems incorrect",
+                owner="tester",
+                source="unit-test",
+            )
+        # Using model.flags.create() on unsupported model
+        with self.assertRaises(Exception):
+            self.product.flags.create(
+                reason=FlagReason.OTHER,
+                comment="This product is weird",
+                owner="tester",
+                source="unit-test",
+            )
 
 
 class ModerationRulesTest(TestCase):
