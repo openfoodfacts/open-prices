@@ -17,7 +17,7 @@ from open_prices.api.prices.serializers import (
 )
 from open_prices.api.utils import get_source_from_request
 from open_prices.common.authentication import CustomAuthentication
-from open_prices.common.permission import OnlyOwnerOrModeratorCanEditOrDelete
+from open_prices.common.permission import OnlyObjectOwnerOrModeratorIsAllowed
 from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 
@@ -33,7 +33,7 @@ class PriceViewSet(
     authentication_classes = []  # see get_authenticators
     permission_classes = [
         IsAuthenticatedOrReadOnly,
-        OnlyOwnerOrModeratorCanEditOrDelete,
+        OnlyObjectOwnerOrModeratorIsAllowed,  # for edit & delete
     ]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = Price.objects.all()
