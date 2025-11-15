@@ -58,6 +58,7 @@ LOCAL_APPS = [
     "open_prices.challenges",
     "open_prices.users",
     "open_prices.stats",
+    "open_prices.moderation",
     "open_prices.api",
     "open_prices.www",
 ]
