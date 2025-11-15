@@ -713,9 +713,7 @@ class ProofFlagApiTest(TestCase):
 
     def test_proof_flag_authentication_errors(self):
         # anonymous
-        response = self.client.post(
-            self.url, {"reason": FlagReason.OTHER}
-        )
+        response = self.client.post(self.url, {"reason": FlagReason.OTHER})
         self.assertEqual(response.status_code, 403)
         # wrong token
         response = self.client.post(
