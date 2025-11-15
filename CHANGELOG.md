@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.91.0](https://github.com/openfoodfacts/open-prices/compare/v1.90.1...v1.91.0) (2025-11-15)
+
+
+### Features
+
+* **Moderation:** new Flag table to store upcoming issues ([#1115](https://github.com/openfoodfacts/open-prices/issues/1115)) ([c4c1d46](https://github.com/openfoodfacts/open-prices/commit/c4c1d46993763feb8dfea7cffc19c18c29c8b207))
+* **Moderation:** Prices: new endpoint to add a Flag for a given price ([#1116](https://github.com/openfoodfacts/open-prices/issues/1116)) ([e06896e](https://github.com/openfoodfacts/open-prices/commit/e06896eb9dd68b10fbabf0995b239e0d88b6077f))
+* **Moderation:** Proofs: new endpoint to add a Flag for a given proof ([#1120](https://github.com/openfoodfacts/open-prices/issues/1120)) ([fee667e](https://github.com/openfoodfacts/open-prices/commit/fee667ec039a1fe5e65c2aa53fa6a8db76bdb966))
+
 ## [1.90.1](https://github.com/openfoodfacts/open-prices/compare/v1.90.0...v1.90.1) (2025-11-10)
 
 
