@@ -9,6 +9,7 @@ from rest_framework import routers
 from open_prices.api.auth.views import LoginView, SessionView
 from open_prices.api.challenges.views import ChallengeViewSet
 from open_prices.api.locations.views import LocationViewSet
+from open_prices.api.moderation.views import FlagViewSet
 from open_prices.api.prices.views import PriceViewSet
 from open_prices.api.products.views import ProductViewSet
 from open_prices.api.proofs.views import (
@@ -31,6 +32,7 @@ router.register(r"v1/prices", PriceViewSet, basename="prices")
 router.register(r"v1/price-tags", PriceTagViewSet, basename="price-tags")
 router.register(r"v1/receipt-items", ReceiptItemViewSet, basename="receipt-items")
 router.register(r"v1/challenges", ChallengeViewSet, basename="challenges")
+router.register(r"v1/flags", FlagViewSet, basename="flags")
 
 urlpatterns = [
     # auth urls

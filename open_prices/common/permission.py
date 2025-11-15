@@ -1,33 +1,46 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
-class OnlyOwnerCanEditOrDelete(BasePermission):
-    """
-    Only allow owners to edit or delete an object.
-    """
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        return (
-            request.user
-            and request.user.is_authenticated
-            and (obj.owner == request.user.user_id)
-        )
+def request_user_is_object_owner(request, obj) -> bool:
+    return (
+        request.user
+        and request.user.is_authenticated
+        and (obj.owner == request.user.user_id)
+    )
 
 
-class OnlyOwnerOrModeratorCanEditOrDelete(BasePermission):
+def request_user_is_moderator(request) -> bool:
+    return request.user and request.user.is_authenticated and request.user.is_moderator
+
+
+class OnlyObjectOwnerIsAllowed(BasePermission):
     """
-    Only allow owners or moderators to edit or delete an object.
-    - only for non-safe methods
-    - (use only for Price or Proof objects)
+    Only give access to object owners.
     """
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
-        return (
-            request.user
-            and request.user.is_authenticated
-            and ((obj.owner == request.user.user_id) or request.user.is_moderator)
+        return request_user_is_object_owner(request, obj)
+
+
+class OnlyObjectOwnerOrModeratorIsAllowed(BasePermission):
+    """
+    Only give access to object owners or moderators.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        return request_user_is_object_owner(request, obj) or request_user_is_moderator(
+            request
         )
+
+
+class OnlyModeratorIsAllowed(BasePermission):
+    """
+    Only give access to moderators.
+    """
+
+    def has_permission(self, request, view):
+        return request_user_is_moderator(request)
