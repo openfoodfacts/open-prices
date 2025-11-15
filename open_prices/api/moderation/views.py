@@ -1,3 +1,4 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
 
@@ -16,6 +17,6 @@ class FlagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, OnlyModeratorIsAllowed]
     queryset = Flag.objects.all()
     serializer_class = FlagSerializer
-    filter_backends = [filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     ordering_fields = ["id", "reason", "status", "created", "updated"]
     ordering = ["id"]
