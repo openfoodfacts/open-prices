@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 
 from open_prices.common import utils
+from open_prices.moderation import constants as moderation_constants
 
 
 def validate_flag_models(instance):
@@ -9,11 +10,9 @@ def validate_flag_models(instance):
     """
     errors = dict()
 
-    allowed_models = [
-        ContentType.objects.get(app_label="prices", model="price"),
-        ContentType.objects.get(app_label="proofs", model="proof"),
-    ]
-    if instance.content_type not in allowed_models:
+    if instance.content_type not in ContentType.objects.filter(
+        moderation_constants.FLAG_ALLOWED_CONTENT_TYPES_QUERY_LIST
+    ):
         utils.add_validation_error(
             errors, "content_type", "Supported models: Price, Proof"
         )
