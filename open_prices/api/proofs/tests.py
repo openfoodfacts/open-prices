@@ -15,6 +15,7 @@ from open_prices.api.proofs.views import (
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.moderation.models import FlagReason, FlagStatus
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
@@ -698,6 +699,46 @@ class ProofHistoryApiTest(TestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["history_type"], "+")
         self.assertEqual(response.data[0]["changes"], [])
+
+
+class ProofFlagApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.proof = ProofFactory(
+            **PROOF_RECEIPT, price_count=15, owner=cls.user_session_1.user.user_id
+        )
+        cls.url = reverse("api:proofs-flag", args=[cls.proof.id])
+
+    def test_proof_flag_authentication_errors(self):
+        # anonymous
+        response = self.client.post(self.url, {"reason": FlagReason.OTHER})
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.post(
+            self.url,
+            {"reason": FlagReason.OTHER},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_proof_flag_ok_if_authenticated(self):
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This proof is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.proof.id)
+        self.assertEqual(response.data["content_type_display"], "proof")
+        self.assertEqual(response.data["reason"], FlagReason.OTHER)
+        self.assertEqual(response.data["comment"], "This proof is spam")
+        self.assertEqual(response.data["status"], FlagStatus.OPEN)
+        self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
 
 
 class PriceTagListApiTest(TestCase):
