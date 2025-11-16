@@ -1,10 +1,10 @@
 from collections import Counter
 
 from django.core.management.base import BaseCommand
-from django.db import models as dj_models, transaction
+from django.db import models as dj_models
+from django.db import transaction
 
 from open_prices.prices.models import Price
-
 
 COUNTRY_DEFAULT_CURRENCY = {
     # Common mappings; extend as needed
@@ -86,7 +86,8 @@ class Command(BaseCommand):
                     price._change_reason = (
                         "fix_missing_price_currency management command (auto)"
                     )
-                    # Save only this field to avoid triggering unrelated validations
+                    # Save only this field to avoid triggering
+                    # unrelated validations
                     price.save(update_fields=["currency"])
                     fixed += 1
 
