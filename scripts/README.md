@@ -13,7 +13,7 @@ Using uv is the recommended way to run the script. First,  [install uv](https://
 Then, simply run:
 
 ```bash
-uv run scripts.anonymize_receipts --help
+uv run anonymize_receipts --help
 ```
 
 This will install the required dependencies in an isolated environment and display the help message.
