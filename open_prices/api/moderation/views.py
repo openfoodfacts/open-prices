@@ -2,6 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
 
+from open_prices.api.moderation.filters import FlagFilter
 from open_prices.api.moderation.serializers import FlagSerializer
 from open_prices.common.authentication import CustomAuthentication
 from open_prices.common.permission import OnlyModeratorIsAllowed
@@ -18,5 +19,6 @@ class FlagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Flag.objects.all()
     serializer_class = FlagSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = FlagFilter
     ordering_fields = ["id", "reason", "status", "created", "updated"]
     ordering = ["id"]

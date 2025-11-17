@@ -32,10 +32,6 @@ class Flag(models.Model):
     ]
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-    )
     object_id = models.PositiveBigIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 
@@ -79,4 +75,4 @@ class Flag(models.Model):
 
     @property
     def content_type_display(self):
-        return self.content_type.model
+        return self.content_type.model.upper()
