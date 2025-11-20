@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 from typing import Any, Literal
 
+import numpy as np
 import typing_extensions as typing
 from asgiref.sync import async_to_sync
 from django.conf import settings
@@ -740,8 +741,13 @@ def detect_price_tags(
         label_names=label_names,
         image_size=image_size,
     )
+    # The object detector expects a numpy array as input
+    image_array = np.asarray(image.convert("RGB"))
     return detector.detect_from_image(
-        image, triton_uri=triton_uri, threshold=threshold, model_version=model_version
+        image_array,
+        triton_uri=triton_uri,
+        threshold=threshold,
+        model_version=model_version,
     )
 
 
