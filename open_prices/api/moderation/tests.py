@@ -1,6 +1,5 @@
 from django.test import TestCase
 from django.urls import reverse
-from django.urls.exceptions import NoReverseMatch
 
 from open_prices.moderation.models import Flag, FlagReason, FlagStatus
 from open_prices.prices.factories import PriceFactory
@@ -11,8 +10,7 @@ from open_prices.users.factories import SessionFactory
 class FlagListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user_session_1 = SessionFactory()
-        cls.user_session_2 = SessionFactory()
+        cls.user_session = SessionFactory()
         cls.url = reverse("api:flags-list")
         # create flag
         Flag.objects.create(
@@ -29,24 +27,24 @@ class FlagListApiTest(TestCase):
         # wrong token
         response = self.client.get(
             self.url,
-            headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
+            headers={"Authorization": f"Bearer {self.user_session.token}X"},
         )
         self.assertEqual(response.status_code, 403)
         # user not moderator
         response = self.client.get(
             self.url,
-            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 403)
 
     def test_flag_list_ok_if_moderator(self):
         # set user as moderator
-        self.user_session_2.user.is_moderator = True
-        self.user_session_2.user.save()
+        self.user_session.user.is_moderator = True
+        self.user_session.user.save()
         # authenticated as moderator
         response = self.client.get(
             self.url,
-            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()["items"]), 1)
@@ -206,14 +204,22 @@ class FlagDetailApiTest(TestCase):
         cls.flag = Flag.objects.create(
             content_object=cls.price,
             reason=FlagReason.WRONG_PRICE_VALUE,
+            comment="Please fix",
             owner="tester",
             source="unittest",
         )
+        cls.url = reverse("api:flags-detail", args=[cls.flag.id])
 
     def test_flag_detail_not_allowed(self):
-        self.assertRaises(
-            NoReverseMatch, reverse, "api:flags-detail", args=[self.flag.id]
+        # set user as moderator
+        self.user_session.user.is_moderator = True
+        self.user_session.user.save()
+        # authenticated as moderator
+        response = self.client.get(
+            self.url,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
+        self.assertEqual(response.status_code, 405)
 
 
 class FlagUpdateApiTest(TestCase):
@@ -224,14 +230,90 @@ class FlagUpdateApiTest(TestCase):
         cls.flag = Flag.objects.create(
             content_object=cls.price,
             reason=FlagReason.WRONG_PRICE_VALUE,
+            comment="Please fix",
             owner="tester",
             source="unittest",
         )
+        cls.url = reverse("api:flags-detail", args=[cls.flag.id])
 
-    def test_flag_update_not_allowed(self):
-        self.assertRaises(
-            NoReverseMatch, reverse, "api:flags-detail", args=[self.flag.id]
+    def test_flag_put_not_allowed(self):
+        # set user as moderator
+        self.user_session.user.is_moderator = True
+        self.user_session.user.save()
+        # authenticated as moderator
+        response = self.client.put(
+            self.url,
+            data={
+                "status": FlagStatus.CLOSED,
+                "reason": FlagReason.WRONG_TYPE,
+                "comment": "hacked",
+            },
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
         )
+        self.assertEqual(response.status_code, 405)
+
+    def test_flag_patch_authentication_errors(self):
+        # anonymous
+        response = self.client.patch(
+            self.url,
+            data={"status": FlagStatus.CLOSED},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.patch(
+            self.url,
+            data={"status": FlagStatus.CLOSED},
+            headers={"Authorization": f"Bearer {self.user_session.token}X"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        # user not moderator
+        response = self.client.patch(
+            self.url,
+            data={"status": FlagStatus.CLOSED},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_flag_patch_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session.user.is_moderator = True
+        self.user_session.user.save()
+        # authenticated as moderator
+        response = self.client.patch(
+            self.url,
+            data={"status": FlagStatus.CLOSED},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.flag.refresh_from_db()
+        self.assertEqual(self.flag.status, FlagStatus.CLOSED)
+
+    def test_flag_patch_only_status(self):
+        # set user as moderator
+        self.user_session.user.is_moderator = True
+        self.user_session.user.save()
+        # authenticated as moderator
+        # attempt to change reason and comment in same PATCH
+        response = self.client.patch(
+            self.url,
+            data={
+                "status": FlagStatus.CLOSED,
+                "reason": FlagReason.WRONG_PRODUCT,
+                "comment": "hacked",
+            },
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.flag.refresh_from_db()
+        self.assertEqual(self.flag.status, FlagStatus.CLOSED)
+        self.assertEqual(self.flag.reason, FlagReason.WRONG_PRICE_VALUE)
+        self.assertEqual(self.flag.comment, "Please fix")
 
 
 class FlagDeleteApiTest(TestCase):
@@ -245,8 +327,15 @@ class FlagDeleteApiTest(TestCase):
             owner="tester",
             source="unittest",
         )
+        cls.url = reverse("api:flags-detail", args=[cls.flag.id])
 
     def test_flag_delete_not_allowed(self):
-        self.assertRaises(
-            NoReverseMatch, reverse, "api:flags-detail", args=[self.flag.id]
+        # set user as moderator
+        self.user_session.user.is_moderator = True
+        self.user_session.user.save()
+        # authenticated as moderator
+        response = self.client.delete(
+            self.url,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
+        self.assertEqual(response.status_code, 405)

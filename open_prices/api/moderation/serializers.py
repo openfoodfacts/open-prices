@@ -12,6 +12,12 @@ class FlagCreateSerializer(serializers.ModelSerializer):
         fields = Flag.CREATE_FIELDS + ["content_object"]
 
 
+class FlagUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Flag
+        fields = ["status"]
+
+
 class FlagSerializer(serializers.ModelSerializer):
     content_type = serializers.SerializerMethodField()
 
