@@ -1,9 +1,12 @@
 import json
 import logging
-import typing
 
 from openfoodfacts.types import JSONType
 from PIL import Image
+
+# TypedDict is only available from typing in Python 3.12+, drop
+# typing_extensions import when we drop support for older versions
+from typing_extensions import TypedDict
 
 from open_prices.common import google as common_google
 from open_prices.prices import constants as price_constants
@@ -15,13 +18,13 @@ from open_prices.proofs.models import Proof, ProofPrediction, ReceiptItem
 logger = logging.getLogger(__name__)
 
 
-class ReceiptItemType(typing.TypedDict):
+class ReceiptItemType(TypedDict):
     product: Products
     price: float
     product_name: str
 
 
-class Receipt(typing.TypedDict):
+class Receipt(TypedDict):
     store_name: str
     store_address: str
     store_city_name: str
