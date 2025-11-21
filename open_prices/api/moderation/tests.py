@@ -129,7 +129,7 @@ class FlagListFilterApiTest(TestCase):
             source="unittest",
         )
 
-    def test_flag_list_filter_by_content_object(self):
+    def test_flag_list_filter_by_object_id(self):
         # object_id
         url = self.url + f"?object_id={self.flag_price_wrong_price_value.object_id}"
         response = self.client.get(
@@ -138,7 +138,9 @@ class FlagListFilterApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()["items"]), 1)
-        # content_type (single)
+
+    def test_flag_list_filter_by_content_type(self):
+        # single
         url = self.url + "?content_type=PRICE"
         response = self.client.get(
             url,
@@ -153,7 +155,7 @@ class FlagListFilterApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()["items"]), 1)
-        # content_type (multiple)
+        # multiple
         url = self.url + "?content_type=PRICE&content_type=PROOF"
         response = self.client.get(
             url,

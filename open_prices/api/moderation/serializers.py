@@ -4,7 +4,7 @@ from open_prices.moderation.models import Flag
 
 
 class FlagCreateSerializer(serializers.ModelSerializer):
-    # add read_only generic foreign key field
+    # the content_object will be set in the view (from the url pk)
     content_object = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:

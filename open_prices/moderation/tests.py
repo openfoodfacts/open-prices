@@ -33,7 +33,7 @@ class FlagModelSaveTest(TestCase):
                 reason="INVALID_REASON",
             )
 
-    def test_create_flag_on_price(self):
+    def test_create_flag_price(self):
         # Using Flag.objects.create()
         flag = Flag.objects.create(
             content_object=self.price,
@@ -68,7 +68,7 @@ class FlagModelSaveTest(TestCase):
         self.assertEqual(flag.source, "unit-test")
         self.assertEqual(self.price.flags.count(), 2)
 
-    def test_create_flag_on_proof(self):
+    def test_create_flag_proof(self):
         # Using Flag.objects.create()
         flag = Flag.objects.create(
             content_type=ContentType.objects.get_for_model(Proof),
@@ -122,6 +122,50 @@ class FlagModelSaveTest(TestCase):
                 owner="tester",
                 source="unit-test",
             )
+
+
+class FlagModelQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        barcode = "8001505005707"
+        cls.product = ProductFactory(code=barcode, source=product_constants.SOURCE_OFF)
+        cls.proof = ProofFactory()
+        cls.price = PriceFactory(
+            product_code=cls.product.code, proof_id=cls.proof.id, source="mobile"
+        )
+        cls.flag_price = Flag.objects.create(
+            content_object=cls.price,
+            reason=FlagReason.WRONG_PRICE_VALUE,
+            owner="tester",
+            source="unit-test",
+        )
+        cls.flag_proof = Flag.objects.create(
+            content_object=cls.proof,
+            reason=FlagReason.WRONG_TYPE,
+            owner="tester",
+            source="unit-test",
+        )
+
+    def test_filter_by_content_type_model(self):
+        flag_price_qs = Flag.objects.filter_by_content_type_model("PRICE")
+        self.assertEqual(flag_price_qs.count(), 1)
+        self.assertEqual(flag_price_qs.first(), self.flag_price)
+        flags_on_proof = Flag.objects.filter_by_content_type_model("PROOF")
+        self.assertEqual(flags_on_proof.count(), 1)
+        self.assertEqual(flags_on_proof.first(), self.flag_proof)
+
+    def test_filter_by_content_type_model_list(self):
+        # single
+        flag_price_qs = Flag.objects.filter_by_content_type_model_list(["PRICE"])
+        self.assertEqual(flag_price_qs.count(), 1)
+        self.assertEqual(flag_price_qs.first(), self.flag_price)
+        # multiple
+        flag_price_proof_qs = Flag.objects.filter_by_content_type_model_list(
+            ["PRICE", "PROOF"]
+        )
+        self.assertEqual(flag_price_proof_qs.count(), 2)
+        self.assertIn(self.flag_price, flag_price_proof_qs)
+        self.assertIn(self.flag_proof, flag_price_proof_qs)
 
 
 class FlagModelPropertyTest(TestCase):
