@@ -20,4 +20,4 @@ class FlagSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_content_type(self, obj):
-        return obj.content_type_display.upper()
+        return obj.content_type_display

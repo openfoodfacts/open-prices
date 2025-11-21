@@ -75,4 +75,7 @@ class Flag(models.Model):
 
     @property
     def content_type_display(self):
+        """
+        Example: "PRICE"
+        """
         return self.content_type.model.upper()

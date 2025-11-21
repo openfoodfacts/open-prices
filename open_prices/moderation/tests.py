@@ -16,7 +16,7 @@ from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 
 
-class FlagModelTest(TestCase):
+class FlagModelSaveTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         barcode = "8001505005707"
@@ -122,6 +122,33 @@ class FlagModelTest(TestCase):
                 owner="tester",
                 source="unit-test",
             )
+
+
+class FlagModelPropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        barcode = "8001505005707"
+        cls.product = ProductFactory(code=barcode, source=product_constants.SOURCE_OFF)
+        cls.proof = ProofFactory()
+        cls.price = PriceFactory(
+            product_code=cls.product.code, proof_id=cls.proof.id, source="mobile"
+        )
+        cls.flag_proof = Flag.objects.create(
+            content_object=cls.proof,
+            reason=FlagReason.WRONG_CURRENCY,
+            owner="tester",
+            source="unit-test",
+        )
+        cls.flag_price = Flag.objects.create(
+            content_object=cls.price,
+            reason=FlagReason.WRONG_PRICE_VALUE,
+            owner="tester",
+            source="unit-test",
+        )
+
+    def test_content_type_display_property(self):
+        self.assertEqual(self.flag_proof.content_type_display, "PROOF")
+        self.assertEqual(self.flag_price.content_type_display, "PRICE")
 
 
 class ModerationRulesTest(TestCase):
