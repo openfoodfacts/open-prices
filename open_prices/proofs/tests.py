@@ -14,6 +14,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
+from openfoodfacts.ml.object_detection import ObjectDetectionRawResult
 from PIL import Image
 from simple_history.utils import bulk_update_with_history
 
@@ -32,17 +33,18 @@ from open_prices.proofs.factories import (
     ProofPredictionFactory,
     ReceiptItemFactory,
 )
-from open_prices.proofs.ml import (
-    PRICE_TAG_DETECTOR_MODEL_NAME,
-    PRICE_TAG_DETECTOR_MODEL_VERSION,
+from open_prices.proofs.ml import run_and_save_proof_prediction
+from open_prices.proofs.ml.classification import (
     PROOF_CLASSIFICATION_MODEL_NAME,
     PROOF_CLASSIFICATION_MODEL_VERSION,
-    ObjectDetectionRawResult,
-    create_price_tags_from_proof_prediction,
-    fetch_and_save_ocr_data,
-    run_and_save_price_tag_detection,
-    run_and_save_proof_prediction,
     run_and_save_proof_type_prediction,
+)
+from open_prices.proofs.ml.ocr import fetch_and_save_ocr_data
+from open_prices.proofs.ml.price_tags import (
+    PRICE_TAG_DETECTOR_MODEL_NAME,
+    PRICE_TAG_DETECTOR_MODEL_VERSION,
+    create_price_tags_from_proof_prediction,
+    run_and_save_price_tag_detection,
 )
 from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
 from open_prices.proofs.utils import (
@@ -700,7 +702,7 @@ class RunOCRTaskTest(TestCase):
         with self.settings(GOOGLE_CLOUD_VISION_API_KEY="test_api_key"):
             # mock call to run_ocr_on_image
             with unittest.mock.patch(
-                "open_prices.proofs.ml.run_ocr_on_image",
+                "open_prices.proofs.ml.ocr.run_ocr_on_image",
                 return_value=response_data,
             ) as mock_run_ocr_on_image:
                 with tempfile.TemporaryDirectory() as tmpdirname:
@@ -774,11 +776,11 @@ class MLModelTest(TestCase):
                 # Patch predict_proof_type to return a fixed response
                 with (
                     unittest.mock.patch(
-                        "open_prices.proofs.ml.predict_proof_type",
+                        "open_prices.proofs.ml.classification.predict_proof_type",
                         return_value=predict_proof_type_response,
                     ) as mock_predict_proof_type,
                     unittest.mock.patch(
-                        "open_prices.proofs.ml.detect_price_tags",
+                        "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=None,
                     ) as mock_detect_price_tags,
                 ):
@@ -861,11 +863,11 @@ class MLModelTest(TestCase):
                 # Patch predict_proof_type to return a fixed response
                 with (
                     unittest.mock.patch(
-                        "open_prices.proofs.ml.predict_proof_type",
+                        "open_prices.proofs.ml.classification.predict_proof_type",
                         return_value=predict_proof_type_response,
                     ) as mock_predict_proof_type,
                     unittest.mock.patch(
-                        "open_prices.proofs.ml.detect_price_tags",
+                        "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
                 ):

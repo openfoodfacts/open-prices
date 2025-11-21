@@ -38,7 +38,7 @@ from open_prices.common.authentication import (
 )
 from open_prices.common.permission import OnlyOwnerOrModeratorCanEditOrDelete
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.ml import extract_from_price_tag
+from open_prices.proofs.ml.price_tags import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
 from open_prices.proofs.utils import compute_file_md5, store_file
 
@@ -316,7 +316,7 @@ class PriceTagViewSet(
 
         if not settings.TESTING:
             async_task(
-                "open_prices.proofs.ml.run_and_save_price_tag_extraction_from_id",
+                "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
                 price_tag.id,
             )
 
@@ -341,7 +341,8 @@ class PriceTagViewSet(
             and previous_bounding_box != price_tag.bounding_box
         ):
             async_task(
-                "open_prices.proofs.ml.update_price_tag_extraction", price_tag.id
+                "open_prices.proofs.ml.price_tags.update_price_tag_extraction",
+                price_tag.id,
             )
 
         # return full price tag

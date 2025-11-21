@@ -345,7 +345,7 @@ def proof_post_save_run_ocr(sender, instance, created, **kwargs):
     if not settings.TESTING:
         if created:
             async_task(
-                "open_prices.proofs.ml.fetch_and_save_ocr_data",
+                "open_prices.proofs.ml.ocr.fetch_and_save_ocr_data",
                 f"{settings.IMAGES_DIR}/{instance.file_path}",
             )
 
@@ -574,7 +574,7 @@ class PriceTag(models.Model):
     def update_tags(self):
         changes = False
         # prediction tags
-        from open_prices.proofs.ml import (
+        from open_prices.proofs.ml.price_tags import (
             price_tag_prediction_has_predicted_barcode_valid,
             price_tag_prediction_has_predicted_category_tag_valid,
             price_tag_prediction_has_predicted_product_exists,

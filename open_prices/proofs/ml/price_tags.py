@@ -1,37 +1,20 @@
-"""
-Proof ML/AI
-- predict Proof type with triton
-- detect Proof's PriceTags with triton
-- extract data from PriceTags with Gemini
-"""
-
 import asyncio
-import base64
 import enum
-import gzip
-import json
 import logging
-import time
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import numpy as np
-import typing_extensions as typing
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from google import genai
 from openfoodfacts.barcode import normalize_barcode
-from openfoodfacts.ml.image_classification import ImageClassifier
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDetector
-from openfoodfacts.types import JSONType
-from openfoodfacts.utils import http_session
 from PIL import Image
 from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
 from open_prices.common import openfoodfacts as common_openfoodfacts
-from open_prices.prices import constants as price_constants
-from open_prices.prices.models import Price
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import (
@@ -39,29 +22,17 @@ from open_prices.proofs.models import (
     PriceTagPrediction,
     Proof,
     ProofPrediction,
-    ReceiptItem,
 )
 from open_prices.proofs.utils import crop_image
 
-logger = logging.getLogger(__name__)
-
-
-PROOF_CLASSIFICATION_LABEL_NAMES = [
-    "OTHER",
-    "PRICE_TAG",
-    "PRODUCT_WITH_PRICE",
-    "RECEIPT",
-    "SHELF",
-    "WEB_PRINT",
-]
-PROOF_CLASSIFICATION_MODEL_NAME = "price_proof_classification"
-PROOF_CLASSIFICATION_MODEL_VERSION = "price_proof_classification-1.0"
-PROOF_CLASSIFICATION_TRITON_VERSION = "1"
 PRICE_TAG_DETECTOR_LABEL_NAMES = ["price_tag"]
 PRICE_TAG_DETECTOR_MODEL_NAME = "price_tag_detection"
 PRICE_TAG_DETECTOR_MODEL_VERSION = "price_tag_detection-1.0"
 PRICE_TAG_DETECTOR_TRITON_VERSION = "1"
 PRICE_TAG_DETECTOR_IMAGE_SIZE = 960
+
+
+logger = logging.getLogger(__name__)
 
 
 # TODO: what about other categories?
@@ -434,7 +405,7 @@ class Label(BaseModel):
         # sort prices to have prices with VAT first
         sorted_prices = sorted(self.prices, key=lambda p: p.with_vat, reverse=True)
 
-        price_grouped_by_per = {unit: [] for unit in Unit}
+        price_grouped_by_per: dict[Unit, list[LabelPrice]] = {unit: [] for unit in Unit}
         for price in sorted_prices:
             # Convert price_per to Unit.KILOGRAM if it is LITER
             price_per = (
@@ -541,23 +512,6 @@ class LabelWithSimilarBarcodes(Label):
     )
 
 
-class ReceiptItemType(typing.TypedDict):
-    product: Products
-    price: float
-    product_name: str
-
-
-class Receipt(typing.TypedDict):
-    store_name: str
-    store_address: str
-    store_city_name: str
-    date: str
-    # currency: str
-    # price_count: int
-    # price_total: float
-    items: list[ReceiptItemType]
-
-
 def preprocess_price_tag(image: Image.Image) -> Image.Image:
     # Gemini model max payload size is 20MB
     # To prevent the payload from being too large, we resize the images
@@ -661,59 +615,6 @@ async def extract_from_price_tag_batch(
 sync_extract_from_price_tag_batch = async_to_sync(extract_from_price_tag_batch)
 
 
-def extract_from_receipt(image: Image.Image) -> JSONType | None:
-    """Extract receipt information from an image."""
-    # Gemini model max payload size is 20MB
-    # To prevent the payload from being too large, we resize the images before
-    # upload
-    max_size = 1024
-    if image.width > max_size or image.height > max_size:
-        image = image.copy()
-        image.thumbnail((max_size, max_size))
-
-    prompt = "Extract all relevent information, use empty strings for unknown values."
-    client = common_google.get_genai_client()
-    response = client.models.generate_content(
-        model=common_google.GEMINI_MODEL_VERSION,
-        contents=[
-            prompt,
-            image,
-        ],
-        config=common_google.get_generation_config(Receipt),
-    )
-    # Sometimes the response is not valid JSON, we try to parse it and return
-    # None
-    try:
-        return json.loads(response.text) if response.text else None
-    except json.JSONDecodeError:
-        logger.warning("Error decoding receipt extraction response: %s", response.text)
-        return None
-
-
-def predict_proof_type(
-    image: Image.Image,
-    model_name: str = PROOF_CLASSIFICATION_MODEL_NAME,
-    model_version: str = PROOF_CLASSIFICATION_TRITON_VERSION,
-    label_names: list[str] = PROOF_CLASSIFICATION_LABEL_NAMES,
-    triton_uri: str = settings.TRITON_URI,
-) -> list[tuple[str, float]]:
-    """Predict the type of a proof image.
-
-    :param image: the input Pillow image
-    :param model_version: the version of the model to use
-    :return: the prediction results as a list of tuples (label, confidence)
-    """
-    classifier = ImageClassifier(
-        model_name=model_name,
-        label_names=label_names,
-    )
-    return classifier.predict(
-        image,
-        triton_uri=triton_uri,
-        model_version=model_version,
-    )
-
-
 def detect_price_tags(
     image: Image.Image,
     model_name: str = PRICE_TAG_DETECTOR_MODEL_NAME,
@@ -750,103 +651,6 @@ def detect_price_tags(
         threshold=threshold,
         model_version=model_version,
     )
-
-
-def run_ocr_on_image(image_path: Path | str, api_key: str) -> dict[str, Any] | None:
-    """Run Google Cloud Vision OCR on the image stored at the given path.
-
-    :param image_path: the path to the image
-    :param api_key: the Google Cloud Vision API key
-    :return: the OCR data as a dict or None if an error occurred
-
-    This is similar to the run_ocr.py script in openfoodfacts-server:
-    https://github.com/openfoodfacts/openfoodfacts-server/blob/main/scripts/run_ocr.py
-    """
-    with open(image_path, "rb") as f:
-        image_bytes = f.read()
-
-    base64_content = base64.b64encode(image_bytes).decode("utf-8")
-    url = f"{common_google.GOOGLE_CLOUD_VISION_OCR_API_URL}?key={api_key}"
-    data = {
-        "requests": [
-            {
-                "features": [
-                    {"type": feature}
-                    for feature in common_google.GOOGLE_CLOUD_VISION_OCR_FEATURES
-                ],
-                "image": {"content": base64_content},
-            }
-        ]
-    }
-    response = http_session.post(url, json=data)
-
-    if not response.ok:
-        logger.debug(
-            "Error running OCR on image %s, HTTP %s\n%s",
-            image_path,
-            response.status_code,
-            response.text,
-        )
-    return response.json()
-
-
-def fetch_and_save_ocr_data(image_path: Path | str, override: bool = False) -> bool:
-    """Run OCR on the image stored at the given path and save the result to a
-    JSON file.
-
-    The JSON file will be saved in the same directory as the image, with the
-    same name but a `.json` extension.
-
-    :param image_path: the path to the image
-    :param override: whether to override existing OCR data, default to False
-    :return: True if the OCR data was saved, False otherwise
-    """
-    image_path = Path(image_path)
-
-    if image_path.suffix not in (".jpg", ".jpeg", ".png", ".webp"):
-        logger.debug("Skipping %s, not a supported image type", image_path)
-        return False
-
-    if not settings.GOOGLE_CLOUD_VISION_API_KEY:
-        logger.error("No Google Cloud Vision API key found")
-        return False
-
-    ocr_json_path = image_path.with_suffix(".json.gz")
-
-    if ocr_json_path.exists() and not override:
-        logger.info("OCR data already exists for %s", image_path)
-        return False
-
-    data = run_ocr_on_image(image_path, settings.GOOGLE_CLOUD_VISION_API_KEY)
-
-    if data is None:
-        return False
-
-    data["created_at"] = int(time.time())
-
-    with gzip.open(ocr_json_path, "wt") as f:
-        f.write(json.dumps(data))
-
-    logger.debug("OCR data saved to %s", ocr_json_path)
-    return True
-
-
-def run_and_save_price_tag_extraction_from_id(price_tag_id: int) -> None:
-    """Extract information from a single price tag using the Gemini model and
-    save the predictions in the database.
-
-    This function is meant to be called asynchronously using django background
-    tasks.
-
-    :param price_tag_id the ID of the PriceTag instance to extract information
-    """
-    price_tag = PriceTag.objects.filter(id=price_tag_id).select_related("proof").first()
-
-    if not price_tag:
-        logger.error("Price tag with id %s not found", price_tag_id)
-        return None
-
-    run_and_save_price_tag_extraction([price_tag], price_tag.proof)
 
 
 def run_and_save_price_tag_extraction(
@@ -946,6 +750,24 @@ def run_and_save_price_tag_extraction(
     return predictions
 
 
+def run_and_save_price_tag_extraction_from_id(price_tag_id: int) -> None:
+    """Extract information from a single price tag using the Gemini model and
+    save the predictions in the database.
+
+    This function is meant to be called asynchronously using django background
+    tasks.
+
+    :param price_tag_id the ID of the PriceTag instance to extract information
+    """
+    price_tag = PriceTag.objects.filter(id=price_tag_id).select_related("proof").first()
+
+    if not price_tag:
+        logger.error("Price tag with id %s not found", price_tag_id)
+        return None
+
+    run_and_save_price_tag_extraction([price_tag], price_tag.proof)
+
+
 def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction | None:
     """Update the price tag extraction prediction using the Gemini model.
 
@@ -961,7 +783,7 @@ def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction | None:
     proof = price_tag.proof
     if proof.file_path_full is None or not Path(proof.file_path_full).exists():
         logger.error("Proof file not found: %s", proof.file_path_full)
-        return []
+        return None
 
     price_tag_prediction = PriceTagPrediction.objects.filter(
         price_tag=price_tag, type=proof_constants.PRICE_TAG_EXTRACTION_TYPE
@@ -1031,72 +853,11 @@ def create_price_tags_from_proof_prediction(
     return created
 
 
-def create_receipt_items_from_proof_prediction(
-    proof: Proof, proof_prediction: ProofPrediction
-) -> list[ReceiptItem]:
-    """Create receipt items from a proof prediction containing receipt item
-    detections.
-    Also looks up Prices table for similar product name and location to try to
-    extract the product code.
-
-    :param proof: the Proof instance to associate the ReceiptItems with
-    :param proof_prediction: the ProofPrediction instance containing the
-        receipt items detections
-    :return: the list of ReceiptItem instances created
-    """
-    if proof_prediction.model_name != common_google.GEMINI_MODEL_NAME:
-        logger.error(
-            "Proof prediction model %s is not a receipt extraction",
-            proof_prediction.model_name,
-        )
-        return []
-
-    # For every predicted item product name, look up a corresponding Price
-    product_names = [
-        item.get("product_name")
-        for item in proof_prediction.data.get("items", [])
-        if item.get("product_name")
-    ]
-    matching_prices = Price.objects.filter(
-        product_name__in=product_names,
-        location=proof.location,
-        type=price_constants.TYPE_PRODUCT,
-    )
-    # Using the prices data, create a lookup table matching product names
-    # and product codes
-    product_lookup = {}
-    for price in matching_prices:
-        if (
-            price.product_name in product_lookup
-            and product_lookup[price.product_name] != price.product_code
-        ):
-            logger.warning(
-                "Multiple products with the same name found: %s", price.product_name
-            )
-        product_lookup[price.product_name] = price.product_code
-
-    created = []
-    for index, predicted_item in enumerate(proof_prediction.data.get("items", [])):
-        # Check if we have a matching product code
-        # for the predicted product name
-        matching_product_code = product_lookup.get(predicted_item.get("product_name"))
-        if matching_product_code:
-            predicted_item["predicted_product_code"] = matching_product_code
-
-        receipt_item = ReceiptItem.objects.create(
-            proof=proof,
-            proof_prediction=proof_prediction,
-            price=None,
-            order=index + 1,
-            predicted_data=predicted_item,
-            status=None,
-        )
-        created.append(receipt_item)
-    return created
-
-
 def run_and_save_price_tag_detection(
-    image: Image, proof: Proof, overwrite: bool = False, run_extraction: bool = True
+    image: Image.Image,
+    proof: Proof,
+    overwrite: bool = False,
+    run_extraction: bool = True,
 ) -> ProofPrediction | None:
     """Run the price tag object detection model and save the prediction
     in ProofPrediction table.
@@ -1160,145 +921,6 @@ def run_and_save_price_tag_detection(
         proof, proof_prediction, run_extraction=run_extraction
     )
     return proof_prediction
-
-
-def run_and_save_proof_type_prediction(
-    image: Image, proof: Proof, overwrite: bool = False
-) -> ProofPrediction | None:
-    """Run the proof type classifier model and save the prediction in
-    ProofPrediction table.
-
-    :param image: the image to run the model on
-    :param proof: the Proof instance to associate the ProofPrediction with
-    :param overwrite: whether to overwrite existing prediction, defaults to
-        False
-    :return: the ProofPrediction instance created, or None if the prediction
-        already exists and overwrite is False
-    """
-    if ProofPrediction.objects.filter(
-        proof=proof, model_name=PROOF_CLASSIFICATION_MODEL_NAME
-    ).exists():
-        if overwrite:
-            logger.info("Overwriting existing type prediction for proof %s", proof.id)
-            ProofPrediction.objects.filter(
-                proof=proof, model_name=PROOF_CLASSIFICATION_MODEL_NAME
-            ).delete()
-        else:
-            logger.debug(
-                "Proof %s already has a prediction for model %s",
-                proof.id,
-                PROOF_CLASSIFICATION_MODEL_NAME,
-            )
-            return None
-
-    prediction = predict_proof_type(image)
-
-    max_confidence = max(prediction, key=lambda x: x[1])[1]
-    proof_type = max(prediction, key=lambda x: x[1])[0]
-    try:
-        return ProofPrediction.objects.create(
-            proof=proof,
-            type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
-            model_name=PROOF_CLASSIFICATION_MODEL_NAME,
-            model_version=PROOF_CLASSIFICATION_MODEL_VERSION,
-            data={
-                "prediction": [
-                    {"label": label, "score": confidence}
-                    for label, confidence in prediction
-                ]
-            },
-            value=proof_type,
-            max_confidence=max_confidence,
-        )
-    except Exception as e:
-        logger.exception(e)
-
-
-def run_and_save_receipt_extraction_prediction(
-    image: Image, proof: Proof, overwrite: bool = False
-) -> ProofPrediction | None:
-    """Run the receipt extraction model and save the prediction in
-    ProofPrediction table.
-
-    :param image: the image to run the model on
-    :param proof: the Proof instance to associate the ProofPrediction with
-    :param overwrite: whether to overwrite existing prediction, defaults to
-        False
-    :return: the ProofPrediction instance created, or None if the prediction
-        already exists and overwrite is False
-    """
-    if proof.type != proof_constants.TYPE_RECEIPT:
-        logger.debug("Skipping proof %s, not of type RECEIPT", proof.id)
-        return None
-
-    if ProofPrediction.objects.filter(
-        proof=proof, model_name=common_google.GEMINI_MODEL_NAME
-    ).exists():
-        if overwrite:
-            logger.info("Overwriting existing type prediction for proof %s", proof.id)
-            ProofPrediction.objects.filter(
-                proof=proof, model_name=common_google.GEMINI_MODEL_NAME
-            ).delete()
-        else:
-            logger.debug(
-                "Proof %s already has a prediction for model %s",
-                proof.id,
-                common_google.GEMINI_MODEL_NAME,
-            )
-            return None
-
-    prediction = extract_from_receipt(image)
-
-    try:
-        proof_prediction = ProofPrediction.objects.create(
-            proof=proof,
-            type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
-            model_name=common_google.GEMINI_MODEL_NAME,
-            model_version=common_google.GEMINI_MODEL_VERSION,
-            # prediction may be None if the model failed to extract
-            data=prediction or {},
-        )
-        create_receipt_items_from_proof_prediction(proof, proof_prediction)
-        return proof_prediction
-    except Exception as e:
-        logger.exception(e)
-
-
-def run_and_save_proof_prediction(
-    proof: Proof,
-    run_price_tag_extraction: bool = True,
-    run_receipt_extraction: bool = True,
-) -> None:
-    """Run all ML models on a specific proof, and save the predictions in DB.
-
-    Currently, the following models are run:
-
-    - proof type classification model
-    - price tag detection model (object detector)
-    - price tag extraction model
-    - receipt extraction model
-
-    :param proof_id: the ID of the proof to be classified
-    :param run_price_tag_extraction: whether to run the price tag extraction
-        model on the detected price tags, defaults to True
-    """
-    file_path_full = proof.file_path_full
-
-    if file_path_full is None or not Path(file_path_full).exists():
-        logger.error("Proof file not found: %s", file_path_full)
-        return
-
-    if Path(file_path_full).suffix not in (".jpg", ".jpeg", ".png", ".webp"):
-        logger.debug("Skipping %s, not a supported image type", file_path_full)
-        return None
-
-    image = Image.open(file_path_full)
-    run_and_save_proof_type_prediction(image, proof)
-    run_and_save_price_tag_detection(
-        image, proof, run_extraction=run_price_tag_extraction
-    )
-    if run_receipt_extraction:
-        run_and_save_receipt_extraction_prediction(image, proof)
 
 
 def price_tag_prediction_has_predicted_barcode_valid(
