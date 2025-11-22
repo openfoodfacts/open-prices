@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.92.0](https://github.com/openfoodfacts/open-prices/compare/v1.91.0...v1.92.0) (2025-11-22)
+
+
+### Features
+
+* improve price tag detection ([#1128](https://github.com/openfoodfacts/open-prices/issues/1128)) ([ada31cf](https://github.com/openfoodfacts/open-prices/commit/ada31cfe443e56b5389a6ce5bf859188ded54f5b))
+* **Moderation:** allow moderators to edit flag's status field ([#1129](https://github.com/openfoodfacts/open-prices/issues/1129)) ([89ebb89](https://github.com/openfoodfacts/open-prices/commit/89ebb89cb27fb265af8f0e55ddc51d311d151008))
+* **Moderation:** new endpoint to list all flags (restricted to moderators) ([#1123](https://github.com/openfoodfacts/open-prices/issues/1123)) ([84f8e69](https://github.com/openfoodfacts/open-prices/commit/84f8e690240e5b0d31bc8d182c26d5da93b4a0b4))
+
+
+### Bug Fixes
+
+* fix command in README for running anonymize_receipts ([#1126](https://github.com/openfoodfacts/open-prices/issues/1126)) ([dbbdd76](https://github.com/openfoodfacts/open-prices/commit/dbbdd765facfe87a9ddf80b751e9a2961b9baae0))
+* use TypedDict from typing_extensions ([#1131](https://github.com/openfoodfacts/open-prices/issues/1131)) ([96b89f4](https://github.com/openfoodfacts/open-prices/commit/96b89f4db35378d26f1b5159db6c9365529d31b0))
+
+
+### Technical
+
+* **ml:** split open_prices.proofs.ml into submodules ([#1130](https://github.com/openfoodfacts/open-prices/issues/1130)) ([c45ffd3](https://github.com/openfoodfacts/open-prices/commit/c45ffd31ac461b98044dfce3479d852f62b17d0a))
+
 ## [1.91.0](https://github.com/openfoodfacts/open-prices/compare/v1.90.1...v1.91.0) (2025-11-15)
 
 
