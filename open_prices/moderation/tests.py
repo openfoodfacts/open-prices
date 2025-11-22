@@ -205,7 +205,7 @@ class ModerationRulesTest(TestCase):
         PriceFactory(product_code=cls.product_ok.code, source="mobile")
         PriceFactory(
             product_code=cls.product_ok.code,
-            source="web - /experiments/price-validation-assistant",
+            source="web - /prices/add/validate",
         )
         barcode_invalid = "0123456789100"
         cls.product_with_barcode_invalid = ProductFactory(

@@ -35,7 +35,10 @@ PRICE_PER_LIST = [PRICE_PER_UNIT, PRICE_PER_KILOGRAM]
 PRICE_PER_CHOICES = [(key, key) for key in PRICE_PER_LIST]
 
 PRICE_CREATED_FROM_PRICE_TAG_VALIDATION_SOURCE_LIST = [
-    "/experiments/price-validation-assistant",
-    "/experiments/contribution-assistant",
-    "/experiments/proof-price-tag-assistant",  # new name
+    # price validation
+    "/prices/add/validate",
+    "/experiments/price-validation-assistant",  # old name
+    # proof price tag assistant
+    "/experiments/proof-price-tag-assistant",
+    "/experiments/contribution-assistant",  # old name
 ]
