@@ -4,7 +4,7 @@ from open_prices.moderation.models import Flag
 
 
 class FlagCreateSerializer(serializers.ModelSerializer):
-    # add read_only generic foreign key field
+    # the content_object will be set in the view (from the url pk)
     content_object = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
@@ -13,8 +13,11 @@ class FlagCreateSerializer(serializers.ModelSerializer):
 
 
 class FlagSerializer(serializers.ModelSerializer):
-    content_type_display = serializers.ReadOnlyField()
+    content_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Flag
         fields = "__all__"
+
+    def get_content_type(self, obj):
+        return obj.content_type_display

@@ -734,7 +734,7 @@ class ProofFlagApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["object_id"], self.proof.id)
-        self.assertEqual(response.data["content_type_display"], "proof")
+        self.assertEqual(response.data["content_type"], "PROOF")
         self.assertEqual(response.data["reason"], FlagReason.OTHER)
         self.assertEqual(response.data["comment"], "This proof is spam")
         self.assertEqual(response.data["status"], FlagStatus.OPEN)

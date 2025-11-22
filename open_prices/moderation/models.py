@@ -23,6 +23,15 @@ class FlagStatus(models.TextChoices):
     CLOSED = "CLOSED", "Closed"
 
 
+class FlagQuerySet(models.QuerySet):
+    def filter_by_content_type_model(self, model_name):
+        return self.filter(content_type__model=model_name.lower())
+
+    def filter_by_content_type_model_list(self, model_name_list):
+        model_name_list_lower = [m.lower() for m in model_name_list]
+        return self.filter(content_type__model__in=model_name_list_lower)
+
+
 class Flag(models.Model):
     CREATE_FIELDS = [
         # object_id, owner & source: set via the request
@@ -32,10 +41,6 @@ class Flag(models.Model):
     ]
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-    )
     object_id = models.PositiveBigIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 
@@ -52,6 +57,8 @@ class Flag(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(FlagQuerySet)()
 
     class Meta:
         indexes = [
@@ -79,4 +86,7 @@ class Flag(models.Model):
 
     @property
     def content_type_display(self):
-        return self.content_type.model
+        """
+        Example: "PRICE"
+        """
+        return self.content_type.model.upper()

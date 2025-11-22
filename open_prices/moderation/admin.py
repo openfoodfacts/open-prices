@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.contenttypes.models import ContentType
 
 from open_prices.moderation import constants as moderation_constants
 from open_prices.moderation.models import Flag
@@ -10,16 +9,11 @@ class ContentTypeListFilter(admin.SimpleListFilter):
     parameter_name = "content_type"
 
     def lookups(self, request, model_admin):
-        return [
-            (ct.id, ct)
-            for ct in ContentType.objects.filter(
-                moderation_constants.FLAG_ALLOWED_CONTENT_TYPES_QUERY_LIST
-            )
-        ]
+        return moderation_constants.FLAG_ALLOWED_CONTENT_TYPE_CHOICES_UPPER
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(content_type__id=self.value())
+            return queryset.filter_by_content_type_model(self.value())
         return queryset
 
 
