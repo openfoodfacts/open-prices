@@ -51,6 +51,7 @@ def validate_price_product_code_or_category_tag_rules(instance):
                 "Should be set to 'CATEGORY' if `category_tag` is filled",
             )
         try:
+            # cleanup: normalize
             instance.category_tag = openfoodfacts.normalize_taxonomized_tags(
                 "category", [instance.category_tag]
             )[0]
@@ -79,6 +80,9 @@ def validate_price_product_code_or_category_tag_rules(instance):
                         "labels_tags",
                         str(e),
                     )
+        else:
+            # cleanup: normalize
+            instance.labels_tags = []
         if instance.origins_tags:
             if not isinstance(instance.origins_tags, list):
                 utils.add_validation_error(
@@ -97,6 +101,9 @@ def validate_price_product_code_or_category_tag_rules(instance):
                         "origins_tags",
                         str(e),
                     )
+        else:
+            # cleanup: normalize
+            instance.origins_tags = []  # "en:unknown" ?
     else:
         utils.add_validation_error(
             errors,
