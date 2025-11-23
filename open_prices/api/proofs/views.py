@@ -159,8 +159,7 @@ class ProofViewSet(
             (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
             response_status_code = status.HTTP_200_OK
             # see note in common/openfoodfacts.py
-            smoothie_version = common_openfoodfacts.get_smoothie_app_version(source)
-            if smoothie_version[0] is not None and (smoothie_version <= (4, 20)):
+            if common_openfoodfacts.is_smoothie_app_version_leq_4_20(source):
                 response_status_code = status.HTTP_201_CREATED
 
             return Response(

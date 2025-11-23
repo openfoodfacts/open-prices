@@ -426,12 +426,7 @@ def get_smoothie_app_version(source: str | None) -> tuple[int | None, int | None
     Return the Smoothie app version
 
     Input: "Smoothie - OpenFoodFacts (4.18.1+1434)...""
-    Output: (major, minor) if the request comes from Smoothie app. (None, None) otherwise.
-
-    Why?
-    - Smoothie app version <= 4.20: for the proof upload request we need to
-    return HTTP 200 instead of 201, if not the user's background task fails.
-    see https://github.com/openfoodfacts/smooth-app/issues/6855#issuecomment-3265072440  # noqa
+    Output: (major, minor) if the request comes from Smoothie app. (None, None) otherwise.  # noqa
     """
     if source and (
         match := re.search(r"^Smoothie - OpenFoodFacts \((\d+)\.(\d+)\.(\d+)", source)
@@ -453,4 +448,18 @@ def is_smoothie_app_version_4_20(source: str | None) -> bool:
     uploading price tag proofs, even when it should not be set.
     see https://github.com/openfoodfacts/smooth-app/pull/6794
     """
-    return get_smoothie_app_version(source) == (4, 20)
+    smoothie_version = get_smoothie_app_version(source)
+    return smoothie_version == (4, 20)
+
+
+def is_smoothie_app_version_leq_4_20(source: str | None) -> bool:
+    """
+    Return True if the requests comes from Smoothie app version <= 4.20.
+
+    Why?
+    - Smoothie app version <= 4.20: for the proof upload request we need to
+    return HTTP 200 instead of 201, if not the user's background task fails.
+    see https://github.com/openfoodfacts/smooth-app/issues/6855#issuecomment-3265072440  # noqa
+    """
+    smoothie_version = get_smoothie_app_version(source)
+    return smoothie_version[0] is not None and (smoothie_version <= (4, 20))
