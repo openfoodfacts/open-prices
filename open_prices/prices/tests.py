@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from freezegun import freeze_time
 from simple_history.utils import bulk_update_with_history
 
@@ -314,7 +314,7 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
                 )
 
 
-class PriceModelSaveTest(TestCase):
+class PriceModelSaveTest(TransactionTestCase):
     @classmethod
     def setUpTestData(cls):
         pass
@@ -420,6 +420,17 @@ class PriceModelSaveTest(TestCase):
         )
 
     def test_price_labels_tags_validation(self):
+        # TYPE_PRODUCT
+        for TUPLE_OK in [(None, None), ("", None), ([], None)]:
+            with self.subTest(TUPLE_OK=TUPLE_OK):
+                price = PriceFactory(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="8001505005707",
+                    labels_tags=TUPLE_OK[0],
+                    price=5,
+                )
+                self.assertEqual(price.labels_tags, TUPLE_OK[1])
+        # TYPE_CATEGORY
         for TUPLE_OK in [
             (None, []),
             ("", []),
@@ -451,6 +462,7 @@ class PriceModelSaveTest(TestCase):
         for TUPLE_NOT_OK in [
             ("en:organic", json.JSONDecodeError),
             (5, TypeError),
+            ([""], ValidationError),
             (["en:organic", "test"], ValidationError),
         ]:
             with self.subTest(TUPLE_NOT_OK=TUPLE_NOT_OK):
@@ -465,6 +477,17 @@ class PriceModelSaveTest(TestCase):
                 )
 
     def test_price_origins_tags_validation(self):
+        # TYPE_PRODUCT
+        for TUPLE_OK in [(None, None), ("", None), ([], None)]:
+            with self.subTest(TUPLE_OK=TUPLE_OK):
+                price = PriceFactory(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="8001505005707",
+                    origins_tags=TUPLE_OK[0],
+                    price=5,
+                )
+                self.assertEqual(price.origins_tags, TUPLE_OK[1])
+        # TYPE_CATEGORY
         for TUPLE_OK in [
             (None, []),
             ("", []),
@@ -486,6 +509,7 @@ class PriceModelSaveTest(TestCase):
         for TUPLE_NOT_OK in [
             ("en:france", json.JSONDecodeError),
             (5, TypeError),
+            ([""], ValidationError),
             (["en:france", "test"], ValidationError),
         ]:
             with self.subTest(TUPLE_NOT_OK=TUPLE_NOT_OK):

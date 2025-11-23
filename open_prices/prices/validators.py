@@ -43,6 +43,8 @@ def validate_price_product_code_or_category_tag_rules(instance):
                     field_name,
                     "Should not be set if `product_code` is filled",
                 )
+            # cleanup: unset
+            setattr(instance, field_name, None)
     elif instance.category_tag:
         if instance.type != price_constants.TYPE_CATEGORY:
             utils.add_validation_error(
