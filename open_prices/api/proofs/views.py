@@ -157,13 +157,8 @@ class ProofViewSet(
         if duplicate_proof:
             # We remove the uploaded file as it's a duplicate
             (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
-
-            # We return HTTP 200 OK if the request does not come from
-            # Smoothie app version <= 4.20, as the background task fails
-            # if the status code is not 201 Created.
-            # See for more information:
-            # https://github.com/openfoodfacts/smooth-app/issues/6855#issuecomment-3265072440
             response_status_code = status.HTTP_200_OK
+            # see note in common/openfoodfacts.py
             smoothie_version = common_openfoodfacts.get_smoothie_app_version(source)
             if smoothie_version[0] is not None and (smoothie_version <= (4, 20)):
                 response_status_code = status.HTTP_201_CREATED
@@ -178,11 +173,7 @@ class ProofViewSet(
             "image_md5_hash": image_md5_hash,
             "source": source,
         }
-        # Smoothie sets incorrectly the ready_for_price_tag_validation flag
-        # when uploading price tag proofs on version 4.20.
-        # This should only be set to True for multiple proof upload.
-        # It was fixed in the upcoming release of Smoothie 4.21
-        # (see https://github.com/openfoodfacts/smooth-app/pull/6794)
+        # see note in common/openfoodfacts.py
         if common_openfoodfacts.is_smoothie_app_version_4_20(source):
             save_kwargs["ready_for_price_tag_validation"] = False
         # save

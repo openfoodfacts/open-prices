@@ -421,26 +421,36 @@ def upload_product_image_in_off(
     )
 
 
-def is_smoothie_app_version_4_20(source: str | None) -> bool:
-    """Return True if the requests comes from Smoothie app version 4.20.
-
-    This is used to detect the Smoothie app version 4.20 which has a bug
-    where it sets the `Proof.ready_for_price_tag_validation` flag to True when
-    uploading price tag proofs, even when it should not be set.
-    """
-    return get_smoothie_app_version(source) == (4, 20)
-
-
 def get_smoothie_app_version(source: str | None) -> tuple[int | None, int | None]:
-    """Return the Smoothie app version (major, minor) if the request comes from
-    Smoothie app, or (None, None) otherwise."""
+    """
+    Return the Smoothie app version
+
+    Input: "Smoothie - OpenFoodFacts (4.18.1+1434)...""
+    Output: (major, minor) if the request comes from Smoothie app. (None, None) otherwise.
+
+    Why?
+    - Smoothie app version <= 4.20: for the proof upload request we need to
+    return HTTP 200 instead of 201, if not the user's background task fails.
+    see https://github.com/openfoodfacts/smooth-app/issues/6855#issuecomment-3265072440  # noqa
+    """
     if source and (
         match := re.search(r"^Smoothie - OpenFoodFacts \((\d+)\.(\d+)\.(\d+)", source)
     ):
-        # source is in the format
-        # "Smoothie - OpenFoodFacts (4.18.1+1434)...""
         smoothie_major = int(match.group(1))
         smoothie_minor = int(match.group(2))
         return smoothie_major, smoothie_minor
 
     return None, None
+
+
+def is_smoothie_app_version_4_20(source: str | None) -> bool:
+    """
+    Return True if the requests comes from Smoothie app version 4.20.
+
+    Why?
+    - Smoothie app version 4.20 has a bug where it sets the
+    `Proof.ready_for_price_tag_validation` flag to True when
+    uploading price tag proofs, even when it should not be set.
+    see https://github.com/openfoodfacts/smooth-app/pull/6794
+    """
+    return get_smoothie_app_version(source) == (4, 20)
