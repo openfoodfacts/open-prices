@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.92.1](https://github.com/openfoodfacts/open-prices/compare/v1.92.0...v1.92.1) (2025-11-23)
+
+
+### Technical
+
+* **Moderation:** auto-fix rules: take into account the frontend Price Validation renaming ([#1133](https://github.com/openfoodfacts/open-prices/issues/1133)) ([e162116](https://github.com/openfoodfacts/open-prices/commit/e162116cb35a8dfa03014317e207927d4a48eb7c))
+* **OpenFoodFacts:** move Smoothie-specific utils to `openfoodfacts.py` ([#1117](https://github.com/openfoodfacts/open-prices/issues/1117)) ([7192df4](https://github.com/openfoodfacts/open-prices/commit/7192df45d8882d841f52bfeea7522a87f2f47a46))
+
 ## [1.92.0](https://github.com/openfoodfacts/open-prices/compare/v1.91.0...v1.92.0) (2025-11-22)
 
 
