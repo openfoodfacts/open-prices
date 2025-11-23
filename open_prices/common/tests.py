@@ -132,6 +132,67 @@ class OpenFoodFactsTest(TestCase):
                     BARCODE_TUPLE[1],
                 )
 
+    def test_get_smoothie_app_version(self):
+        for source, expected_result in [
+            (None, (None, None)),
+            ("", (None, None)),
+            ("Open Prices Web App - /proofs/add/single", (None, None)),
+            ("API", (None, None)),
+            (
+                "Smoothie - OpenFoodFacts (4.20.0+1478) (android+U1TLS34.115-16-1-7-4)",
+                (4, 20),
+            ),
+            ("Smoothie - OpenFoodFacts (4.20.1+1481) (android+2025070800)", (4, 20)),
+            (
+                "Smoothie - OpenFoodFacts (4.21.0+1500) (ios+Version 18.5 (Build 22F76))",
+                (4, 21),
+            ),
+        ]:
+            result = common_openfoodfacts.get_smoothie_app_version(source)
+            self.assertEqual(result, expected_result)
+
+    def test_is_smoothie_app_version_4_20(self):
+        for source, expected_result in [
+            (None, False),
+            ("", False),
+            ("Open Prices Web App - /proofs/add/single", False),
+            ("API", False),
+            (
+                "Smoothie - OpenFoodFacts (4.20.0+1478) (android+U1TLS34.115-16-1-7-4)",
+                True,
+            ),
+            ("Smoothie - OpenFoodFacts (4.20.1+1481) (android+2025070800)", True),
+            (
+                "Smoothie - OpenFoodFacts (4.21.0+1500) (ios+Version 18.5 (Build 22F76))",
+                False,
+            ),
+        ]:
+            result = common_openfoodfacts.is_smoothie_app_version_4_20(source)
+            self.assertEqual(result, expected_result)
+
+    def test_is_smoothie_app_version_leq_4_20(self):
+        for source, expected_result in [
+            (None, False),
+            ("", False),
+            ("Open Prices Web App - /proofs/add/single", False),
+            ("API", False),
+            (
+                "Smoothie - OpenFoodFacts (4.19.9+1450) (ios+Version 18.5 (Build 22F76))",
+                True,
+            ),
+            (
+                "Smoothie - OpenFoodFacts (4.20.0+1478) (android+U1TLS34.115-16-1-7-4)",
+                True,
+            ),
+            ("Smoothie - OpenFoodFacts (4.20.1+1481) (android+2025070800)", True),
+            (
+                "Smoothie - OpenFoodFacts (4.21.0+1500) (ios+Version 18.5 (Build 22F76))",
+                False,
+            ),
+        ]:
+            result = common_openfoodfacts.is_smoothie_app_version_leq_4_20(source)
+            self.assertEqual(result, expected_result)
+
 
 class UtilsTest(TestCase):
     @classmethod
