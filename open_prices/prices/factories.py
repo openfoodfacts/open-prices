@@ -22,14 +22,14 @@ class PriceFactory(DjangoModelFactory):
     type = price_constants.TYPE_PRODUCT  # random.choice(price_constants.TYPE_LIST)
 
     product_code = factory.LazyAttribute(
-        lambda x: x.product_code_faker
-        if x.type == price_constants.TYPE_PRODUCT
-        else None
+        lambda x: (
+            x.product_code_faker if x.type == price_constants.TYPE_PRODUCT else None
+        )
     )
     category_tag = factory.LazyAttribute(
-        lambda x: x.category_tag_faker
-        if x.type == price_constants.TYPE_CATEGORY
-        else None
+        lambda x: (
+            x.category_tag_faker if x.type == price_constants.TYPE_CATEGORY else None
+        )
     )
 
     price = factory.LazyAttribute(lambda x: random.randrange(0, 100))
