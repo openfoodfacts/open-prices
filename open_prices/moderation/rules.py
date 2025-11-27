@@ -1,6 +1,7 @@
 """
 A list of rules, to clean up the data
 """
+
 from django.db.models import Q
 from django.db.models.functions import Length
 
