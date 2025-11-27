@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from freezegun import freeze_time
 from simple_history.utils import bulk_update_with_history
 
@@ -314,7 +314,7 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
                 )
 
 
-class PriceModelSaveTest(TestCase):
+class PriceModelSaveTest(TransactionTestCase):
     @classmethod
     def setUpTestData(cls):
         pass
@@ -356,7 +356,7 @@ class PriceModelSaveTest(TestCase):
         self.assertEqual(price.product_code, "0012345678910A")
 
     def test_price_without_product_validation(self):
-        # product_code set
+        # product_code should not be set
         self.assertRaises(
             ValidationError,
             PriceFactory,
@@ -381,13 +381,32 @@ class PriceModelSaveTest(TestCase):
             product_code="8001505005707",
             price_per=price_constants.PRICE_PER_UNIT,
         )
-        # product_code not set
+        # product_code not set: ok
         PriceFactory(
             type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
+        # both product_code & category_tag not set
+        self.assertRaises(
+            ValidationError, PriceFactory, product_code="", category_tag=""
+        )
+
+    def test_price_category_tag_validation(self):
+        for TUPLE_OK in [
+            ("en: Tomatoes", "en:tomatoes"),
+            ("fr: Pommes", "en:apples"),
+            ("fr: Soupe aux lentilles", "en:lentil-soups"),
+            ("fr: Grenoble", "fr:grenoble"),  # valid (even if not in the taxonomy)
+        ]:
+            price = PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag=TUPLE_OK[0],
+                price=3,
+                price_per=price_constants.PRICE_PER_KILOGRAM,
+            )
+            self.assertEqual(price.category_tag, TUPLE_OK[1])
         with self.assertRaises(ValidationError) as cm:
             PriceFactory(
                 type=price_constants.TYPE_CATEGORY,
@@ -399,105 +418,23 @@ class PriceModelSaveTest(TestCase):
             cm.exception.messages[0],
             "Invalid value: 'test', expected value to be in 'lang:tag' format",
         )
-        PriceFactory(
-            type=price_constants.TYPE_CATEGORY,
-            category_tag="fr: Grenoble",  # valid (even if not in the taxonomy)
-            price=3,
-            price_per=price_constants.PRICE_PER_KILOGRAM,
-        )
-        PriceFactory(
-            type=price_constants.TYPE_CATEGORY,
-            category_tag="en:tomatoes",
-            labels_tags=["en:organic"],
-            price=3,
-            price_per=price_constants.PRICE_PER_KILOGRAM,
-        )
-        self.assertRaises(
-            json.JSONDecodeError,
-            PriceFactory,
-            type=price_constants.TYPE_CATEGORY,
-            category_tag="en:tomatoes",
-            labels_tags="en:organic",  # should be a list
-            price=3,
-            price_per=price_constants.PRICE_PER_KILOGRAM,
-        )
-        self.assertRaises(
-            ValidationError,
-            PriceFactory,
-            type=price_constants.TYPE_CATEGORY,
-            category_tag="en:tomatoes",
-            labels_tags=[
-                "en:organic",
-                "test",
-            ],  # not valid, no lang prefix before 'test'
-            price=3,
-            price_per=price_constants.PRICE_PER_KILOGRAM,
-        )
-        PriceFactory(
-            type=price_constants.TYPE_CATEGORY,
-            category_tag="en:tomatoes",
-            labels_tags=["en:organic"],
-            origins_tags=["en:france"],
-            price=3,
-            price_per=price_constants.PRICE_PER_KILOGRAM,
-        )
-        self.assertRaises(
-            json.JSONDecodeError,
-            PriceFactory,
-            type=price_constants.TYPE_CATEGORY,
-            category_tag="en:tomatoes",
-            labels_tags=["en:organic"],
-            origins_tags="en:france",  # should be a list
-            price=3,
-            price_per=price_constants.PRICE_PER_KILOGRAM,
-        )
-        self.assertRaises(
-            ValidationError,
-            PriceFactory,
-            type=price_constants.TYPE_CATEGORY,
-            category_tag="en:tomatoes",
-            labels_tags=["en:organic"],
-            origins_tags=["en:france", "test"],  # not valid
-            price=3,
-            price_per=price_constants.PRICE_PER_KILOGRAM,
-        )
-        # both product_code & category_tag not set
-        self.assertRaises(
-            ValidationError, PriceFactory, product_code="", category_tag=""
-        )
 
-    def test_price_category_validation(self):
-        for input_category, expected_category in [
-            ("en: Tomatoes", "en:tomatoes"),
-            ("fr: Pommes", "en:apples"),
-            ("fr: Soupe aux lentilles", "en:lentil-soups"),
-        ]:
-            price = PriceFactory(
-                type=price_constants.TYPE_CATEGORY,
-                category_tag=input_category,
-                price=3,
-                price_per=price_constants.PRICE_PER_KILOGRAM,
-            )
-            self.assertEqual(price.category_tag, expected_category)
-
-    def test_price_origin_validation(self):
-        for input_origin_tags, expected_origin_tags in [
-            (["en:France"], ["en:france"]),
-            (["fr:Allemagne"], ["en:germany"]),
-            (["de:Deutschland", "es: España"], ["en:germany", "en:spain"]),
-            (["fr: Fairyland"], ["fr:fairyland"]),
-        ]:
-            price = PriceFactory(
-                type=price_constants.TYPE_CATEGORY,
-                category_tag="en:tomatoes",
-                origins_tags=input_origin_tags,
-                price=3,
-                price_per=price_constants.PRICE_PER_KILOGRAM,
-            )
-            self.assertEqual(price.origins_tags, expected_origin_tags)
-
-    def test_price_label_validation(self):
-        for input_labels_tags, expected_labels_tags in [
+    def test_price_labels_tags_validation(self):
+        # TYPE_PRODUCT
+        for TUPLE_OK in [(None, None), ("", None), ([], None)]:
+            with self.subTest(TUPLE_OK=TUPLE_OK):
+                price = PriceFactory(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="8001505005707",
+                    labels_tags=TUPLE_OK[0],
+                    price=5,
+                )
+                self.assertEqual(price.labels_tags, TUPLE_OK[1])
+        # TYPE_CATEGORY
+        for TUPLE_OK in [
+            (None, []),
+            ("", []),
+            (["en:organic"], ["en:organic"]),
             (
                 [
                     "fr: Nutriscore A",
@@ -513,14 +450,78 @@ class PriceModelSaveTest(TestCase):
                 ],
             ),
         ]:
-            price = PriceFactory(
-                type=price_constants.TYPE_CATEGORY,
-                category_tag="en:tomatoes",
-                labels_tags=input_labels_tags,
-                price=3,
-                price_per=price_constants.PRICE_PER_KILOGRAM,
-            )
-            self.assertEqual(price.labels_tags, expected_labels_tags)
+            with self.subTest(TUPLE_OK=TUPLE_OK):
+                price = PriceFactory(
+                    type=price_constants.TYPE_CATEGORY,
+                    category_tag="en:tomatoes",
+                    labels_tags=TUPLE_OK[0],
+                    price=3,
+                    price_per=price_constants.PRICE_PER_KILOGRAM,
+                )
+                self.assertEqual(price.labels_tags, TUPLE_OK[1])
+        for TUPLE_NOT_OK in [
+            ("en:organic", json.JSONDecodeError),
+            (5, TypeError),
+            ([""], ValidationError),
+            (["en:organic", "test"], ValidationError),
+        ]:
+            with self.subTest(TUPLE_NOT_OK=TUPLE_NOT_OK):
+                self.assertRaises(
+                    TUPLE_NOT_OK[1],
+                    PriceFactory,
+                    type=price_constants.TYPE_CATEGORY,
+                    category_tag="en:tomatoes",
+                    labels_tags=TUPLE_NOT_OK[0],
+                    price=3,
+                    price_per=price_constants.PRICE_PER_KILOGRAM,
+                )
+
+    def test_price_origins_tags_validation(self):
+        # TYPE_PRODUCT
+        for TUPLE_OK in [(None, None), ("", None), ([], None)]:
+            with self.subTest(TUPLE_OK=TUPLE_OK):
+                price = PriceFactory(
+                    type=price_constants.TYPE_PRODUCT,
+                    product_code="8001505005707",
+                    origins_tags=TUPLE_OK[0],
+                    price=5,
+                )
+                self.assertEqual(price.origins_tags, TUPLE_OK[1])
+        # TYPE_CATEGORY
+        for TUPLE_OK in [
+            (None, []),
+            ("", []),
+            (["en:france"], ["en:france"]),
+            (["en:France"], ["en:france"]),
+            (["fr:Allemagne"], ["en:germany"]),
+            (["de:Deutschland", "es: España"], ["en:germany", "en:spain"]),
+            (["fr: Fairyland"], ["fr:fairyland"]),
+        ]:
+            with self.subTest(TUPLE_OK=TUPLE_OK):
+                price = PriceFactory(
+                    type=price_constants.TYPE_CATEGORY,
+                    category_tag="en:tomatoes",
+                    origins_tags=TUPLE_OK[0],
+                    price=3,
+                    price_per=price_constants.PRICE_PER_KILOGRAM,
+                )
+                self.assertEqual(price.origins_tags, TUPLE_OK[1])
+        for TUPLE_NOT_OK in [
+            ("en:france", json.JSONDecodeError),
+            (5, TypeError),
+            ([""], ValidationError),
+            (["en:france", "test"], ValidationError),
+        ]:
+            with self.subTest(TUPLE_NOT_OK=TUPLE_NOT_OK):
+                self.assertRaises(
+                    TUPLE_NOT_OK[1],
+                    PriceFactory,
+                    type=price_constants.TYPE_CATEGORY,
+                    category_tag="en:tomatoes",
+                    origins_tags=TUPLE_NOT_OK[0],
+                    price=3,
+                    price_per=price_constants.PRICE_PER_KILOGRAM,
+                )
 
     def test_price_price_validation(self):
         for PRICE_OK in [
