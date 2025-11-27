@@ -629,6 +629,34 @@ class PriceTag(models.Model):
         return None
 
 
+@receiver(signals.post_save, sender=PriceTag)
+def price_tag_post_save_generate_image(sender, instance, created, **kwargs):
+    from open_prices.proofs.utils import generate_price_tag_image
+
+    update_fields = kwargs.get("update_fields")
+    if (
+        created
+        or (update_fields and "bounding_box" in update_fields)
+        or update_fields is None
+    ):
+        # Cropping is fast, run synchronously
+        generate_price_tag_image(instance)
+
+
+@receiver(signals.post_delete, sender=PriceTag)
+def price_tag_post_delete_remove_image(sender, instance, **kwargs):
+    import os
+
+    from open_prices.proofs.utils import get_price_tag_image_path
+
+    image_path = get_price_tag_image_path(instance.id)
+    if os.path.exists(image_path):
+        try:
+            os.remove(image_path)
+        except OSError:
+            pass
+
+
 class PriceTagPrediction(models.Model):
     """A machine learning prediction for a price tag."""
 
