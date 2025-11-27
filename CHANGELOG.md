@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.92.2](https://github.com/openfoodfacts/open-prices/compare/v1.92.1...v1.92.2) (2025-11-27)
+
+
+### Technical
+
+* **format:** reformat some files with black ([#1139](https://github.com/openfoodfacts/open-prices/issues/1139)) ([b5230c6](https://github.com/openfoodfacts/open-prices/commit/b5230c62e02103e40ec28a1695f61865bd03fb53))
+* **Prices:** set labels_tags & origins_tags to None or empty list depending on price type. Add tests ([#1135](https://github.com/openfoodfacts/open-prices/issues/1135)) ([ef2a85e](https://github.com/openfoodfacts/open-prices/commit/ef2a85e978c05f8685cee0832d1758051e351bee))
+
 ## [1.92.1](https://github.com/openfoodfacts/open-prices/compare/v1.92.0...v1.92.1) (2025-11-23)
 
 
