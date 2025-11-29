@@ -639,17 +639,28 @@ async def extract_from_price_tag_batch(
         tokens. 0 is DISABLED. -1 is AUTOMATIC.
     :return: a list of Gemini responses, one for each image
     """
+    start_time = time.time()
+    logger.info(f"Starting batch extraction for {len(images)} images")
+    
     responses = []
     # We get the uncached version of the client because otherwise
     # the event loop configuration done during the client initialization
     # leads to an exception when reusing the client in an async context
     # (due to the event loop being closed)
     client = common_google.get_genai_client.__wrapped__()
-    tasks = [
-        extract_from_price_tag_async(client, image, thinking_budget=thinking_budget)
-        for image in images
-    ]
+    
+    # Limit concurrency to avoid rate limits or network errors
+    semaphore = asyncio.Semaphore(5)
+
+    async def sem_task(image):
+        async with semaphore:
+            return await extract_from_price_tag_async(client, image, thinking_budget=thinking_budget)
+
+    tasks = [sem_task(image) for image in images]
     responses = await asyncio.gather(*tasks)
+    
+    duration = time.time() - start_time
+    logger.info(f"Batch extraction finished in {duration:.2f}s")
     return responses
 
 
@@ -1286,12 +1297,19 @@ def run_and_save_proof_prediction(
         return None
 
     image = Image.open(file_path_full)
+    
+    start_time = time.time()
+    logger.info(f"Starting ML predictions for proof {proof.id}")
+
     run_and_save_proof_type_prediction(image, proof)
     run_and_save_price_tag_detection(
         image, proof, run_extraction=run_price_tag_extraction
     )
     if run_receipt_extraction:
         run_and_save_receipt_extraction_prediction(image, proof)
+
+    duration = time.time() - start_time
+    logger.info(f"Finished ML predictions for proof {proof.id} in {duration:.2f}s")
 
 
 def price_tag_prediction_has_predicted_barcode_valid(
