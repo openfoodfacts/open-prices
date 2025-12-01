@@ -6,8 +6,8 @@ from open_prices.challenges.models import Challenge
 
 class ChallengeSerializer(serializers.ModelSerializer):
     locations = LocationSerializer(many=True, read_only=True)
-    status = serializers.CharField(read_only=True)  # property
-    tag = serializers.CharField(read_only=True)  # property
+    status = serializers.CharField(read_only=True)  # from model property
+    tag = serializers.CharField(read_only=True)  # from model property
 
     class Meta:
         model = Challenge

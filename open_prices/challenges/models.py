@@ -18,7 +18,6 @@ class ChallengeQuerySet(models.QuerySet):
         return self.filter(is_published=True)
 
     def with_status(self):
-        # print("=== with_status ===", today_date)
         return self.annotate(
             status_annotated=Case(
                 When(
