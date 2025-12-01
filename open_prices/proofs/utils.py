@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import os
 import random
 import string
 from mimetypes import guess_extension
@@ -59,7 +60,10 @@ def generate_relative_path(
     return f"{current_dir_id_str}/{file_stem}{extension}"
 
 
-def crop_image(image_file_path_full, bounding_box):
+def crop_image(
+    image_file_path_full: str | Path, bounding_box: tuple[float, float, float, float]
+) -> Image.Image:
+    """Crop the image at the given path using the bounding box."""
     y_min, x_min, y_max, x_max = bounding_box
     image = Image.open(image_file_path_full)
     (left, right, top, bottom) = (
@@ -282,3 +286,57 @@ def match_receipt_item_with_price(receipt_item: ReceiptItem, price: Price) -> bo
         and proof_prices.count(price.price) == 1
         and proof_receipt_item_prices.count(receipt_item_prediction_price) == 1
     )
+
+
+def get_price_tag_image_path(price_tag_id: int) -> str:
+    """Generate the path for the price tag image based on its ID.
+
+    The path is structured to avoid too many files in a single directory.
+    The ID is zero-padded to 9 digits and split into three parts of three
+    digits each. The image extension is .webp.
+
+    Example: for price_tag_id = 200000, the path will be:
+    /img/price-tags/000/200/000200000.webp
+
+    :param price_tag_id: The ID of the price tag.
+    :return: The full path to the price tag image.
+    """
+    id_str = str(price_tag_id).zfill(9)
+    part1 = id_str[0:3]
+    part2 = id_str[3:6]
+
+    filename = f"{id_str}.webp"
+    relative_path = os.path.join("price-tags", part1, part2, filename)
+    return os.path.join(settings.IMAGES_DIR, relative_path)
+
+
+def generate_price_tag_image(price_tag: PriceTag) -> None:
+    """Crop the price tag from the proof image and save it to disk.
+
+    The cropped image is saved in WebP format, using the price tag's ID to
+    determine the file path.
+
+    The structure of the path is as follows:
+    /img/price-tags/000/200/000200000.webp (for price_tag_id = 200000)
+
+    :param price_tag: The price tag object containing the proof and bounding
+        box.
+    """
+    if not price_tag.proof.file_path:
+        return
+
+    proof_image_path = os.path.join(settings.IMAGES_DIR, price_tag.proof.file_path)
+    if not os.path.exists(proof_image_path):
+        return
+
+    try:
+        cropped_img = crop_image(proof_image_path, price_tag.bounding_box)
+        output_path = get_price_tag_image_path(price_tag.id)
+
+        # Ensure output directory exists
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        # Save as WebP
+        cropped_img.save(output_path, "WEBP")
+    except Exception as e:
+        logger.error(f"Error generating price tag image for {price_tag.id}: {e}")

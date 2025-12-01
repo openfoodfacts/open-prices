@@ -2,16 +2,19 @@ import gzip
 import hashlib
 import io
 import json
+import os
+import shutil
 import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
 
 import numpy as np
+from django.conf import settings
 from django.core import management
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from freezegun import freeze_time
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult
@@ -49,6 +52,7 @@ from open_prices.proofs.ml.price_tags import (
 from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
 from open_prices.proofs.utils import (
     compute_file_md5,
+    get_price_tag_image_path,
     match_category_price_tag_with_category_price,
     match_price_tag_with_price,
     match_product_price_tag_with_product_price,
@@ -1693,3 +1697,59 @@ class TestComputeFileMd5(TestCase):
         # Compute MD5 using the function
         computed_md5 = compute_file_md5(django_file)
         self.assertEqual(computed_md5, expected_md5)
+
+
+@override_settings(IMAGES_DIR=Path(tempfile.mkdtemp()))
+class PriceTagImageTest(TestCase):
+    def setUp(self):
+        self.temp_dir = settings.IMAGES_DIR
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+
+    def test_generate_price_tag_image(self):
+        # Create a dummy proof image
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        proof.file_path = "proofs/test_proof.jpg"
+        proof.save()
+
+        full_proof_path = os.path.join(self.temp_dir, proof.file_path)
+        os.makedirs(os.path.dirname(full_proof_path), exist_ok=True)
+
+        # Create a 100x100 red image
+        img = Image.new("RGB", (100, 100), color="red")
+        img.save(full_proof_path)
+
+        # Create a PriceTag with bounding box covering top-left quarter
+        # [y_min, x_min, y_max, x_max]
+        price_tag = PriceTagFactory(proof=proof, bounding_box=[0.0, 0.0, 0.5, 0.5])
+
+        # Check if image is generated (signal runs synchronously)
+        image_path = get_price_tag_image_path(price_tag.id)
+        self.assertTrue(os.path.exists(image_path))
+
+        # Verify cropped image size
+        with Image.open(image_path) as cropped:
+            self.assertEqual(cropped.size, (50, 50))
+
+    def test_delete_price_tag_image(self):
+        # Setup similar to above
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        proof.file_path = "proofs/test_proof.jpg"
+        proof.save()
+
+        full_proof_path = os.path.join(self.temp_dir, proof.file_path)
+        os.makedirs(os.path.dirname(full_proof_path), exist_ok=True)
+        img = Image.new("RGB", (100, 100), color="red")
+        img.save(full_proof_path)
+
+        price_tag = PriceTagFactory(proof=proof, bounding_box=[0.0, 0.0, 0.5, 0.5])
+
+        image_path = get_price_tag_image_path(price_tag.id)
+        self.assertTrue(os.path.exists(image_path))
+
+        # Delete price tag
+        price_tag.delete()
+
+        # Check if image is deleted (signal runs synchronously)
+        self.assertFalse(os.path.exists(image_path))
