@@ -296,7 +296,7 @@ def get_price_tag_image_path(price_tag_id: int) -> str:
     digits each. The image extension is .webp.
 
     Example: for price_tag_id = 200000, the path will be:
-    /img/price-tags/000/200/000/000200000.webp
+    /img/price-tags/000/200/000200000.webp
 
     :param price_tag_id: The ID of the price tag.
     :return: The full path to the price tag image.
@@ -304,10 +304,9 @@ def get_price_tag_image_path(price_tag_id: int) -> str:
     id_str = str(price_tag_id).zfill(9)
     part1 = id_str[0:3]
     part2 = id_str[3:6]
-    part3 = id_str[6:9]
 
     filename = f"{id_str}.webp"
-    relative_path = os.path.join("price-tags", part1, part2, part3, filename)
+    relative_path = os.path.join("price-tags", part1, part2, filename)
     return os.path.join(settings.IMAGES_DIR, relative_path)
 
 
@@ -318,7 +317,7 @@ def generate_price_tag_image(price_tag: PriceTag) -> None:
     determine the file path.
 
     The structure of the path is as follows:
-    /img/price-tags/000/200/000/000200000.webp (for price_tag_id = 200000)
+    /img/price-tags/000/200/000200000.webp (for price_tag_id = 200000)
 
     :param price_tag: The price tag object containing the proof and bounding
         box.
