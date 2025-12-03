@@ -566,10 +566,17 @@ class PriceTag(models.Model):
 
     @property
     def image_path(self):
-        from open_prices.proofs.utils import get_price_tag_image_path
+        from open_prices.proofs.utils import get_price_tag_image_path_full
 
-        image_path = get_price_tag_image_path(self.id)
-        return image_path if os.path.exists(image_path) else None
+        return get_price_tag_image_path_full(self.id)
+
+    @property
+    def image_path_display(self):
+        return self.image_path if os.path.exists(self.image_path) else None
+
+    @property
+    def image_path_full(self):
+        return str(settings.IMAGES_DIR / "price-tags" / self.image_path)
 
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:
@@ -653,9 +660,9 @@ def price_tag_post_save_generate_image(sender, instance, created, **kwargs):
 
 @receiver(signals.post_delete, sender=PriceTag)
 def price_tag_post_delete_remove_image(sender, instance, **kwargs):
-    from open_prices.proofs.utils import get_price_tag_image_path
+    from open_prices.proofs.utils import get_price_tag_image_path_full
 
-    image_path = get_price_tag_image_path(instance.id)
+    image_path = get_price_tag_image_path_full(instance.id)
     if os.path.exists(image_path):
         try:
             os.remove(image_path)
