@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.93.0](https://github.com/openfoodfacts/open-prices/compare/v1.92.1...v1.93.0) (2025-12-04)
+
+
+### Features
+
+* **Proofs:** create a cropped image of the price tag after DB instance creation ([#1138](https://github.com/openfoodfacts/open-prices/issues/1138)) ([89347e3](https://github.com/openfoodfacts/open-prices/commit/89347e395b9b23f63918262e087c42a45f1bd5cb))
+
+
+### Technical
+
+* **format:** reformat some files with black ([#1139](https://github.com/openfoodfacts/open-prices/issues/1139)) ([b5230c6](https://github.com/openfoodfacts/open-prices/commit/b5230c62e02103e40ec28a1695f61865bd03fb53))
+* **Prices:** set labels_tags & origins_tags to None or empty list depending on price type. Add tests ([#1135](https://github.com/openfoodfacts/open-prices/issues/1135)) ([ef2a85e](https://github.com/openfoodfacts/open-prices/commit/ef2a85e978c05f8685cee0832d1758051e351bee))
+* **Proofs:** API: return PriceTag cropped image_path ([#1143](https://github.com/openfoodfacts/open-prices/issues/1143)) ([ecf0ae9](https://github.com/openfoodfacts/open-prices/commit/ecf0ae989fc91d08a942262ab7fd4cd1ff395654))
+
 ## [1.92.1](https://github.com/openfoodfacts/open-prices/compare/v1.92.0...v1.92.1) (2025-11-23)
 
 
