@@ -832,12 +832,11 @@ class PriceTagDetailApiTest(TestCase):
             self.assertEqual(response.status_code, 200)
         data = response.data
         self.assertEqual(data["id"], self.price_tag_2.id)
-        self.assertIn("proof", data.keys())
-        proof = data["proof"]
-        self.assertEquals(proof["id"], self.proof.id)
-        self.assertEqual(proof["type"], proof_constants.TYPE_PRICE_TAG)
+        self.assertEqual(data["proof"]["id"], self.proof.id)
+        self.assertEqual(data["proof"]["type"], proof_constants.TYPE_PRICE_TAG)
         self.assertNotIn("price", data)  # not returned in "detail"
         self.assertEqual(data["price_id"], self.price.id)
+        self.assertIn("image_path", data)  # but will return a 404
 
 
 class PriceTagCreateApiTest(TestCase):

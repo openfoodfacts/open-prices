@@ -1,4 +1,5 @@
 import decimal
+import os
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -563,6 +564,16 @@ class PriceTag(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    @property
+    def image_path(self):
+        from open_prices.proofs.utils import get_price_tag_image_path
+
+        return get_price_tag_image_path(self.id)
+
+    @property
+    def image_path_full(self):
+        return str(settings.IMAGES_DIR / self.image_path)
+
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:
             self.tags.append(tag)
@@ -645,14 +656,10 @@ def price_tag_post_save_generate_image(sender, instance, created, **kwargs):
 
 @receiver(signals.post_delete, sender=PriceTag)
 def price_tag_post_delete_remove_image(sender, instance, **kwargs):
-    import os
-
-    from open_prices.proofs.utils import get_price_tag_image_path
-
-    image_path = get_price_tag_image_path(instance.id)
-    if os.path.exists(image_path):
+    print(instance.id, instance.image_path_full)
+    if os.path.exists(instance.image_path_full):
         try:
-            os.remove(image_path)
+            os.remove(instance.image_path_full)
         except OSError:
             pass
 

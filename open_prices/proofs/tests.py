@@ -52,7 +52,6 @@ from open_prices.proofs.ml.price_tags import (
 from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
 from open_prices.proofs.utils import (
     compute_file_md5,
-    get_price_tag_image_path,
     match_category_price_tag_with_category_price,
     match_price_tag_with_price,
     match_product_price_tag_with_product_price,
@@ -1713,23 +1712,21 @@ class PriceTagImageTest(TestCase):
         proof.file_path = "proofs/test_proof.jpg"
         proof.save()
 
-        full_proof_path = os.path.join(self.temp_dir, proof.file_path)
-        os.makedirs(os.path.dirname(full_proof_path), exist_ok=True)
+        os.makedirs(os.path.dirname(proof.file_path_full), exist_ok=True)
 
         # Create a 100x100 red image
         img = Image.new("RGB", (100, 100), color="red")
-        img.save(full_proof_path)
+        img.save(proof.file_path_full)
 
         # Create a PriceTag with bounding box covering top-left quarter
         # [y_min, x_min, y_max, x_max]
         price_tag = PriceTagFactory(proof=proof, bounding_box=[0.0, 0.0, 0.5, 0.5])
 
         # Check if image is generated (signal runs synchronously)
-        image_path = get_price_tag_image_path(price_tag.id)
-        self.assertTrue(os.path.exists(image_path))
+        self.assertTrue(os.path.exists(price_tag.image_path_full))
 
         # Verify cropped image size
-        with Image.open(image_path) as cropped:
+        with Image.open(price_tag.image_path_full) as cropped:
             self.assertEqual(cropped.size, (50, 50))
 
     def test_delete_price_tag_image(self):
@@ -1738,18 +1735,16 @@ class PriceTagImageTest(TestCase):
         proof.file_path = "proofs/test_proof.jpg"
         proof.save()
 
-        full_proof_path = os.path.join(self.temp_dir, proof.file_path)
-        os.makedirs(os.path.dirname(full_proof_path), exist_ok=True)
+        os.makedirs(os.path.dirname(proof.file_path_full), exist_ok=True)
         img = Image.new("RGB", (100, 100), color="red")
-        img.save(full_proof_path)
+        img.save(proof.file_path_full)
 
         price_tag = PriceTagFactory(proof=proof, bounding_box=[0.0, 0.0, 0.5, 0.5])
 
-        image_path = get_price_tag_image_path(price_tag.id)
-        self.assertTrue(os.path.exists(image_path))
+        self.assertTrue(os.path.exists(price_tag.image_path_full))
 
         # Delete price tag
         price_tag.delete()
 
         # Check if image is deleted (signal runs synchronously)
-        self.assertFalse(os.path.exists(image_path))
+        self.assertFalse(os.path.exists(price_tag.image_path_full))
