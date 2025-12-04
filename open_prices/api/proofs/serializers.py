@@ -112,9 +112,7 @@ class PriceTagFullSerializer(serializers.ModelSerializer):
     price_id = serializers.PrimaryKeyRelatedField(read_only=True)
     predictions = PriceTagPredictionSerializer(many=True, read_only=True)
     proof = ProofHalfFullSerializer()
-    image_path = serializers.CharField(
-        source="image_path_display", read_only=True
-    )  # from model property
+    image_path = serializers.CharField(read_only=True)  # from model property
 
     class Meta:
         model = PriceTag

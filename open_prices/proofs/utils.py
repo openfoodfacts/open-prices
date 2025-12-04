@@ -309,16 +309,6 @@ def get_price_tag_image_path(price_tag_id: int) -> str:
     return f"price-tags/{part1}/{part2}/{filename}"
 
 
-def get_price_tag_image_path_full(price_tag_id: int) -> str:
-    """Generate the path for the price tag image based on its ID.
-
-    :param price_tag_id: The ID of the price tag.
-    :return: The full path to the price tag image.
-    """
-    relative_path = get_price_tag_image_path(price_tag_id)
-    return os.path.join(settings.IMAGES_DIR, relative_path)
-
-
 def generate_price_tag_image(price_tag: PriceTag) -> None:
     """Crop the price tag from the proof image and save it to disk.
 
@@ -339,7 +329,7 @@ def generate_price_tag_image(price_tag: PriceTag) -> None:
 
     try:
         cropped_img = crop_image(price_tag.proof.file_path_full, price_tag.bounding_box)
-        output_path = get_price_tag_image_path_full(price_tag.id)
+        output_path = price_tag.image_path_full
 
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
