@@ -9,7 +9,6 @@ from django_q.tasks import async_task
 from open_prices.common import utils
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
-from open_prices.locations import utils as location_utils
 from open_prices.locations import validators as location_validators
 
 
@@ -163,6 +162,8 @@ class Location(models.Model):
 
     @property
     def logo_image_path_full(self):
+        from open_prices.locations import utils as location_utils
+
         return location_utils.get_location_logo_image_path_full(self)
 
     def update_price_count(self):
