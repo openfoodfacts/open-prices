@@ -4,9 +4,8 @@ import time
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from openfoodfacts import Flavor
-from openfoodfacts.redis import ProductUpdateEvent
+from openfoodfacts.redis import ProductUpdateEvent, get_redis_client
 from openfoodfacts.redis import UpdateListener as BaseUpdateListener
-from openfoodfacts.redis import get_redis_client
 from openfoodfacts.utils import get_logger
 
 from open_prices.products.tasks import process_delete, process_update
@@ -34,7 +33,7 @@ class UpdateListener(BaseUpdateListener):
             logger.info("Product %s has been deleted", redis_update.code)
             process_delete(redis_update.code, flavor)
         elif redis_update.action == "updated":
-            now = datetime.datetime.now(datetime.timezone.utc)
+            now = datetime.datetime.now(datetime.UTC)
             # Often, we receive information through Redis before the info is
             # available through the Product Opener API. We wait 2s to avoid
             # getting out-of-date info.

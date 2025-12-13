@@ -29,9 +29,7 @@ class ProofPredictionFactory(DjangoModelFactory):
     type = "CLASSIFICATION"
     model_name = "price_proof_classification"
     model_version = "price_proof_classification-1.0"
-    created = factory.LazyFunction(
-        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
-    )
+    created = factory.LazyFunction(lambda: datetime.datetime.now(tz=datetime.UTC))
     data = {
         "prediction": [
             {"label": "PRICE_TAG", "score": 0.98},
@@ -54,12 +52,8 @@ class PriceTagFactory(DjangoModelFactory):
     proof_prediction = factory.LazyAttribute(
         lambda x: ProofPredictionFactory(proof=x.proof)
     )
-    created = factory.LazyFunction(
-        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
-    )
-    updated = factory.LazyFunction(
-        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
-    )
+    created = factory.LazyFunction(lambda: datetime.datetime.now(tz=datetime.UTC))
+    updated = factory.LazyFunction(lambda: datetime.datetime.now(tz=datetime.UTC))
     bounding_box = [0.1, 0.2, 0.3, 0.4]
     status = None
     created_by = None
@@ -83,9 +77,5 @@ class ReceiptItemFactory(DjangoModelFactory):
         "product_name": "Apples",
     }
     status = None
-    created = factory.LazyFunction(
-        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
-    )
-    updated = factory.LazyFunction(
-        lambda: datetime.datetime.now(tz=datetime.timezone.utc)
-    )
+    created = factory.LazyFunction(lambda: datetime.datetime.now(tz=datetime.UTC))
+    updated = factory.LazyFunction(lambda: datetime.datetime.now(tz=datetime.UTC))

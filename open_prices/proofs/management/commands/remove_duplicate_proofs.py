@@ -94,12 +94,14 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(
-            "Proof IDs to delete: %s"
-            % ", ".join(map(str, [proof.id for proof in proofs_to_delete]))
+            "Proof IDs to delete: {}".format(
+                ", ".join(map(str, [proof.id for proof in proofs_to_delete]))
+            )
         )
         self.stdout.write(
-            "Prices to move: %s"
-            % ", ".join(map(str, prices_to_move.values_list("id", flat=True)))
+            "Prices to move: {}".format(
+                ", ".join(map(str, prices_to_move.values_list("id", flat=True)))
+            )
         )
 
         if apply:

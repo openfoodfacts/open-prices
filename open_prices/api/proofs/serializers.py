@@ -86,9 +86,7 @@ class ProofProcessWithGeminiSerializer(serializers.Serializer):
     files = serializers.ListField(
         child=serializers.FileField(required=True, use_url=False)
     )
-    mode = (
-        serializers.CharField()
-    )  # TODO: this mode param should be used to select the prompt to execute, unimplemented for now
+    mode = serializers.CharField()  # TODO: this mode param should be used to select the prompt to execute, unimplemented for now
 
 
 class ProofHistorySerializer(history.HistorySerializer):

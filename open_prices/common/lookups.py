@@ -16,4 +16,4 @@ class Any(Lookup):
         # right-hand side (rhs) is the value we want to check against the
         # array. That's why we invert the order of lhs and rhs, as the SQL
         # syntax is: value = ANY (array_field)
-        return "%s = ANY (%s)" % (rhs, lhs), params
+        return f"{rhs} = ANY ({lhs})", params

@@ -179,7 +179,7 @@ if __name__ == "__main__":
     if os.environ.get("DRY_RUN") == "False":
         print(f"===== Step 5/5: Uploading data to {os.environ.get('API_ENDPOINT')}")
         progress = 0
-        for index, price in enumerate(open_prices_price_list_filtered):
+        for _index, price in enumerate(open_prices_price_list_filtered):
             create_price(
                 price, os.environ.get("API_ENDPOINT"), os.environ.get("API_TOKEN")
             )

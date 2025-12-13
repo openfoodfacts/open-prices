@@ -121,9 +121,7 @@ def gdpr_source_filter_rules(op_price_list, gdpr_source=""):
                 passes_test = False
             elif (len(op_price["product_code"]) == 8) and op_price[
                 "product_code"
-            ].startswith(
-                "900000"
-            ):  # boucherie
+            ].startswith("900000"):  # boucherie
                 passes_test = False
             elif len(op_price["product_code"]) < 6:
                 passes_test = False
@@ -186,8 +184,12 @@ def gdpr_source_location_rules(op_price_list):
     return op_price_list_filtered
 
 
-def map_gdpr_price_list_to_open_prices(gdpr_price_list, gdpr_source="", extra_data={}):
+def map_gdpr_price_list_to_open_prices(
+    gdpr_price_list, gdpr_source="", extra_data=None
+):
     # get mapping file
+    if extra_data is None:
+        extra_data = {}
     gdpr_field_mapping = read_csv(GDPR_FIELD_MAPPING_FILEPATH)
 
     # map source fields to op fields
@@ -283,7 +285,7 @@ if __name__ == "__main__":
     if os.environ.get("DRY_RUN") == "False":
         print(f"===== Uploading data to {os.environ.get('API_ENDPOINT')}")
         progress = 0
-        for index, price in enumerate(open_prices_price_list_filtered_2):
+        for _index, price in enumerate(open_prices_price_list_filtered_2):
             create_price(
                 price, os.environ.get("API_ENDPOINT"), os.environ.get("API_TOKEN")
             )

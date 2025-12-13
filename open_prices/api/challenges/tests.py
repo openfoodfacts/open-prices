@@ -115,13 +115,9 @@ class ChallengeListFilterApiTest(TestCase):
             self.url + f"?status={challenge_constants.CHALLENGE_STATUS_ONGOING}"
         )  # noqa
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(
-            response.data["items"][0]["id"], self.challenge_ongoing.id
-        )  # noqa
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_ongoing.id)  # noqa
         response = self.client.get(
             self.url + f"?status={challenge_constants.CHALLENGE_STATUS_COMPLETED}"
         )  # noqa
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(
-            response.data["items"][0]["id"], self.challenge_completed.id
-        )  # noqa
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_completed.id)  # noqa

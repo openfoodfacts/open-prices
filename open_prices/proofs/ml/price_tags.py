@@ -686,7 +686,7 @@ def run_and_save_price_tag_extraction(
         )
     else:
         responses = [extract_from_price_tag(image) for image in preprocessed_images]
-    for price_tag, response in zip(price_tags, responses):
+    for price_tag, response in zip(price_tags, responses, strict=False):
         if response.parsed is None:
             logger.info(
                 "Failed to extract price tag for price tag id %s: %s",
