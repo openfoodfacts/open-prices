@@ -5,7 +5,9 @@ def get_object_or_drf_404(model, **kwargs):
     try:
         return model.objects.get(**kwargs)
     except model.DoesNotExist:
-        raise Http404(f"No {model._meta.verbose_name} matches the given query.")
+        raise Http404(
+            f"No {model._meta.verbose_name} matches the given query."
+        ) from None
 
 
 def get_source_from_request(request):

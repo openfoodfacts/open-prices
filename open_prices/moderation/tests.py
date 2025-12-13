@@ -106,7 +106,7 @@ class FlagModelSaveTest(TestCase):
 
     def test_restrict_flag_to_some_models(self):
         # Using Flag.objects.create() on unsupported model
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             Flag.objects.create(
                 content_object=self.product,
                 reason=FlagReason.WRONG_TYPE,
@@ -115,7 +115,7 @@ class FlagModelSaveTest(TestCase):
                 source="unit-test",
             )
         # Using model.flags.create() on unsupported model
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             self.product.flags.create(
                 reason=FlagReason.OTHER,
                 comment="This product is weird",
