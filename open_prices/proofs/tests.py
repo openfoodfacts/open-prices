@@ -682,7 +682,6 @@ class ProofModelHistoryTest(TestCase):
         )
 
     def test_proof_history(self):
-        self.proof.refresh_from_db()
         self.assertEqual(self.proof.history.count(), 1)
         self.assertEqual(self.proof.history.first().history_type, "+")
         self.assertEqual(self.proof.history.first().history_user_id, None)
