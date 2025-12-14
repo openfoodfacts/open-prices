@@ -413,6 +413,10 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
             Location.objects.filter(id=instance.location_id).update(
                 price_count=F("price_count") + 1
             )
+    else:
+        # what about if we update the proof, product or location? (owner cannot be updated)
+        # the update_fields is often not set, so we cannot rely on it
+        pass
 
 
 @receiver(signals.post_save, sender=Price)
@@ -435,18 +439,18 @@ def price_pre_delete_update_price_tag(sender, instance, **kwargs):
 @receiver(signals.post_delete, sender=Price)
 def price_post_delete_decrement_counts(sender, instance, **kwargs):
     if instance.owner:
-        User.objects.filter(user_id=instance.owner).update(
+        User.objects.filter(user_id=instance.owner, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.proof_id:
-        Proof.objects.filter(id=instance.proof_id).update(
+        Proof.objects.filter(id=instance.proof_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.product_id:
-        Product.objects.filter(id=instance.product_id).update(
+        Product.objects.filter(id=instance.product_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.location_id:
-        Location.objects.filter(id=instance.location.id).update(
+        Location.objects.filter(id=instance.location_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )

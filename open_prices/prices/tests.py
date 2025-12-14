@@ -870,31 +870,41 @@ class PriceModelUpdateTest(TestCase):
 
 
 class PriceModelDeleteTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.user_proof = ProofFactory(owner=cls.user_session.user.user_id)
+        cls.location = LocationFactory()
+        cls.product = ProductFactory()
+        cls.price = PriceFactory(
+            proof_id=cls.user_proof.id,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            product_code=cls.product.code,
+            owner=cls.user_session.user.user_id,
+        )
+
     def test_price_count_decrement(self):
-        user_session = SessionFactory()
-        user_proof = ProofFactory(owner=user_session.user.user_id)
-        location = LocationFactory()
-        product = ProductFactory()
-        price = PriceFactory(
-            proof_id=user_proof.id,
-            location_osm_id=location.osm_id,
-            location_osm_type=location.osm_type,
-            product_code=product.code,
-            owner=user_session.user.user_id,
-        )
-        self.assertEqual(
-            User.objects.get(user_id=user_session.user.user_id).price_count, 1
-        )
-        self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 1)
-        self.assertEqual(Location.objects.get(id=location.id).price_count, 1)
-        self.assertEqual(Product.objects.get(id=product.id).price_count, 1)
-        price.delete()
-        self.assertEqual(
-            User.objects.get(user_id=user_session.user.user_id).price_count, 0
-        )
-        self.assertEqual(Proof.objects.get(id=user_proof.id).price_count, 0)
-        self.assertEqual(Location.objects.get(id=location.id).price_count, 0)
-        self.assertEqual(Product.objects.get(id=product.id).price_count, 0)
+        # before
+        self.user_session.user.refresh_from_db()
+        self.user_proof.refresh_from_db()
+        self.location.refresh_from_db()
+        self.product.refresh_from_db()
+        self.assertEqual(self.user_session.user.price_count, 1)
+        self.assertEqual(self.user_proof.price_count, 1)
+        self.assertEqual(self.location.price_count, 1)
+        self.assertEqual(self.product.price_count, 1)
+        # delete price
+        self.price.delete()
+        # after
+        self.user_session.user.refresh_from_db()
+        self.user_proof.refresh_from_db()
+        self.location.refresh_from_db()
+        self.product.refresh_from_db()
+        self.assertEqual(self.user_session.user.price_count, 0)
+        self.assertEqual(self.user_proof.price_count, 0)
+        self.assertEqual(self.location.price_count, 0)
+        self.assertEqual(self.product.price_count, 0)
 
 
 class PriceModelHistoryTest(TestCase):
