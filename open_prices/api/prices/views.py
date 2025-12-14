@@ -94,7 +94,9 @@ class PriceViewSet(
         price = self.get_object()
         return Response(price.get_history_list(), status=200)
 
-    @extend_schema(request=FlagCreateSerializer, responses=FlagSerializer)
+    @extend_schema(
+        request=FlagCreateSerializer, responses=FlagSerializer, tags=["moderation"]
+    )
     @action(detail=True, methods=["POST"])
     def flag(self, request: Request, pk=None) -> Response:
         price = self.get_object()
