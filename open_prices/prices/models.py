@@ -127,6 +127,8 @@ class Price(models.Model):
     TYPE_PRODUCT_FIELDS = ["product_code"]
     TYPE_CATEGORY_FIELDS = ["category_tag", "labels_tags", "origins_tags"]
     UPDATE_FIELDS = [
+        "product_code",
+        # "product_name",
         "category_tag",
         "labels_tags",
         "origins_tags",

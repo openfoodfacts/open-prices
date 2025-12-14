@@ -827,18 +827,6 @@ class PriceUpdateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["currency"], "USD")
-        self.assertEqual(
-            Price.objects.get(id=self.price_product.id).product_code, "8001505005707"
-        )  # ignored
-        # update price category
-        response = self.client.patch(
-            self.url_price_category,
-            {"category_tag": "en:tomatoes"},
-            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["category_tag"], "en:tomatoes")
 
     def test_price_update_ok_if_moderator(self):
         self.assertEqual(self.price_product.currency, "EUR")
@@ -854,15 +842,109 @@ class PriceUpdateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["currency"], "USD")
-        self.assertEqual(
-            Price.objects.get(id=self.price_product.id).product_code, "8001505005707"
-        )  # ignored
 
-    def test_price_update_type_mismatch(self):
+    def test_price_update_price_fields(self):
+        # before
+        self.assertEqual(self.price_product.price, 15)
+        self.assertEqual(self.price_product.currency, "EUR")
+        self.assertEqual(self.price_product.price_is_discounted, False)
+        self.assertEqual(self.price_product.price_without_discount, None)
+        self.assertEqual(self.price_product.discount_type, None)
+        # update price & currency & discounted info
+        response = self.client.patch(
+            self.url_price_product,
+            {
+                "price": 10,
+                "currency": "USD",
+                "price_is_discounted": True,
+                "price_without_discount": 15,
+                "discount_type": price_constants.DISCOUNT_TYPE_EXPIRES_SOON,
+            },
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price"], 10)
+        self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(response.data["price_is_discounted"], True)
+        self.assertEqual(response.data["price_without_discount"], 15)
+        self.assertEqual(
+            response.data["discount_type"], price_constants.DISCOUNT_TYPE_EXPIRES_SOON
+        )
+
+    def test_price_type_product_update_fields(self):
+        # update 'product' price: before
+        self.assertEqual(self.price_product.type, price_constants.TYPE_PRODUCT)
+        self.assertEqual(self.price_product.price, 15)
+        self.assertEqual(self.price_product.currency, "EUR")
+        self.assertEqual(self.price_product.product_code, "8001505005707")
+        # update currency & product_code
+        response = self.client.patch(
+            self.url_price_product,
+            {"currency": "USD", "product_code": "8850187002197"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price"], 15)  # unchanged
+        self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(
+            Price.objects.get(id=self.price_product.id).product_code, "8850187002197"
+        )
         # cannot add 'category' fields to a 'product' price
         response = self.client.patch(
             self.url_price_product,
             {"category_tag": "en:tomatoes"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        # cannot change the price type into 'category'
+        response = self.client.patch(
+            self.url_price_product,
+            {"type": price_constants.TYPE_CATEGORY, "category_tag": "en:apples"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_price_type_category_update_fields(self):
+        # update 'category' price: before
+        self.assertEqual(self.price_category.type, price_constants.TYPE_CATEGORY)
+        self.assertEqual(self.price_category.price, 1)
+        self.assertEqual(self.price_category.currency, "EUR")
+        self.assertEqual(self.price_category.category_tag, "en:apples")
+        self.assertEqual(self.price_category.labels_tags, [])
+        self.assertEqual(self.price_category.origins_tags, [])
+        # update category_tag
+        response = self.client.patch(
+            self.url_price_category,
+            {
+                "category_tag": "en:tomatoes",
+                "labels_tags": ["en:organic"],
+                "origins_tags": ["en:france"],
+            },
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price"], 1)  # unchanged
+        self.assertEqual(response.data["currency"], "EUR")  # unchanged
+        self.assertEqual(response.data["category_tag"], "en:tomatoes")
+        self.assertEqual(response.data["labels_tags"], ["en:organic"])
+        self.assertEqual(response.data["origins_tags"], ["en:france"])
+        # cannot add 'product' fields to a 'category' price
+        response = self.client.patch(
+            self.url_price_category,
+            {"product_code": "8001505005707"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        # cannot change the price type into 'product'
+        response = self.client.patch(
+            self.url_price_category,
+            {"type": price_constants.TYPE_PRODUCT, "product_code": "8001505005707"},
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
             content_type="application/json",
         )
