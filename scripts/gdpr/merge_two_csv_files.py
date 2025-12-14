@@ -14,8 +14,12 @@ def read_csv(filepath):
 
 
 def merge_data_of_two_lists(
-    list_1, list_2, pivot_field_name_list=["ticket"], exclude_field_name_list=[]
+    list_1, list_2, pivot_field_name_list=None, exclude_field_name_list=None
 ):
+    if exclude_field_name_list is None:
+        exclude_field_name_list = []
+    if pivot_field_name_list is None:
+        pivot_field_name_list = ["ticket"]
     data_merged = list()
 
     for row_1 in list_1:

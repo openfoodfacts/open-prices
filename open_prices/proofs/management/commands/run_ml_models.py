@@ -109,7 +109,8 @@ class Command(BaseCommand):
                     predictions__model_name__isnull=True,
                 )
                 | Proof.objects.exclude(exclusion_filter)
-            ).distinct()
+            )
+            .distinct()
             # Order by -id to process the most recent proofs first
             .order_by("-id")
         )

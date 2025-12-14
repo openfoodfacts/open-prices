@@ -191,7 +191,7 @@ def import_product_db(
     """
     from open_prices.products.models import Product
 
-    print((f"Launching import_product_db (flavor={flavor}, obsolete={obsolete})"))
+    print(f"Launching import_product_db (flavor={flavor}, obsolete={obsolete})")
     existing_product_codes = set(Product.objects.values_list("code", flat=True))
     existing_product_flavor_codes = set(
         Product.objects.filter(source=flavor).values_list("code", flat=True)
@@ -215,7 +215,7 @@ def import_product_db(
     # the dataset was created after the start of the day, every product updated
     # after should be skipped, as we don't know the exact creation time of the
     # dump
-    start_datetime = datetime.datetime.now(tz=datetime.timezone.utc).replace(
+    start_datetime = datetime.datetime.now(tz=datetime.UTC).replace(
         hour=0, minute=0, second=0
     )
 
@@ -241,9 +241,7 @@ def import_product_db(
         if isinstance(product_last_modified_t, str):
             product_last_modified_t = int(product_last_modified_t)
         product_source_last_modified = (
-            datetime.datetime.fromtimestamp(
-                product_last_modified_t, tz=datetime.timezone.utc
-            )
+            datetime.datetime.fromtimestamp(product_last_modified_t, tz=datetime.UTC)
             if product_last_modified_t
             else None
         )
@@ -374,8 +372,10 @@ def create_or_update_product_in_off(
     flavor: str = Flavor.off,
     country_code: str = "en",
     owner: str = None,
-    update_params: dict = {},
+    update_params: dict = None,
 ) -> JSONType | None:
+    if update_params is None:
+        update_params = {}
     client = API(
         username=settings.OFF_DEFAULT_USER,
         password=settings.OFF_DEFAULT_PASSWORD,

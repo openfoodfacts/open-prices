@@ -21,7 +21,7 @@ class LevenshteinLessEqual(Func):
         ins_cost=1,
         del_cost=1,
         sub_cost=1,
-        **extras
+        **extras,
     ):
         super().__init__(
             source=source,
@@ -30,5 +30,5 @@ class LevenshteinLessEqual(Func):
             del_cost=del_cost,
             sub_cost=sub_cost,
             max_d=max_d,
-            **extras
+            **extras,
         )
