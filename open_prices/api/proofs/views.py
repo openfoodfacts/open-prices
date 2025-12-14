@@ -202,7 +202,9 @@ class ProofViewSet(
         proof = self.get_object()
         return Response(proof.get_history_list(), status=200)
 
-    @extend_schema(request=FlagCreateSerializer, responses=FlagSerializer)
+    @extend_schema(
+        request=FlagCreateSerializer, responses=FlagSerializer, tags=["moderation"]
+    )
     @action(detail=True, methods=["POST"])
     def flag(self, request: Request, pk=None) -> Response:
         proof = self.get_object()

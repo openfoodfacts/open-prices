@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
 
@@ -9,13 +10,13 @@ from open_prices.common.permission import OnlyModeratorIsAllowed
 from open_prices.moderation.models import Flag
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["moderation"]),
+    partial_update=extend_schema(tags=["moderation"]),
+)
 class FlagViewSet(
     mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
 ):
-    """
-    Allow moderators to view all flags.
-    """
-
     authentication_classes = [CustomAuthentication]
     permission_classes = [IsAuthenticated, OnlyModeratorIsAllowed]
     http_method_names = ["get", "patch"]  # disable "put"
