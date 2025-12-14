@@ -212,7 +212,12 @@ SPECTACULAR_SETTINGS = {
     },
     "SCHEMA_PATH_PREFIX": "/api/v[0-9]",
     "ENUM_NAME_OVERRIDES": {
-        "LocationOsmTypeEnum": "open_prices.locations.constants.OSM_TYPE_CHOICES"
+        "PriceTypeEnum": "open_prices.prices.constants.TYPE_CHOICES",
+        "ProofTypeEnum": "open_prices.proofs.constants.TYPE_CHOICES",
+        "PriceTagStatusEnum": "open_prices.proofs.constants.PRICE_TAG_STATUS_CHOICES",
+        "LocationTypeEnum": "open_prices.locations.constants.TYPE_CHOICES",
+        "LocationOsmTypeEnum": "open_prices.locations.constants.OSM_TYPE_CHOICES",
+        "FlagStatusEnum": "open_prices.moderation.models.FlagStatus.choices",
     },
 }
 
