@@ -586,16 +586,24 @@ class ProofModelUpdateTest(TestCase):
         )
 
     def test_proof_update(self):
-        # currency
         self.assertEqual(self.proof_price_tag.prices.count(), 1)
+        # currency
+        self.assertEqual(self.proof_price_tag.currency, "EUR")
         self.proof_price_tag.currency = "USD"
         self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.currency, "USD")
         self.assertEqual(self.proof_price_tag.prices.first().currency, "USD")
         # date
+        self.assertEqual(str(self.proof_price_tag.prices.first().date), "2024-06-30")
         self.proof_price_tag.date = "2024-07-01"
         self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(str(self.proof_price_tag.date), "2024-07-01")
         self.assertEqual(str(self.proof_price_tag.prices.first().date), "2024-07-01")
         # location
+        self.assertEqual(self.proof_price_tag.location, self.location_osm_1)
+        self.assertEqual(self.location_osm_1.proof_count, 0)  # TODO: should be 1
         self.proof_price_tag.location_osm_id = self.location_osm_2.osm_id
         self.proof_price_tag.location_osm_type = self.location_osm_2.osm_type
         self.proof_price_tag.save()
@@ -604,6 +612,10 @@ class ProofModelUpdateTest(TestCase):
         self.assertEqual(
             self.proof_price_tag.prices.first().location, self.location_osm_2
         )
+        self.location_osm_1.refresh_from_db()
+        self.location_osm_2.refresh_from_db()
+        self.assertEqual(self.location_osm_1.proof_count, 0)
+        self.assertEqual(self.location_osm_2.proof_count, 0)  # TODO: should be 1
 
 
 class ProofModelHistoryTest(TestCase):

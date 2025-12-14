@@ -660,7 +660,6 @@ def price_tag_post_save_generate_image(sender, instance, created, **kwargs):
 
 @receiver(signals.post_delete, sender=PriceTag)
 def price_tag_post_delete_remove_image(sender, instance, **kwargs):
-    print(instance.id, instance.image_path_full)
     if os.path.exists(instance.image_path_full):
         try:
             os.remove(instance.image_path_full)
