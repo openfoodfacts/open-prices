@@ -153,12 +153,18 @@ class PriceListFilterApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
+        cls.location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         cls.user_proof_price_tag = ProofFactory(
-            type=proof_constants.TYPE_PRICE_TAG, owner=cls.user_session.user.user_id
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
+            owner=cls.user_session.user.user_id,
         )
         cls.user_proof_receipt = ProofFactory(
             type=proof_constants.TYPE_RECEIPT,
             owner_consumption=True,
+            location_id=cls.location_online.id,
             owner=cls.user_session.user.user_id,
         )
         cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
@@ -167,6 +173,7 @@ class PriceListFilterApiTest(TestCase):
             **PRICE_8001505005707,
             receipt_quantity=2,
             proof_id=cls.user_proof_receipt.id,
+            location_id=cls.user_proof_receipt.location_id,
             owner=cls.user_session.user.user_id,
             product=cls.product_8001505005707,
         )
@@ -175,18 +182,26 @@ class PriceListFilterApiTest(TestCase):
             labels_tags=[],
             origins_tags=["en:spain"],
             proof_id=cls.user_proof_price_tag.id,
+            location_osm_id=cls.user_proof_price_tag.location_osm_id,
+            location_osm_type=cls.user_proof_price_tag.location_osm_type,
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:unknown"],
+            proof_id=None,
+            location_osm_id=None,
+            location_osm_type=None,
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
+            proof_id=None,
+            location_osm_id=None,
+            location_osm_type=None,
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
@@ -194,7 +209,9 @@ class PriceListFilterApiTest(TestCase):
             price=50,
             price_without_discount=70,
             price_is_discounted=True,
+            discount_type=price_constants.DISCOUNT_TYPE_EXPIRES_SOON,
             currency="USD",
+            proof_id=None,
             location_osm_id=None,
             location_osm_type=None,
             date="2024-06-30",
@@ -215,6 +232,37 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["product_code"], "8001505005707")
+        # product_code__in
+        # url = self.url + "?product_code__in=8001505005707&product_code__in=8850187002197"
+        # response = self.client.get(url)
+        # self.assertEqual(response.data["total"], 2)
+        url = self.url + "?product_code__in=8001505005707,8850187002197"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?product_code__in=8001505005707,0000000000000"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # product_code__isnull
+        url = self.url + "?product_code__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        url = self.url + "?product_code__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # product_id
+        url = self.url + f"?product_id={self.product_8001505005707.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["product_id"], self.product_8001505005707.id
+        )
+        # product_id__in
+        url = (
+            self.url
+            + f"?product_id__in={self.product_8001505005707.id},{self.product_8850187002197.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
         # product_id__isnull
         url = self.url + "?product_id__isnull=true"
         response = self.client.get(url)
@@ -295,6 +343,10 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?price_is_discounted=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
+        # discount_type
+        url = self.url + f"?discount_type={price_constants.DISCOUNT_TYPE_EXPIRES_SOON}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_currency(self):
         self.assertEqual(Price.objects.count(), 5)
@@ -305,20 +357,31 @@ class PriceListFilterApiTest(TestCase):
     def test_price_list_filter_by_location(self):
         self.assertEqual(Price.objects.count(), 5)
         # location_osm_id
-        url = self.url + f"?location_osm_id={self.user_price.location_osm_id}"
+        url = self.url + f"?location_osm_id={self.location_osm.osm_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # location_osm_type
+        url = self.url + f"?location_osm_type={self.location_osm.osm_type}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         # location_id
-        url = self.url + f"?location_id={self.user_price.location_id}"
+        url = self.url + f"?location_id={self.location_osm.id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # location_id__in
+        url = (
+            self.url
+            + f"?location_id__in={self.location_osm.id},{self.location_online.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 1)
         # location_id__isnull
         url = self.url + "?location_id__isnull=true"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["total"], 3)
         url = self.url + "?location_id__isnull=false"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 4)
+        self.assertEqual(response.data["total"], 1 + 1)
 
     def test_price_list_filter_by_proof(self):
         self.assertEqual(Price.objects.count(), 5)
@@ -326,13 +389,20 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + f"?proof_id={self.user_price.proof_id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # proof_id__in
+        url = (
+            self.url
+            + f"?proof_id__in={self.user_proof_price_tag.id},{self.user_proof_receipt.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 1)
         # proof_id__isnull
         url = self.url + "?proof_id__isnull=true"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
         url = self.url + "?proof_id__isnull=false"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 1 + 1)
         # proof__type
         url = self.url + f"?proof__type={proof_constants.TYPE_RECEIPT}"
         # thanks to select_related, we only have 2 queries:
