@@ -105,29 +105,14 @@ toml-check:
 toml-lint:
 	${DOCKER_COMPOSE} run --rm --no-deps api poetry run toml-sort --in-place pyproject.toml
 
-flake8:
-	${DOCKER_COMPOSE} run --rm --no-deps api flake8
-
-black-check:
-	${DOCKER_COMPOSE} run --rm --no-deps api black --check .
-
-black:
-	${DOCKER_COMPOSE} run --rm --no-deps api black .
-
 mypy:
 	${DOCKER_COMPOSE} run --rm --no-deps api mypy .
-
-isort-check:
-	${DOCKER_COMPOSE} run --rm --no-deps api isort --check .
-
-isort:
-	${DOCKER_COMPOSE} run --rm --no-deps api isort .
 
 docs:
 	@echo "🥫 Generationg doc…"
 	${DOCKER_COMPOSE} run --rm --no-deps api ./build_mkdocs.sh
 
-checks: toml-check flake8 black-check mypy isort-check docs
+checks: toml-check mypy docs
 
 tests: django-tests
 

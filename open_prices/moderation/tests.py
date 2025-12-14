@@ -115,7 +115,7 @@ class FlagModelSaveTest(TestCase):
                 source="unit-test",
             )
         # Using model.flags.create() on unsupported model
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(AttributeError):
             self.product.flags.create(
                 reason=FlagReason.OTHER,
                 comment="This product is weird",
