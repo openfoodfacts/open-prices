@@ -399,6 +399,18 @@ def proof_post_save_update_prices(sender, instance, created, **kwargs):
 
 
 @receiver(signals.post_delete, sender=Proof)
+def proof_post_delete_decrement_counts(sender, instance, **kwargs):
+    if instance.owner:
+        User.objects.filter(user_id=instance.owner, proof_count__gt=0).update(
+            proof_count=F("proof_count") - 1
+        )
+    if instance.location_id:
+        Location.objects.filter(id=instance.location.id, proof_count__gt=0).update(
+            proof_count=F("proof_count") - 1
+        )
+
+
+@receiver(signals.post_delete, sender=Proof)
 def proof_post_delete_remove_images(sender, instance, **kwargs):
     import os
 

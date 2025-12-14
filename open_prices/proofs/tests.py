@@ -469,10 +469,11 @@ class ProofModelSaveTest(TestCase):
         self.assertEqual(location.proof_count, 0)
         # create proof
         ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=location.osm_id,
             location_osm_type=location.osm_type,
-            owner=user_session.user.user_id,
             date="2024-01-01",
+            owner=user_session.user.user_id,
         )
         # after
         user_session.user.refresh_from_db()
@@ -638,6 +639,34 @@ class ProofModelUpdateTest(TestCase):
         self.assertEqual(self.location_osm_2.proof_count, 0)  # TODO: should be 1
 
 
+class ProofModelDeleteTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.location = LocationFactory()
+        cls.proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            date="2024-01-01",
+            owner=cls.user_session.user.user_id,
+        )
+
+    def test_proof_count_decrement(self):
+        # before
+        self.user_session.user.refresh_from_db()
+        self.location.refresh_from_db()
+        self.assertEqual(self.user_session.user.proof_count, 1)
+        self.assertEqual(self.location.proof_count, 1)
+        # delete proof
+        self.proof.delete()
+        # after
+        self.user_session.user.refresh_from_db()
+        self.location.refresh_from_db()
+        self.assertEqual(self.user_session.user.proof_count, 0)
+        self.assertEqual(self.location.proof_count, 0)
+
+
 class ProofModelHistoryTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -653,6 +682,7 @@ class ProofModelHistoryTest(TestCase):
         )
 
     def test_proof_history(self):
+        self.proof.refresh_from_db()
         self.assertEqual(self.proof.history.count(), 1)
         self.assertEqual(self.proof.history.first().history_type, "+")
         self.assertEqual(self.proof.history.first().history_user_id, None)
