@@ -461,6 +461,26 @@ class ProofModelSaveTest(TestCase):
         for OWNER_COMMENT_OK in [None, "", "test"]:
             ProofFactory(owner_comment=OWNER_COMMENT_OK)
 
+    def test_proof_count_increment(self):
+        user_session = SessionFactory()
+        location = LocationFactory()
+        # before
+        self.assertEqual(user_session.user.proof_count, 0)
+        self.assertEqual(location.proof_count, 0)
+        # create proof
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            date="2024-01-01",
+            owner=user_session.user.user_id,
+        )
+        # after
+        user_session.user.refresh_from_db()
+        location.refresh_from_db()
+        self.assertEqual(user_session.user.proof_count, 1)
+        self.assertEqual(location.proof_count, 1)
+
 
 class ProofPropertyTest(TestCase):
     @classmethod
@@ -586,16 +606,25 @@ class ProofModelUpdateTest(TestCase):
         )
 
     def test_proof_update(self):
-        # currency
         self.assertEqual(self.proof_price_tag.prices.count(), 1)
+        # currency
+        self.assertEqual(self.proof_price_tag.currency, "EUR")
         self.proof_price_tag.currency = "USD"
         self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.currency, "USD")
         self.assertEqual(self.proof_price_tag.prices.first().currency, "USD")
         # date
+        self.assertEqual(str(self.proof_price_tag.prices.first().date), "2024-06-30")
         self.proof_price_tag.date = "2024-07-01"
         self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(str(self.proof_price_tag.date), "2024-07-01")
         self.assertEqual(str(self.proof_price_tag.prices.first().date), "2024-07-01")
         # location
+        self.location_osm_1.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.location, self.location_osm_1)
+        self.assertEqual(self.location_osm_1.proof_count, 1)
         self.proof_price_tag.location_osm_id = self.location_osm_2.osm_id
         self.proof_price_tag.location_osm_type = self.location_osm_2.osm_type
         self.proof_price_tag.save()
@@ -604,6 +633,38 @@ class ProofModelUpdateTest(TestCase):
         self.assertEqual(
             self.proof_price_tag.prices.first().location, self.location_osm_2
         )
+        self.location_osm_1.refresh_from_db()
+        self.location_osm_2.refresh_from_db()
+        self.assertEqual(self.location_osm_1.proof_count, 1)  # TODO: should be 0
+        self.assertEqual(self.location_osm_2.proof_count, 0)  # TODO: should be 1
+
+
+class ProofModelDeleteTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.location = LocationFactory()
+        cls.proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            date="2024-01-01",
+            owner=cls.user_session.user.user_id,
+        )
+
+    def test_proof_count_decrement(self):
+        # before
+        self.user_session.user.refresh_from_db()
+        self.location.refresh_from_db()
+        self.assertEqual(self.user_session.user.proof_count, 1)
+        self.assertEqual(self.location.proof_count, 1)
+        # delete proof
+        self.proof.delete()
+        # after
+        self.user_session.user.refresh_from_db()
+        self.location.refresh_from_db()
+        self.assertEqual(self.user_session.user.proof_count, 0)
+        self.assertEqual(self.location.proof_count, 0)
 
 
 class ProofModelHistoryTest(TestCase):

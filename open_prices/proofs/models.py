@@ -23,8 +23,10 @@ from open_prices.common import (
     utils,
 )
 from open_prices.locations import constants as location_constants
+from open_prices.locations.models import Location
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs import validators as proof_validators
+from open_prices.users.models import User
 
 
 class ProofQuerySet(models.QuerySet):
@@ -346,6 +348,19 @@ class Proof(models.Model):
 
 
 @receiver(signals.post_save, sender=Proof)
+def proof_post_create_increment_counts(sender, instance, created, **kwargs):
+    if created:
+        if instance.owner:
+            User.objects.filter(user_id=instance.owner).update(
+                proof_count=F("proof_count") + 1
+            )
+        if instance.location_id:
+            Location.objects.filter(id=instance.location_id).update(
+                proof_count=F("proof_count") + 1
+            )
+
+
+@receiver(signals.post_save, sender=Proof)
 def proof_post_save_run_ocr(sender, instance, created, **kwargs):
     if not settings.TESTING:
         if created:
@@ -381,6 +396,18 @@ def proof_post_save_update_prices(sender, instance, created, **kwargs):
                     setattr(price, field, getattr(instance, field))
                     price._change_reason = "Proof.update_location() method"
                     price.save()
+
+
+@receiver(signals.post_delete, sender=Proof)
+def proof_post_delete_decrement_counts(sender, instance, **kwargs):
+    if instance.owner:
+        User.objects.filter(user_id=instance.owner, proof_count__gt=0).update(
+            proof_count=F("proof_count") - 1
+        )
+    if instance.location_id:
+        Location.objects.filter(id=instance.location.id, proof_count__gt=0).update(
+            proof_count=F("proof_count") - 1
+        )
 
 
 @receiver(signals.post_delete, sender=Proof)
@@ -660,7 +687,6 @@ def price_tag_post_save_generate_image(sender, instance, created, **kwargs):
 
 @receiver(signals.post_delete, sender=PriceTag)
 def price_tag_post_delete_remove_image(sender, instance, **kwargs):
-    print(instance.id, instance.image_path_full)
     if os.path.exists(instance.image_path_full):
         try:
             os.remove(instance.image_path_full)
