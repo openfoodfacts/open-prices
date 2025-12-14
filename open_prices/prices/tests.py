@@ -853,20 +853,46 @@ class PriceModelSaveTest(TransactionTestCase):
 
 
 class PriceModelUpdateTest(TestCase):
-    def test_price_update(self):
+    @classmethod
+    def setUpTestData(cls):
         user_session = SessionFactory()
         user_proof = ProofFactory(owner=user_session.user.user_id)
         location = LocationFactory()
-        product = ProductFactory()
-        price = PriceFactory(
+        cls.price = PriceFactory(
+            product_code="8850187002197",
+            price=10,
             proof_id=user_proof.id,
             location_osm_id=location.osm_id,
             location_osm_type=location.osm_type,
-            product_code=product.code,
             owner=user_session.user.user_id,
         )
-        price.price = 5
-        price.save()
+
+    def test_price_update(self):
+        # before
+        self.assertEqual(self.price.price, 10)
+        # update price
+        self.price.price = 5
+        self.price.save()
+        # after
+        self.assertEqual(self.price.price, 5)
+
+    def test_price_update_product_code(self):
+        # before
+        self.assertEqual(self.price.product_code, "8850187002197")
+        product_8850187002197 = Product.objects.get(code=self.price.product_code)
+        self.assertEqual(self.price.product, product_8850187002197)
+        self.assertEqual(product_8850187002197.price_count, 1)
+        self.assertFalse(Product.objects.filter(code="8001505005707").exists())
+        # update product_code
+        self.price.product_code = "8001505005707"
+        self.price.save()
+        # after
+        self.assertEqual(self.price.product_code, "8001505005707")
+        product_8850187002197.refresh_from_db()
+        self.assertEqual(product_8850187002197.price_count, 1)  # TODO: should be 0
+        product_8001505005707 = Product.objects.get(code="8001505005707")
+        self.assertEqual(product_8001505005707.price_count, 0)  # TODO: should be 1
+        self.assertEqual(self.price.product, product_8001505005707)
 
 
 class PriceModelDeleteTest(TestCase):
