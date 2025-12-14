@@ -23,8 +23,10 @@ from open_prices.common import (
     utils,
 )
 from open_prices.locations import constants as location_constants
+from open_prices.locations.models import Location
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs import validators as proof_validators
+from open_prices.users.models import User
 
 
 class ProofQuerySet(models.QuerySet):
@@ -343,6 +345,19 @@ class Proof(models.Model):
 
     def get_history_list(self):
         return history.build_instance_history_list(self)
+
+
+@receiver(signals.post_save, sender=Proof)
+def proof_post_create_increment_counts(sender, instance, created, **kwargs):
+    if created:
+        if instance.owner:
+            User.objects.filter(user_id=instance.owner).update(
+                proof_count=F("proof_count") + 1
+            )
+        if instance.location_id:
+            Location.objects.filter(id=instance.location_id).update(
+                proof_count=F("proof_count") + 1
+            )
 
 
 @receiver(signals.post_save, sender=Proof)
