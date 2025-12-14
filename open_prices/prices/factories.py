@@ -37,7 +37,13 @@ class PriceFactory(DjangoModelFactory):
     currency = factory.fuzzy.FuzzyChoice(constants.CURRENCY_LIST)
     location_osm_id = factory.LazyAttribute(
         lambda x: random.randrange(100000, 999999999999)
+        if not hasattr(x, "location_id")
+        else None
     )
-    location_osm_type = factory.fuzzy.FuzzyChoice(location_constants.OSM_TYPE_LIST)
+    location_osm_type = factory.LazyAttribute(
+        lambda x: random.choice(location_constants.OSM_TYPE_LIST)
+        if not hasattr(x, "location_id")
+        else None
+    )
     date = date.fromisoformat("2023-10-30")
     # owner = factory.Faker("user_name")
