@@ -194,6 +194,7 @@ class PriceListFilterApiTest(TestCase):
             price=50,
             price_without_discount=70,
             price_is_discounted=True,
+            discount_type=price_constants.DISCOUNT_TYPE_EXPIRES_SOON,
             currency="USD",
             location_osm_id=None,
             location_osm_type=None,
@@ -215,6 +216,30 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["product_code"], "8001505005707")
+        # product_code__in
+        # url = self.url + "?product_code__in=8001505005707&product_code__in=8850187002197"
+        # response = self.client.get(url)
+        # self.assertEqual(response.data["total"], 2)
+        url = self.url + "?product_code__in=8001505005707,8850187002197"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?product_code__in=8001505005707,0000000000000"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # product_id
+        url = self.url + f"?product_id={self.product_8001505005707.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["product_id"], self.product_8001505005707.id
+        )
+        # product_id__in
+        url = (
+            self.url
+            + f"?product_id__in={self.product_8001505005707.id},{self.product_8850187002197.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
         # product_id__isnull
         url = self.url + "?product_id__isnull=true"
         response = self.client.get(url)
@@ -295,6 +320,10 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?price_is_discounted=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
+        # discount_type
+        url = self.url + f"?discount_type={price_constants.DISCOUNT_TYPE_EXPIRES_SOON}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_currency(self):
         self.assertEqual(Price.objects.count(), 5)
