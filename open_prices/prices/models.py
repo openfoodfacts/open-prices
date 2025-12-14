@@ -296,14 +296,14 @@ class Price(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def get_or_create_product(self):
+    def set_product(self):
         if self.product_code:
             from open_prices.products.models import Product
 
             product, created = Product.objects.get_or_create(code=self.product_code)
             self.product = product
 
-    def get_or_create_location(self):
+    def set_location(self):
         if self.location_osm_id and self.location_osm_type:
             from open_prices.locations import constants as location_constants
             from open_prices.locations.models import Location
@@ -325,8 +325,8 @@ class Price(models.Model):
         self.normalize_product_code()
         self.full_clean()
         # self.set_proof()  # should already exist
-        self.get_or_create_product()
-        self.get_or_create_location()
+        self.set_product()
+        self.set_location()
         super().save(*args, **kwargs)
 
     def set_tag(self, tag: str, save: bool = True):

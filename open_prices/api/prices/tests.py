@@ -18,6 +18,7 @@ from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
 PRICE_8001505005707 = {
+    "type": price_constants.TYPE_PRODUCT,
     "product_code": "8001505005707",
     "price": 15,
     "currency": "EUR",
@@ -540,7 +541,7 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.status_code, 400)
         # without type: OK
         data = self.data.copy()
-        self.assertTrue("type" not in data)
+        del data["type"]
         response = self.client.post(
             self.url,
             data,
@@ -791,18 +792,17 @@ class PriceUpdateApiTest(TestCase):
         cls.url_price_category = reverse(
             "api:prices-detail", args=[cls.price_category.id]
         )
-        cls.data = {"currency": "USD", "product_code": "123"}
 
     def test_price_update_authentication_errors(self):
         # anonymous
         response = self.client.patch(
-            self.url_price_product, self.data, content_type="application/json"
+            self.url_price_product, {"currency": "USD"}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 403)
         # wrong token
         response = self.client.patch(
             self.url_price_product,
-            self.data,
+            {"currency": "USD"},
             headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
             content_type="application/json",
         )
@@ -810,17 +810,18 @@ class PriceUpdateApiTest(TestCase):
         # not price owner and not moderator
         response = self.client.patch(
             self.url_price_product,
-            self.data,
+            {"currency": "USD"},
             headers={"Authorization": f"Bearer {self.user_session_2.token}"},
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
 
     def test_price_update_ok_if_owner(self):
-        # authenticated
+        self.assertEqual(self.price_product.currency, "EUR")
+        # authenticated and price owner
         response = self.client.patch(
             self.url_price_product,
-            self.data,
+            {"currency": "USD"},
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
             content_type="application/json",
         )
@@ -840,13 +841,14 @@ class PriceUpdateApiTest(TestCase):
         self.assertEqual(response.data["category_tag"], "en:tomatoes")
 
     def test_price_update_ok_if_moderator(self):
+        self.assertEqual(self.price_product.currency, "EUR")
         # set user as moderator
         self.user_session_2.user.is_moderator = True
         self.user_session_2.user.save()
         # authenticated as moderator
         response = self.client.patch(
             self.url_price_product,
-            self.data,
+            {"currency": "USD"},
             headers={"Authorization": f"Bearer {self.user_session_2.token}"},
             content_type="application/json",
         )
@@ -867,9 +869,10 @@ class PriceUpdateApiTest(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_price_update_history(self):
+        self.assertEqual(Price.history.filter(id=self.price_product.id).count(), 1)
         response = self.client.patch(
             self.url_price_product,
-            self.data,
+            {"currency": "USD"},
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
             content_type="application/json",
         )
