@@ -296,14 +296,14 @@ class Price(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def get_or_create_product(self):
+    def set_product(self):
         if self.product_code:
             from open_prices.products.models import Product
 
             product, created = Product.objects.get_or_create(code=self.product_code)
             self.product = product
 
-    def get_or_create_location(self):
+    def set_location(self):
         if self.location_osm_id and self.location_osm_type:
             from open_prices.locations import constants as location_constants
             from open_prices.locations.models import Location
@@ -325,8 +325,8 @@ class Price(models.Model):
         self.normalize_product_code()
         self.full_clean()
         # self.set_proof()  # should already exist
-        self.get_or_create_product()
-        self.get_or_create_location()
+        self.set_product()
+        self.set_location()
         super().save(*args, **kwargs)
 
     def set_tag(self, tag: str, save: bool = True):
@@ -413,6 +413,10 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
             Location.objects.filter(id=instance.location_id).update(
                 price_count=F("price_count") + 1
             )
+    else:
+        # what about if we update the proof, product or location? (owner cannot be updated)
+        # the update_fields is often not set, so we cannot rely on it
+        pass
 
 
 @receiver(signals.post_save, sender=Price)
@@ -435,18 +439,18 @@ def price_pre_delete_update_price_tag(sender, instance, **kwargs):
 @receiver(signals.post_delete, sender=Price)
 def price_post_delete_decrement_counts(sender, instance, **kwargs):
     if instance.owner:
-        User.objects.filter(user_id=instance.owner).update(
+        User.objects.filter(user_id=instance.owner, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.proof_id:
-        Proof.objects.filter(id=instance.proof_id).update(
+        Proof.objects.filter(id=instance.proof_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.product_id:
-        Product.objects.filter(id=instance.product_id).update(
+        Product.objects.filter(id=instance.product_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.location_id:
-        Location.objects.filter(id=instance.location.id).update(
+        Location.objects.filter(id=instance.location_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )

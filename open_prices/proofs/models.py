@@ -358,6 +358,10 @@ def proof_post_create_increment_counts(sender, instance, created, **kwargs):
             Location.objects.filter(id=instance.location_id).update(
                 proof_count=F("proof_count") + 1
             )
+    else:
+        # what about if we update location? (owner cannot be updated)
+        # the update_fields is often not set, so we cannot rely on it
+        pass
 
 
 @receiver(signals.post_save, sender=Proof)
