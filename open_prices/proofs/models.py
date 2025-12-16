@@ -251,7 +251,7 @@ class Proof(models.Model):
     def save(self, *args, **kwargs):
         """
         - run validations
-        - get or create location
+        - set location (create if needed)
         """
         self.full_clean()
         self.set_location()

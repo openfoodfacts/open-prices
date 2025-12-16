@@ -127,6 +127,8 @@ class Price(models.Model):
     TYPE_PRODUCT_FIELDS = ["product_code"]
     TYPE_CATEGORY_FIELDS = ["category_tag", "labels_tags", "origins_tags"]
     UPDATE_FIELDS = [
+        "product_code",
+        # "product_name",
         "category_tag",
         "labels_tags",
         "origins_tags",
@@ -319,8 +321,8 @@ class Price(models.Model):
         """
         - normalize product_code
         - run validations
-        - get or create product
-        - get or create location
+        - set product (create if needed)
+        - set location (create if needed)
         """
         self.normalize_product_code()
         self.full_clean()
