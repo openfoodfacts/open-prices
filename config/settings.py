@@ -308,8 +308,8 @@ PRICE_TAG_EXTRACTION_ASYNC_REQUESTS = (
 # ------------------------------------------------------------------------------
 
 TRITON_URI = os.getenv("TRITON_URI", "localhost:5504")
+ENABLE_OCR = os.getenv("ENABLE_OCR") == "True"
 ENABLE_ML_PREDICTIONS = os.getenv("ENABLE_ML_PREDICTIONS") == "True"
-
 
 # Open Food Facts
 # ------------------------------------------------------------------------------

@@ -366,7 +366,7 @@ def proof_post_create_increment_counts(sender, instance, created, **kwargs):
 
 @receiver(signals.post_save, sender=Proof)
 def proof_post_save_run_ocr(sender, instance, created, **kwargs):
-    if not settings.TESTING:
+    if not settings.TESTING and settings.ENABLE_OCR:
         if created:
             async_task(
                 "open_prices.proofs.ml.ocr.fetch_and_save_ocr_data",
