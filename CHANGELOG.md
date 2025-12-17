@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.94.0](https://github.com/openfoodfacts/open-prices/compare/v1.93.0...v1.94.0) (2025-12-17)
+
+
+### Features
+
+* **Prices:** API: allow editing the product_code ([#1157](https://github.com/openfoodfacts/open-prices/issues/1157)) ([d2ae13c](https://github.com/openfoodfacts/open-prices/commit/d2ae13cee5252c1bb1f1144f1241240316a6f20c))
+* **Prices:** API: allow filtering by multiple product_code, product_id, proof_id & location_id ([#1156](https://github.com/openfoodfacts/open-prices/issues/1156)) ([f36d66f](https://github.com/openfoodfacts/open-prices/commit/f36d66fbe3361ef2661a331b768824946b7d755f))
+* **Proofs:** on create, increment location & user proof counts (and decrement on delete) ([#1158](https://github.com/openfoodfacts/open-prices/issues/1158)) ([9112127](https://github.com/openfoodfacts/open-prices/commit/911212764f17afa6f46945196e2ca1c41e4d349f))
+
+
+### Bug Fixes
+
+* **ML:** disable OCR extraction because we don't use it ([#1162](https://github.com/openfoodfacts/open-prices/issues/1162)) ([ed1dc0a](https://github.com/openfoodfacts/open-prices/commit/ed1dc0af3d0de7be6ac2c9af6bc8443405c6448d))
+
+
+### Technical
+
+* **API:** improve the Enum documentation (and avoid warnings) in the swagger ([#1155](https://github.com/openfoodfacts/open-prices/issues/1155)) ([e0b3f45](https://github.com/openfoodfacts/open-prices/commit/e0b3f450fe8ffda723f7080d051f37f30cf54e14))
+* fixes following the switch to ruff in [#1150](https://github.com/openfoodfacts/open-prices/issues/1150) ([#1153](https://github.com/openfoodfacts/open-prices/issues/1153)) ([d33a8a8](https://github.com/openfoodfacts/open-prices/commit/d33a8a8ce3ffe4b0ad4633405cb6b51d79f8da1e))
+* **Moderation:** API: group endpoints together (in the swagger) ([#1154](https://github.com/openfoodfacts/open-prices/issues/1154)) ([cacfeec](https://github.com/openfoodfacts/open-prices/commit/cacfeeca5bed528686ffd07f3770bcb5ddd03597))
+* **Prices:** Small cleanup of the price_count increment/decrement logic post save/delete ([#1159](https://github.com/openfoodfacts/open-prices/issues/1159)) ([aaa241b](https://github.com/openfoodfacts/open-prices/commit/aaa241b5d600ff5cbdde61565c58a1fda399b52d))
+* replace black, flake8 & isort with ruff ([#1150](https://github.com/openfoodfacts/open-prices/issues/1150)) ([79e90b9](https://github.com/openfoodfacts/open-prices/commit/79e90b91218436ffe8f4c5a19abd54a3b1d77d1a))
+
 ## [1.93.0](https://github.com/openfoodfacts/open-prices/compare/v1.92.1...v1.93.0) (2025-12-04)
 
 
