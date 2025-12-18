@@ -1,12 +1,12 @@
 import base64
 import json
 import logging
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 from django.conf import settings
-from google import genai
 from google.genai import types
+from google.oauth2 import service_account
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +22,10 @@ GEMINI_MODEL_NAME = "gemini"
 GEMINI_MODEL_VERSION = "gemini-2.5-flash"
 
 
-def check_google_credentials() -> None:
-    """Create Google Application Default Credentials (ADC) from variable if
-    doesn't exist.
+@cache
+def get_google_credentials() -> service_account.Credentials | None:
+    """Return Google Application Default Credentials (ADC) from file or
+    variable.
 
     See
     https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment#service-account
@@ -33,29 +34,27 @@ def check_google_credentials() -> None:
     credentials_path = Path(
         "~/.config/gcloud/application_default_credentials.json"
     ).expanduser()
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+
     if not credentials_path.is_file():
         if settings.GOOGLE_CREDENTIALS:
             logger.info(
                 "No google credentials found at %s. Creating credentials from GOOGLE_CREDENTIALS.",
                 credentials_path,
             )
-            credentials_path.parent.mkdir(parents=True, exist_ok=True)
-            credentials_base64 = settings.GOOGLE_CREDENTIALS
             credentials = json.loads(
-                base64.b64decode(credentials_base64).decode("utf-8")
+                base64.b64decode(settings.GOOGLE_CREDENTIALS).decode("utf-8")
             )
-            with open(credentials_path, "w") as f:
-                json.dump(credentials, f, indent=4)
+            return service_account.Credentials.from_service_account_info(
+                credentials, scopes=scopes
+            )
         else:
             logger.info(
                 "No google credentials found in environment variable GOOGLE_CREDENTIALS",
             )
-
-
-@lru_cache(maxsize=1)
-def get_genai_client() -> genai.Client:
-    check_google_credentials()
-    return genai.Client()
+            return None
+    else:
+        return service_account.Credentials.from_service_account_file(credentials_path)
 
 
 def get_generation_config(
