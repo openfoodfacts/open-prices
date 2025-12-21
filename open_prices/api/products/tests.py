@@ -153,6 +153,12 @@ class ProductDetailApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.product.id)
+        # existing product with normalization
+        ProductFactory(code="0123456789100")
+        url = reverse("api:products-get-by-code", args=["123456789100"])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["code"], "0123456789100")
 
 
 class ProductCreateApiTest(TestCase):
