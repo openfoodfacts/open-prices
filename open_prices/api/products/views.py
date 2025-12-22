@@ -1,5 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from openfoodfacts import Flavor
+from openfoodfacts.barcode import normalize_barcode
 from rest_framework import filters, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -38,6 +39,7 @@ class ProductViewSet(
 
     @action(detail=False, methods=["GET"], url_path=r"code/(?P<code>\d+)")
     def get_by_code(self, request: Request, code):
+        code = normalize_barcode(code)
         product = get_object_or_drf_404(Product, code=code)
         serializer = self.get_serializer(product)
         return Response(serializer.data)
