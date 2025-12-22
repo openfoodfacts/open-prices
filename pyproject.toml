@@ -2,49 +2,18 @@
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.ruff]
-target-version = "py311"
-line-length = 88
-
-[tool.ruff.lint]
-select = [
-    "B",    # flake8-bugbear
-    "UP",   # pyupgrade
-    "E",    # pycodestyle errors
-    "W",    # pycodestyle warnings
-    "F",    # pyflakes
-    "I",    # isort
-]
-
-
-ignore = [
-    "E501",  # line too long (handled by ruff)
-
-]
-
-exclude = [
-    ".git",
-    ".mypy_cache",
-    ".venv",
-]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-
-
 [tool.mypy]
 strict = true
 disable_error_code = ["no-untyped-call", "no-any-return"]
 python_version = "3.11"
 plugins = [
-    "pydantic.mypy"
+  "pydantic.mypy"
 ]
 
 [[tool.mypy.overrides]]
 module = [
-    "OSMPythonTools.nominatim",
-    "apscheduler.*"
+  "OSMPythonTools.nominatim",
+  "apscheduler.*"
 ]
 ignore_missing_imports = true
 warn_return_any = false
@@ -72,7 +41,7 @@ django-simple-history = "^3.10.1"
 django-solo = "^2.3.0"
 djangorestframework = "^3.16.1"
 drf-spectacular = "~0.29.0"
-google-genai = "~1.46.0"
+google-genai = "~1.56.0"
 gunicorn = "^23.0.0"
 ipython = "^9.6.0"
 openfoodfacts = {version = "~3.3.0", extras = ["ml", "redis"]}
@@ -103,3 +72,29 @@ pytest-cov = "^4.1.0"
 toml-sort = "^0.24.3"
 types-requests = "^2.32.4.20250913"
 types-tqdm = "^4.67.0.20250809"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = [
+  "B", # flake8-bugbear
+  "UP", # pyupgrade
+  "E", # pycodestyle errors
+  "W", # pycodestyle warnings
+  "F", # pyflakes
+  "I" # isort
+]
+ignore = [
+  "E501" # line too long (handled by ruff)
+]
+exclude = [
+  ".git",
+  ".mypy_cache",
+  ".venv"
+]

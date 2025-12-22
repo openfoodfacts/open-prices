@@ -298,6 +298,9 @@ GOOGLE_CLOUD_VISION_API_KEY = os.getenv("GOOGLE_CLOUD_VISION_API_KEY")
 # Google service account credentials. This is a base64-encoded version of the
 # JSON file
 GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")
+# The project to use on Google Cloud
+GOOGLE_PROJECT = os.getenv("GOOGLE_PROJECT", "robotoff")
+
 # If True, requests to the Vertex AI (or Gemini) API will be made
 # asynchronously using asyncio.
 PRICE_TAG_EXTRACTION_ASYNC_REQUESTS = (

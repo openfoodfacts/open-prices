@@ -1,6 +1,8 @@
 import json
 import logging
 
+from django.conf import settings
+from google import genai
 from openfoodfacts.types import JSONType
 from PIL import Image
 
@@ -46,15 +48,18 @@ def extract_from_receipt(image: Image.Image) -> JSONType | None:
         image.thumbnail((max_size, max_size))
 
     prompt = "Extract all relevant information, use empty strings for unknown values."
-    client = common_google.get_genai_client()
-    response = client.models.generate_content(
-        model=common_google.GEMINI_MODEL_VERSION,
-        contents=[
-            prompt,
-            image,
-        ],
-        config=common_google.get_generation_config(Receipt),
-    )
+    with genai.Client(
+        credentials=common_google.get_google_credentials(),
+        project=settings.GOOGLE_PROJECT,
+    ) as client:
+        response = client.models.generate_content(
+            model=common_google.GEMINI_MODEL_VERSION,
+            contents=[
+                prompt,
+                image,
+            ],
+            config=common_google.get_generation_config(Receipt),
+        )
     # Sometimes the response is not valid JSON, we try to parse it and return
     # None
     try:

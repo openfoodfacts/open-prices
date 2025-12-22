@@ -539,37 +539,39 @@ def extract_from_price_tag(
         tokens. 0 is DISABLED. -1 is AUTOMATIC.
     :return: the Gemini response
     """
-    client = common_google.get_genai_client()
     preprocessed_image = preprocess_price_tag(image)
 
-    response = client.models.generate_content(
-        model=common_google.GEMINI_MODEL_VERSION,
-        contents=[
-            EXTRACT_PRICE_TAG_PROMPT,
-            preprocessed_image,
-        ],
-        config=common_google.get_generation_config(
-            Label, thinking_budget=thinking_budget
-        ),
-    )
-    return response
+    with genai.Client(
+        credentials=common_google.get_google_credentials(),
+        project=settings.GOOGLE_PROJECT,
+    ) as client:
+        return client.models.generate_content(
+            model=common_google.GEMINI_MODEL_VERSION,
+            contents=[
+                EXTRACT_PRICE_TAG_PROMPT,
+                preprocessed_image,
+            ],
+            config=common_google.get_generation_config(
+                Label, thinking_budget=thinking_budget
+            ),
+        )
 
 
 async def extract_from_price_tag_async(
-    client: genai.Client, image: Image.Image, thinking_budget: int = -1
+    client: genai.client.AsyncClient, image: Image.Image, thinking_budget: int = -1
 ) -> common_google.types.GenerateContentResponse:
     """Asynchronous version of extract_from_price_tag.
 
     Image preprocessing (resizing to maximum size) must be done before calling
     this function.
 
-    :param client: the genai.Client instance to use for the request.
+    :param client: the AsyncClient instance to use for the request.
     :param image: the input Pillow image, already preprocessed.
     :param thinking_budget: the thinking budget for the Gemini model, in
         tokens. 0 is DISABLED. -1 is AUTOMATIC.
     :return: the Gemini response
     """
-    response = await client.aio.models.generate_content(
+    response = await client.models.generate_content(
         model=common_google.GEMINI_MODEL_VERSION,
         contents=[
             EXTRACT_PRICE_TAG_PROMPT,
@@ -594,18 +596,17 @@ async def extract_from_price_tag_batch(
         tokens. 0 is DISABLED. -1 is AUTOMATIC.
     :return: a list of Gemini responses, one for each image
     """
-    responses = []
-    # We get the uncached version of the client because otherwise
-    # the event loop configuration done during the client initialization
-    # leads to an exception when reusing the client in an async context
-    # (due to the event loop being closed)
-    client = common_google.get_genai_client.__wrapped__()
-    tasks = [
-        extract_from_price_tag_async(client, image, thinking_budget=thinking_budget)
-        for image in images
-    ]
-    responses = await asyncio.gather(*tasks)
-    return responses
+    async with genai.Client(
+        credentials=common_google.get_google_credentials(),
+        project=settings.GOOGLE_PROJECT,
+    ).aio as aclient:
+        tasks = [
+            extract_from_price_tag_async(
+                aclient, image, thinking_budget=thinking_budget
+            )
+            for image in images
+        ]
+        return await asyncio.gather(*tasks)
 
 
 # We use async_to_sync to make the function synchronous for compatibility
