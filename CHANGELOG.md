@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.94.1](https://github.com/openfoodfacts/open-prices/compare/v1.94.0...v1.94.1) (2025-12-22)
+
+
+### Bug Fixes
+
+* **ML:** close the genai.Client after using it ([#1163](https://github.com/openfoodfacts/open-prices/issues/1163)) ([1f6bbd9](https://github.com/openfoodfacts/open-prices/commit/1f6bbd9f84788600a0bbc522fa3c4bb71f378d2b))
+* **Products:** API: normalize code before fetching corresponding product ([#1164](https://github.com/openfoodfacts/open-prices/issues/1164)) ([c262f17](https://github.com/openfoodfacts/open-prices/commit/c262f1714e1b947374aebce185deac170c22f8a4))
+
 ## [1.94.0](https://github.com/openfoodfacts/open-prices/compare/v1.93.0...v1.94.0) (2025-12-17)
 
 
