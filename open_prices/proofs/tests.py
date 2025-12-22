@@ -47,6 +47,7 @@ from open_prices.proofs.ml.price_tags import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
     PRICE_TAG_DETECTOR_MODEL_VERSION,
     create_price_tags_from_proof_prediction,
+    extract_from_price_tag,
     run_and_save_price_tag_detection,
 )
 from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
@@ -1091,6 +1092,41 @@ class MLModelTest(TestCase):
         self.assertEqual(price_tag_1.created_by, None)
         self.assertEqual(price_tag_1.updated_by, None)
         self.assertEqual(price_tag_1.model_version, PRICE_TAG_DETECTOR_MODEL_VERSION)
+
+    def test_extract_from_price_tag(self):
+        with unittest.mock.patch(
+            "open_prices.proofs.ml.price_tags.genai",
+        ) as mock_genai:
+            extract_from_price_tag(self.image)
+            mock_calls = mock_genai.Client.mock_calls
+            # 4 calls:
+            # - instantiate the Client
+            # - enter the context manager context
+            # - call client.models.generate_content
+            # - exit the context manager context
+            self.assertEqual(len(mock_calls), 4)
+            client_creation_kwargs = mock_calls[0].kwargs
+            self.assertEqual(
+                set(client_creation_kwargs.keys()), {"credentials", "project"}
+            )
+            self.assertEqual(client_creation_kwargs["project"], "robotoff")
+
+            generate_content_kwargs = mock_calls[2].kwargs
+            self.assertEqual(
+                set(generate_content_kwargs.keys()), {"model", "contents", "config"}
+            )
+            self.assertEqual(generate_content_kwargs["model"], "gemini-3-flash-preview")
+            self.assertListEqual(
+                generate_content_kwargs["contents"],
+                [
+                    "Here is one picture containing a price label, extract information from it. If you cannot decode an attribute, set it to an empty string.",
+                    self.image,
+                ],
+            )
+            self.assertEqual(
+                generate_content_kwargs["config"].thinking_config.thinking_level.name,
+                "MINIMAL",
+            )
 
 
 class TestSelectProofImageDir(TestCase):
