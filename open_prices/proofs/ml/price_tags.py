@@ -504,6 +504,9 @@ class LabelWithSimilarBarcodes(Label):
     are sorted by increasing Levenshtein distance.
     """
 
+    raw_barcode: str = Field(
+        ..., description="The raw extracted barcode, before normalization."
+    )
     similar_barcodes: list[BarcodeSimilarityMatch] = Field(
         [],
         description="A list of suggested barcodes for the product, if any. "
@@ -683,7 +686,7 @@ def run_and_save_price_tag_extraction(
         # 1) fix barcode with some custom rules
         # 2) if the barcode is still unknown, generate similar barcodes
         barcode = response.parsed.barcode
-        barcode_raw = barcode
+        raw_barcode = barcode
         similar_barcodes = []
         # 1) barcode fix
         if barcode:
@@ -712,9 +715,10 @@ def run_and_save_price_tag_extraction(
                 # Check that barcode is valid (correct check digit)
                 if common_openfoodfacts.barcode_is_valid(p.code)
             ]
+
         data = LabelWithSimilarBarcodes(
-            **dict(response.parsed),
-            barcode_raw=barcode_raw,
+            **{**dict(response.parsed), "barcode": barcode},  # merge any barcode fix
+            raw_barcode=raw_barcode,
             similar_barcodes=similar_barcodes,
         )
         try:
