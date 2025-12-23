@@ -504,7 +504,7 @@ class LabelWithSimilarBarcodes(Label):
     are sorted by increasing Levenshtein distance.
     """
 
-    barcode_raw: str = Field(
+    raw_barcode: str = Field(
         ..., description="The raw extracted barcode, before normalization."
     )
     similar_barcodes: list[BarcodeSimilarityMatch] = Field(
@@ -702,7 +702,7 @@ def run_and_save_price_tag_extraction(
         # 1) fix barcode with some custom rules
         # 2) if the barcode is still unknown, generate similar barcodes
         barcode = response.parsed.barcode
-        barcode_raw = barcode
+        raw_barcode = barcode
         similar_barcodes = []
         # 1) barcode fix
         if barcode:
@@ -734,7 +734,7 @@ def run_and_save_price_tag_extraction(
 
         data = LabelWithSimilarBarcodes(
             **{**dict(response.parsed), "barcode": barcode},  # merge any barcode fix
-            barcode_raw=barcode_raw,
+            raw_barcode=raw_barcode,
             similar_barcodes=similar_barcodes,
         )
         try:
