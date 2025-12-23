@@ -19,7 +19,7 @@ GOOGLE_CLOUD_VISION_OCR_FEATURES = [
     "FACE_DETECTION",
 ]
 GEMINI_MODEL_NAME = "gemini"
-GEMINI_MODEL_VERSION = "gemini-2.5-flash"
+GEMINI_MODEL_VERSION = "gemini-3-flash-preview"
 
 
 @cache
@@ -58,20 +58,27 @@ def get_google_credentials() -> service_account.Credentials | None:
 
 
 def get_generation_config(
-    response_schema: type, thinking_budget: int = -1
+    response_schema: type,
+    thinking_budget: int | None = None,
+    thinking_level: str | None = None,
 ) -> types.GenerateContentConfig:
     """Return a generation configuration for the Gemini model.
+
+    For more information on thinking configurations for Gemini models, see
+    https://ai.google.dev/gemini-api/docs/thinking
 
     :param response_schema: The schema for the response. It can be a Pydantic
         model or a TypeDict.
     :param thinking_budget: The budget for the thinking process, in tokens.
-        0 is DISABLED. -1 is AUTOMATIC.
+    :param thinking_level: The level of thinking to include in the response.
     """
     return types.GenerateContentConfig(
         response_mime_type="application/json",
         response_schema=response_schema,
         thinking_config=types.ThinkingConfig(
-            thinking_budget=thinking_budget, include_thoughts=True
+            thinking_budget=thinking_budget,
+            thinking_level=thinking_level,
+            include_thoughts=True,
         ),
     )
 

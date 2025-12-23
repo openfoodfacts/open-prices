@@ -529,14 +529,12 @@ EXTRACT_PRICE_TAG_PROMPT = (
 
 
 def extract_from_price_tag(
-    image: Image.Image, thinking_budget: int = -1
+    image: Image.Image,
 ) -> common_google.types.GenerateContentResponse:
     """Extract price tag information from an image.
 
     :param image: the input Pillow image. Image preprocessing is done
         automatically to resize the image if it is too large.
-    :param thinking_budget: the thinking budget for the Gemini model, in
-        tokens. 0 is DISABLED. -1 is AUTOMATIC.
     :return: the Gemini response
     """
     preprocessed_image = preprocess_price_tag(image)
@@ -551,14 +549,12 @@ def extract_from_price_tag(
                 EXTRACT_PRICE_TAG_PROMPT,
                 preprocessed_image,
             ],
-            config=common_google.get_generation_config(
-                Label, thinking_budget=thinking_budget
-            ),
+            config=common_google.get_generation_config(Label, thinking_level="minimal"),
         )
 
 
 async def extract_from_price_tag_async(
-    client: genai.client.AsyncClient, image: Image.Image, thinking_budget: int = -1
+    client: genai.client.AsyncClient, image: Image.Image
 ) -> common_google.types.GenerateContentResponse:
     """Asynchronous version of extract_from_price_tag.
 
@@ -567,8 +563,6 @@ async def extract_from_price_tag_async(
 
     :param client: the AsyncClient instance to use for the request.
     :param image: the input Pillow image, already preprocessed.
-    :param thinking_budget: the thinking budget for the Gemini model, in
-        tokens. 0 is DISABLED. -1 is AUTOMATIC.
     :return: the Gemini response
     """
     response = await client.models.generate_content(
@@ -577,35 +571,26 @@ async def extract_from_price_tag_async(
             EXTRACT_PRICE_TAG_PROMPT,
             image,
         ],
-        config=common_google.get_generation_config(
-            Label, thinking_budget=thinking_budget
-        ),
+        config=common_google.get_generation_config(Label, thinking_level="minimal"),
     )
     return response
 
 
 async def extract_from_price_tag_batch(
-    images: list[Image.Image], thinking_budget: int = -1
+    images: list[Image.Image],
 ) -> list[common_google.types.GenerateContentResponse]:
     """Extract price tag information from a batch of images.
 
     This function processes multiple images in parallel using asyncio.
 
     :param images: a list of Pillow images, already preprocessed (resized).
-    :param thinking_budget: the thinking budget for the Gemini model, in
-        tokens. 0 is DISABLED. -1 is AUTOMATIC.
     :return: a list of Gemini responses, one for each image
     """
     async with genai.Client(
         credentials=common_google.get_google_credentials(),
         project=settings.GOOGLE_PROJECT,
     ).aio as aclient:
-        tasks = [
-            extract_from_price_tag_async(
-                aclient, image, thinking_budget=thinking_budget
-            )
-            for image in images
-        ]
+        tasks = [extract_from_price_tag_async(aclient, image) for image in images]
         return await asyncio.gather(*tasks)
 
 
@@ -682,9 +667,7 @@ def run_and_save_price_tag_extraction(
     if settings.PRICE_TAG_EXTRACTION_ASYNC_REQUESTS:
         # We send requests to Gemini in parallel using asyncio
         # to speed up the extraction process.
-        responses = sync_extract_from_price_tag_batch(
-            preprocessed_images, thinking_budget=-1
-        )
+        responses = sync_extract_from_price_tag_batch(preprocessed_images)
     else:
         responses = [extract_from_price_tag(image) for image in preprocessed_images]
     for price_tag, response in zip(price_tags, responses, strict=False):

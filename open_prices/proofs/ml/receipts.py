@@ -58,7 +58,9 @@ def extract_from_receipt(image: Image.Image) -> JSONType | None:
                 prompt,
                 image,
             ],
-            config=common_google.get_generation_config(Receipt),
+            config=common_google.get_generation_config(
+                Receipt, thinking_level="minimal"
+            ),
         )
     # Sometimes the response is not valid JSON, we try to parse it and return
     # None
