@@ -1,6 +1,7 @@
 import django_filters
 
 from open_prices.common import constants
+from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
 
@@ -17,6 +18,10 @@ class ProofFilter(django_filters.FilterSet):
     kind = django_filters.ChoiceFilter(
         choices=constants.KIND_CHOICES,
         method="filter_kind",
+    )
+    location__type = django_filters.ChoiceFilter(
+        field_name="location__type",
+        choices=location_constants.TYPE_CHOICES,
     )
     tags__contains = django_filters.CharFilter(field_name="tags", lookup_expr="any")
 
