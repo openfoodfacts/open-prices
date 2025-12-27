@@ -19,7 +19,9 @@ GOOGLE_CLOUD_VISION_OCR_FEATURES = [
     "FACE_DETECTION",
 ]
 GEMINI_MODEL_NAME = "gemini"
-GEMINI_MODEL_VERSION = "gemini-3-flash-preview"
+GEMINI_MODEL_VERSION = "gemini-3-flash-preview"  # used since 2025-12-27
+# GEMINI_MODEL_VERSION = "gemini-2.5-flash"  # used from 2025-07-23 to 2025-12-27
+# GEMINI_MODEL_VERSION = "gemini-1.5-flash"  # used from 2024-12-18 to 2025-07-23
 
 
 @cache
