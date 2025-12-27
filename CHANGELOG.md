@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.95.0](https://github.com/openfoodfacts/open-prices/compare/v1.94.1...v1.95.0) (2025-12-27)
+
+
+### Features
+
+* **ml:** upgrade to gemini-3-flash-preview ([#1169](https://github.com/openfoodfacts/open-prices/issues/1169)) ([bcc35ed](https://github.com/openfoodfacts/open-prices/commit/bcc35ed9932d9bf24b084d58acddd382e6a32589))
+* **Prices:** API: New filter by location__type & product__source ([#1176](https://github.com/openfoodfacts/open-prices/issues/1176)) ([7419592](https://github.com/openfoodfacts/open-prices/commit/741959260d485aa5ec5e632d42bd2d17b3158a0f))
+* **Proofs:** API: new filters by location (osm_id, osm_type, exact, in, type) ([#1175](https://github.com/openfoodfacts/open-prices/issues/1175)) ([07058ee](https://github.com/openfoodfacts/open-prices/commit/07058ee40df267251d2934e8977689f72c85a601))
+
+
+### Bug Fixes
+
+* **PriceTag:** actually store barcode normalization (post-ML) ([#1165](https://github.com/openfoodfacts/open-prices/issues/1165)) ([1cd29b3](https://github.com/openfoodfacts/open-prices/commit/1cd29b3b0135a3422cbe9592f3757ae46aa86c55))
+
+
+### Technical
+
+* **ML:** document previous GenAI model versions ([#1177](https://github.com/openfoodfacts/open-prices/issues/1177)) ([6adbc21](https://github.com/openfoodfacts/open-prices/commit/6adbc2124513cf98f0346365e575a63f74d380c0))
+* **ml:** fix .env configuration ([#1171](https://github.com/openfoodfacts/open-prices/issues/1171)) ([aadd105](https://github.com/openfoodfacts/open-prices/commit/aadd105a1bf62241c3186b831e3e601be79ca6b0))
+* **Proofs:** API: simplify filter definition. Add tests ([#1174](https://github.com/openfoodfacts/open-prices/issues/1174)) ([77003ca](https://github.com/openfoodfacts/open-prices/commit/77003ca448ccc4a12c1a8f8faf046f382f51ee1b))
+
 ## [1.94.1](https://github.com/openfoodfacts/open-prices/compare/v1.94.0...v1.94.1) (2025-12-22)
 
 
