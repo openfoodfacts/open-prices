@@ -194,6 +194,7 @@ class Proof(models.Model):
     owner_consumption = models.BooleanField(blank=True, null=True)
     owner_comment = models.TextField(blank=True, null=True)
 
+    # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)
     prediction_count = models.PositiveIntegerField(default=0)
 

@@ -41,7 +41,7 @@ LOCATION_OSM_NODE_6509705997 = {
 PROOF_RECEIPT = {
     "type": proof_constants.TYPE_RECEIPT,
     "currency": "EUR",
-    "date": "2024-01-01",
+    "date": "2024-06-30",
     "location_osm_id": LOCATION_OSM_NODE_652825274["osm_id"],
     "location_osm_type": LOCATION_OSM_NODE_652825274["osm_type"],
     "receipt_price_count": 5,
@@ -124,13 +124,22 @@ class ProofListFilterApiTest(TestCase):
         cls.image_md5_hash = "d41d8cd98f00b204e9800998ecf8427e"
         cls.proof = ProofFactory(
             **PROOF_RECEIPT,
+            # currency="EUR",
+            # date="2024-01-01",
             price_count=15,
             owner=cls.user_session.user.user_id,
             image_md5_hash=cls.image_md5_hash,
         )
-        ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
+            currency="USD",
+            date="2025-01-01",
+            price_count=0,
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            currency="EUR",
+            date="2025-01-01",
             price_count=50,
             owner=cls.user_session.user.user_id,
             tags=["challenge-1"],
@@ -158,21 +167,6 @@ class ProofListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
 
-    def test_proof_list_filter_by_owner(self):
-        self.assertEqual(Proof.objects.count(), 3)
-        url = self.url + f"?owner={self.user_session.user.user_id}"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
-        self.assertEqual(response.data["items"][0]["price_count"], 15)
-
-    def test_proof_list_filter_by_tags(self):
-        self.assertEqual(Proof.objects.count(), 3)
-        # tags
-        url = self.url + "?tags__contains=challenge-1"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["tags"], ["challenge-1"])
-
     def test_proof_filter_filter_by_image_md5_hash(self):
         response = self.client.get(
             self.url, data={"image_md5_hash": self.image_md5_hash}
@@ -192,6 +186,60 @@ class ProofListFilterApiTest(TestCase):
         self.assertEqual(
             response.data, {"items": [], "page": 1, "pages": 1, "size": 10, "total": 0}
         )
+
+    def test_proof_list_filter_by_date(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        # exact date
+        url = self.url + "?date=2024-06-30"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # lte / gte
+        url = self.url + "?date__gte=2024-06-01&date__lte=2024-06-30"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # month
+        url = self.url + "?date__month=6"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # year
+        url = self.url + "?date__year=2024"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_proof_list_filter_by_currency(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        url = self.url + "?currency=EUR"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?currency=USD"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_proof_list_filter_by_tags(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        # tags
+        url = self.url + "?tags__contains=challenge-1"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["tags"], ["challenge-1"])
+
+    def test_proof_list_filter_by_owner(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        url = self.url + f"?owner={self.user_session.user.user_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["items"][0]["price_count"], 15)
+
+    def test_proof_list_filter_by_created(self):
+        # created__gte
+        self.assertEqual(Proof.objects.count(), 3)
+        url = self.url + "?created__gte=2024-01-01T00:00:00Z"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        # created__lte
+        url = self.url + "?created__lte=2024-01-01T00:00:00Z"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
 
 class ProofDetailApiTest(TestCase):

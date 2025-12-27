@@ -226,6 +226,27 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 5)
 
+    def test_price_list_filter_by_type(self):
+        self.assertEqual(Price.objects.count(), 5)
+        # type=PRODUCT
+        url = self.url + f"?type={price_constants.TYPE_PRODUCT}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # type=CATEGORY
+        url = self.url + f"?type={price_constants.TYPE_CATEGORY}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+
+    def test_price_list_filter_by_kind(self):
+        self.assertEqual(Price.objects.count(), 5)
+        # kind
+        url = self.url + "?kind=CONSUMPTION"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?kind=COMMUNITY"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 4)
+
     def test_price_list_filter_by_product(self):
         self.assertEqual(Price.objects.count(), 5)
         # product_code
@@ -423,16 +444,6 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1 + 1)
 
-    def test_price_list_filter_by_kind(self):
-        self.assertEqual(Price.objects.count(), 5)
-        # kind
-        url = self.url + "?kind=CONSUMPTION"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
-        url = self.url + "?kind=COMMUNITY"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 4)
-
     def test_price_list_filter_by_date(self):
         self.assertEqual(Price.objects.count(), 5)
         # exact date
@@ -459,10 +470,12 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_created(self):
+        # created__gte
         self.assertEqual(Price.objects.count(), 5)
         url = self.url + "?created__gte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 5)
+        # created__lte
         url = self.url + "?created__lte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)
