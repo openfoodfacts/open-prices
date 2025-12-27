@@ -51,6 +51,7 @@ PRODUCT_8001505005707 = {
     "labels_tags": ["en:no-gluten", "en:organic"],
     "brands_tags": ["rigoni-di-asiago"],
     "price_count": 15,
+    "source": "off",
 }
 
 PRODUCT_8850187002197 = {
@@ -293,6 +294,10 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?product_id__isnull=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
+        # product__source
+        url = self.url + "?product__source=off"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
         # category_tag
         url = self.url + "?category_tag=apples"
         response = self.client.get(url)
@@ -404,6 +409,10 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?location_id__isnull=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1 + 1)
+        # location__type
+        url = self.url + f"?location__type={location_constants.TYPE_ONLINE}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_proof(self):
         self.assertEqual(Price.objects.count(), 5)

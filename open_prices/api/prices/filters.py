@@ -1,7 +1,9 @@
 import django_filters
 
 from open_prices.common import constants
+from open_prices.locations import constants as location_constants
 from open_prices.prices.models import Price
+from open_prices.products import constants as product_constants
 from open_prices.proofs import constants as proof_constants
 
 
@@ -10,6 +12,14 @@ class PriceFilter(django_filters.FilterSet):
     PriceViewSet GET queryset has select_related on product, location, proof
     """
 
+    kind = django_filters.ChoiceFilter(
+        choices=constants.KIND_CHOICES,
+        method="filter_kind",
+    )
+    product__source = django_filters.ChoiceFilter(
+        field_name="product__source",
+        choices=product_constants.SOURCE_CHOICES,
+    )
     product__categories_tags__contains = django_filters.CharFilter(
         field_name="product__categories_tags",
         lookup_expr="any",
@@ -26,13 +36,13 @@ class PriceFilter(django_filters.FilterSet):
         field_name="origins_tags",
         lookup_expr="icontains",
     )
+    location__type = django_filters.ChoiceFilter(
+        field_name="location__type",
+        choices=location_constants.TYPE_CHOICES,
+    )
     proof__type = django_filters.MultipleChoiceFilter(
         field_name="proof__type",
         choices=proof_constants.TYPE_CHOICES,
-    )
-    kind = django_filters.ChoiceFilter(
-        choices=constants.KIND_CHOICES,
-        method="filter_kind",
     )
     tags__contains = django_filters.CharFilter(
         field_name="tags",
