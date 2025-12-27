@@ -121,9 +121,12 @@ class ProofListFilterApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:proofs-list")
         cls.user_session = SessionFactory()
+        cls.location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         cls.image_md5_hash = "d41d8cd98f00b204e9800998ecf8427e"
         cls.proof = ProofFactory(
             **PROOF_RECEIPT,
+            # location_id=cls.location_osm.id,
             # currency="EUR",
             # date="2024-01-01",
             price_count=15,
@@ -132,12 +135,14 @@ class ProofListFilterApiTest(TestCase):
         )
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
+            location_id=cls.location_online.id,
             currency="USD",
             date="2025-01-01",
             price_count=0,
         )
         ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
+            location=None,
             currency="EUR",
             date="2025-01-01",
             price_count=50,
@@ -186,6 +191,35 @@ class ProofListFilterApiTest(TestCase):
         self.assertEqual(
             response.data, {"items": [], "page": 1, "pages": 1, "size": 10, "total": 0}
         )
+
+    def test_proof_list_filter_by_location(self):
+        self.assertEqual(Proof.objects.count(), 3)
+        # location_osm_id
+        url = self.url + f"?location_osm_id={LOCATION_OSM_NODE_652825274['osm_id']}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # location_osm_type
+        url = self.url + f"?location_osm_type={LOCATION_OSM_NODE_652825274['osm_type']}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # location_id
+        url = self.url + f"?location_id={self.location_online.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # location_id__in
+        url = (
+            self.url
+            + f"?location_id__in={self.location_osm.id},{self.location_online.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 1)
+        # location_id__isnull
+        url = self.url + "?location_id__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?location_id__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 1)
 
     def test_proof_list_filter_by_date(self):
         self.assertEqual(Proof.objects.count(), 3)
