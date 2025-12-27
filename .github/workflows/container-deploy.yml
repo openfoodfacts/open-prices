@@ -148,9 +148,9 @@ jobs:
           echo "OFF_DEFAULT_PASSWORD=${{ secrets.OFF_DEFAULT_PASSWORD }}" >> .env
           echo "GOOGLE_CLOUD_VISION_API_KEY=${{ secrets.GOOGLE_CLOUD_VISION_API_KEY }}" >> .env
           echo "GOOGLE_GENAI_USE_VERTEXAI=true" >> .env
-          echo "GOOGLE_CLOUD_LOCATION=europe-west1" >> .env
+          echo "GOOGLE_CLOUD_LOCATION=global" >> .env
           echo "GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}" >> .env
-          echo "PRICE_TAG_EXTRACTION_ASYNC_REQUESTS=False" >> .env
+          echo "PRICE_TAG_EXTRACTION_ASYNC_REQUESTS=True" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
           # Disable OCR temporarily, as we have no use of it
           echo "ENABLE_OCR=False" >> .env
