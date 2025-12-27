@@ -220,6 +220,10 @@ class ProofListFilterApiTest(TestCase):
         url = self.url + "?location_id__isnull=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1 + 1)
+        # location__type
+        url = self.url + f"?location__type={location_constants.TYPE_ONLINE}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_proof_list_filter_by_date(self):
         self.assertEqual(Proof.objects.count(), 3)
