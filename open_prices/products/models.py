@@ -104,6 +104,7 @@ class Product(models.Model):
     nova_group = models.PositiveIntegerField(blank=True, null=True)
     unique_scans_n = models.PositiveIntegerField(default=0, blank=True, null=True)
 
+    # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)
     price_currency_count = models.PositiveIntegerField(default=0)
     location_count = models.PositiveIntegerField(default=0)

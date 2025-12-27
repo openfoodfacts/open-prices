@@ -80,6 +80,7 @@ class Location(models.Model):
     # type ONLINE
     website_url = models.URLField(blank=True, null=True)
 
+    # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)
     user_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)

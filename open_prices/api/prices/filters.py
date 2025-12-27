@@ -6,6 +6,10 @@ from open_prices.proofs import constants as proof_constants
 
 
 class PriceFilter(django_filters.FilterSet):
+    """
+    PriceViewSet GET queryset has select_related on product, location, proof
+    """
+
     product__categories_tags__contains = django_filters.CharFilter(
         field_name="product__categories_tags",
         lookup_expr="any",

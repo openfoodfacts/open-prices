@@ -6,6 +6,10 @@ from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
 
 
 class ProofFilter(django_filters.FilterSet):
+    """
+    ProofViewSet GET queryset has select_related on location
+    """
+
     type = django_filters.MultipleChoiceFilter(
         field_name="type",
         choices=proof_constants.TYPE_CHOICES,
@@ -14,34 +18,7 @@ class ProofFilter(django_filters.FilterSet):
         choices=constants.KIND_CHOICES,
         method="filter_kind",
     )
-    location_id__isnull = django_filters.BooleanFilter(
-        field_name="location_id", lookup_expr="isnull"
-    )
-    date__gt = django_filters.DateFilter(field_name="date", lookup_expr="gt")
-    date__gte = django_filters.DateFilter(field_name="date", lookup_expr="gte")
-    date__lt = django_filters.DateFilter(field_name="date", lookup_expr="lt")
-    date__lte = django_filters.DateFilter(field_name="date", lookup_expr="lte")
-    date__year = django_filters.NumberFilter(field_name="date", lookup_expr="year")
-    date__month = django_filters.NumberFilter(field_name="date", lookup_expr="month")
-    price_count__gte = django_filters.NumberFilter(
-        field_name="price_count", lookup_expr="gte"
-    )
-    price_count__lte = django_filters.NumberFilter(
-        field_name="price_count", lookup_expr="lte"
-    )
-    prediction_count__gte = django_filters.NumberFilter(
-        field_name="prediction_count", lookup_expr="gte"
-    )
-    prediction_count__lte = django_filters.NumberFilter(
-        field_name="price_count", lookup_expr="lte"
-    )
     tags__contains = django_filters.CharFilter(field_name="tags", lookup_expr="any")
-    created__gte = django_filters.DateTimeFilter(
-        field_name="created", lookup_expr="gte"
-    )
-    created__lte = django_filters.DateTimeFilter(
-        field_name="created", lookup_expr="lte"
-    )
 
     def filter_kind(self, queryset, name, value):
         if value == constants.KIND_COMMUNITY:
@@ -52,18 +29,19 @@ class ProofFilter(django_filters.FilterSet):
 
     class Meta:
         model = Proof
-        fields = [
-            "image_md5_hash",
-            "location_osm_id",
-            "location_osm_type",
-            "location_id",
-            "currency",
-            "date",
-            "owner",
-            "ready_for_price_tag_validation",
-            "price_count",
-            "prediction_count",
-        ]
+        fields = {
+            "image_md5_hash": ["exact"],
+            "location_osm_id": ["exact"],
+            "location_osm_type": ["exact"],
+            "location_id": ["exact", "in", "isnull"],
+            "date": ["exact", "gt", "gte", "lt", "lte", "year", "month"],
+            "currency": ["exact"],
+            "ready_for_price_tag_validation": ["exact"],
+            "price_count": ["exact", "gte", "lte"],
+            "prediction_count": ["exact", "gte", "lte"],
+            "owner": ["exact"],
+            "created": ["gte", "lte"],
+        }
 
 
 class PriceTagFilter(django_filters.FilterSet):

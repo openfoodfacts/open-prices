@@ -52,6 +52,7 @@ class User(models.Model):
 
     is_moderator = models.BooleanField(default=False)
 
+    # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)
     price_type_product_count = models.PositiveIntegerField(default=0)
     price_type_category_count = models.PositiveIntegerField(default=0)
