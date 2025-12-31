@@ -2,8 +2,8 @@
   "shop_name": "Coop 14",
   "shop_address": "70 boulevard Jourdan 75014 Paris",
   "shop_website": "https://coop14.fr",
-  "shop_osm_id": "8138785201",
-  "shop_osm_type": "NODE",
+  "shop_location_osm_id": "8138785201",
+  "shop_location_osm_type": "NODE",
   "shop_currency": "EUR",
   "shop_username": "coop14-paris14",
   "fields": [

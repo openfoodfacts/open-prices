@@ -56,9 +56,14 @@ def shop_filter_rules(shop_price_list, shop_mapping_filters):
     return shop_price_list_filtered
 
 
-def map_shop_price_list_to_open_prices(shop_price_list, shop_mapping_fields):
+def map_shop_price_list_to_open_prices(
+    shop_price_list, shop_mapping, shop_mapping_fields
+):
     """
     Map a price list from Shop format to Open Prices format
+    - some fields are fetched from shop_mapping: currency, location_osm_id, location_osm_type
+    - some fields are expected from shop_mapping_fields: product_name, product_code, price
+    - some fields are set from env: date, proof_id
     """
     open_prices_price_list = list()
 
@@ -131,7 +136,7 @@ if __name__ == "__main__":
     How-to run: see README.md
     Required params: see REQUIRED_ENV_PARAMS
     """
-    print("===== Step 1.1/5: Checking env params")
+    print("===== Step 1/7: Checking env params")
     for env_param in REQUIRED_ENV_PARAMS:
         if not os.environ.get(env_param):
             sys.exit(f"Error: missing {env_param} env")
@@ -141,43 +146,43 @@ if __name__ == "__main__":
     print("All good :)")
 
     filepath = os.environ.get("FILEPATH")
-    print(f"===== Step 1.2/5: Reading {filepath}")
+    print(f"===== Step 2/7: Reading {filepath}")
     if os.environ.get("DELIMITER"):
         shop_price_list = read_csv(filepath, delimiter=os.environ.get("DELIMITER"))
     else:
         shop_price_list = read_csv(filepath)
     print(len(shop_price_list))
 
-    print("Input example:")
+    print(">>>>> Input example:")
     print(shop_price_list[0])
 
     shop_mapping_filepath = os.environ.get("MAPPING_FILEPATH")
-    print(f"===== Step 1.3/5: Reading {shop_mapping_filepath}")
+    print(f"===== Step 3/7: Reading {shop_mapping_filepath}")
     shop_mapping = read_json(shop_mapping_filepath)
     shop_mapping_fields = shop_mapping.get("fields", [])
     shop_mapping_filters = shop_mapping.get("filters", [])
     print(f"Found {len(shop_mapping_fields)} field mappings")
     print(f"Found {len(shop_mapping_filters)} shop filters")
 
-    print("===== Step 2/5: Applying shop filtering rules")
+    print("===== Step 4/7: Applying shop filtering rules")
     shop_price_list_filtered = shop_filter_rules(shop_price_list, shop_mapping_filters)
     print(len(shop_price_list_filtered))
 
-    print("===== Step 3/5: Mapping source file to Open Prices format")
+    print("===== Step 5/7: Mapping source file to Open Prices format")
     open_prices_price_list = map_shop_price_list_to_open_prices(
-        shop_price_list_filtered, shop_mapping_fields
+        shop_price_list_filtered, shop_mapping, shop_mapping_fields
     )
     print(len(open_prices_price_list))
 
-    print("===== Step 4/5: Applying open_prices filtering rules")
+    print("===== Step 6/7: Applying open_prices filtering rules")
     open_prices_price_list_filtered = open_prices_filter_rules(open_prices_price_list)
     print(len(open_prices_price_list_filtered))
 
-    print("Output example (extra fields will be ignored)")
+    print(">>>>> Output example (extra fields will be ignored)")
     print(open_prices_price_list_filtered[0])
 
     if os.environ.get("DRY_RUN") == "False":
-        print(f"===== Step 5/5: Uploading data to {os.environ.get('API_ENDPOINT')}")
+        print(f"===== Step 7/7: Uploading data to {os.environ.get('API_ENDPOINT')}")
         progress = 0
         for _index, price in enumerate(open_prices_price_list_filtered):
             create_price(
@@ -191,5 +196,5 @@ if __name__ == "__main__":
                 print(f"{progress}/{len(open_prices_price_list_filtered)}...")
     else:
         sys.exit(
-            "===== Step 5/5: No prices uploaded (DRY_RUN env missing or set to 'True')"
+            "===== Step 7/7: No prices uploaded (DRY_RUN env missing or set to 'True')"
         )
