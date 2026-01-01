@@ -37,7 +37,8 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
 ]
 
-THIRD_PARTY_APPS = [ 
+THIRD_PARTY_APPS = [
+    "corsheaders",  # django-cors-headers
     "rest_framework",  # djangorestframework
     "django_filters",  # django-filter
     "drf_spectacular",  # drf-spectacular
@@ -47,14 +48,6 @@ THIRD_PARTY_APPS = [
     # "debug_toolbar",  # django-debug-toolbar (see below)
     "django_extensions",  # django-extensions
 ]
-
-# Optional Dependancy: django-cors-headers
-try:
-   import corsheaders #noqa F401
-except ImportError:
- pass
-else:
-  THIRD_PARTY_APPS.append("corsheaders") 
 
 LOCAL_APPS = [
     "open_prices.common",
@@ -75,6 +68,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -82,15 +76,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",  # django-simple-history
 ]
-
-# Optional middleware: django-cors-headers
-try:
-  import corsheaders #noqa F301
-except ImportError:
-   pass
-else:
-  MIDDLEWARE.insert(0,"corsheaders.middlewaare.CorsMiddle")
-
 
 APPEND_SLASH = False
 
@@ -262,16 +247,10 @@ Q_CLUSTER = {
 # ------------------------------------------------------------------------------
 
 if not DEBUG:
-    try:
-      import sentry_sdk
-      from sentry_sdk.integrations.django import DjangoIntegration
-    except ImportError:
-      sentry_sdk = None
-      DjangoIntegration = None
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
 
-    
-    if sentry_sdk:
-     sentry_sdk.init(
+    sentry_sdk.init(
         dsn=os.getenv("SENTRY_DSN"),
         integrations=[DjangoIntegration()],
         environment=os.getenv("ENVIRONMENT"),
@@ -280,7 +259,7 @@ if not DEBUG:
         # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.  # noqa
         # We recommend adjusting this value in production.
         # profiles_sample_rate=1.0,
-     )
+    )
 
 
 # Django Debug Toolbar
