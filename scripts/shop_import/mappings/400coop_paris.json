@@ -2,8 +2,8 @@
   "shop_name": "Les 400 Coop",
   "shop_address": "65 boulevard de Charonne 75011 Paris",
   "shop_website": "https://les400coop.fr",
-  "shop_osm_id": "6015254442",
-  "shop_osm_type": "NODE",
+  "shop_location_osm_id": "6015254442",
+  "shop_location_osm_type": "NODE",
   "shop_currency": "EUR",
   "shop_username": "400coop-paris11",
   "fields": [
