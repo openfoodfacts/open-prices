@@ -163,6 +163,7 @@ jobs:
           echo "REDIS_PORT=${{ env.REDIS_PORT }}" >> .env
           echo "REDIS_PRODUCT_UPDATES_STREAM_NAME=product_updates" >> .env
           echo "ENABLE_REDIS_UPDATES=True" >> .env
+          echo "Q2_WORKERS=8" >> .env
 
     - name: Create Docker volumes
       uses: appleboy/ssh-action@master

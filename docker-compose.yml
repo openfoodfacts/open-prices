@@ -10,6 +10,7 @@ x-api-common: &api-common
     - SECRET_KEY
     - DEBUG
     - Q2_SYNC
+    - Q2_WORKERS
     - ALLOWED_HOSTS
     - CSRF_TRUSTED_ORIGINS
     - ENVIRONMENT
