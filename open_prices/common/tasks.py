@@ -159,7 +159,7 @@ CRON_SCHEDULES = {
     ),
     "update_product_counts_task": (
         "20 2 * * 1",  # every start of the week (at 02:20)
-        {"timeout": 6 * 60 * 60},  # 6 hours
+        {"timeout": 10 * 60 * 60},  # 10 hours
     ),
 }
 
