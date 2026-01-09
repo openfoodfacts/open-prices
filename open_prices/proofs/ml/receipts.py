@@ -1,40 +1,190 @@
 import json
 import logging
+from typing import Literal
 
 from django.conf import settings
 from google import genai
 from openfoodfacts.types import JSONType
 from PIL import Image
-
-# TypedDict is only available from typing in Python 3.12+, drop
-# typing_extensions import when we drop support for older versions
-from typing_extensions import TypedDict
+from pydantic import BaseModel, Field
 
 from open_prices.common import google as common_google
 from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.ml.price_tags import Products
+from open_prices.proofs.ml.common import DiscountType, RawCategory, Unit
 from open_prices.proofs.models import Proof, ProofPrediction, ReceiptItem
 
 logger = logging.getLogger(__name__)
 
 
-class ReceiptItemType(TypedDict):
-    product: Products
-    price: float
-    product_name: str
+# The schema version must be changed every time we introduce a breaking change
+# in the Receipt model.
+RECEIPT_SCHEMA_VERSION = "2.0"
 
 
-class Receipt(TypedDict):
-    store_name: str
-    store_address: str
-    store_city_name: str
-    date: str
-    # currency: str
-    # price_count: int
-    # price_total: float
-    items: list[ReceiptItemType]
+class ReceiptItemType(BaseModel):
+    type: Literal["PRODUCT", "CATEGORY"] = Field(
+        ...,
+        description="The type of product the receipt entry is referring to. It should be "
+        "`PRODUCT` for packaged products with barcode, and `CATEGORY` for raw "
+        "products without barcode. The barcode is usually not displayed on receipts, "
+        "so the `CATEGORY` type is often inferred from the product name and from the fact "
+        "the product is sold per weight.",
+    )
+    category_group: str | None = Field(
+        ...,
+        description="if indicated on the receipt, the name of the category group "
+        "of the product entry. Indeed, products are sometimes grouped by category "
+        "on the receipt, e.g. 'Fruits & Vegetables', 'Dairy', 'Meat', etc. Set to "
+        "null if not displayed.",
+    )
+    product_code: str | None = Field(
+        ...,
+        description="the barcode of the product entry, if detected. Product barcodes are "
+        "rarely displayed on receipts, but some receipts do show them. If type is `CATEGORY` "
+        "or if not detected, set to null.",
+    )
+    category: str | None = Field(
+        None,
+        description="The category of the product entry. If type=CATEGORY, this should be set to the "
+        "category of the product, such as Apples, Bananas, Tomatoes, etc. The category must be in English, "
+        "even if the category is displayed in another language on the price tag. "
+        "The category must be the most precise category possible: for example, if the entry label says 'Red Onions', "
+        "category should be 'Red onions', and not 'Onions'. "
+        "If unknown, or if TYPE=PRODUCT, this should be set to null.",
+    )
+    category_tag: RawCategory | None = Field(
+        ...,
+        description="the category of the product entry, mapped to Open Food Facts "
+        "category taxonomy. This must only be set if type is `CATEGORY`. "
+        "if type is `PRODUCT`, set to null. If no suitable category exists in the mapping, set to"
+        "'other'.",
+    )
+    price_total: float | None = Field(
+        ...,
+        description="the total price for the product entry. On receipts, we "
+        "often have a single line when we buy more than one single product, "
+        "with the quantity being displayed next to the price. This field "
+        "captures this total price for the entry. Set to null if not "
+        "detected.",
+    )
+    price: float | None = Field(
+        ...,
+        description="the price of a single item, as displayed on this product "
+        "entry. It can be the price per unit (if type is 'PRODUCT' or 'CATEGORY'), or "
+        "the price per kilogram/per liter (for type 'CATEGORY' only). Set to null if "
+        "not detected.",
+    )
+    price_without_discount: float | None = Field(
+        ...,
+        description="the price of a single item, before an optional discount. "
+        "It can be the price per unit (if type is 'PRODUCT' or 'CATEGORY'), or "
+        "the price per kilogram/per liter (for type 'CATEGORY' only). Set to null if "
+        "not detected. If there is no discount (=if `price_is_discounted` is false), "
+        "also set this to null.",
+    )
+    price_is_discounted: bool = Field(
+        False,
+        description="true if this particular price entry is a discounted price, false otherwise",
+    )
+    discount_type: DiscountType = Field(
+        DiscountType.NO_DISCOUNT,
+        description="The type of discount applied to the price entry, if any. "
+        "If no discount is applied, this should be set to NO_DISCOUNT. "
+        "Possible discount types are: "
+        " - QUANTITY: example: buy 1 get 1 free, "
+        " - SALE: example: 50% off, "
+        " - SEASONAL: example: Christmas sale, "
+        " - LOYALTY_PROGRAM: example: 10% off for members, "
+        " - EXPIRES_SOON: example: 30% off expiring soon, "
+        " - PICK_IT_YOURSELF: example: 5% off for pick-up, "
+        " - SECOND_HAND: example: second hand books or clothes, "
+        " - OTHER: other types of discounts.",
+    )
+    quantity: float | int | None = Field(
+        ...,
+        description="the quantity for the product entry. It is a number, either an integer "
+        "(for packaged goods or for fruits and vegetables that can be bought "
+        "individually), or a float representing the weight (per kg or per liter), for "
+        "fruits, vegetables and raw foods that are sold by weight. Set to "
+        "null if not detected.",
+    )
+    price_per: Unit | None = Field(
+        ...,
+        description="Unit of the price. Can be one of: KILOGRAM: price is per kg, only if type = CATEGORY; "
+        "LITER: price is per liter, only if type = CATEGORY; "
+        "UNIT: price is per unit (available for both CATEGORY and PRODUCT types). Set to null if not detected.",
+    )
+    product_name: str | None = Field(
+        ...,
+        description="the label describing the product entry on the receipt. "
+        "Set to null if not detected.",
+    )
+    uncertain: bool = Field(
+        False,
+        description="true if the price entry is uncertain: "
+        "1) if the entry is occluded (even partially), or blurred, "
+        "2) if there is a reflection preventing accurate price of product name reading, "
+        "3) if the image quality is not good enough to read the price. "
+        "Otherwise, the value must be false.",
+    )
+
+
+class Receipt(BaseModel):
+    store_name: str | None = Field(
+        ...,
+        description="the name of the store. It should be null if the store is not "
+        "known. Example: 'Walmart', 'Monoprix', 'Carrefour Express'",
+    )
+    store_address: str | None = Field(
+        ...,
+        description="the address of the store. It should be null if the address is "
+        "not known. Example: '44 rue du Midi'",
+    )
+    store_city_name: str | None = Field(
+        ...,
+        description="the city of the store location. It should be null if the city "
+        "is not known. Example: 'Paris'",
+    )
+    store_postal_code: str | None = Field(
+        ...,
+        description="the postal code of the store location. It should be null if "
+        "the postal code is not known. Example: '75015'",
+    )
+    store_phone_number: str | None = Field(
+        ...,
+        description="the phone number of the store. It should be null if the "
+        "phone number is not known. Example: '+33123456789'",
+    )
+    date: str | None = Field(
+        ...,
+        description="the date when the receipt was issued, in ISO 8601 format "
+        "(YYYY-MM-DD). It should be null if the date is not known. Example: "
+        "'2023-10-15'",
+    )
+    hour: str | None = Field(
+        ...,
+        description="the hour when the receipt was issued, in HH:MM format. "
+        "It should be null if the hour is not known. Example: '14:30'",
+    )
+    total_price: float | None = Field(
+        ...,
+        description="the total price of the bought products, after discount, "
+        "as displayed on the receipt. It should be null if the total price is "
+        "not known. Example: 23.45",
+    )
+    currency: str | None = Field(
+        ...,
+        description="the currency of the prices on the receipt, in ISO 4217 "
+        "format (e.g. 'USD', 'EUR'). It should be null if the currency is not "
+        "known. Example: 'EUR'",
+    )
+    items: list[ReceiptItemType] = Field(
+        ...,
+        description="the list of items bought. It should be an empty list if no "
+        "items are detected.",
+    )
 
 
 def extract_from_receipt(image: Image.Image) -> JSONType | None:
@@ -130,6 +280,7 @@ def create_receipt_items_from_proof_prediction(
             order=index + 1,
             predicted_data=predicted_item,
             status=None,
+            schema_version=proof_prediction.data.get("schema_version"),
         )
         created.append(receipt_item)
     return created
@@ -168,7 +319,10 @@ def run_and_save_receipt_extraction_prediction(
             )
             return None
 
-    prediction = extract_from_receipt(image)
+    # prediction may be None if the model failed to extract
+    prediction = extract_from_receipt(image) or {}
+    if prediction:
+        prediction["schema_version"] = RECEIPT_SCHEMA_VERSION
 
     try:
         proof_prediction = ProofPrediction.objects.create(
@@ -176,8 +330,7 @@ def run_and_save_receipt_extraction_prediction(
             type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
             model_name=common_google.GEMINI_MODEL_NAME,
             model_version=common_google.GEMINI_MODEL_VERSION,
-            # prediction may be None if the model failed to extract
-            data=prediction or {},
+            data=prediction,
         )
         create_receipt_items_from_proof_prediction(proof, proof_prediction)
         return proof_prediction
