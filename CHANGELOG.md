@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.95.1](https://github.com/openfoodfacts/open-prices/compare/v1.95.0...v1.95.1) (2026-01-09)
+
+
+### Bug Fixes
+
+* **scheduler:** increase number of workers ([#1182](https://github.com/openfoodfacts/open-prices/issues/1182)) ([3e0d212](https://github.com/openfoodfacts/open-prices/commit/3e0d2120552b4e09c65d11962f4014cd79b4b0c2))
+* **scheduler:** increase timeout for specific task ([#1181](https://github.com/openfoodfacts/open-prices/issues/1181)) ([ec28150](https://github.com/openfoodfacts/open-prices/commit/ec2815002a6230859375e16a3baca2dfc24ea346))
+
+
+### Technical
+
+* **Shop Import:** add config for Graoucoop prices ([#1179](https://github.com/openfoodfacts/open-prices/issues/1179)) ([f9b033c](https://github.com/openfoodfacts/open-prices/commit/f9b033c30bf434fbf95b9000f78ca0b7395bf396))
+
 ## [1.95.0](https://github.com/openfoodfacts/open-prices/compare/v1.94.1...v1.95.0) (2025-12-27)
 
 
