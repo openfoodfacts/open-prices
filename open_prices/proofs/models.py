@@ -726,7 +726,7 @@ class PriceTagPrediction(models.Model):
         blank=True,
         max_length=20,
         help_text="The schema version of the prediction data. Used to handle changes in the "
-        "prediction data structure. It is currently used when calling Gemine API to extract price tags.",
+        "prediction data structure. It is currently used when calling Gemini API to extract price tags.",
     )
     data = models.JSONField(
         null=False,
@@ -853,6 +853,13 @@ class ReceiptItem(models.Model):
         null=True,
         blank=True,
         help_text="The current status of the item",
+    )
+    schema_version = models.CharField(
+        null=True,
+        blank=True,
+        max_length=20,
+        help_text="The schema version of the predicted data. Used to handle changes in the "
+        "prediction data structure.",
     )
 
     created = models.DateTimeField(
