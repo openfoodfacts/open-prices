@@ -114,7 +114,9 @@ class ReceiptItemType(BaseModel):
         ...,
         description="Unit of the price. Can be one of: KILOGRAM: price is per kg, only if type = CATEGORY; "
         "LITER: price is per liter, only if type = CATEGORY; "
-        "UNIT: price is per unit (available for both CATEGORY and PRODUCT types). Set to null if not detected.",
+        "UNIT: price is per unit (available for both CATEGORY and PRODUCT types). "
+        "If the unit displayed is not a SI unit (ex: ounce, pound), it must be converted to the closest SI unit. "
+        "Set to null if not detected.",
     )
     product_name: str | None = Field(
         ...,
