@@ -71,6 +71,7 @@ class PriceTagFilter(django_filters.FilterSet):
         model = PriceTag
         fields = [
             "proof_id",
+            "proof__location__osm_address_country_code",
             "proof__owner",
             "proof__ready_for_price_tag_validation",
             "price_id",
