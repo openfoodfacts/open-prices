@@ -29,6 +29,7 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
     "osm_address_country": "France",
+    "osm_address_country_code": "FR",
     "osm_lat": "45.1805534",
     "osm_lon": "5.7153387",
 }
@@ -827,9 +828,23 @@ class PriceTagListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:price-tags-list")
-        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        cls.proof_2 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        cls.price = PriceFactory(proof=cls.proof)
+        cls.user_session = SessionFactory()
+        cls.location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
+            owner=cls.user_session.user.user_id,
+            ready_for_price_tag_validation=True,
+        )
+        cls.proof_2 = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG, ready_for_price_tag_validation=False
+        )
+        cls.price = PriceFactory(
+            proof=cls.proof,
+            location_osm_id=cls.proof.location_osm_id,
+            location_osm_type=cls.proof.location_osm_type,
+        )
         cls.price_tag_1 = PriceTagFactory(
             proof=cls.proof,
             price=cls.price,
@@ -865,6 +880,18 @@ class PriceTagListApiTest(TestCase):
     def test_price_tag_list_filter_by_proof(self):
         # proof_id
         url = self.url + f"?proof_id={self.proof.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # proof__location__osm_address_country_code
+        url = self.url + "?proof__location__osm_address_country_code=FR"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # proof__owner
+        url = self.url + f"?proof__owner={self.user_session.user.user_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # proof__ready_for_price_tag_validation
+        url = self.url + "?proof__ready_for_price_tag_validation=True"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
