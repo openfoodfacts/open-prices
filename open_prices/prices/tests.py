@@ -851,6 +851,205 @@ class PriceModelSaveTest(TransactionTestCase):
         self.assertEqual(Location.objects.get(id=location.id).price_count, 2)
         self.assertEqual(Product.objects.get(id=product.id).price_count, 2)
 
+    def test_price_set_is_duplicate_of_product_type(self):
+        user_session_1 = SessionFactory()
+        user_session_2 = SessionFactory()
+        proof_1 = ProofFactory(owner=user_session_1.user.user_id)
+        proof_2 = ProofFactory(owner=user_session_2.user.user_id)
+        location_1 = LocationFactory()
+        location_2 = LocationFactory(
+            osm_id=location_1.osm_id + 1, osm_type=location_1.osm_type
+        )
+        product = ProductFactory()
+
+        ref_price_kwargs = {
+            "type": "PRODUCT",
+            "proof_id": proof_1.id,
+            "location_osm_id": location_1.osm_id,
+            "location_osm_type": location_1.osm_type,
+            "product_code": product.code,
+            "category_tag": None,
+            "owner": user_session_1.user.user_id,
+            "date": "2025-01-01",
+            "currency": "EUR",
+            "price": Decimal("1.99"),
+            "price_is_discounted": False,
+            "price_without_discount": None,
+            "discount_type": None,
+            "labels_tags": None,
+            "origins_tags": None,
+        }
+        new_price_kwargs = ref_price_kwargs | {
+            "proof_id": proof_2.id,
+            "owner": user_session_2.user.user_id,
+        }
+        ref_price_1 = PriceFactory(**ref_price_kwargs)
+        for new_price, is_duplicate in (
+            (
+                PriceFactory(**new_price_kwargs),
+                True,
+            ),
+            (
+                # Different location
+                PriceFactory(
+                    **(
+                        new_price_kwargs
+                        | {
+                            "location_osm_id": location_2.osm_id,
+                            "location_osm_type": location_2.osm_type,
+                        }
+                    )
+                ),
+                False,
+            ),
+            (
+                # Different price
+                PriceFactory(
+                    **(
+                        new_price_kwargs
+                        | {
+                            "price": Decimal("2.90"),
+                        }
+                    )
+                ),
+                False,
+            ),
+            (
+                # Different price without discount
+                PriceFactory(
+                    **(
+                        new_price_kwargs
+                        | {
+                            "price_is_discounted": True,
+                            "price_without_discount": Decimal("3.0"),
+                        }
+                    )
+                ),
+                False,
+            ),
+            (
+                # Different date
+                PriceFactory(
+                    **(
+                        new_price_kwargs
+                        | {
+                            "date": "2024-01-01",
+                        }
+                    )
+                ),
+                False,
+            ),
+            (
+                # Different product code
+                PriceFactory(
+                    **(
+                        new_price_kwargs
+                        | {
+                            "product_code": "3259685685824",
+                        }
+                    )
+                ),
+                False,
+            ),
+        ):
+            self.assertEqual(
+                new_price.duplicate_of_id, ref_price_1.id if is_duplicate else None
+            )
+            # Delete the price so that we only compare to ref
+            new_price.delete()
+
+    def test_price_set_is_duplicate_of_category_type(self):
+        user_session_1 = SessionFactory()
+        user_session_2 = SessionFactory()
+        proof_1 = ProofFactory(owner=user_session_1.user.user_id)
+        proof_2 = ProofFactory(owner=user_session_2.user.user_id)
+        location_1 = LocationFactory()
+        location_2 = LocationFactory(
+            osm_id=location_1.osm_id + 1, osm_type=location_1.osm_type
+        )
+        ref_price_kwargs = {
+            "type": "CATEGORY",
+            "price_per": price_constants.PRICE_PER_KILOGRAM,
+            "proof_id": proof_1.id,
+            "location_osm_id": location_1.osm_id,
+            "location_osm_type": location_1.osm_type,
+            "product_code": None,
+            "category_tag": "en:pumpkins",
+            "owner": user_session_1.user.user_id,
+            "date": "2025-01-01",
+            "currency": "EUR",
+            "price": Decimal("1.99"),
+            "price_is_discounted": False,
+            "price_without_discount": None,
+            "discount_type": None,
+            "labels_tags": None,
+            "origins_tags": None,
+        }
+        new_price_kwargs = ref_price_kwargs | {
+            "proof_id": proof_2.id,
+            "owner": user_session_2.user.user_id,
+        }
+        ref_price_1 = PriceFactory(**ref_price_kwargs)
+        for new_price, is_duplicate in (
+            (
+                PriceFactory(**new_price_kwargs),
+                True,
+            ),
+            (
+                # Different location
+                PriceFactory(
+                    **(
+                        new_price_kwargs
+                        | {
+                            "location_osm_id": location_2.osm_id,
+                            "location_osm_type": location_2.osm_type,
+                        }
+                    )
+                ),
+                False,
+            ),
+            (
+                # Different price
+                PriceFactory(**(new_price_kwargs | {"price": Decimal("2.99")})),
+                False,
+            ),
+            (
+                # Different price without discount
+                PriceFactory(
+                    **(
+                        new_price_kwargs
+                        | {
+                            "price_is_discounted": True,
+                            "price_without_discount": Decimal("3.00"),
+                        }
+                    )
+                ),
+                False,
+            ),
+            (
+                # Different date
+                PriceFactory(**(new_price_kwargs | {"date": "2024-01-01"})),
+                False,
+            ),
+            (
+                # Different category tag
+                PriceFactory(**(new_price_kwargs | {"category_tag": "en:apples"})),
+                False,
+            ),
+            (
+                # Different price_per
+                PriceFactory(
+                    **(new_price_kwargs | {"price_per": price_constants.PRICE_PER_UNIT})
+                ),
+                False,
+            ),
+        ):
+            self.assertEqual(
+                new_price.duplicate_of_id, ref_price_1.id if is_duplicate else None
+            )
+            # Delete the price so that we only compare to ref
+            new_price.delete()
+
 
 class PriceModelUpdateTest(TestCase):
     @classmethod

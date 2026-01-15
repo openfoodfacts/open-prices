@@ -79,4 +79,5 @@ class PriceFilter(django_filters.FilterSet):
             "proof_id": ["exact", "in", "isnull"],
             "owner": ["exact"],
             "created": ["gte", "lte"],
+            "duplicate_of_id": ["isnull"],
         }
