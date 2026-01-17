@@ -1,5 +1,6 @@
 from django.core.validators import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -58,6 +59,23 @@ class LocationViewSet(
                 response_status_code = status.HTTP_200_OK
         return Response(response_data, status=response_status_code)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="osm_type",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                enum=location_constants.OSM_TYPE_LIST,
+                required=True,
+            ),
+            OpenApiParameter(
+                name="osm_id",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                required=True,
+            ),
+        ],
+    )
     @action(
         detail=False, methods=["GET"], url_path=r"osm/(?P<osm_type>\w+)/(?P<osm_id>\d+)"
     )
