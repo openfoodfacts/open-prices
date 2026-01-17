@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.96.1](https://github.com/openfoodfacts/open-prices/compare/v1.96.0...v1.96.1) (2026-01-17)
+
+
+### Technical
+
+* **Locations:** API: better document the osm url (type & id fields) ([#1189](https://github.com/openfoodfacts/open-prices/issues/1189)) ([57b8b81](https://github.com/openfoodfacts/open-prices/commit/57b8b8131df9095db40ef0d3e1768e4dd2bbd41a))
+
 ## [1.96.0](https://github.com/openfoodfacts/open-prices/compare/v1.95.0...v1.96.0) (2026-01-13)
 
 
