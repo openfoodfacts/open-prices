@@ -12,6 +12,16 @@ OSM_ADDRESS_FIELDS = [
 # https://wiki.openstreetmap.org/wiki/Key:place
 OSM_ADDRESS_PLACE_FIELDS = ["village", "town", "city", "municipality"]
 
+OVERPASS_API_URL = "https://overpass-api.de/api/interpreter"
+
+COUNTRIES_OVERPASS_QUERY = """
+[out:json];
+(
+  relation["type"="boundary"]["boundary"="administrative"]["admin_level"="2"];
+);
+out body;
+"""
+
 
 def get_location_from_nominatim(osm_id: int, osm_type: str) -> list:
     client = Nominatim()
