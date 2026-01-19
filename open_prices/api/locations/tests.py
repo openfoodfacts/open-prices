@@ -271,13 +271,28 @@ class LocationOsmCountriesListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:locations-list-osm-countries")
+        cls.location_fr = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_address_country_code="FR",
+            price_count=5,
+        )
+        cls.location_ch = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_address_country_code="CH",
+            price_count=0,
+        )
 
     def test_location_osm_countries(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(isinstance(response.data, list))
         self.assertEqual(len(response.data), 238)
-        self.assertTrue("id" in response.data[0])
-        self.assertTrue("name" in response.data[0])
-        self.assertTrue("country_code_2" in response.data[0])
-        self.assertTrue("osm_name" in response.data[0])
+        country_fr = next(c for c in response.data if c["country_code_2"] == "FR")
+        self.assertEqual(country_fr["location_count"], 1)
+        self.assertEqual(country_fr["price_count"], 5)
+        country_ch = next(c for c in response.data if c["country_code_2"] == "CH")
+        self.assertEqual(country_ch["location_count"], 1)
+        self.assertEqual(country_ch["price_count"], 0)
+        country_us = next(c for c in response.data if c["country_code_2"] == "US")
+        self.assertEqual(country_us["location_count"], 0)
+        self.assertEqual(country_us["price_count"], 0)

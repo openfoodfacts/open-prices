@@ -1,4 +1,5 @@
 from django.core.validators import ValidationError
+from django.db.models import Count, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -90,7 +91,32 @@ class LocationViewSet(
     @extend_schema(responses=CountrySerializer(many=True), filters=False)
     @action(detail=False, methods=["GET"], url_path="osm/countries")
     def list_osm_countries(self, request):
+        # get countries from JSON file
         countries = utils.read_json(openstreetmap.COUNTRIES_JSON_PATH)
-        # TODO: enrich with price_count & location_count
+        # enrich with existing stats
+        location_qs = (
+            Location.objects.filter(
+                type=location_constants.TYPE_OSM, osm_address_country_code__isnull=False
+            )
+            .values("osm_address_country_code")
+            .annotate(location_count=Count("id"), price_count=Sum("price_count"))
+        )
+        for i, country in enumerate(countries):
+            countries[i]["location_count"] = next(
+                (
+                    loc["location_count"]
+                    for loc in location_qs
+                    if loc["osm_address_country_code"] == country["country_code_2"]
+                ),
+                0,
+            )
+            countries[i]["price_count"] = next(
+                (
+                    loc["price_count"]
+                    for loc in location_qs
+                    if loc["osm_address_country_code"] == country["country_code_2"]
+                ),
+                0,
+            )
         # TODO: cache results
         return Response(countries)
