@@ -8,10 +8,12 @@ from rest_framework.response import Response
 
 from open_prices.api.locations.filters import LocationFilter
 from open_prices.api.locations.serializers import (
+    CountrySerializer,
     LocationCreateSerializer,
     LocationSerializer,
 )
 from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
+from open_prices.common import openstreetmap, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 
@@ -83,3 +85,12 @@ class LocationViewSet(
         location = get_object_or_drf_404(Location, osm_type=osm_type, osm_id=osm_id)
         serializer = self.get_serializer(location)
         return Response(serializer.data)
+
+    # TODO: disable pagination
+    @extend_schema(responses=CountrySerializer(many=True), filters=False)
+    @action(detail=False, methods=["GET"], url_path="osm/countries")
+    def list_osm_countries(self, request):
+        countries = utils.read_json(openstreetmap.COUNTRIES_JSON_PATH)
+        # TODO: enrich with price_count & location_count
+        # TODO: cache results
+        return Response(countries)

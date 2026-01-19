@@ -5,7 +5,8 @@ import time
 from openfoodfacts.barcode import normalize_barcode
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
-from scripts.utils import create_price, is_valid_date, read_csv, read_json
+from open_prices.common import utils
+from scripts.utils import create_price, is_valid_date, read_csv
 
 OPEN_PRICES_CREATE_PRICE_ENDPOINT = f'{os.environ.get("API_ENDPOINT")}/prices'
 OPEN_PRICES_TOKEN = os.environ.get("API_TOKEN")
@@ -158,7 +159,7 @@ if __name__ == "__main__":
 
     shop_mapping_filepath = os.environ.get("MAPPING_FILEPATH")
     print(f"===== Step 3/7: Reading {shop_mapping_filepath}")
-    shop_mapping = read_json(shop_mapping_filepath)
+    shop_mapping = utils.read_json(shop_mapping_filepath)
     shop_mapping_fields = shop_mapping.get("fields", [])
     shop_mapping_filters = shop_mapping.get("filters", [])
     print(f"Found {len(shop_mapping_fields)} field mappings")

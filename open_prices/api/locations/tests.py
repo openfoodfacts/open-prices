@@ -265,3 +265,19 @@ class LocationDeleteApiTest(TestCase):
             self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
         )
         self.assertEqual(response.status_code, 405)
+
+
+class LocationOsmCountriesListApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:locations-list-osm-countries")
+
+    def test_location_osm_countries(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertEqual(len(response.data), 238)
+        self.assertTrue("id" in response.data[0])
+        self.assertTrue("name" in response.data[0])
+        self.assertTrue("country_code_2" in response.data[0])
+        self.assertTrue("osm_name" in response.data[0])

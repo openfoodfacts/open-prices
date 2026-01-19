@@ -80,3 +80,8 @@ def url_keep_only_domain(url):
         url = url_add_missing_https(url)
     url_parsed = urlparse(url)
     return f"{url_parsed.scheme}://{url_parsed.netloc}"
+
+
+def read_json(filepath):
+    with open(filepath) as jsonfile:
+        return json.load(jsonfile)

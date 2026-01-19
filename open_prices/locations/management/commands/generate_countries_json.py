@@ -1,7 +1,6 @@
 import json
 
 import requests
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from openfoodfacts.taxonomy import Taxonomy, TaxonomyNode, get_taxonomy
 
@@ -24,9 +23,6 @@ COUNTRY_CODES_TO_EXCLUDE = [
     "YU",
     "world",
 ]
-OUTPUT_PATH = (
-    settings.BASE_DIR / "open_prices" / "locations" / "data" / "countries.json"
-)
 
 
 def get_all_root_nodes(taxonomy: Taxonomy) -> list[TaxonomyNode]:
@@ -126,6 +122,6 @@ class Command(BaseCommand):
             )
 
         # Step 4: write countries to file
-        with open(OUTPUT_PATH, "w") as f:
+        with open(openstreetmap.COUNTRIES_JSON_PATH, "w") as f:
             json.dump(countries, f, ensure_ascii=False)  # indent=4
-        self.stdout.write(f"Done! Wrote to {OUTPUT_PATH}")
+        self.stdout.write(f"Done! Wrote to {openstreetmap.COUNTRIES_JSON_PATH}")

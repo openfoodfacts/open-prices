@@ -1,5 +1,4 @@
 import csv
-import json
 from datetime import datetime
 
 import requests
@@ -9,11 +8,6 @@ def read_csv(filepath, delimiter=","):
     with open(filepath, newline="") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=delimiter)
         return list(reader)
-
-
-def read_json(filepath):
-    with open(filepath) as jsonfile:
-        return json.load(jsonfile)
 
 
 def is_valid_date(date_str):
