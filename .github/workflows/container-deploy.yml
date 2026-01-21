@@ -156,9 +156,9 @@ jobs:
           echo "ENABLE_OCR=False" >> .env
           echo "ENABLE_ML_PREDICTIONS=True" >> .env
           # echo "ENABLE_IMPORT_OFF_DB_TASK=True" >> .env  # disabled because we have the REDIS live updates
-          echo "ENABLE_IMPORT_OBF_DB_TASK=True" >> .env
-          echo "ENABLE_IMPORT_OPFF_DB_TASK=True" >> .env
-          echo "ENABLE_IMPORT_OPF_DB_TASK=True" >> .env
+          # echo "ENABLE_IMPORT_OBF_DB_TASK=True" >> .env  # disabled because we have the REDIS live updates
+          # echo "ENABLE_IMPORT_OPFF_DB_TASK=True" >> .env  # disabled because we have the REDIS live updates
+          # echo "ENABLE_IMPORT_OPF_DB_TASK=True" >> .env  # disabled because we have the REDIS live updates
           echo "REDIS_HOST=${{ env.REDIS_HOST }}" >> .env
           echo "REDIS_PORT=${{ env.REDIS_PORT }}" >> .env
           echo "REDIS_PRODUCT_UPDATES_STREAM_NAME=product_updates" >> .env
