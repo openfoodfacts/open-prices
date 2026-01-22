@@ -99,8 +99,8 @@ def generate_thumbnail(
         image_thumb_full_path = generate_full_path(
             current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
         )
-        # avoid 'cannot write mode RGBA as JPEG' error
-        if mimetype in ("image/jpeg",) and img_thumb.mode in ("RGBA", "P"):
+        # avoid 'cannot write mode RGBA/LA/P as JPEG' error
+        if mimetype in ("image/jpeg",) and img_thumb.mode in ("RGBA", "LA", "P"):
             img_thumb = img_thumb.convert("RGB")
         # save (exif will be stripped)
         img_thumb.save(image_thumb_full_path)
