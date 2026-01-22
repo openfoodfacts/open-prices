@@ -820,6 +820,23 @@ class MLModelTest(TestCase):
                 ],
             )
 
+    def test_run_and_save_proof_prediction_proof_deleted(self):
+        proof = ProofFactory()
+        proof_id = proof.id
+        proof.delete()
+
+        from open_prices.proofs.models import Proof
+        deleted_proof = Proof(id=proof_id)
+
+        with self.assertLogs("open_prices.proofs.ml", level="WARNING") as cm:
+            result = run_and_save_proof_prediction(deleted_proof)
+            self.assertIsNone(result)
+            self.assertIn(
+                f"WARNING:open_prices.proofs.ml:Proof with id {proof_id} no longer exists, skipping ML prediction",
+                cm.output[0]
+            )
+
+
     def test_run_and_save_proof_prediction_for_receipt_proof(self):
         predict_proof_type_response = [
             ("RECEIPT", 0.9786477088928223),

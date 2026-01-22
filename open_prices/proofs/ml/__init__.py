@@ -36,6 +36,14 @@ def run_and_save_proof_prediction(
     :param run_price_tag_extraction: whether to run the price tag extraction
         model on the detected price tags, defaults to True
     """
+    try:
+        proof = Proof.objects.get(id=proof.id)
+    except Proof.DoesNotExist:
+        logger.warning(
+            "Proof with id %s no longer exists, skipping ML prediction", proof.id
+        )
+        return None
+
     file_path_full = proof.file_path_full
 
     if file_path_full is None or not Path(file_path_full).exists():
