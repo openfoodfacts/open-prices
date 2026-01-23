@@ -78,5 +78,6 @@ class PriceFilter(django_filters.FilterSet):
             "date": ["exact", "gt", "gte", "lt", "lte", "year", "month"],
             "proof_id": ["exact", "in", "isnull"],
             "owner": ["exact"],
+            "duplicate_of": ["isnull"],
             "created": ["gte", "lte"],
         }
