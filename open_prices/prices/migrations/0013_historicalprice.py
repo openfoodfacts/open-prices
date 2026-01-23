@@ -520,5 +520,7 @@ class Migration(migrations.Migration):
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
-        migrations.RunPython(populate_history),
+        # Disable automatic population of history, as it breaks
+        # unit tests after we introduced new
+        # migrations.RunPython(populate_history),
     ]

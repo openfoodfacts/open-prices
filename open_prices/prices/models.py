@@ -255,6 +255,16 @@ class Price(models.Model):
     tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
     flags = GenericRelation("moderation.Flag", related_query_name="price")
 
+    # If this price is a duplicate of another price, we store the reference
+    # here
+    duplicate_of = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="duplicates",
+    )
+
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
@@ -329,6 +339,7 @@ class Price(models.Model):
         # self.set_proof()  # should already exist
         self.set_product()
         self.set_location()
+        self.set_is_duplicate_of()
         super().save(*args, **kwargs)
 
     def set_tag(self, tag: str, save: bool = True):
@@ -391,6 +402,50 @@ class Price(models.Model):
                 or self.has_location(challenge.location_id_list())
             )
         )
+
+    def set_is_duplicate_of(self):
+        """Look for duplicate prices and set the duplicate_of field
+        accordingly.
+
+        We consider `self` to be a duplicate of another price if:
+        - it has the same location (osm_id and osm_type), date, currency and
+          price information (price, discount type, is discounted, price
+          without discount), product code/category tag, labels tags, and
+          origins tags
+        - it was created later than the other price (we keep the first one)
+        """
+        # Look for possible duplicates
+        possible_duplicates = (
+            Price.objects.filter(
+                type=self.type,
+                location_id=self.location_id,  # type: ignore
+                date=self.date,
+                currency=self.currency,
+                price=self.price,
+                price_per=self.price_per,
+                price_is_discounted=self.price_is_discounted,
+                price_without_discount=self.price_without_discount,
+                discount_type=self.discount_type,
+                product_code=self.product_code,
+                category_tag=self.category_tag,
+                labels_tags=self.labels_tags,
+                origins_tags=self.origins_tags,
+                # Check that at least location and date are set,
+                # otherwise it doesn't make much sense to consider these
+                # prices as duplicates
+                location_id__isnull=False,
+                date__isnull=False,
+            )
+            .exclude(
+                id=self.id  # type: ignore
+            )
+            # oldest first
+            .order_by("id")
+        )
+        duplicate = possible_duplicates.first()
+        if duplicate is not None and duplicate.created < self.created:
+            # Set the duplicate_of field to the first found duplicate
+            self.duplicate_of = duplicate
 
     def get_history_list(self):
         return history.build_instance_history_list(self)
@@ -456,3 +511,16 @@ def price_post_delete_decrement_counts(sender, instance, **kwargs):
         Location.objects.filter(id=instance.location_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
+
+
+@receiver(signals.post_delete, sender=Price)
+def price_post_delete_update_duplicate_of(sender, instance, **kwargs):
+    """When a price is deleted, we need to update the duplicate_of field
+    of any prices that were marked as duplicates of this price.
+    We set their duplicate_of field to None and save the price, so that
+    the search for possible duplicates is run again."""
+    # Sort by created descending, so that the most recent price is
+    # re-evaluated first
+    for price in Price.objects.filter(duplicate_of_id=instance.id).order_by("-created"):
+        price.duplicate_of = None
+        price.save(update_fields=["duplicate_of"])
