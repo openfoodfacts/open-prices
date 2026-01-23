@@ -419,7 +419,6 @@ class Price(models.Model):
             Price.objects.filter(
                 type=self.type,
                 location_id=self.location_id,  # type: ignore
-                location_osm_type=self.location_osm_type,
                 date=self.date,
                 currency=self.currency,
                 price=self.price,
@@ -431,6 +430,11 @@ class Price(models.Model):
                 category_tag=self.category_tag,
                 labels_tags=self.labels_tags,
                 origins_tags=self.origins_tags,
+                # Check that at least location and date are set,
+                # otherwise it doesn't make much sense to consider these
+                # prices as duplicates
+                location_id__isnull=False,
+                date__isnull=False,
             )
             .exclude(
                 id=self.id  # type: ignore
