@@ -418,7 +418,7 @@ class Price(models.Model):
         possible_duplicates = (
             Price.objects.filter(
                 type=self.type,
-                location_osm_id=self.location_osm_id,
+                location_id=self.location_id,  # type: ignore
                 location_osm_type=self.location_osm_type,
                 date=self.date,
                 currency=self.currency,
@@ -432,9 +432,12 @@ class Price(models.Model):
                 labels_tags=self.labels_tags,
                 origins_tags=self.origins_tags,
             )
-            .exclude(id=self.id)
-            .order_by("created")
-        )  # oldest first
+            .exclude(
+                id=self.id  # type: ignore
+            )
+            # oldest first
+            .order_by("id")
+        )
         duplicate = possible_duplicates.first()
         if duplicate is not None and duplicate.created < self.created:
             # Set the duplicate_of field to the first found duplicate
