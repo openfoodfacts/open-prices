@@ -478,6 +478,28 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
 
+    def test_price_list_filter_by_duplicate_of(self):
+        self.assertEqual(Price.objects.count(), 5)
+        # create a duplicate price
+        price_duplicate = PriceFactory(
+            **PRICE_8001505005707,
+            receipt_quantity=2,
+            proof_id=self.user_proof_receipt.id,
+            location_id=self.user_proof_receipt.location_id,
+            owner=self.user_session.user.user_id,
+            product=self.product_8001505005707,
+        )
+        self.assertIsNotNone(price_duplicate.duplicate_of)
+        self.assertEqual(Price.objects.count(), 6)
+        # duplicate_of__isnull=true
+        url = self.url + "?duplicate_of__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 5)
+        # duplicate_of__isnull=false
+        url = self.url + "?duplicate_of__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
     def test_price_list_filter_by_created(self):
         # created__gte
         self.assertEqual(Price.objects.count(), 5)

@@ -256,7 +256,6 @@ class Price(models.Model):
     flags = GenericRelation("moderation.Flag", related_query_name="price")
 
     # If this price is a duplicate of another price, we store the reference
-    # here
     duplicate_of = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
@@ -418,7 +417,7 @@ class Price(models.Model):
         possible_duplicates = (
             Price.objects.filter(
                 type=self.type,
-                location_id=self.location_id,  # type: ignore
+                location_id=self.location_id,
                 date=self.date,
                 currency=self.currency,
                 price=self.price,
@@ -436,9 +435,7 @@ class Price(models.Model):
                 location_id__isnull=False,
                 date__isnull=False,
             )
-            .exclude(
-                id=self.id  # type: ignore
-            )
+            .exclude(id=self.id)
             # oldest first
             .order_by("id")
         )
