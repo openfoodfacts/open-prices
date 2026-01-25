@@ -26,3 +26,10 @@ class LocationCreateSerializer(serializers.ModelSerializer):
         ):
             self.fields[field].required = False
             self.fields[field].validators = []
+
+
+class CountrySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    country_code_2 = serializers.CharField()
+    osm_name = serializers.CharField(required=False, allow_null=True)

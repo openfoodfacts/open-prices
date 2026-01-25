@@ -1,4 +1,5 @@
 from django.core.validators import ValidationError
+from django.db.models import Count, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -8,10 +9,12 @@ from rest_framework.response import Response
 
 from open_prices.api.locations.filters import LocationFilter
 from open_prices.api.locations.serializers import (
+    CountrySerializer,
     LocationCreateSerializer,
     LocationSerializer,
 )
 from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
+from open_prices.common import openstreetmap, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 
@@ -83,3 +86,37 @@ class LocationViewSet(
         location = get_object_or_drf_404(Location, osm_type=osm_type, osm_id=osm_id)
         serializer = self.get_serializer(location)
         return Response(serializer.data)
+
+    # TODO: disable pagination
+    @extend_schema(responses=CountrySerializer(many=True), filters=False)
+    @action(detail=False, methods=["GET"], url_path="osm/countries")
+    def list_osm_countries(self, request):
+        # get countries from JSON file
+        countries = utils.read_json(openstreetmap.COUNTRIES_JSON_PATH)
+        # enrich with existing stats
+        location_qs = (
+            Location.objects.filter(
+                type=location_constants.TYPE_OSM, osm_address_country_code__isnull=False
+            )
+            .values("osm_address_country_code")
+            .annotate(location_count=Count("id"), price_count=Sum("price_count"))
+        )
+        for i, country in enumerate(countries):
+            countries[i]["location_count"] = next(
+                (
+                    loc["location_count"]
+                    for loc in location_qs
+                    if loc["osm_address_country_code"] == country["country_code_2"]
+                ),
+                0,
+            )
+            countries[i]["price_count"] = next(
+                (
+                    loc["price_count"]
+                    for loc in location_qs
+                    if loc["osm_address_country_code"] == country["country_code_2"]
+                ),
+                0,
+            )
+        # TODO: cache results
+        return Response(countries)
