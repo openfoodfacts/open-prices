@@ -2,6 +2,7 @@ name: Open Prices unit and integration tests
 
 on:
   push:
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
