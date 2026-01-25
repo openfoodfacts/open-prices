@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.97.0](https://github.com/openfoodfacts/open-prices/compare/v1.96.0...v1.97.0) (2026-01-25)
+
+
+### Features
+
+* **Locations:** API: new /locations/osm/countries endpoints that returns the full list of countries (with location & price counts) ([#1195](https://github.com/openfoodfacts/open-prices/issues/1195)) ([159f6da](https://github.com/openfoodfacts/open-prices/commit/159f6da5a9844d90918d75be9f682de6c2686dd9))
+* **Locations:** script to generate a list of countries (JSON, from the OFF taxonomy, enriched with OSM name) ([#1192](https://github.com/openfoodfacts/open-prices/issues/1192)) ([d19e764](https://github.com/openfoodfacts/open-prices/commit/d19e7644046e75d762c9b6c3790a21ce9f6eefde))
+* **Prices:** add `duplicate_of` FK field ([#1184](https://github.com/openfoodfacts/open-prices/issues/1184)) ([2b86eae](https://github.com/openfoodfacts/open-prices/commit/2b86eae455dd11cf5ee9d8b274ef918f2450f2e9))
+* **Prices:** API: add a filter on the new duplicate_of field ([#1204](https://github.com/openfoodfacts/open-prices/issues/1204)) ([17452f4](https://github.com/openfoodfacts/open-prices/commit/17452f44356c04c6b893078fc90d4dd20a6aadf9))
+
+
+### Technical
+
+* **Locations:** API: better document the osm url (type & id fields) ([#1189](https://github.com/openfoodfacts/open-prices/issues/1189)) ([57b8b81](https://github.com/openfoodfacts/open-prices/commit/57b8b8131df9095db40ef0d3e1768e4dd2bbd41a))
+* **Locations:** API: cache the new osm countries response ([#1196](https://github.com/openfoodfacts/open-prices/issues/1196)) ([1517508](https://github.com/openfoodfacts/open-prices/commit/1517508e26ef9a7252bfb7cb0f05fe097572a041))
+* run single unit tests with Q2_SYNC=True ([#1203](https://github.com/openfoodfacts/open-prices/issues/1203)) ([55d5f7c](https://github.com/openfoodfacts/open-prices/commit/55d5f7c97bc34592aedf9b5732f51d15e9519d2e))
+
 ## [1.96.0](https://github.com/openfoodfacts/open-prices/compare/v1.95.0...v1.96.0) (2026-01-13)
 
 
