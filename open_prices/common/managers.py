@@ -9,7 +9,8 @@ class ApproximateCountQuerySet(QuerySet):
 
         cursor = connections[self.db].cursor()
         cursor.execute(
-            "SELECT reltuples::bigint FROM pg_class WHERE relname = %s;",
+            "SELECT reltuples::bigint FROM pg_class "
+            "WHERE relname = %s AND relkind = 'r';",
             [self.model._meta.db_table],
         )
         row = cursor.fetchone()
