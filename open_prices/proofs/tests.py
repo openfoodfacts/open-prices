@@ -820,22 +820,28 @@ class MLModelTest(TestCase):
                 ],
             )
 
-    def test_run_and_save_proof_prediction_proof_deleted(self):
-        proof = ProofFactory()
+    def test_run_and_save_price_tag_detection_proof_deleted(self):
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
         proof_id = proof.id
         proof.delete()
-
         from open_prices.proofs.models import Proof
+
         deleted_proof = Proof(id=proof_id)
-
-        with self.assertLogs("open_prices.proofs.ml", level="WARNING") as cm:
-            result = run_and_save_proof_prediction(deleted_proof)
-            self.assertIsNone(result)
-            self.assertIn(
-                f"WARNING:open_prices.proofs.ml:Proof with id {proof_id} no longer exists, skipping ML prediction",
-                cm.output[0]
+        detect_price_tags_response = ObjectDetectionRawResult(
+            num_detections=1,
+            detection_boxes=np.array([[0.5, 0.5, 1.0, 1.0]]),
+            detection_classes=np.array([0], dtype=int),
+            detection_scores=np.array([0.98], dtype=np.float32),
+            label_names=["price-tag"],
+        )
+        with unittest.mock.patch(
+            "open_prices.proofs.ml.price_tags.detect_price_tags",
+            return_value=detect_price_tags_response,
+        ):
+            result = run_and_save_price_tag_detection(
+                self.image, deleted_proof, run_extraction=False
             )
-
+            self.assertIsNone(result)
 
     def test_run_and_save_proof_prediction_for_receipt_proof(self):
         predict_proof_type_response = [
