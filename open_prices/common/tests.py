@@ -123,6 +123,7 @@ class OpenFoodFactsTest(TestCase):
             ("71627004002", "0716270040027"),  # 11 digits (proof_id 48443)
             ("471058718081", "4710587180816"),  # 12 digits (proof_id 48849)
             ("2006050050833", "2006050050833"),  # 13 digits valid
+            ("S123456789", "S123456789"),  # non-numeric barcode should return as-is
         ]:
             with self.subTest(BARCODE_TUPLE=BARCODE_TUPLE):
                 self.assertEqual(
