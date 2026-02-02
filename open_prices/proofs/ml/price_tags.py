@@ -288,7 +288,8 @@ class Label(BaseModel):
                     price_per=selected_unit,
                     price_is_discounted=False,
                     price_without_discount=None,
-                    discount_type=DiscountType.NO_DISCOUNT,
+                    # discount_type must be null if price_is_discounted is False
+                    discount_type=None,
                 )
 
         return None
