@@ -3,6 +3,16 @@ from django.db.models import Manager, QuerySet
 
 
 class ApproximateCountQuerySet(QuerySet):
+    """Use PostgreSQL's pg_class.reltuples for fast approximate counting.
+
+    For large tables, COUNT(*) requires a full table scan which is slow.
+    This queryset uses PostgreSQL's internal table statistics (reltuples)
+    for unfiltered counts, providing significant performance improvement.
+
+    Falls back to exact COUNT(*) when filters are applied to maintain accuracy.
+    Relies on PostgreSQL's autovacuum to keep statistics up-to-date.
+    """
+
     def count(self):
         if self.query.where:
             return super().count()
