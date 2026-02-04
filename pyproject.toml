@@ -44,7 +44,7 @@ drf-spectacular = "~0.29.0"
 google-genai = "~1.56.0"
 gunicorn = "^23.0.0"
 ipython = "^9.6.0"
-openfoodfacts = {version = "~3.3.0", extras = ["ml", "redis"]}
+openfoodfacts = {version = "~3.4.0", extras = ["ml", "redis"]}
 osmpythontools = "^0.3.6"
 pillow = "^10.4.0"
 psycopg2-binary = "~2.9.9"
