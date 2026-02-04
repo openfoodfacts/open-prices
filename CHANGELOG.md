@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.97.1](https://github.com/openfoodfacts/open-prices/compare/v1.97.0...v1.97.1) (2026-02-04)
+
+
+### Bug Fixes
+
+* **ml:** fix bug in price tag detection post-processing ([#1214](https://github.com/openfoodfacts/open-prices/issues/1214)) ([c6301a3](https://github.com/openfoodfacts/open-prices/commit/c6301a3e82de6cfd614f6ad86e19267b4bae9eaa))
+* **ML:** fix incorrect discount_type value for prices without discount ([#1213](https://github.com/openfoodfacts/open-prices/issues/1213)) ([03702c2](https://github.com/openfoodfacts/open-prices/commit/03702c2d44c9cebcf909f8ee53baf462cc94d99b))
+* OSError when generating JPEG thumbnails from LA mode images ([#1198](https://github.com/openfoodfacts/open-prices/issues/1198)) ([0b0fb88](https://github.com/openfoodfacts/open-prices/commit/0b0fb888083cb360c8776e2aaebed3731648fc5d))
+* ValueError when processing non-numeric barcodes in proof prediction ([#1211](https://github.com/openfoodfacts/open-prices/issues/1211)) ([84a5bbc](https://github.com/openfoodfacts/open-prices/commit/84a5bbc1f87c0e89c29aae913803fd8ab3bc047c))
+
+
+### Technical
+
+* also run test workflow on PRs coming from forks ([#1205](https://github.com/openfoodfacts/open-prices/issues/1205)) ([b973c2c](https://github.com/openfoodfacts/open-prices/commit/b973c2c66c96198a8415e36d613c7e4628d240b2))
+* **deps:** upgrade Django to 5.2 ([#1194](https://github.com/openfoodfacts/open-prices/issues/1194)) ([954cc24](https://github.com/openfoodfacts/open-prices/commit/954cc24d5fb7a3fd2e8de4e1654a2acd18b2ba6a))
+
 ## [1.97.0](https://github.com/openfoodfacts/open-prices/compare/v1.96.0...v1.97.0) (2026-01-25)
 
 
