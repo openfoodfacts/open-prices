@@ -347,6 +347,9 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
     :return: the 13-digit fixed and valid barcode, or the original barcode if
     it cannot be fixed
     """
+    if not barcode.isnumeric():
+        return barcode
+
     if len(barcode) in (10, 11, 12):
         barcode_temp = barcode.zfill(12)
         barcode_check_digit = openfoodfacts.barcode.calculate_check_digit(barcode + "0")
