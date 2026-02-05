@@ -10,10 +10,11 @@ from openfoodfacts.barcode import normalize_barcode
 # Import custom lookups so that they are registered
 from open_prices.common import lookups  # noqa: F401
 from open_prices.common.db_func import LevenshteinLessEqual
+from open_prices.common.managers import ApproximateCountQuerySet
 from open_prices.products import constants as product_constants
 
 
-class ProductQuerySet(models.QuerySet):
+class ProductQuerySet(ApproximateCountQuerySet):
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
