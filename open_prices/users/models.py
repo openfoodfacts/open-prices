@@ -104,22 +104,19 @@ class User(models.Model):
             Price.objects.select_related("proof")
             .filter(owner=self.user_id)
             .filter(proof__owner=self.user_id)
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("id")
         )
         self.price_in_proof_not_owned_count = (
             Price.objects.select_related("proof")
             .filter(owner=self.user_id)
             .exclude(proof__owner=self.user_id)
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("id")
         )
         self.price_not_owned_in_proof_owned_count = (
             Price.objects.select_related("proof")
             .exclude(owner=self.user_id)
             .filter(proof__owner=self.user_id)
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("id")
         )
         self.save(update_fields=self.PRICE_COUNT_FIELDS)
 
@@ -127,12 +124,9 @@ class User(models.Model):
         from open_prices.locations import constants as location_constants
         from open_prices.proofs.models import Proof
 
-        self.location_count = (
-            Proof.objects.filter(owner=self.user_id, location_id__isnull=False)
-            .values_list("location_id", flat=True)
-            .distinct()
-            .count()
-        )
+        self.location_count = Proof.objects.filter(
+            owner=self.user_id, location_id__isnull=False
+        ).calculate_field_distinct_count("location_id")
         self.location_type_osm_country_count = (
             Proof.objects.select_related("location")
             .filter(
@@ -140,21 +134,16 @@ class User(models.Model):
                 location_id__isnull=False,
                 location__type=location_constants.TYPE_OSM,
             )
-            .values_list("location__osm_address_country", flat=True)
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("location__osm_address_country")
         )
         self.save(update_fields=self.LOCATION_COUNT_FIELDS)
 
     def update_product_count(self):
         from open_prices.prices.models import Price
 
-        self.product_count = (
-            Price.objects.filter(owner=self.user_id, product_id__isnull=False)
-            .values_list("product_id", flat=True)
-            .distinct()
-            .count()
-        )
+        self.product_count = Price.objects.filter(
+            owner=self.user_id, product_id__isnull=False
+        ).calculate_field_distinct_count("product_id")
         self.save(update_fields=self.PRODUCT_COUNT_FIELDS)
 
     def update_proof_count(self):
@@ -175,17 +164,14 @@ class User(models.Model):
         from open_prices.proofs.models import Proof
 
         self.currency_count = (  # should we filter on proof with prices only?
-            Proof.objects.filter(owner=self.user_id)
-            .values_list("currency", flat=True)
-            .distinct()
-            .count()
+            Proof.objects.filter(owner=self.user_id).calculate_field_distinct_count(
+                "currency"
+            )
         )
         self.year_count = (
             Proof.objects.filter(owner=self.user_id)
             .annotate(date_year_annotated=ExtractYear("date"))
-            .values("date_year_annotated")
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("date_year_annotated")
         )
         proof_in_challenge_tag_list = (
             Proof.objects.exclude(tags=[])

@@ -27,6 +27,14 @@ class LocationQuerySet(models.QuerySet):
             price_count_annotated=Count("prices", distinct=True)
         )
 
+    def calculate_field_distinct_count(self, field_name: str):
+        return (
+            self.exclude(**{f"{field_name}__isnull": True})
+            .values(field_name)
+            .distinct()
+            .count()
+        )
+
 
 class Location(models.Model):
     CREATE_FIELDS = ["type", "osm_id", "osm_type", "website_url"]
@@ -168,23 +176,17 @@ class Location(models.Model):
     def update_user_count(self):
         from open_prices.proofs.models import Proof
 
-        self.user_count = (
-            Proof.objects.filter(location=self, owner__isnull=False)
-            .values_list("owner", flat=True)
-            .distinct()
-            .count()
-        )
+        self.user_count = Proof.objects.filter(
+            location=self, owner__isnull=False
+        ).calculate_field_distinct_count("owner")
         self.save(update_fields=["user_count"])
 
     def update_product_count(self):
         from open_prices.prices.models import Price
 
-        self.product_count = (
-            Price.objects.filter(location=self, product_id__isnull=False)
-            .values_list("product_id", flat=True)
-            .distinct()
-            .count()
-        )
+        self.product_count = Price.objects.filter(
+            location=self, product_id__isnull=False
+        ).calculate_field_distinct_count("product_id")
         self.save(update_fields=["product_count"])
 
     def update_proof_count(self):
