@@ -419,7 +419,7 @@ def detect_price_tags(
     label_names: list[str] = PRICE_TAG_DETECTOR_LABEL_NAMES,
     image_size: int = PRICE_TAG_DETECTOR_IMAGE_SIZE,
     triton_uri: str = settings.TRITON_URI,
-    threshold: float = 0.25,
+    threshold: float = 0.1,
 ) -> ObjectDetectionRawResult:
     """Detect the price tags in a proof image.
 
@@ -432,7 +432,7 @@ def detect_price_tags(
     :param image_size: the size of the image, defaults to IMAGE_SIZE
     :param triton_uri: the URI of the Triton server, defaults to
         settings.TRITON_URI
-    :param threshold: the detection threshold, defaults to 0.25
+    :param threshold: the detection threshold, defaults to 0.1
     :return: the detection results
     """
     detector = ObjectDetector(
