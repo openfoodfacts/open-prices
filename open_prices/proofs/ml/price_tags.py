@@ -704,19 +704,23 @@ def run_and_save_price_tag_detection(
     else:
         max_confidence = None
 
-    proof_prediction = ProofPrediction.objects.create(
-        proof=proof,
-        type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
-        model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
-        model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
-        data={"objects": detections},
-        value=None,
-        max_confidence=max_confidence,
-    )
-    create_price_tags_from_proof_prediction(
-        proof, proof_prediction, run_extraction=run_extraction
-    )
-    return proof_prediction
+    try:
+        proof_prediction = ProofPrediction.objects.create(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+            model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
+            model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
+            data={"objects": detections},
+            value=None,
+            max_confidence=max_confidence,
+        )
+        create_price_tags_from_proof_prediction(
+            proof, proof_prediction, run_extraction=run_extraction
+        )
+        return proof_prediction
+    except Exception as e:
+        logger.exception(e)
+        return None
 
 
 def price_tag_prediction_has_predicted_barcode_valid(
