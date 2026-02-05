@@ -125,7 +125,7 @@ class User(models.Model):
         from open_prices.proofs.models import Proof
 
         self.location_count = Proof.objects.filter(
-            owner=self.user_id, location_id__isnull=False
+            owner=self.user_id
         ).calculate_field_distinct_count("location_id")
         self.location_type_osm_country_count = (
             Proof.objects.select_related("location")
@@ -142,7 +142,7 @@ class User(models.Model):
         from open_prices.prices.models import Price
 
         self.product_count = Price.objects.filter(
-            owner=self.user_id, product_id__isnull=False
+            owner=self.user_id
         ).calculate_field_distinct_count("product_id")
         self.save(update_fields=self.PRODUCT_COUNT_FIELDS)
 

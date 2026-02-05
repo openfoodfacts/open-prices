@@ -177,7 +177,7 @@ class Product(models.Model):
         from open_prices.prices.models import Price
 
         self.location_count = Price.objects.filter(
-            product=self, location_id__isnull=False
+            product=self
         ).calculate_field_distinct_count("location_id")
         self.location_type_osm_country_count = Price.objects.filter(
             product=self,
@@ -190,7 +190,7 @@ class Product(models.Model):
         from open_prices.prices.models import Price
 
         self.user_count = Price.objects.filter(
-            product=self, owner__isnull=False
+            product=self
         ).calculate_field_distinct_count("owner")
         self.save(update_fields=["user_count"])
 
@@ -198,7 +198,7 @@ class Product(models.Model):
         from open_prices.prices.models import Price
 
         self.proof_count = Price.objects.filter(
-            product=self, proof_id__isnull=False
+            product=self
         ).calculate_field_distinct_count("proof_id")
         self.save(update_fields=["proof_count"])
 

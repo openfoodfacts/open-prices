@@ -177,7 +177,7 @@ class Location(models.Model):
         from open_prices.proofs.models import Proof
 
         self.user_count = Proof.objects.filter(
-            location=self, owner__isnull=False
+            location=self
         ).calculate_field_distinct_count("owner")
         self.save(update_fields=["user_count"])
 
@@ -185,7 +185,7 @@ class Location(models.Model):
         from open_prices.prices.models import Price
 
         self.product_count = Price.objects.filter(
-            location=self, product_id__isnull=False
+            location=self
         ).calculate_field_distinct_count("product_id")
         self.save(update_fields=["product_count"])
 
