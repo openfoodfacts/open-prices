@@ -92,6 +92,14 @@ class ProofQuerySet(models.QuerySet):
             )
         )
 
+    def calculate_field_distinct_count(self, field_name: str):
+        return (
+            self.exclude(**{f"{field_name}__isnull": True})
+            .values(field_name)
+            .distinct()
+            .count()
+        )
+
     def has_tag(self, tag: str):
         return self.filter(tags__contains=[tag])
 
