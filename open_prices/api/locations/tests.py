@@ -128,6 +128,7 @@ class LocationDetailApiTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.location.id)
         # self.assertEqual(response.data["osm_lat"], 45.1805534)
+        self.assertIn("logo_image_path_full", response.data)
 
     def test_location_detail_by_osm(self):
         # 404
