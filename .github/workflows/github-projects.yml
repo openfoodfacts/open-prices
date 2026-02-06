@@ -42,6 +42,7 @@ jobs:
   add-to-projects:
     name: Ventilate issues to the right GitHub projects
     runs-on: ubuntu-slim
+    if: github.repository_owner == 'openfoodfacts'
     steps:
       - uses: actions/add-to-project@main
         with:
