@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.98.0](https://github.com/openfoodfacts/open-prices/compare/v1.97.1...v1.98.0) (2026-02-06)
+
+
+### Features
+
+* approximate counting with pg_class.reltuples ([#1208](https://github.com/openfoodfacts/open-prices/issues/1208)) ([21c15bd](https://github.com/openfoodfacts/open-prices/commit/21c15bdb4b03a7cd877c3f656a683ce6d5ae516a))
+
+
+### Bug Fixes
+
+* decrease threshold for price tag detection to 0.1 ([#1216](https://github.com/openfoodfacts/open-prices/issues/1216)) ([8a252dd](https://github.com/openfoodfacts/open-prices/commit/8a252dda4e6c16ad3f103b83f4c43f7c997114ab))
+* prevent foreign key violation for deleted proofs ([#1201](https://github.com/openfoodfacts/open-prices/issues/1201)) ([a0ad233](https://github.com/openfoodfacts/open-prices/commit/a0ad233a49b9683a86b129e3d2b8399fead533c0))
+
+
+### Technical
+
+* standardize repository checks ([#1200](https://github.com/openfoodfacts/open-prices/issues/1200)) ([141b85c](https://github.com/openfoodfacts/open-prices/commit/141b85cacfcd6030835aa4d308961bb9d8c3eabd))
+
 ## [1.97.1](https://github.com/openfoodfacts/open-prices/compare/v1.97.0...v1.97.1) (2026-02-04)
 
 
