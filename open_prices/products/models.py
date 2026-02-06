@@ -198,12 +198,9 @@ class Product(models.Model):
     def update_user_count(self):
         from open_prices.prices.models import Price
 
-        self.user_count = (
-            Price.objects.filter(product=self, owner__isnull=False)
-            .values_list("owner", flat=True)
-            .distinct()
-            .count()
-        )
+        self.user_count = Price.objects.filter(
+            product=self, owner__isnull=False
+        ).aggregate(count=Count("owner", distinct=True))["count"] or 0
         self.save(update_fields=["user_count"])
 
     def update_proof_count(self):
