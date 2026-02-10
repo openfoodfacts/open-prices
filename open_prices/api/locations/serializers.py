@@ -4,6 +4,8 @@ from open_prices.locations.models import Location
 
 
 class LocationSerializer(serializers.ModelSerializer):
+    logo_image_path_full = serializers.CharField(read_only=True)  # from model property
+
     class Meta:
         model = Location
         fields = "__all__"
