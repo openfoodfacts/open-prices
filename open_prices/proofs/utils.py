@@ -247,6 +247,7 @@ def match_price_tag_with_price(price_tag: PriceTag, price: Price) -> bool:
     """
     Match only on price.
     We make sure this price is unique in the proof to avoid errors.
+    # TODO: manage schema_version 2 and is_discounted=True ?
     """
     price_tag_prediction_price = price_tag.get_predicted_price()
     proof_prices = list(
@@ -269,6 +270,7 @@ def match_receipt_item_with_price(receipt_item: ReceiptItem, price: Price) -> bo
     """
     Match only on price.
     We make sure this price is unique in the proof to avoid errors.
+    # TODO: manage schema_version 2 and is_discounted=True ?
     """
     receipt_item_prediction_data = receipt_item.predicted_data
     receipt_item_prediction_price = receipt_item_prediction_data.get("price")
