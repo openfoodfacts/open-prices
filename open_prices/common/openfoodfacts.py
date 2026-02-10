@@ -29,6 +29,7 @@ OFF_CREATE_FIELDS = [
     "product_name",
     "product_quantity",
     "product_quantity_unit",
+    "quantity",
     "categories_tags",
     "brands",
     "brands_tags",
