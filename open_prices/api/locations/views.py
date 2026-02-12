@@ -185,6 +185,13 @@ class LocationViewSet(
                 required=False,
                 description="Filter prices with date less than or equal to this date (YYYY-MM-DD)",
             ),
+            OpenApiParameter(
+                name="price_is_discounted",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Filter to keep only discounted or non-discounted prices",
+            ),
         ],
         responses=LocationCompareSerializer(many=False),
         filters=False,
@@ -200,6 +207,7 @@ class LocationViewSet(
         location_id_b = request.query_params.get("location_id_b")
         date__gte = request.query_params.get("date__gte")
         date__lte = request.query_params.get("date__lte")
+        price_is_discounted = request.query_params.get("price_is_discounted")
 
         # Validate parameters
         if not location_id_a or not location_id_b:
@@ -246,13 +254,22 @@ class LocationViewSet(
             price_filters &= Q(date__gte=date__gte)
         if date__lte:
             price_filters &= Q(date__lte=date__lte)
+        if price_is_discounted is not None:
+            price_filters &= Q(
+                price_is_discounted=price_is_discounted.lower() == "true"
+            )
 
         prices_qs = (
             Price.objects.select_related("product")
             .filter(price_filters)
             .order_by("product_code", "-date")
             .values(
-                "product_code", "product__product_name", "location_id", "price", "date"
+                "product_code",
+                "product__product_name",
+                "location_id",
+                "price",
+                "price_is_discounted",
+                "date",
             )
         )
         price_list = list(prices_qs)
@@ -281,11 +298,11 @@ class LocationViewSet(
                     ],
                     "location_a": {
                         key: locations_dict[location_id_a][key]
-                        for key in ("price", "date")
+                        for key in ("price", "price_is_discounted", "date")
                     },
                     "location_b": {
                         key: locations_dict[location_id_b][key]
-                        for key in ("price", "date")
+                        for key in ("price", "price_is_discounted", "date")
                     },
                 }
                 results["shared_products"].append(product_result)
