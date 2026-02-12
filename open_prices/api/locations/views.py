@@ -148,6 +148,20 @@ class LocationViewSet(
                 location=OpenApiParameter.QUERY,
                 required=True,
             ),
+            OpenApiParameter(
+                name="date__gte",
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Filter prices with date greater than or equal to this date (YYYY-MM-DD)",
+            ),
+            OpenApiParameter(
+                name="date__lte",
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Filter prices with date less than or equal to this date (YYYY-MM-DD)",
+            ),
         ],
         responses=LocationCompareSerializer(many=False),
         filters=False,
@@ -161,6 +175,8 @@ class LocationViewSet(
         """
         location_id_a = request.query_params.get("location_id_a")
         location_id_b = request.query_params.get("location_id_b")
+        date__gte = request.query_params.get("date__gte")
+        date__lte = request.query_params.get("date__lte")
 
         # Validate parameters
         if not location_id_a or not location_id_b:
@@ -200,12 +216,17 @@ class LocationViewSet(
         }
 
         # Single query: fetch all prices from both locations
+        price_filters = Q(location_id=location_id_a) | Q(location_id=location_id_b)
+        price_filters &= Q(product_code__isnull=False)
+
+        if date__gte:
+            price_filters &= Q(date__gte=date__gte)
+        if date__lte:
+            price_filters &= Q(date__lte=date__lte)
+
         prices_qs = (
             Price.objects.select_related("product")
-            .filter(
-                Q(location_id=location_id_a) | Q(location_id=location_id_b),
-                product_code__isnull=False,
-            )
+            .filter(price_filters)
             .order_by("product_code", "-date")
             .values(
                 "product_code", "product__product_name", "location_id", "price", "date"
