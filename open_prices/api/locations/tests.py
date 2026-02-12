@@ -387,6 +387,7 @@ class LocationCompareApiTest(TestCase):
             location_osm_type=cls.location_a.osm_type,
             product_code=cls.product_8001505005707.code,
             price=1.5,
+            date="2024-01-01",
         )
         PriceFactory(
             location=cls.location_a,
@@ -394,6 +395,7 @@ class LocationCompareApiTest(TestCase):
             location_osm_type=cls.location_a.osm_type,
             product_code=cls.product_8850187002197.code,
             price=2.5,
+            date="2024-01-01",
         )
         # location b has 2 prices (1 shared)
         PriceFactory(
@@ -402,6 +404,7 @@ class LocationCompareApiTest(TestCase):
             location_osm_type=cls.location_b.osm_type,
             product_code=cls.product_8001505005707.code,
             price=1.0,
+            date="2025-01-01",
         )
         PriceFactory(
             location=cls.location_b,
@@ -411,6 +414,7 @@ class LocationCompareApiTest(TestCase):
             category_tag="en:apples",
             price=2,
             price_per=price_constants.PRICE_PER_KILOGRAM,
+            date="2025-01-01",
         )
 
     def test_cannot_compare_with_bad_request(self):
@@ -469,3 +473,13 @@ class LocationCompareApiTest(TestCase):
         self.assertEqual(shared_product["location_b"]["price"], Decimal("1.0"))
         self.assertEqual(response.data["total_sum_location_a"], Decimal("1.5"))
         self.assertEqual(response.data["total_sum_location_b"], Decimal("1.0"))
+
+    def test_compare_shared_products_with_date_filter(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}&date__gte=2024-12-31"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["shared_products"]), 0)
+        self.assertEqual(response.data["total_sum_location_a"], Decimal("0"))
+        self.assertEqual(response.data["total_sum_location_b"], Decimal("0"))
