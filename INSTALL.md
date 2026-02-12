@@ -19,13 +19,13 @@ cd open-prices
 ### Without Docker
 
 ```
-# Install poetry (Python dependency manager)
-# see https://python-poetry.org/docs/
+# Install uv (Python dependency manager)
+# see https://docs.astral.sh/uv/
 
 # Install dependencies (pyproject.toml)
-poetry install
+uv sync
 
-# Note: all future commands should be prefixed with `poetry run`
+# Note: all future commands should be prefixed with `uv run`
 
 # Apply migrations
 python manage.py migrate
