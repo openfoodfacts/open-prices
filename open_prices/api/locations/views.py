@@ -1,6 +1,8 @@
+from decimal import Decimal
+
 from django.core.cache import cache
 from django.core.validators import ValidationError
-from django.db.models import Count, F, Sum
+from django.db.models import Count, F, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -12,6 +14,7 @@ from open_prices.api.locations.filters import LocationFilter
 from open_prices.api.locations.serializers import (
     CountryCitySerializer,
     CountrySerializer,
+    LocationCompareSerializer,
     LocationCreateSerializer,
     LocationSerializer,
 )
@@ -19,6 +22,7 @@ from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
 from open_prices.common import openstreetmap, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
+from open_prices.prices.models import Price
 
 
 class LocationViewSet(
@@ -49,7 +53,7 @@ class LocationViewSet(
         try:
             location = serializer.save(source=source)
             response_data = self.serializer_class(location).data
-            response_status_code = status.HTTP_201_CREATED
+            response_status_code = status.HTTP_b01_CREATED
         # avoid duplicates: return existing location instead
         except ValidationError as e:
             if any(
@@ -61,7 +65,7 @@ class LocationViewSet(
                     **self.serializer_class(location).data,
                     "detail": "duplicate",
                 }
-                response_status_code = status.HTTP_200_OK
+                response_status_code = status.HTTP_b00_OK
         return Response(response_data, status=response_status_code)
 
     @extend_schema(
@@ -114,7 +118,7 @@ class LocationViewSet(
                     (
                         loc["location_count"]
                         for loc in location_qs
-                        if loc["osm_address_country_code"] == country["country_code_2"]
+                        if loc["osm_address_country_code"] == country["country_code_b"]
                     ),
                     0,
                 )
@@ -122,7 +126,7 @@ class LocationViewSet(
                     (
                         loc["price_count"]
                         for loc in location_qs
-                        if loc["osm_address_country_code"] == country["country_code_2"]
+                        if loc["osm_address_country_code"] == country["country_code_b"]
                     ),
                     0,
                 )
@@ -152,3 +156,117 @@ class LocationViewSet(
             .order_by("osm_name")
         )
         return Response(CountryCitySerializer(location_qs, many=True).data)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="location_id_a",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+            ),
+            OpenApiParameter(
+                name="location_id_b",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+            ),
+        ],
+        responses=LocationCompareSerializer(many=True),
+        filters=False,
+    )
+    @action(detail=False, methods=["GET"])
+    def compare(self, request: Request) -> Response:
+        """
+        Compare two locations by their IDs.
+        Returns shared product prices with the latest price per location,
+        the date of that price, and the total sum.
+        """
+        location_id_a = request.query_params.get("location_id_a")
+        location_id_b = request.query_params.get("location_id_b")
+
+        # Validate parameters
+        if not location_id_a or not location_id_b:
+            return Response(
+                {
+                    "detail": "location_id_a and location_id_b query parameters are required"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            location_id_a = int(location_id_a)
+            location_id_b = int(location_id_b)
+        except ValueError:
+            return Response(
+                {"detail": "location_id_a and location_id_b must be integers"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Verify both locations exist
+        location_a = get_object_or_drf_404(Location, id=location_id_a)
+        location_b = get_object_or_drf_404(Location, id=location_id_b)
+
+        response = {
+            "location_a": LocationSerializer(location_a).data,
+            "location_b": LocationSerializer(location_b).data,
+            "shared_products": [],
+            "total_sum_location_a": Decimal(0),
+            "total_sum_location_b": Decimal(0),
+        }
+
+        # Single query: fetch all prices from both locations
+        prices_qs = (
+            Price.objects.select_related("product")
+            .filter(
+                Q(location_id=location_id_a) | Q(location_id=location_id_b),
+                product_code__isnull=False,
+            )
+            .order_by("product_code", "-date")
+            .values(
+                "product_code", "product__product_name", "location_id", "price", "date"
+            )
+        )
+        price_list = list(prices_qs)
+
+        # Group latest prices by product_code and location_id
+        latest_prices = {}
+        for price in price_list:
+            product_code = price["product_code"]
+            location_id = price["location_id"]
+
+            if product_code not in latest_prices:
+                latest_prices[product_code] = {}
+
+            # Only store if we haven't seen this location yet
+            # first occurrence is latest price due to ordering
+            if location_id not in latest_prices[product_code]:
+                latest_prices[product_code][location_id] = price
+
+        # Find shared products and build response
+        for product_code, locations_dict in latest_prices.items():
+            if len(locations_dict.keys()) == 2:
+                response["shared_products"].append(
+                    {
+                        "product_code": product_code,
+                        "product_name": locations_dict[location_id_a][
+                            "product__product_name"
+                        ],
+                        "location_a": {
+                            key: locations_dict[location_id_a][key]
+                            for key in ("price", "date")
+                        },
+                        "location_b": {
+                            key: locations_dict[location_id_b][key]
+                            for key in ("price", "date")
+                        },
+                    }
+                )
+                response["total_sum_location_a"] += locations_dict[location_id_a][
+                    "price"
+                ]
+                response["total_sum_location_b"] += locations_dict[location_id_b][
+                    "price"
+                ]
+
+        return Response(response)
