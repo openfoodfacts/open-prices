@@ -375,6 +375,10 @@ class LocationCompareApiTest(TestCase):
             type=location_constants.TYPE_OSM,
             price_count=2,
         )
+        cls.location_c = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            price_count=0,
+        )
         cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
         cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
         PriceFactory(
@@ -428,7 +432,22 @@ class LocationCompareApiTest(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_compare(self):
+    def test_compare_same_location(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_a.id}"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_compare_no_shared_products(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_c.id}"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["shared_products"], [])
+        self.assertEqual(response.data["total_sum_location_a"], Decimal("0"))
+        self.assertEqual(response.data["total_sum_location_b"], Decimal("0"))
+
+    def test_compare_shared_products(self):
         url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}"
 
         # 3 queries: 2 for fetching both locations, 1 for fetching all prices

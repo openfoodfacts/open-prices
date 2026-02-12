@@ -172,7 +172,7 @@ class LocationViewSet(
                 required=True,
             ),
         ],
-        responses=LocationCompareSerializer(many=True),
+        responses=LocationCompareSerializer(many=False),
         filters=False,
     )
     @action(detail=False, methods=["GET"])
@@ -207,7 +207,14 @@ class LocationViewSet(
         location_a = get_object_or_drf_404(Location, id=location_id_a)
         location_b = get_object_or_drf_404(Location, id=location_id_b)
 
-        response = {
+        if location_id_a == location_id_b:
+            return Response(
+                {"detail": "location_id_a and location_id_b must be different"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # prepare response structure
+        results = {
             "location_a": LocationSerializer(location_a).data,
             "location_b": LocationSerializer(location_b).data,
             "shared_products": [],
@@ -246,27 +253,22 @@ class LocationViewSet(
         # Find shared products and build response
         for product_code, locations_dict in latest_prices.items():
             if len(locations_dict.keys()) == 2:
-                response["shared_products"].append(
-                    {
-                        "product_code": product_code,
-                        "product_name": locations_dict[location_id_a][
-                            "product__product_name"
-                        ],
-                        "location_a": {
-                            key: locations_dict[location_id_a][key]
-                            for key in ("price", "date")
-                        },
-                        "location_b": {
-                            key: locations_dict[location_id_b][key]
-                            for key in ("price", "date")
-                        },
-                    }
-                )
-                response["total_sum_location_a"] += locations_dict[location_id_a][
-                    "price"
-                ]
-                response["total_sum_location_b"] += locations_dict[location_id_b][
-                    "price"
-                ]
+                product_result = {
+                    "product_code": product_code,
+                    "product_name": locations_dict[location_id_a][
+                        "product__product_name"
+                    ],
+                    "location_a": {
+                        key: locations_dict[location_id_a][key]
+                        for key in ("price", "date")
+                    },
+                    "location_b": {
+                        key: locations_dict[location_id_b][key]
+                        for key in ("price", "date")
+                    },
+                }
+                results["shared_products"].append(product_result)
+                results["total_sum_location_a"] += product_result["location_a"]["price"]
+                results["total_sum_location_b"] += product_result["location_b"]["price"]
 
-        return Response(response)
+        return Response(LocationCompareSerializer(results).data)
