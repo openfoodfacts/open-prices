@@ -33,3 +33,11 @@ class CountrySerializer(serializers.Serializer):
     name = serializers.CharField()
     country_code_2 = serializers.CharField()
     osm_name = serializers.CharField(required=False, allow_null=True)
+
+
+class LocationCompareSerializer(serializers.Serializer):
+    location_a = LocationSerializer()
+    location_b = LocationSerializer()
+    shared_products = serializers.ListField(child=serializers.CharField())
+    total_sum_location_a = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_sum_location_b = serializers.DecimalField(max_digits=10, decimal_places=2)
