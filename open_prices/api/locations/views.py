@@ -1,6 +1,6 @@
 from django.core.cache import cache
 from django.core.validators import ValidationError
-from django.db.models import Count, Sum
+from django.db.models import Count, F, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from open_prices.api.locations.filters import LocationFilter
 from open_prices.api.locations.serializers import (
+    CountryCitySerializer,
     CountrySerializer,
     LocationCreateSerializer,
     LocationSerializer,
@@ -129,3 +130,25 @@ class LocationViewSet(
             cache.set(cache_key, countries_list, timeout=cache_timeout)
 
         return Response(countries_list)
+
+    # TODO: disable pagination
+    @extend_schema(responses=CountryCitySerializer(many=True), filters=False)
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_path="osm/countries/(?P<country_code>\\w{2})/cities",
+    )
+    def list_osm_country_cities(self, request, country_code):
+        location_qs = (
+            Location.objects.filter(
+                type=location_constants.TYPE_OSM,
+                osm_address_country_code=country_code,
+                osm_address_city__isnull=False,
+            )
+            .values("osm_address_city")
+            .annotate(osm_name=F("osm_address_city"))
+            .annotate(country_code_2=F("osm_address_country_code"))
+            .annotate(location_count=Count("id"), price_count=Sum("price_count"))
+            .order_by("osm_name")
+        )
+        return Response(CountryCitySerializer(location_qs, many=True).data)
