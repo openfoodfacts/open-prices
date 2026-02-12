@@ -173,19 +173,17 @@ class Challenge(models.Model):
         price_product_code_count = (
             Price.objects.has_tag(self.tag)
             .has_type_product()
-            .distinct("product_code")
-            .count()
+            .calculate_field_distinct_count("product_code")
         )
         price_category_tag_count = (
             Price.objects.has_tag(self.tag)
             .has_type_category()
-            .distinct("category_tag")
-            .count()
+            .calculate_field_distinct_count("category_tag")
         )
         price_product_count = price_product_code_count + price_category_tag_count
-        proof_location_count = (
-            Proof.objects.has_tag(self.tag).distinct("location_id").count()
-        )
+        proof_location_count = Proof.objects.has_tag(
+            self.tag
+        ).calculate_field_distinct_count("location_id")
         user_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .values("owner")
