@@ -22,7 +22,7 @@ ENV PATH="/root/.local/bin:$VENV_PATH/bin:$PATH"
 FROM python-base AS builder-base
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 WORKDIR $PYSETUP_PATH
-COPY uv.lock pyproject.toml ./
+COPY uv.lock pyproject.toml README.md ./
 RUN uv sync --frozen
 
 # This is our final image
@@ -63,7 +63,7 @@ CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--workers", "1"]
 # ----------------------
 FROM builder-base AS builder-dev
 WORKDIR $PYSETUP_PATH
-COPY uv.lock pyproject.toml ./
+COPY uv.lock pyproject.toml README.md ./
 # full install, with dev packages
 RUN uv sync --frozen --group dev
 
