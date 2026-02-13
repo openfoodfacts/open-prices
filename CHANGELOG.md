@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.98.1](https://github.com/openfoodfacts/open-prices/compare/v1.98.0...v1.98.1) (2026-02-13)
+
+
+### Technical
+
+* **Currencies:** update list of available currencies (babel) ([#1222](https://github.com/openfoodfacts/open-prices/issues/1222)) ([0c9cccf](https://github.com/openfoodfacts/open-prices/commit/0c9cccf5273b0fd518ea0ee7dc0b8dcd8993097a))
+* **Stats:** exclude None when counting distinct values ([#1217](https://github.com/openfoodfacts/open-prices/issues/1217)) ([1d64438](https://github.com/openfoodfacts/open-prices/commit/1d64438a063bbae230bd6549b3422cf177df8f29))
+* **Tests:** avoid running the test CI twice when opening a PR ([#1228](https://github.com/openfoodfacts/open-prices/issues/1228)) ([062d15b](https://github.com/openfoodfacts/open-prices/commit/062d15bd936fbfe69819e00555fa611115ef5ef9))
+
 ## [1.98.0](https://github.com/openfoodfacts/open-prices/compare/v1.97.1...v1.98.0) (2026-02-06)
 
 
