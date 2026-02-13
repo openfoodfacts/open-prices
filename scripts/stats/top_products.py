@@ -43,7 +43,7 @@ def aggregate_product_list(product_list, field="price_count"):
 if __name__ == "__main__":
     """
     How-to run:
-    > poetry run python scripts/stats/top_products.py
+    > uv run python scripts/stats/top_products.py
     """
     # Step 1: get the list of products from OP
     product_list = get_product_list(count=1000)

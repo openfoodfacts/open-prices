@@ -225,7 +225,7 @@ def map_gdpr_price_list_to_open_prices(
 if __name__ == "__main__":
     """
     How-to run:
-    > FILEPATH= poetry run python scripts/gdpr/create_prices_from_gdpr_csv.py
+    > FILEPATH= uv run python scripts/gdpr/create_prices_from_gdpr_csv.py
     Required params: see REQUIRED_ENV_PARAMS
     """
     # Step 1: read input file

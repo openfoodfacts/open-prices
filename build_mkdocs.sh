@@ -5,4 +5,4 @@ IFS=$'\n\t'
 
 
 # Build mkdocs
-poetry run mkdocs build --strict
+uv run mkdocs build --strict
