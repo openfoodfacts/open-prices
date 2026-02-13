@@ -100,10 +100,10 @@ log:
 # Quality    #
 #------------#
 toml-check:
-	${DOCKER_COMPOSE} run --rm --no-deps api uv run toml-sort --check pyproject.toml
+	${DOCKER_COMPOSE} run --rm --no-deps api toml-sort --check pyproject.toml
 
 toml-lint:
-	${DOCKER_COMPOSE} run --rm --no-deps api uv run toml-sort --in-place pyproject.toml
+	${DOCKER_COMPOSE} run --rm --no-deps api toml-sort --in-place pyproject.toml
 
 mypy:
 	${DOCKER_COMPOSE} run --rm --no-deps api mypy .
@@ -121,12 +121,12 @@ django-tests:
 	# change project name to run in isolation
 	# Override Q2_SYNC to make sure that async tasks are run synchronously during tests
 	# See https://github.com/openfoodfacts/open-prices/issues/962
-	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api uv run python3 manage.py test -v 2
+	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api python3 manage.py test -v 2
 
 
 django-tests-single: guard-args
 	@echo "🥫 Running specific tests …"
-	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api uv run python3 manage.py test -v 2 ${args}
+	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api python3 manage.py test -v 2 ${args}
 
 #------------#
 # Production #
