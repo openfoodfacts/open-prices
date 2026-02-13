@@ -3,7 +3,7 @@ name = "open-prices"
 version = "0.1.0"
 description = "An open database of product prices"
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11"
 license = { text = "AGPL-3.0 licence" }
 authors = [{ name = "Open Food Facts", email = "contact@openfoodfacts.org" }]
 dependencies = [
