@@ -257,7 +257,7 @@ class Price(models.Model):
 
     owner_comment = models.TextField(blank=True, null=True)
 
-    owner = models.CharField(blank=True, null=True)
+    owner = models.CharField(blank=True, null=True, db_index=True)
     source = models.CharField(blank=True, null=True)
 
     tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
