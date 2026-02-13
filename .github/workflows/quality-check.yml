@@ -2,6 +2,8 @@ name: Open Prices unit and integration tests
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 concurrency:
