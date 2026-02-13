@@ -13,15 +13,15 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=off \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100 \
-    PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
-ENV PATH="/root/.local/bin:$VENV_PATH/bin:$PATH"
+    VENV_PATH=/opt/open-prices/.venv \
+    UV_PATH=/root/.local/bin/uv
+ENV PATH="/root/.local/bin:/opt/open-prices/.venv/bin:$PATH"
 
 # building packages
 # -----------------
 FROM python-base AS builder-base
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-WORKDIR $PYSETUP_PATH
+WORKDIR /opt/open-prices
 COPY uv.lock pyproject.toml README.md ./
 RUN uv sync --frozen
 
@@ -29,6 +29,7 @@ RUN uv sync --frozen
 # ------------------------
 FROM python-base AS runtime
 COPY --from=builder-base $VENV_PATH $VENV_PATH
+COPY --from=builder-base $UV_PATH $UV_PATH
 
 # create off user
 ARG USER_UID=1000
@@ -62,7 +63,7 @@ CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--workers", "1"]
 # building dev packages
 # ----------------------
 FROM builder-base AS builder-dev
-WORKDIR $PYSETUP_PATH
+WORKDIR /opt/open-prices
 COPY uv.lock pyproject.toml README.md ./
 # full install, with dev packages
 RUN uv sync --frozen --group dev
@@ -72,6 +73,7 @@ RUN uv sync --frozen --group dev
 # This image will be used by default, unless a target is specified in docker-compose.yml
 FROM runtime AS runtime-dev
 COPY --from=builder-dev $VENV_PATH $VENV_PATH
+COPY --from=builder-dev $UV_PATH $UV_PATH
 # Handle possible issue with Docker being too eager after copying files
 RUN true
 COPY pyproject.toml ./
