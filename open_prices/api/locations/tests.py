@@ -284,6 +284,7 @@ class LocationOsmCountriesListApiTest(TestCase):
 
     def test_location_osm_countries(self):
         response = self.client.get(self.url)
+
         self.assertEqual(response.status_code, 200)
         self.assertTrue(isinstance(response.data, list))
         self.assertEqual(len(response.data), 238)
@@ -296,3 +297,44 @@ class LocationOsmCountriesListApiTest(TestCase):
         country_us = next(c for c in response.data if c["country_code_2"] == "US")
         self.assertEqual(country_us["location_count"], 0)
         self.assertEqual(country_us["price_count"], 0)
+
+
+class LocationOsmCountryCitiesListApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:locations-list-osm-country-cities", args=["FR"])
+        cls.location_fr_paris = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_address_country_code="FR",
+            osm_address_city="Paris",
+            price_count=5,
+        )
+        cls.location_fr_grenoble = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_address_country_code="FR",
+            osm_address_city="Grenoble",
+            price_count=10,
+        )
+        cls.location_fr_grenoble = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_address_country_code="FR",
+            osm_address_city="Grenoble",
+            price_count=0,
+        )
+        cls.location_ch_geneva = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_address_country_code="CH",
+            osm_address_city="Geneva",
+            price_count=0,
+        )
+
+    def test_location_osm_country_cities(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["osm_name"], "Grenoble")  # ordered by name
+        self.assertEqual(response.data[0]["country_code_2"], "FR")
+        self.assertEqual(response.data[0]["location_count"], 2)
+        self.assertEqual(response.data[0]["price_count"], 10)

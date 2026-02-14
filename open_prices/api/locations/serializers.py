@@ -32,4 +32,13 @@ class CountrySerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
     country_code_2 = serializers.CharField()
-    osm_name = serializers.CharField(required=False, allow_null=True)
+    osm_name = serializers.CharField()
+    location_count = serializers.IntegerField()
+    price_count = serializers.IntegerField()
+
+
+class CountryCitySerializer(serializers.Serializer):
+    osm_name = serializers.CharField()
+    country_code_2 = serializers.CharField()
+    location_count = serializers.IntegerField()
+    price_count = serializers.IntegerField()
