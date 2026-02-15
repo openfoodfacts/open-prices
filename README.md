@@ -19,6 +19,8 @@ A Python Django REST API designed to interact with the Open Food Facts _Open Pri
 - Please get in touch at reuse@openfoodfacts.org
 - We are very interested in learning what the Open Prices data is used for. It is not mandatory, but we would very much appreciate it if you tell us about your re-uses (https://forms.gle/hwaeqBfs8ywwhbTg8) so that we can share them with the Open Food Facts community. And we would be happy to feature it here: https://prices.openfoodfacts.org/community
 
+**SDK Maintainers**: API changes are automatically communicated to OpenFoodFacts SDK repositories through our [SDK notification system](docs/maintenance.md#sdk-update-notifications).
+
 ### 🎨 Design & User interface
 
 - The Open Prices server is exposed through the Mobile App and the Open Prices frontend (and probably elsewhere in the future, thanks to web components)
