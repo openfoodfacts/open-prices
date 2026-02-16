@@ -1,82 +1,107 @@
+# The build is currently made in 3 steps:
+#
+# 1. install all dependencies in a stage called `builder-base`. This stage (and all pre-install commands before)
+#    is cached unless a dependency is updated. Only non-dev dependencies are installed.
+# 2. build a stage called `runtime`: this is the production build. We create a user named `off` that will be used
+#    when running the main command (we don't run as root inside containers). We make sure all directories that are
+#    bind-mounted are owned by this user to prevent permission issues. In this stage, we also:
+#      - copy the dependencies (`.venv`) installed in the previous build stage
+#      - run `uv sync` again, to install the project (dependencies installed in the previous stage will be reused)
+#      - add a docker entrypoint to automatically use the virtualenv interpreter
+#      - collect Django static content and define the main command (running the API server)
+# 3. build a stage called `runtime-dev`: this inherits from `runtime` but adds the following changes:
+#      - install dev dependencies (useful to run linter, doc build,...)
+#      - create some directories owned by the `off` user that are used when running dev commands, to prevent
+#        permission issues
+#   This is the build stage we use when developping locally.
+
 ARG PYTHON_VERSION=3.11
 
 # base python setup
 # -----------------
 FROM python:$PYTHON_VERSION-slim AS python-base
+
+# Install uv globally
+COPY --from=ghcr.io/astral-sh/uv:0.9.22 /uv /uvx /bin/
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    # Enable bytecode compilation
+    UV_COMPILE_BYTECODE=1 \
+    # Copy from the cache instead of linking since it's a mounted volume
+    UV_LINK_MODE=copy \
+    # Ensure installed tools can be executed out of the box
+    UV_TOOL_BIN_DIR=/usr/local/bin \
+    # Ensure uv uses the system's python3
+    PATH="/usr/local/bin:$PATH" \
+    # Define which Python interpreter will be installed by uv
+    UV_PYTHON=$PYTHON_VERSION
 RUN apt-get update && \
     apt-get install --no-install-suggests --no-install-recommends -y curl && \
     apt-get autoremove --purge && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    VENV_PATH=/opt/open-prices/.venv \
-    UV_PATH=/root/.local/bin/uv
-ENV PATH="/root/.local/bin:/opt/open-prices/.venv/bin:$PATH"
+WORKDIR /opt/open-prices
 
 # building packages
 # -----------------
 FROM python-base AS builder-base
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-WORKDIR /opt/open-prices
-COPY uv.lock pyproject.toml README.md ./
-RUN uv sync --frozen
+# Install dependencies before copying the rest of the code to leverage Docker cache
+# We use the `--no-install-project` option to prevent uv from installing the project.
+# Since the project changes frequently, but its dependencies are generally static, this
+# can be a big time saver.
+# See https://docs.astral.sh/uv/guides/integration/docker/#intermediate-layers for more
+# info
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
 
 # This is our final image
 # ------------------------
 FROM python-base AS runtime
-COPY --from=builder-base $VENV_PATH $VENV_PATH
-COPY --from=builder-base $UV_PATH $UV_PATH
 
 # create off user
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 RUN groupadd -g $USER_GID off && \
-    useradd -u $USER_UID -g off -m off && \
-    mkdir -p /home/off && \
-    mkdir -p /home/off/.cache && \
+    useradd -u $USER_UID -g off -m off
+
+# Create some directories for which the off user need write permissions
+RUN mkdir -p /home/off/.cache && \
+    chown off:off -R /home/off && \
     mkdir -p /opt/open-prices && \
-    mkdir -p /opt/open-prices/data && \
-    mkdir -p /opt/open-prices/img && \
-    mkdir -p /opt/open-prices/static && \
-    chown off:off -R /opt/open-prices /home/off
-COPY --chown=off:off config /opt/open-prices/config
-COPY --chown=off:off open_prices /opt/open-prices/open_prices
+    mkdir -p /opt/open-prices/img
+RUN chown off:off -R /opt/open-prices
+
+# Copy the full repo in the workdir
+COPY --chown=off:off . /opt/open-prices
+
+# Copy the virtualenv containing dependencies installed in the previous stage
+COPY --chown=off:off --from=builder-base /opt/open-prices/.venv /opt/open-prices/.venv
+# Final sync to install the project itself if needed
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-COPY --chown=off:off uv.lock pyproject.toml manage.py /opt/open-prices/
-
-USER off:off
-WORKDIR /opt/open-prices
 ENTRYPOINT /docker-entrypoint.sh $0 $@
 
-RUN ["python", "manage.py", "collectstatic", "--noinput"]
+RUN ["uv", "run", "--no-dev", "python", "manage.py", "collectstatic", "--noinput"]
 
 CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--workers", "1"]
 
 
+FROM runtime AS runtime-dev
 # building dev packages
 # ----------------------
-FROM builder-base AS builder-dev
-WORKDIR /opt/open-prices
-COPY uv.lock pyproject.toml README.md ./
 # full install, with dev packages
-RUN uv sync --frozen --group dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --group dev
 
 # image with dev tooling
 # ----------------------
-# This image will be used by default, unless a target is specified in docker-compose.yml
-FROM runtime AS runtime-dev
-COPY --from=builder-dev $VENV_PATH $VENV_PATH
-COPY --from=builder-dev $UV_PATH $UV_PATH
-# Handle possible issue with Docker being too eager after copying files
-RUN true
-COPY pyproject.toml ./
 # create folders that we mount in dev to avoid permission problems
 USER root
 RUN \

@@ -1,0 +1,6 @@
+.venv
+.git
+.mypy_cache
+.gh_pages
+.envrc
+img
