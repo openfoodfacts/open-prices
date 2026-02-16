@@ -53,7 +53,7 @@ class LocationViewSet(
         try:
             location = serializer.save(source=source)
             response_data = self.serializer_class(location).data
-            response_status_code = status.HTTP_b01_CREATED
+            response_status_code = status.HTTP_201_CREATED
         # avoid duplicates: return existing location instead
         except ValidationError as e:
             if any(
@@ -65,7 +65,7 @@ class LocationViewSet(
                     **self.serializer_class(location).data,
                     "detail": "duplicate",
                 }
-                response_status_code = status.HTTP_b00_OK
+                response_status_code = status.HTTP_200_OK
         return Response(response_data, status=response_status_code)
 
     @extend_schema(
@@ -118,7 +118,7 @@ class LocationViewSet(
                     (
                         loc["location_count"]
                         for loc in location_qs
-                        if loc["osm_address_country_code"] == country["country_code_b"]
+                        if loc["osm_address_country_code"] == country["country_code_2"]
                     ),
                     0,
                 )
@@ -126,7 +126,7 @@ class LocationViewSet(
                     (
                         loc["price_count"]
                         for loc in location_qs
-                        if loc["osm_address_country_code"] == country["country_code_b"]
+                        if loc["osm_address_country_code"] == country["country_code_2"]
                     ),
                     0,
                 )
