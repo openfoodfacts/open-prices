@@ -1,77 +1,59 @@
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.mypy]
-strict = true
-disable_error_code = ["no-untyped-call", "no-any-return"]
-python_version = "3.11"
-plugins = [
-  "pydantic.mypy"
-]
-
-[[tool.mypy.overrides]]
-module = [
-  "OSMPythonTools.nominatim",
-  "apscheduler.*"
-]
-ignore_missing_imports = true
-warn_return_any = false
-
-[tool.poetry]
+[project]
 name = "open-prices"
 version = "0.1.0"
 description = "An open database of product prices"
-authors = ["Open Food Facts <contact@openfoodfacts.org>"]
-license = "AGPL-3.0 licence"
 readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0 licence" }
+authors = [{ name = "Open Food Facts", email = "contact@openfoodfacts.org" }]
+dependencies = [
+  "babel>=2.17.0,<3.0.0",
+  "blessed>=1.20.0,<2.0.0",
+  "croniter>=3.0.3,<4.0.0",
+  "django>=5.2,<5.3",
+  "django-cors-headers>=4.9.0,<5.0.0",
+  "django-debug-toolbar>=6.1.0,<7.0.0",
+  "django-extensions>=4.1,<5.0.0",
+  "django-filter>=25.1,<26.0.0",
+  "django-q2>=1.8.0,<2.0.0",
+  "django-simple-history>=3.10.1,<4.0.0",
+  "django-solo>=2.3.0,<3.0.0",
+  "djangorestframework>=3.16.1,<4.0.0",
+  "drf-spectacular>=0.29.0,<0.30.0",
+  "google-genai>=1.56.0,<1.57.0",
+  "gunicorn>=23.0.0,<24.0.0",
+  "ipython>=9.6.0,<10.0.0",
+  "openfoodfacts[ml,redis]>=3.4.0,<3.5.0",
+  "osmpythontools>=0.3.6,<0.4.0",
+  "pillow>=10.4.0,<11.0.0",
+  "psycopg2-binary>=2.9.9,<2.10.0",
+  "pydantic>=2.10.3,<2.11.0",
+  "python-multipart>=0.0.7,<0.0.8",
+  "requests>=2.32.5,<3.0.0",
+  "sentry-sdk[django]>=2.43.0,<2.44.0",
+  "typer>=0.20.0,<0.21.0",
+]
 
-[tool.poetry.dependencies]
-python = "~3.11"
-babel = "^2.17.0"
-blessed = "^1.20.0"
-croniter = "^3.0.3"
-django = "~5.2"
-django-cors-headers = "^4.9.0"
-django-debug-toolbar = "^6.1.0"
-django-extensions = "^4.1"
-django-filter = "^25.1"
-django-q2 = "^1.8.0"
-django-simple-history = "^3.10.1"
-django-solo = "^2.3.0"
-djangorestframework = "^3.16.1"
-drf-spectacular = "~0.29.0"
-google-genai = "~1.56.0"
-gunicorn = "^23.0.0"
-ipython = "^9.6.0"
-openfoodfacts = {version = "~3.4.0", extras = ["ml", "redis"]}
-osmpythontools = "^0.3.6"
-pillow = "^10.4.0"
-psycopg2-binary = "~2.9.9"
-pydantic = "~2.10.3"
-python-multipart = "~0.0.7"
-requests = "^2.32.5"
-sentry-sdk = {extras = ["django"], version = "~2.43.0"}
-typer = "^0.20.0"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.6.9"
-freezegun = "^1.5.5"
-httpx = "<1.0.0"
-mdx-truly-sane-lists = "^1.3"
-mkdocs = "^1.6.1"
-mkdocs-awesome-pages-plugin = "^2.10.1"
-mkdocs-material = "^9.6.23"
-mypy = "^1.18.2"
-pre-commit = "^3.8.0"
-factory-boy = "^3.3.3"
-pydot = "^3.0.1"
-pyparsing = "^3.2.5"
-pytest = "^7.4.4"
-pytest-cov = "^4.1.0"
-toml-sort = "^0.24.3"
-types-requests = "^2.32.4.20250913"
-types-tqdm = "^4.67.0.20250809"
+[dependency-groups]
+dev = [
+  "ruff>=0.6.9,<0.7.0",
+  "freezegun>=1.5.5,<2.0.0",
+  "httpx<1.0.0",
+  "mdx-truly-sane-lists>=1.3,<2.0.0",
+  "mkdocs>=1.6.1,<2.0.0",
+  "mkdocs-awesome-pages-plugin>=2.10.1,<3.0.0",
+  "mkdocs-material>=9.6.23,<10.0.0",
+  "mypy>=1.18.2,<2.0.0",
+  "pre-commit>=3.8.0,<4.0.0",
+  "factory-boy>=3.3.3,<4.0.0",
+  "pydot>=3.0.1,<4.0.0",
+  "pyparsing>=3.2.5,<4.0.0",
+  "pytest>=7.4.4,<8.0.0",
+  "pytest-cov>=4.1.0,<5.0.0",
+  "toml-sort>=0.24.3,<0.25.0",
+  "types-requests>=2.32.4.20250913,<3.0.0",
+  "types-tqdm>=4.67.0.20250809,<5.0.0",
+]
 
 [tool.ruff]
 target-version = "py311"
@@ -98,3 +80,19 @@ exclude = [
   ".mypy_cache",
   ".venv"
 ]
+
+[tool.mypy]
+strict = true
+disable_error_code = ["no-untyped-call", "no-any-return"]
+python_version = "3.11"
+plugins = [
+  "pydantic.mypy"
+]
+
+[[tool.mypy.overrides]]
+module = [
+  "OSMPythonTools.nominatim",
+  "apscheduler.*"
+]
+ignore_missing_imports = true
+warn_return_any = false

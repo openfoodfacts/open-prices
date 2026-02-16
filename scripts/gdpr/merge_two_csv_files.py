@@ -65,7 +65,7 @@ def write_csv(data, filepath):
 if __name__ == "__main__":
     """
     How-to run:
-    > FILEPATH_1= FILEPATH_2= PIVOT_FIELD_NAME_LIST= EXCLUDE_FIELD_NAME_LIST= poetry run python scripts/gdpr/merge_two_csv_files.py  # noqa
+    > FILEPATH_1= FILEPATH_2= PIVOT_FIELD_NAME_LIST= EXCLUDE_FIELD_NAME_LIST= uv run python scripts/gdpr/merge_two_csv_files.py  # noqa
     """
     filepath_1 = os.environ.get("FILEPATH_1")
     filepath_2 = os.environ.get("FILEPATH_2")

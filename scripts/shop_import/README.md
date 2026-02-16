@@ -46,7 +46,7 @@ The file must be a `.csv`.
 Use the token returned in Step 1.
 
 ```
-FILEPATH=../data/Elefan/20241208_articles_actif.csv MAPPING_FILEPATH=scripts/shop_import/mappings/elefan_grenoble.json DATE=2024-12-08 PROOF_ID=1234 API_ENDPOINT=https://prices.openfoodfacts.net/api/v1 API_TOKEN=<username__token-hash> DRY_RUN=True poetry run python scripts/shop_import/create_prices_from_csv.py
+FILEPATH=../data/Elefan/20241208_articles_actif.csv MAPPING_FILEPATH=scripts/shop_import/mappings/elefan_grenoble.json DATE=2024-12-08 PROOF_ID=1234 API_ENDPOINT=https://prices.openfoodfacts.net/api/v1 API_TOKEN=<username__token-hash> DRY_RUN=True uv run python scripts/shop_import/create_prices_from_csv.py
 ```
 
 Last changes ONLY when everything looks good and you're ready:
