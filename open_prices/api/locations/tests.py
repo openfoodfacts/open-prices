@@ -1,9 +1,14 @@
+from decimal import Decimal
+
 from django.test import TestCase
 from django.urls import reverse
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.prices import constants as price_constants
+from open_prices.prices.factories import PriceFactory
+from open_prices.products.factories import ProductFactory
 from open_prices.users.factories import SessionFactory
 
 LOCATION_OSM_NODE_652825274 = {
@@ -34,6 +39,24 @@ LOCATION_ONLINE_DECATHLON = {
     "type": location_constants.TYPE_ONLINE,
     "website_url": "https://www.decathlon.fr",
     "price_count": 15,
+}
+PRODUCT_8001505005707 = {
+    "code": "8001505005707",
+    "product_name": "Nocciolata",
+    "categories_tags": ["en:breakfasts", "en:spreads"],
+    "labels_tags": ["en:no-gluten", "en:organic"],
+    "brands_tags": ["rigoni-di-asiago"],
+    "price_count": 15,
+    "source": "off",
+}
+
+PRODUCT_8850187002197 = {
+    "code": "8850187002197",
+    "product_name": "Riz 20 kg",
+    "categories_tags": ["en:rices"],
+    "labels_tags": [],
+    "brands_tags": ["royal-umbrella"],
+    "price_count": 10,
 }
 
 
@@ -338,3 +361,137 @@ class LocationOsmCountryCitiesListApiTest(TestCase):
         self.assertEqual(response.data[0]["country_code_2"], "FR")
         self.assertEqual(response.data[0]["location_count"], 2)
         self.assertEqual(response.data[0]["price_count"], 10)
+
+
+class LocationCompareApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:locations-compare")
+        cls.location_a = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            price_count=5,
+        )
+        cls.location_b = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            price_count=2,
+        )
+        cls.location_c = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            price_count=0,
+        )
+        cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
+        cls.product_8850187002197 = ProductFactory(**PRODUCT_8850187002197)
+        PriceFactory(
+            location=cls.location_a,
+            location_osm_id=cls.location_a.osm_id,
+            location_osm_type=cls.location_a.osm_type,
+            product_code=cls.product_8001505005707.code,
+            price=1.5,
+            date="2024-01-01",
+        )
+        PriceFactory(
+            location=cls.location_a,
+            location_osm_id=cls.location_a.osm_id,
+            location_osm_type=cls.location_a.osm_type,
+            product_code=cls.product_8850187002197.code,
+            price=2.5,
+            date="2024-01-01",
+        )
+        # location b has 2 prices (1 shared)
+        PriceFactory(
+            location=cls.location_b,
+            location_osm_id=cls.location_b.osm_id,
+            location_osm_type=cls.location_b.osm_type,
+            product_code=cls.product_8001505005707.code,
+            price=1.0,
+            price_is_discounted=True,
+            price_without_discount=2,
+            date="2025-01-01",
+        )
+        PriceFactory(
+            location=cls.location_b,
+            location_osm_id=cls.location_b.osm_id,
+            location_osm_type=cls.location_b.osm_type,
+            type=price_constants.TYPE_CATEGORY,
+            category_tag="en:apples",
+            price=2,
+            price_per=price_constants.PRICE_PER_KILOGRAM,
+            date="2025-01-01",
+        )
+
+    def test_cannot_compare_with_bad_request(self):
+        # missing parameter
+        url = f"{self.url}?location_id_a={self.location_a.id}"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 400)
+
+        # location parameter must be an integer
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b=invalid"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 400)
+
+        # location unknown
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b=999"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_compare_same_location(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_a.id}"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_compare_no_shared_products(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_c.id}"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["shared_products"], [])
+        self.assertEqual(response.data["total_sum_location_a"], Decimal("0"))
+        self.assertEqual(response.data["total_sum_location_b"], Decimal("0"))
+
+    def test_compare_shared_products(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}"
+
+        # 3 queries: 2 for fetching both locations, 1 for fetching all prices
+        with self.assertNumQueries(2 + 1):
+            response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["location_a"]["id"], self.location_a.id)
+        self.assertEqual(response.data["location_b"]["id"], self.location_b.id)
+        self.assertEqual(len(response.data["shared_products"]), 1)
+        shared_product = response.data["shared_products"][0]
+        self.assertEqual(
+            shared_product["product_code"], self.product_8001505005707.code
+        )
+        self.assertEqual(
+            shared_product["product_name"], self.product_8001505005707.product_name
+        )
+        self.assertEqual(shared_product["location_a"]["price"], Decimal("1.5"))
+        self.assertEqual(shared_product["location_b"]["price"], Decimal("1.0"))
+        self.assertEqual(response.data["total_sum_location_a"], Decimal("1.5"))
+        self.assertEqual(response.data["total_sum_location_b"], Decimal("1.0"))
+
+    def test_compare_shared_products_with_date_filter(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}&date__gte=2024-12-31"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["shared_products"]), 0)
+        self.assertEqual(response.data["total_sum_location_a"], Decimal("0"))
+        self.assertEqual(response.data["total_sum_location_b"], Decimal("0"))
+
+    def test_compare_shared_products_with_discount_filter(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}&price_is_discounted=false"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["shared_products"]), 0)
+        self.assertEqual(response.data["total_sum_location_a"], Decimal("0"))
+        self.assertEqual(response.data["total_sum_location_b"], Decimal("0"))

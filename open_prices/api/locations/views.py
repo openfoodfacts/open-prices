@@ -1,6 +1,8 @@
+from decimal import Decimal
+
 from django.core.cache import cache
 from django.core.validators import ValidationError
-from django.db.models import Count, F, Sum
+from django.db.models import Count, F, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -12,6 +14,7 @@ from open_prices.api.locations.filters import LocationFilter
 from open_prices.api.locations.serializers import (
     CountryCitySerializer,
     CountrySerializer,
+    LocationCompareSerializer,
     LocationCreateSerializer,
     LocationSerializer,
 )
@@ -19,6 +22,7 @@ from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
 from open_prices.common import openstreetmap, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
+from open_prices.prices.models import Price
 
 
 class LocationViewSet(
@@ -152,3 +156,157 @@ class LocationViewSet(
             .order_by("osm_name")
         )
         return Response(CountryCitySerializer(location_qs, many=True).data)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="location_id_a",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+            ),
+            OpenApiParameter(
+                name="location_id_b",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+            ),
+            OpenApiParameter(
+                name="date__gte",
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Filter prices with date greater than or equal to this date (YYYY-MM-DD)",
+            ),
+            OpenApiParameter(
+                name="date__lte",
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Filter prices with date less than or equal to this date (YYYY-MM-DD)",
+            ),
+            OpenApiParameter(
+                name="price_is_discounted",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Filter to keep only discounted or non-discounted prices",
+            ),
+        ],
+        responses=LocationCompareSerializer(many=False),
+        filters=False,
+    )
+    @action(detail=False, methods=["GET"])
+    def compare(self, request: Request) -> Response:
+        """
+        Compare two locations by their IDs.
+        Returns shared product prices with the latest price per location,
+        the date of that price, and the total sum.
+        """
+        location_id_a = request.query_params.get("location_id_a")
+        location_id_b = request.query_params.get("location_id_b")
+        date__gte = request.query_params.get("date__gte")
+        date__lte = request.query_params.get("date__lte")
+        price_is_discounted = request.query_params.get("price_is_discounted")
+
+        # Validate parameters
+        if not location_id_a or not location_id_b:
+            return Response(
+                {
+                    "detail": "location_id_a and location_id_b query parameters are required"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            location_id_a = int(location_id_a)
+            location_id_b = int(location_id_b)
+        except ValueError:
+            return Response(
+                {"detail": "location_id_a and location_id_b must be integers"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Verify both locations exist
+        location_a = get_object_or_drf_404(Location, id=location_id_a)
+        location_b = get_object_or_drf_404(Location, id=location_id_b)
+
+        if location_id_a == location_id_b:
+            return Response(
+                {"detail": "location_id_a and location_id_b must be different"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # prepare response structure
+        results = {
+            "location_a": LocationSerializer(location_a).data,
+            "location_b": LocationSerializer(location_b).data,
+            "shared_products": [],
+            "total_sum_location_a": Decimal(0),
+            "total_sum_location_b": Decimal(0),
+        }
+
+        # Single query: fetch all prices from both locations
+        price_filters = Q(location_id=location_id_a) | Q(location_id=location_id_b)
+        price_filters &= Q(product_code__isnull=False)
+
+        if date__gte:
+            price_filters &= Q(date__gte=date__gte)
+        if date__lte:
+            price_filters &= Q(date__lte=date__lte)
+        if price_is_discounted is not None:
+            price_filters &= Q(
+                price_is_discounted=price_is_discounted.lower() == "true"
+            )
+
+        prices_qs = (
+            Price.objects.select_related("product")
+            .filter(price_filters)
+            .order_by("product_code", "-date")
+            .values(
+                "product_code",
+                "product__product_name",
+                "location_id",
+                "price",
+                "price_is_discounted",
+                "date",
+            )
+        )
+        price_list = list(prices_qs)
+
+        # Group latest prices by product_code and location_id
+        latest_prices = {}
+        for price in price_list:
+            product_code = price["product_code"]
+            location_id = price["location_id"]
+
+            if product_code not in latest_prices:
+                latest_prices[product_code] = {}
+
+            # Only store if we haven't seen this location yet
+            # first occurrence is latest price due to ordering
+            if location_id not in latest_prices[product_code]:
+                latest_prices[product_code][location_id] = price
+
+        # Find shared products and build response
+        for product_code, locations_dict in latest_prices.items():
+            if len(locations_dict.keys()) == 2:
+                product_result = {
+                    "product_code": product_code,
+                    "product_name": locations_dict[location_id_a][
+                        "product__product_name"
+                    ],
+                    "location_a": {
+                        key: locations_dict[location_id_a][key]
+                        for key in ("price", "price_is_discounted", "date")
+                    },
+                    "location_b": {
+                        key: locations_dict[location_id_b][key]
+                        for key in ("price", "price_is_discounted", "date")
+                    },
+                }
+                results["shared_products"].append(product_result)
+                results["total_sum_location_a"] += product_result["location_a"]["price"]
+                results["total_sum_location_b"] += product_result["location_b"]["price"]
+
+        return Response(LocationCompareSerializer(results).data)
