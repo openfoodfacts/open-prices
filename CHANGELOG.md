@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.99.1](https://github.com/openfoodfacts/open-prices/compare/v1.99.0...v1.99.1) (2026-02-20)
+
+
+### Technical
+
+* remove auto-label-merge-conflict action ([#1232](https://github.com/openfoodfacts/open-prices/issues/1232)) ([785fd60](https://github.com/openfoodfacts/open-prices/commit/785fd6080f285e6b20099c5322048dd3e8713cb1))
+
 ## [1.99.0](https://github.com/openfoodfacts/open-prices/compare/v1.98.0...v1.99.0) (2026-02-17)
 
 
