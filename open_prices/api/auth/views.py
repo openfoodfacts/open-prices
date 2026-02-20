@@ -18,6 +18,7 @@ from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.common.authentication import (
     CustomAuthentication,
     create_token,
+    decode_keycloak_token,
     get_request_session,
 )
 from open_prices.users.utils import get_or_create_session
@@ -30,11 +31,13 @@ class LoginView(APIView):
     @extend_schema(responses=SessionResponseSerializer, tags=["auth"])
     def post(self, request: Request) -> Response:
         """
-        Authentication: provide username/password
+        Authentication: provide username/password or a keycloak access_token
         and get a bearer token in return.
 
         - **username**: Open Food Facts user_id (not email)
         - **password**: user password (clear text, but HTTPS encrypted)
+
+        - **access_token**: keycloak access_token (clear text)
 
         A **token** is returned. If the **set_cookie** parameter is set to 1,
         the token is also set as a cookie named "session" in the response.
@@ -44,6 +47,35 @@ class LoginView(APIView):
         e.g.: "Authorization: bearer token"
         - use the **session** cookie, e.g.: "Cookie: session=token"
         """
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if request.POST.get("access_token"):
+            access_token = request.POST.get("access_token")
+            payload = decode_keycloak_token(access_token)
+            if payload is None or payload.get("preferred_username") is None:
+                return Response(
+                    {"detail": "Invalid access token"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            user_id = payload.get("preferred_username")
+            user_id = user_id.lower().strip()
+            session, user = get_or_create_session(user_id=user_id, token=access_token)
+            response = Response(
+                {
+                    "user_id": user.user_id,
+                    "is_moderator": user.is_moderator,
+                    "access_token": access_token,
+                    "token_type": "bearer",
+                }
+            )
+            if request.GET.get("set_cookie") == "1":
+                # Don't add httponly=True or secure=True as it's still in
+                # development phase, but it should be added once the front-end
+                # is ready
+                response.set_cookie(settings.SESSION_COOKIE_NAME, access_token)
+            return response
+
         if not settings.OAUTH2_SERVER_URL:
             return Response(
                 {"detail": "OAUTH2_SERVER_URL environment variable missing"},
