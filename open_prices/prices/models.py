@@ -456,8 +456,24 @@ class Price(models.Model):
         return history.build_instance_history_list(self)
 
 
+@receiver(signals.pre_save, sender=Price)
+def price_pre_save_store_original_ids(sender, instance, **kwargs):
+    """
+    Store the original related IDs before saving, so we can detect changes
+    in post_save and update counts accordingly.
+    """
+    if instance.pk:
+        try:
+            original = Price.objects.get(pk=instance.pk)
+            instance._original_product_id = original.product_id
+            instance._original_location_id = original.location_id
+            instance._original_proof_id = original.proof_id
+        except Price.DoesNotExist:
+            pass
+
+
 @receiver(signals.post_save, sender=Price)
-def price_post_create_increment_counts(sender, instance, created, **kwargs):
+def price_post_create_update_increment_counts(sender, instance, created, **kwargs):
     if created:
         if instance.owner:
             User.objects.filter(user_id=instance.owner).update(
@@ -476,9 +492,54 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
                 price_count=F("price_count") + 1
             )
     else:
-        # what about if we update the proof, product or location? (owner cannot be updated)
-        # the update_fields is often not set, so we cannot rely on it
-        pass
+        # New logic for UPDATED prices
+        # 1. Handle Product Change
+        if (
+            hasattr(instance, "_original_product_id")
+            and instance._original_product_id != instance.product_id
+        ):
+            # Decrement old
+            if instance._original_product_id:
+                Product.objects.filter(
+                    id=instance._original_product_id, price_count__gt=0
+                ).update(price_count=F("price_count") - 1)
+            # Increment new
+            if instance.product_id:
+                Product.objects.filter(id=instance.product_id).update(
+                    price_count=F("price_count") + 1
+                )
+
+        # 2. Handle Location Change
+        if (
+            hasattr(instance, "_original_location_id")
+            and instance._original_location_id != instance.location_id
+        ):
+            # Decrement old
+            if instance._original_location_id:
+                Location.objects.filter(
+                    id=instance._original_location_id, price_count__gt=0
+                ).update(price_count=F("price_count") - 1)
+            # Increment new
+            if instance.location_id:
+                Location.objects.filter(id=instance.location_id).update(
+                    price_count=F("price_count") + 1
+                )
+
+        # 3. Handle Proof Change
+        if (
+            hasattr(instance, "_original_proof_id")
+            and instance._original_proof_id != instance.proof_id
+        ):
+            # Decrement old
+            if instance._original_proof_id:
+                Proof.objects.filter(
+                    id=instance._original_proof_id, price_count__gt=0
+                ).update(price_count=F("price_count") - 1)
+            # Increment new
+            if instance.proof_id:
+                Proof.objects.filter(id=instance.proof_id).update(
+                    price_count=F("price_count") + 1
+                )
 
 
 @receiver(signals.post_save, sender=Price)
