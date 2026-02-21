@@ -318,6 +318,8 @@ ENABLE_ML_PREDICTIONS = os.getenv("ENABLE_ML_PREDICTIONS") == "True"
 # ------------------------------------------------------------------------------
 
 OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
+KEYCLOAK_OIDC_CONFIG_URL = os.getenv("KEYCLOAK_OIDC_CONFIG_URL")
+KEYCLOAK_AUDIENCE = os.getenv("KEYCLOAK_AUDIENCE")
 SESSION_COOKIE_NAME = "opsession"
 OFF_USER_AGENT = "open-prices/0.1.0"
 
