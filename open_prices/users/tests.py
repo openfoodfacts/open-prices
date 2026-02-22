@@ -51,6 +51,7 @@ class UserPropertyTest(TestCase):
             location_osm_id=cls.location_1.osm_id,
             location_osm_type=cls.location_1.osm_type,
             currency="EUR",
+            date="2024-01-01",
             owner=cls.user_1.user_id,
             tags=["challenge-1"],
         )
@@ -67,6 +68,7 @@ class UserPropertyTest(TestCase):
             proof_id=cls.proof_1.id,
             price=1.0,
             currency=cls.proof_1.currency,
+            date=cls.proof_1.date,
             owner=cls.user_1.user_id,
             tags=["challenge-1", "challenge-2"],
         )
@@ -89,6 +91,7 @@ class UserPropertyTest(TestCase):
             proof_id=cls.proof_1.id,
             price=1.0,
             currency=cls.proof_1.currency,
+            date=cls.proof_1.date,
             owner=cls.user_2.user_id,
         )
 

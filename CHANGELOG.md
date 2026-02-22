@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.99.0](https://github.com/openfoodfacts/open-prices/compare/v1.98.0...v1.99.0) (2026-02-17)
+
+
+### Features
+
+* **Locations:** API: new cities endpoint that returns the list of cities for a given country code (ordered by name) ([#1226](https://github.com/openfoodfacts/open-prices/issues/1226)) ([61aaa2c](https://github.com/openfoodfacts/open-prices/commit/61aaa2c41a7094835927ed0a0b96fe97abd7dc6c))
+* **Locations:** API: new endpoint to compare 2 locations (in a single SQL query) (with date & discount filters) ([#1227](https://github.com/openfoodfacts/open-prices/issues/1227)) ([fa5c111](https://github.com/openfoodfacts/open-prices/commit/fa5c11110bf0a8b42421c6b805114eb0b4645dd7))
+
+
+### Technical
+
+* **Currencies:** update list of available currencies (babel) ([#1222](https://github.com/openfoodfacts/open-prices/issues/1222)) ([0c9cccf](https://github.com/openfoodfacts/open-prices/commit/0c9cccf5273b0fd518ea0ee7dc0b8dcd8993097a))
+* **Stats:** exclude None when counting distinct values ([#1217](https://github.com/openfoodfacts/open-prices/issues/1217)) ([1d64438](https://github.com/openfoodfacts/open-prices/commit/1d64438a063bbae230bd6549b3422cf177df8f29))
+* switch from poetry to uv ([#1225](https://github.com/openfoodfacts/open-prices/issues/1225)) ([a175538](https://github.com/openfoodfacts/open-prices/commit/a175538ab968d7abbc3f7d9d6e48091a4f1acbcd))
+* **Tests:** avoid running the test CI twice when opening a PR ([#1228](https://github.com/openfoodfacts/open-prices/issues/1228)) ([062d15b](https://github.com/openfoodfacts/open-prices/commit/062d15bd936fbfe69819e00555fa611115ef5ef9))
+* update buildx version in container-build.yml workflow file ([#1230](https://github.com/openfoodfacts/open-prices/issues/1230)) ([c03b78f](https://github.com/openfoodfacts/open-prices/commit/c03b78fc6b074d649dbae687dc2408ad9e93ce0c))
+
 ## [1.98.0](https://github.com/openfoodfacts/open-prices/compare/v1.97.1...v1.98.0) (2026-02-06)
 
 

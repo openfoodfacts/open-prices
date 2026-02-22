@@ -168,8 +168,8 @@ class Product(models.Model):
 
     def update_price_count(self):
         self.price_count = self.prices.count()
-        self.price_currency_count = (
-            self.prices.values_list("currency", flat=True).distinct().count()
+        self.price_currency_count = self.prices.calculate_field_distinct_count(
+            "currency"
         )
         self.save(update_fields=["price_count", "price_currency_count"])
 
@@ -177,44 +177,30 @@ class Product(models.Model):
         from open_prices.locations import constants as location_constants
         from open_prices.prices.models import Price
 
-        self.location_count = (
-            Price.objects.filter(product=self, location_id__isnull=False)
-            .values_list("location_id", flat=True)
-            .distinct()
-            .count()
-        )
-        self.location_type_osm_country_count = (
-            Price.objects.filter(
-                product=self,
-                location_id__isnull=False,
-                location__type=location_constants.TYPE_OSM,
-            )
-            .values_list("location__osm_address_country", flat=True)
-            .distinct()
-            .count()
-        )
+        self.location_count = Price.objects.filter(
+            product=self
+        ).calculate_field_distinct_count("location_id")
+        self.location_type_osm_country_count = Price.objects.filter(
+            product=self,
+            location_id__isnull=False,
+            location__type=location_constants.TYPE_OSM,
+        ).calculate_field_distinct_count("location__osm_address_country")
         self.save(update_fields=["location_count", "location_type_osm_country_count"])
 
     def update_user_count(self):
         from open_prices.prices.models import Price
 
-        self.user_count = (
-            Price.objects.filter(product=self, owner__isnull=False)
-            .values_list("owner", flat=True)
-            .distinct()
-            .count()
-        )
+        self.user_count = Price.objects.filter(
+            product=self
+        ).calculate_field_distinct_count("owner")
         self.save(update_fields=["user_count"])
 
     def update_proof_count(self):
         from open_prices.prices.models import Price
 
-        self.proof_count = (
-            Price.objects.filter(product=self, proof_id__isnull=False)
-            .values_list("proof_id", flat=True)
-            .distinct()
-            .count()
-        )
+        self.proof_count = Price.objects.filter(
+            product=self
+        ).calculate_field_distinct_count("proof_id")
         self.save(update_fields=["proof_count"])
 
 
