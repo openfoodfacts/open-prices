@@ -60,12 +60,13 @@ class LoginView(APIView):
                 )
             user_id = payload.get("preferred_username")
             user_id = user_id.lower().strip()
-            session, user = get_or_create_session(user_id=user_id, token=access_token)
+            session_token = create_token(user_id)
+            session, user = get_or_create_session(user_id=user_id, token=session_token)
             response = Response(
                 {
                     "user_id": user.user_id,
                     "is_moderator": user.is_moderator,
-                    "access_token": access_token,
+                    "access_token": session_token,
                     "token_type": "bearer",
                 }
             )
@@ -73,7 +74,7 @@ class LoginView(APIView):
                 # Don't add httponly=True or secure=True as it's still in
                 # development phase, but it should be added once the front-end
                 # is ready
-                response.set_cookie(settings.SESSION_COOKIE_NAME, access_token)
+                response.set_cookie(settings.SESSION_COOKIE_NAME, session_token)
             return response
 
         if not settings.OAUTH2_SERVER_URL:
