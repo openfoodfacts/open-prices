@@ -37,6 +37,8 @@ x-api-common: &api-common
     - REDIS_PORT
     - REDIS_PRODUCT_UPDATES_STREAM_NAME
     - REDIS_LATEST_ID_KEY
+    - KEYCLOAK_OIDC_CONFIG_URL
+    - KEYCLOAK_AUDIENCE
   networks:
     - default
     - common_net

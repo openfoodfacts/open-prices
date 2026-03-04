@@ -44,6 +44,8 @@ jobs:
         # so we use the production redis server
         echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
+        echo "KEYCLOAK_OIDC_CONFIG_URL=http://auth.openfoodfacts.net/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
+        echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
@@ -57,6 +59,8 @@ jobs:
         echo "TRITON_URI=10.1.0.113:5504" >> $GITHUB_ENV
         echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
+        echo "KEYCLOAK_OIDC_CONFIG_URL=http://auth.openfoodfacts.org/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
+        echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
@@ -165,6 +169,8 @@ jobs:
           echo "REDIS_PRODUCT_UPDATES_STREAM_NAME=product_updates" >> .env
           echo "ENABLE_REDIS_UPDATES=True" >> .env
           echo "Q2_WORKERS=8" >> .env
+          echo "KEYCLOAK_OIDC_CONFIG_URL=${{ env.KEYCLOAK_OIDC_CONFIG_URL }}" >> .env
+          echo "KEYCLOAK_AUDIENCE=${{ env.KEYCLOAK_AUDIENCE }}" >> .env
 
     - name: Create Docker volumes
       uses: appleboy/ssh-action@master
