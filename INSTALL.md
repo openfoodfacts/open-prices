@@ -25,8 +25,6 @@ cd open-prices
 # Install dependencies (pyproject.toml)
 uv sync
 
-# Note: all future commands should be prefixed with `uv run`
-
 # Apply migrations
 uv run python manage.py migrate
 
