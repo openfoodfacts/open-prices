@@ -44,7 +44,7 @@ x-api-common: &api-common
 services:
   api:
     <<: *api-common
-    volumes
+    volumes:
       - images:/opt/open-prices/img
       - data-dump:/opt/open-prices/data
       - home_cache:/home/off/.cache
