@@ -279,8 +279,9 @@ class PriceTagViewSet(
 
         user_id = self.request.user.user_id
         price_tag = serializer.save(updated_by=user_id, created_by=user_id)
+        use_ai = request.data.get("use_ai", False)
 
-        if not settings.TESTING:
+        if not settings.TESTING and use_ai:
             async_task(
                 "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
                 price_tag.id,
