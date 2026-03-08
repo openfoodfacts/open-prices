@@ -28,10 +28,10 @@ uv sync
 # Note: all future commands should be prefixed with `uv run`
 
 # Apply migrations
-python manage.py migrate
+uv run --env-file .env python manage.py migrate
 
 # Run Locally
-python manage.py runserver
+uv run --env-file .env python manage.py runserver
 
 # Now the server will run on http://127.0.0.1:8000 !
 
