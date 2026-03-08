@@ -18,11 +18,11 @@ SECRET_KEY = os.getenv("SECRET_KEY", "set-in-production")
 DEBUG = os.getenv("DEBUG") == "True"
 TESTING = "test" in sys.argv
 
-ALLOWED_HOSTS = [x.strip() for x in os.getenv("ALLOWED_HOSTS", "").split(",")]
+ALLOWED_HOSTS = [x.strip() for x in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")]
 
 # CSRF trusted origins is only used for admin interface, as the rest of
 # front-end is using Vue.js and Django REST Framework
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1:8000").split(",")
 
 
 # App config
@@ -107,11 +107,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "USER": os.getenv("POSTGRES_USER"),
-        "NAME": os.getenv("POSTGRES_DB"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST"),
-        "PORT": os.getenv("POSTGRES_PORT"),
+        "USER": os.getenv("POSTGRES_USER", "postgres"),
+        "NAME": os.getenv("POSTGRES_DB", "postgres"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+        "HOST": os.getenv("POSTGRES_HOST", "postgres"), # Defaults to postgres since we are using docker and the service is named postgres
+        "PORT": os.getenv("POSTGRES_PORT", 5432),
         "CONN_MAX_AGE": 60,
     }
 }
@@ -251,9 +251,9 @@ if not DEBUG:
     from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
-        dsn=os.getenv("SENTRY_DSN"),
+        dsn=os.getenv("SENTRY_DSN", ""),
         integrations=[DjangoIntegration()],
-        environment=os.getenv("ENVIRONMENT"),
+        environment=os.getenv("ENVIRONMENT", "net"),
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for tracing.  # noqa
         traces_sample_rate=1.0,
         # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.  # noqa
@@ -317,7 +317,7 @@ ENABLE_ML_PREDICTIONS = os.getenv("ENABLE_ML_PREDICTIONS") == "True"
 # Open Food Facts
 # ------------------------------------------------------------------------------
 
-OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
+OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL", "https://world.openfoodfacts.org/cgi/auth.pl")
 SESSION_COOKIE_NAME = "opsession"
 OFF_USER_AGENT = "open-prices/0.1.0"
 
