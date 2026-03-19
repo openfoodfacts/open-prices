@@ -8,12 +8,11 @@ Proof ML/AI
 import logging
 from pathlib import Path
 
-from PIL import Image
-
 from open_prices.proofs.ml.classification import run_and_save_proof_type_prediction
 from open_prices.proofs.ml.price_tags import run_and_save_price_tag_detection
 from open_prices.proofs.ml.receipts import run_and_save_receipt_extraction_prediction
 from open_prices.proofs.models import Proof
+from open_prices.proofs.utils import open_image_cv2
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,11 @@ def run_and_save_proof_prediction(
         logger.debug("Skipping %s, not a supported image type", file_path_full)
         return None
 
-    image = Image.open(file_path_full)
+    # image is an uint8 numpy array in BGR format. BGR is the default format used by OpenCV,
+    # while our object detection and classification models expect RGB format.
+    # The conversion from BGR to RGB is done on-the-fly in the predict_proof_type and
+    # run_and_save_price_tag_detection functions.
+    image = open_image_cv2(file_path_full)
     run_and_save_proof_type_prediction(image, proof)
     run_and_save_price_tag_detection(
         image, proof, run_extraction=run_price_tag_extraction

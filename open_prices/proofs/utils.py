@@ -6,6 +6,8 @@ import string
 from mimetypes import guess_extension
 from pathlib import Path
 
+import cv2
+import numpy as np
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 from PIL import Image, ImageOps
@@ -62,17 +64,23 @@ def generate_relative_path(
 
 def crop_image(
     image_file_path_full: str | Path, bounding_box: tuple[float, float, float, float]
-) -> Image.Image:
-    """Crop the image at the given path using the bounding box."""
+) -> np.ndarray:
+    """Crop the image at the given path using the bounding box.
+
+    :param image_file_path_full: the full path to the image file
+    :param bounding_box: the bounding box to crop, in the format
+        (y_min, x_min, y_max, x_max) with values between 0 and 1
+    :return: the cropped image as a numpy array (uint8, BGR format)
+    """
     y_min, x_min, y_max, x_max = bounding_box
-    image = Image.open(image_file_path_full)
+    image = cv2.imread(str(image_file_path_full), cv2.IMREAD_COLOR)
     (left, right, top, bottom) = (
-        x_min * image.width,
-        x_max * image.width,
-        y_min * image.height,
-        y_max * image.height,
+        x_min * image.shape[1],
+        x_max * image.shape[1],
+        y_min * image.shape[0],
+        y_max * image.shape[0],
     )
-    return image.crop((left, top, right, bottom))
+    return image[int(top) : int(bottom), int(left) : int(right)]
 
 
 def generate_thumbnail(
@@ -335,6 +343,51 @@ def generate_price_tag_image(price_tag: PriceTag) -> None:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         # Save as WebP
-        cropped_img.save(output_path, "WEBP")
+        # quality=80 is the default on Pillow for WebP, we keep the same value here
+        # imwrite expects image in BGR format, which is what crop_image returns
+        cv2.imwrite(output_path, cropped_img, [cv2.IMWRITE_WEBP_QUALITY, 80])
     except Exception as e:
         logger.error(f"Error generating price tag image for {price_tag.id}: {e}")
+
+
+def open_image_cv2(image_path: str | Path, rgb: bool = False) -> np.ndarray:
+    """Open an image using OpenCV.
+
+    :param image_path: the path to the image file
+    :param rgb: whether to convert the image to RGB format
+    :return: the image as a numpy array in RGB format if rgb=True (default is False),
+        otherwise in BGR format
+    """
+    image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)  # type: ignore
+    if rgb:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
+    return image  # type: ignore
+
+
+def generate_image_thumbnail_cv2(image: np.ndarray, max_size: int) -> np.ndarray:
+    """Generate a thumbnail for the given image using OpenCV.
+
+    :param image: the image to generate a thumbnail for, as a numpy array
+    :param max_size: the maximum size of the thumbnail (both width and height)
+    :return: the generated thumbnail as a numpy array
+    """
+    height, width = image.shape[:2]
+    if width > max_size or height > max_size:
+        scaling_factor = max_size / max(width, height)
+        new_width = int(width * scaling_factor)
+        new_height = int(height * scaling_factor)
+        image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+    return image
+
+
+def image_bytes_as_webp(image: np.ndarray, quality: int = 80) -> bytes:
+    """Convert an image as a numpy array to WebP format and return the bytes.
+
+    :param image: the image to convert, as a numpy array
+    :param quality: the quality of the WebP image (0-100)
+    :return: the image in WebP format as bytes
+    """
+    success, buffer = cv2.imencode(".webp", image, [cv2.IMWRITE_WEBP_QUALITY, quality])
+    if not success:
+        raise ValueError("Could not encode image to WebP format")
+    return buffer.tobytes()
