@@ -44,7 +44,7 @@ jobs:
         # so we use the production redis server
         echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
-        echo "KEYCLOAK_OIDC_CONFIG_URL=http://auth.openfoodfacts.net/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
+        echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.net/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
@@ -59,7 +59,7 @@ jobs:
         echo "TRITON_URI=10.1.0.113:5504" >> $GITHUB_ENV
         echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
-        echo "KEYCLOAK_OIDC_CONFIG_URL=http://auth.openfoodfacts.org/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
+        echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.org/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
