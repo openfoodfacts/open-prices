@@ -13,4 +13,5 @@ class ChallengeViewSet(
     serializer_class = ChallengeSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ChallengeFilter
-    ordering = ["created"]
+    ordering_fields = ["id", "is_published", "created"]
+    ordering = ["id"]

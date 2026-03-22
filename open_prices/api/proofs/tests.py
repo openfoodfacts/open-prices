@@ -87,11 +87,9 @@ class ProofListApiTest(TestCase):
         with self.assertNumQueries(2):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
-            data = response.data
-            self.assertEqual(data["total"], 3)
-            self.assertEqual(len(data["items"]), 3)
-            item = data["items"][0]
-            self.assertEqual(item["id"], self.proof.id)  # default order
+            self.assertEqual(response.data["total"], 3)
+            self.assertEqual(len(response.data["items"]), 3)
+            item = response.data["items"][0]
             self.assertNotIn("predictions", item)  # not returned in "list"
 
 
@@ -100,21 +98,27 @@ class ProofListOrderApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:proofs-list")
         cls.user_session = SessionFactory()
-        cls.proof = ProofFactory(
+        cls.proof_1 = ProofFactory(
             **PROOF_RECEIPT, price_count=15, owner=cls.user_session.user.user_id
         )
-        ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
-        ProofFactory(
+        cls.proof_2 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG, price_count=0)
+        cls.proof_3 = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             price_count=50,
             owner=cls.user_session.user.user_id,
         )
 
+    def test_proof_list_default_order_by_id(self):
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["items"][0]["id"], self.proof_1.id)
+
     def test_proof_list_order_by(self):
         url = self.url + "?order_by=-price_count"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
         self.assertEqual(response.data["items"][0]["price_count"], 50)
+        self.assertEqual(response.data["items"][0]["id"], self.proof_3.id)
 
 
 class ProofListFilterApiTest(TestCase):
@@ -865,17 +869,20 @@ class PriceTagListApiTest(TestCase):
         with self.assertNumQueries(3):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
-            data = response.data
 
-        self.assertEqual(data["total"], 3)
-        self.assertEqual(len(data["items"]), 3)
-        item = data["items"][0]
-        self.assertEqual(item["id"], self.price_tag_1.id)  # default order: created
-        self.assertNotIn("price", item)  # not returned in "list"
-        self.assertEqual(item["price_id"], self.price.id)
-        item_2 = data["items"][1]
-        self.assertEqual(item_2["id"], self.price_tag_2.id)
-        self.assertIsNone(item_2["price_id"])
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertNotIn("price", response.data["items"][0])  # not returned in "list"
+        self.assertEqual(response.data["items"][0]["price_id"], self.price.id)
+        self.assertEqual(response.data["items"][1]["id"], self.price_tag_2.id)
+        self.assertIsNone(response.data["items"][1]["price_id"])
+
+    def test_price_tag_list_default_order_by_created(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["items"][0]["id"], self.price_tag_1.id)
 
     def test_price_tag_list_filter_by_proof(self):
         # proof_id
@@ -943,13 +950,12 @@ class PriceTagDetailApiTest(TestCase):
         with self.assertNumQueries(2):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
-        data = response.data
-        self.assertEqual(data["id"], self.price_tag_2.id)
-        self.assertEqual(data["proof"]["id"], self.proof.id)
-        self.assertEqual(data["proof"]["type"], proof_constants.TYPE_PRICE_TAG)
-        self.assertNotIn("price", data)  # not returned in "detail"
-        self.assertEqual(data["price_id"], self.price.id)
-        self.assertIn("image_path", data)  # but will return a 404
+        self.assertEqual(response.data["id"], self.price_tag_2.id)
+        self.assertEqual(response.data["proof"]["id"], self.proof.id)
+        self.assertEqual(response.data["proof"]["type"], proof_constants.TYPE_PRICE_TAG)
+        self.assertNotIn("price", response.data)  # not returned in "detail"
+        self.assertEqual(response.data["price_id"], self.price.id)
+        self.assertIn("image_path", response.data)  # but will return a 404
 
 
 class PriceTagCreateApiTest(TestCase):

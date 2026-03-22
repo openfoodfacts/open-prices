@@ -15,12 +15,10 @@ class ChallengeListApiTest(TestCase):
         cls.challenge_2 = ChallengeFactory()
 
     def test_challenge_list(self):
+        # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(len(response.data["items"]), 2)
-        self.assertEqual(
-            response.data["items"][0]["id"], self.challenge_1.id
-        )  # default order
         # extra fields: status, tag
         self.assertTrue("status" in response.data["items"][0])
         self.assertTrue("tag" in response.data["items"][0])
@@ -40,6 +38,25 @@ class ChallengeListPaginationApiTest(TestCase):
             with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
                 self.assertTrue(PAGINATION_KEY in response.data)
         self.assertEqual(response.data["size"], 10)  # default
+
+
+class ChallengeListOrderApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:challenges-list")
+        cls.challenge_1 = ChallengeFactory()
+        cls.challenge_2 = ChallengeFactory()
+
+    def test_challenge_list_default_order_by_id(self):
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.data["items"]), 2)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_1.id)
+
+    def test_challenge_list_order_by(self):
+        url = self.url + "?order_by=-id"
+        response = self.client.get(url)
+        self.assertEqual(len(response.data["items"]), 2)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_2.id)
 
 
 class ChallengeListFilterApiTest(TestCase):

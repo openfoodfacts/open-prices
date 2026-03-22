@@ -90,7 +90,6 @@ class PriceListApiTest(TestCase):
             self.assertEqual(response.data["total"], 3)
             self.assertEqual(len(response.data["items"]), 3)
             self.assertTrue("id" in response.data["items"][0])
-            self.assertEqual(response.data["items"][0]["price"], 15)  # default order
             self.assertTrue("proof" in response.data["items"][0])
             self.assertTrue("location" in response.data["items"][0])
 
@@ -114,7 +113,6 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 10)  # default
-        self.assertEqual(response.data["items"][0]["price"], 15)  # default order
         # size=150
         url = self.url + "?size=150"
         response = self.client.get(url)
@@ -123,7 +121,6 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 100)  # max to 100
-        self.assertEqual(response.data["items"][0]["price"], 15)  # default order
         # size=1
         url = self.url + "?size=1"
         response = self.client.get(url)
@@ -132,22 +129,28 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 3)
         self.assertEqual(response.data["size"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 15)  # default order
 
 
 class PriceListOrderApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
-        PriceFactory(price=15)
-        PriceFactory(price=0)
-        PriceFactory(price=50)
+        cls.price_1 = PriceFactory(price=15)
+        cls.price_2 = PriceFactory(price=0)
+        cls.price_3 = PriceFactory(price=50)
+
+    def test_price_list_default_order_by_id(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["items"][0]["id"], self.price_1.id)
 
     def test_price_list_order_by(self):
         url = self.url + "?order_by=-price"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(response.data["items"][0]["price"], 50)
+        self.assertEqual(response.data["items"][0]["id"], self.price_3.id)
 
 
 class PriceListFilterApiTest(TestCase):
