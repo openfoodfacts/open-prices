@@ -11,9 +11,6 @@
 # Clone repo
 git clone https://github.com/openfoodfacts/open-prices.git
 cd open-prices
-
-# Copy .env.example to .env
-
 ```
 
 ### Without Docker
@@ -25,18 +22,16 @@ cd open-prices
 # Install dependencies (pyproject.toml)
 uv sync
 
-# Note: all future commands should be prefixed with `uv run`
-
 # Apply migrations
-python manage.py migrate
+uv run --env-file .env python manage.py migrate
 
 # Run Locally
-python manage.py runserver
+uv run --env-file .env python manage.py runserver
 
 # Now the server will run on http://127.0.0.1:8000 !
 
 # Note: you can change the port if you want
-python manage.py runserver 8001
+uv run python manage.py runserver 8001
 ```
 
 ### With Docker

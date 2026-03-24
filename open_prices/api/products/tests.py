@@ -29,10 +29,9 @@ class ProductListApiTest(TestCase):
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(len(response.data["items"]), 3)
         self.assertTrue("id" in response.data["items"][0])
-        self.assertEqual(response.data["items"][0]["price_count"], 15)  # default order
 
 
-class ProductListOrderApiTest(TestCase):
+class ProductListPaginationApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:products-list")
@@ -40,11 +39,34 @@ class ProductListOrderApiTest(TestCase):
         ProductFactory(price_count=0)
         ProductFactory(price_count=50)
 
+    def test_product_list_size(self):
+        # default
+        response = self.client.get(self.url)
+        for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
+            with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
+                self.assertTrue(PAGINATION_KEY in response.data)
+        self.assertEqual(response.data["size"], 10)  # default
+
+
+class ProductListOrderApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:products-list")
+        cls.product_1 = ProductFactory(price_count=15)
+        cls.product_2 = ProductFactory(price_count=0)
+        cls.product_3 = ProductFactory(price_count=50)
+
+    def test_product_list_default_order_by_id(self):
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["items"][0]["id"], self.product_1.id)
+
     def test_product_list_order_by(self):
         url = self.url + "?order_by=-price_count"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
         self.assertEqual(response.data["items"][0]["price_count"], 50)
+        self.assertEqual(response.data["items"][0]["id"], self.product_3.id)
 
 
 class ProductListFilterApiTest(TestCase):
