@@ -11,9 +11,6 @@
 # Clone repo
 git clone https://github.com/openfoodfacts/open-prices.git
 cd open-prices
-
-# Copy .env.example to .env
-
 ```
 
 ### Without Docker
