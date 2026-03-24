@@ -21,11 +21,11 @@ You should create basic tests for each new feature or API change.
 To run tests locally, just launch:
 
 ```
-uv run python manage.py test
+uv run --env-file .env python manage.py test
 ```
 
 ## Generate the SQL schema image
 
 ```
-uv run python manage.py graph_models -a -X ContentType,LogEntry,AbstractUser,AbstractBaseSession,Group,Permission,Success,Failure,Task,Schedule,OrmQ,User,Session -o docs/schema/schema.png
+uv run --env-file .env python manage.py graph_models -a -X ContentType,LogEntry,AbstractUser,AbstractBaseSession,Group,Permission,Success,Failure,Task,Schedule,OrmQ,User,Session -o docs/schema/schema.png
 ```

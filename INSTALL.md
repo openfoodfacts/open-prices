@@ -23,10 +23,10 @@ cd open-prices
 uv sync
 
 # Apply migrations
-uv run python manage.py migrate
+uv run --env-file .env python manage.py migrate
 
 # Run Locally
-uv run python manage.py runserver
+uv run --env-file .env python manage.py runserver
 
 # Now the server will run on http://127.0.0.1:8000 !
 
