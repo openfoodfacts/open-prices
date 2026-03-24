@@ -1,6 +1,9 @@
 import uuid
 
+import jwt
+import requests
 from django.conf import settings
+from django.core.cache import cache
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from drf_spectacular.plumbing import build_bearer_security_scheme_object
 from rest_framework.authentication import BaseAuthentication
@@ -49,6 +52,39 @@ def get_request_session(request: Request):
         pass
 
     return None
+
+
+def decode_keycloak_token(access_token: str) -> dict | None:
+    cache_timeout = 60 * 60 * 6  # 6 hours
+    keycloak_oidc_config_cache_key = "keycloak_oidc_config"
+    oidc_config = cache.get(keycloak_oidc_config_cache_key)
+    if oidc_config is None:
+        oidc_config = requests.get(settings.KEYCLOAK_OIDC_CONFIG_URL).json()
+        cache.set(keycloak_oidc_config_cache_key, oidc_config, timeout=cache_timeout)
+
+    signing_algos = oidc_config.get("id_token_signing_alg_values_supported")
+    issuer = oidc_config.get("issuer")
+    jwks_uri = oidc_config.get("jwks_uri")
+
+    try:
+        jwks_client = jwt.PyJWKClient(jwks_uri)
+        signing_key = jwks_client.get_signing_key_from_jwt(access_token)
+
+        payload = jwt.decode(
+            access_token,
+            key=signing_key,
+            algorithms=signing_algos,
+            audience=settings.KEYCLOAK_AUDIENCE,
+            issuer=issuer,
+        )
+
+        return payload
+    except jwt.DecodeError:
+        # Provided token is malformed
+        return None
+    except jwt.PyJWKClientError:
+        # Token is formatted correctly, but not for this Keycloak instance
+        return None
 
 
 class CustomAuthentication(BaseAuthentication):

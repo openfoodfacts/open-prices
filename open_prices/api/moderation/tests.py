@@ -54,6 +54,34 @@ class FlagListApiTest(TestCase):
         )
 
 
+class FlagListPaginationApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.user_session.user.is_moderator = True
+        cls.user_session.user.save()
+        cls.url = reverse("api:flags-list")
+        # create flags
+        for reason in FlagReason.values:
+            Flag.objects.create(
+                content_object=PriceFactory(),
+                reason=reason,
+                owner="tester",
+                source="unittest",
+            )
+
+    def test_flag_list_size(self):
+        # default
+        response = self.client.get(
+            self.url,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
+            with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
+                self.assertTrue(PAGINATION_KEY in response.data)
+        self.assertEqual(response.data["size"], 10)  # default
+
+
 class FlagListOrderApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -70,8 +98,7 @@ class FlagListOrderApiTest(TestCase):
                 source="unittest",
             )
 
-    def test_flag_list_order_by(self):
-        # default by id ascending
+    def test_flag_list_default_order_by_id(self):
         response = self.client.get(
             self.url,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
@@ -79,10 +106,12 @@ class FlagListOrderApiTest(TestCase):
         self.assertEqual(response.status_code, 200)
         flag = Flag.objects.first()
         self.assertEqual(response.json()["items"][0]["id"], flag.id)
+
+    def test_flag_list_order_by(self):
         # order by reason ascending
+        url = self.url + "?order_by=reason"
         response = self.client.get(
-            f"{self.url}?order_by=reason",
-            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            url, headers={"Authorization": f"Bearer {self.user_session.token}"}
         )
         self.assertEqual(response.status_code, 200)
         reasons = [flag["reason"] for flag in response.json()["items"]]
@@ -91,9 +120,9 @@ class FlagListOrderApiTest(TestCase):
         flag = Flag.objects.last()
         flag.status = FlagStatus.CLOSED
         flag.save()
+        url = self.url + "?order_by=status"
         response = self.client.get(
-            f"{self.url}?order_by=status",
-            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            url, headers={"Authorization": f"Bearer {self.user_session.token}"}
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["items"][0]["id"], flag.id)

@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.100.0](https://github.com/openfoodfacts/open-prices/compare/v1.99.0...v1.100.0) (2026-03-20)
+
+
+### Features
+
+* **Auth:** Support for keycloak tokens ([#1235](https://github.com/openfoodfacts/open-prices/issues/1235)) ([1c7f06b](https://github.com/openfoodfacts/open-prices/commit/1c7f06b2d787b29f409bb955f4959462e25ce9df))
+
+
+### Bug Fixes
+
+* **deploy:** Update Keycloak OIDC config URL to use HTTPS ([#1250](https://github.com/openfoodfacts/open-prices/issues/1250)) ([11d03d5](https://github.com/openfoodfacts/open-prices/commit/11d03d577fcdc641f463e233e792008e7cbb8798))
+* timeout by adding index ([#1199](https://github.com/openfoodfacts/open-prices/issues/1199)) ([197802d](https://github.com/openfoodfacts/open-prices/commit/197802d9bf2738dd54b7f90ccc70be5b24c3b73e))
+
+
+### Technical
+
+* **docs:** Fixing a typo in docker/dev.yml  ([#1240](https://github.com/openfoodfacts/open-prices/issues/1240)) ([7e0c168](https://github.com/openfoodfacts/open-prices/commit/7e0c168a4587fbcd69e4282df16cf5083b7d824a))
+* remove auto-label-merge-conflict action ([#1232](https://github.com/openfoodfacts/open-prices/issues/1232)) ([785fd60](https://github.com/openfoodfacts/open-prices/commit/785fd6080f285e6b20099c5322048dd3e8713cb1))
+
 ## [1.99.0](https://github.com/openfoodfacts/open-prices/compare/v1.98.0...v1.99.0) (2026-02-17)
 
 
