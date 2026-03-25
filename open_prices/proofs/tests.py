@@ -9,6 +9,7 @@ import unittest
 from decimal import Decimal
 from pathlib import Path
 
+import cv2
 import numpy as np
 from django.conf import settings
 from django.core import management
@@ -17,6 +18,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from freezegun import freeze_time
+from google.genai import types
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult
 from PIL import Image
 from simple_history.utils import bulk_update_with_history
@@ -53,6 +55,8 @@ from open_prices.proofs.ml.price_tags import (
 from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
 from open_prices.proofs.utils import (
     compute_file_md5,
+    crop_image,
+    generate_image_thumbnail_cv2,
     match_category_price_tag_with_category_price,
     match_price_tag_with_price,
     match_product_price_tag_with_product_price,
@@ -805,8 +809,8 @@ class RunOCRTaskTest(TestCase):
 class MLModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        # Create a white blank image with Pillow
-        cls.image = Image.new("RGB", (100, 100), "white")
+        # Create a white blank image
+        cls.image = np.ones((100, 100, 3), dtype=np.uint8) * 255
 
     def test_run_and_save_proof_prediction_proof_file_not_found(self):
         proof = ProofFactory()
@@ -853,7 +857,7 @@ class MLModelTest(TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             NEW_IMAGE_DIR = Path(tmpdirname)
             file_path = NEW_IMAGE_DIR / "1.jpg"
-            self.image.save(file_path)
+            cv2.imwrite(file_path.as_posix(), self.image)
 
             # change temporarily settings.IMAGE_DIR
             with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
@@ -940,7 +944,7 @@ class MLModelTest(TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             NEW_IMAGE_DIR = Path(tmpdirname)
             file_path = NEW_IMAGE_DIR / "1.jpg"
-            self.image.save(file_path)
+            cv2.imwrite(file_path.as_posix(), self.image)
 
             # change temporarily settings.IMAGE_DIR
             with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
@@ -1118,33 +1122,38 @@ class MLModelTest(TestCase):
 
     def test_extract_from_price_tag(self):
         with unittest.mock.patch(
-            "open_prices.proofs.ml.price_tags.genai",
-        ) as mock_genai:
+            "open_prices.proofs.ml.price_tags.genai.Client"
+        ) as mock_client_class:
+            mock_generate_content = unittest.mock.MagicMock()
+            mock_client = unittest.mock.MagicMock()
+            mock_client.models.generate_content = mock_generate_content
+            # we use a context manager around Client() to open/close the underlying
+            # connection. That's why we need to set the return value of __enter__
+            # to our mock_client, so that when the context manager is entered, it
+            # returns our mock_client that has the mocked generate_content method.
+            mock_client_class.return_value.__enter__.return_value = mock_client
             extract_from_price_tag(self.image)
-            mock_calls = mock_genai.Client.mock_calls
-            # 4 calls:
-            # - instantiate the Client
-            # - enter the context manager context
-            # - call client.models.generate_content
-            # - exit the context manager context
-            self.assertEqual(len(mock_calls), 4)
-            client_creation_kwargs = mock_calls[0].kwargs
+            client_creation_kwargs = mock_client_class.call_args.kwargs
             self.assertEqual(
                 set(client_creation_kwargs.keys()), {"credentials", "project"}
             )
             self.assertEqual(client_creation_kwargs["project"], "robotoff")
 
-            generate_content_kwargs = mock_calls[2].kwargs
+            generate_content_kwargs = mock_generate_content.call_args.kwargs
             self.assertEqual(
                 set(generate_content_kwargs.keys()), {"model", "contents", "config"}
             )
             self.assertEqual(generate_content_kwargs["model"], "gemini-3-flash-preview")
-            self.assertListEqual(
-                generate_content_kwargs["contents"],
-                [
-                    "Here is one picture containing a price label, extract information from it. If you cannot decode an attribute, set it to an empty string.",
-                    self.image,
-                ],
+            self.assertEqual(len(generate_content_kwargs["contents"]), 2)
+            self.assertEqual(
+                generate_content_kwargs["contents"][0],
+                "Here is one picture containing a price label, extract information from it. If you cannot decode an attribute, set it to an empty string.",
+            )
+            # Validate the image part is now a genai.types.Part with WebP bytes
+            self.assertIsInstance(generate_content_kwargs["contents"][1], types.Part)
+            self.assertEqual(
+                generate_content_kwargs["contents"][1].inline_data.mime_type,
+                "image/webp",
             )
             self.assertEqual(
                 generate_content_kwargs["config"].thinking_config.thinking_level.name,
@@ -1868,3 +1877,106 @@ class PriceTagImageTest(TestCase):
 
         # Check if image is deleted (signal runs synchronously)
         self.assertFalse(os.path.exists(price_tag.image_path_full))
+
+
+class CropImageTest(TestCase):
+    def test_crop_image_full_image(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 200, 3), dtype=np.uint8)
+            image[:, :] = [255, 0, 0]
+            cv2.imwrite(image_path.as_posix(), image)
+            result = crop_image(image_path, (0.0, 0.0, 1.0, 1.0))
+            self.assertEqual(result.shape, (100, 200, 3))
+            # check that the image is in BGR format (OpenCV default)
+            self.assertTrue(np.all(result[:, :, 0] == 255))
+            self.assertTrue(np.all(result[:, :, 1] == 0))
+            self.assertTrue(np.all(result[:, :, 2] == 0))
+
+    def test_crop_image_half_image(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 200, 3), dtype=np.uint8)
+            image[:, :] = [255, 0, 0]
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.0, 0.0, 0.5, 0.5))
+
+            self.assertEqual(result.shape, (50, 100, 3))
+
+    def test_crop_image_center(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 200, 3), dtype=np.uint8)
+            image[25:75, 50:150] = [255, 0, 0]
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.25, 0.25, 0.75, 0.75))
+
+            self.assertEqual(result.shape, (50, 100, 3))
+            self.assertTrue(np.all(result == [255, 0, 0]))
+
+    def test_crop_image_small_bbox(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 200, 3), dtype=np.uint8)
+            image[10:20, 20:30] = [0, 255, 0]
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.1, 0.1, 0.2, 0.15))
+
+            self.assertEqual(result.shape, (10, 10, 3))
+            self.assertTrue(np.all(result == [0, 255, 0]))
+
+    def test_crop_image_with_pathlib(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 100, 3), dtype=np.uint8)
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.0, 0.0, 1.0, 1.0))
+
+            self.assertEqual(result.shape, (100, 100, 3))
+
+    def test_crop_image_returns_bgr_format(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((50, 50, 3), dtype=np.uint8)
+            image[:, :] = [255, 128, 64]
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.0, 0.0, 1.0, 1.0))
+
+            self.assertEqual(result[0, 0, 0], 255)
+            self.assertEqual(result[0, 0, 1], 128)
+            self.assertEqual(result[0, 0, 2], 64)
+
+
+class GenerateImageThumbnailCv2Test(TestCase):
+    def test_image_smaller_than_max_size_returns_unchanged(self):
+        image = np.ones((100, 100, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=200)
+        self.assertEqual(result.shape, (100, 100, 3))
+
+    def test_image_equal_to_max_size_returns_unchanged(self):
+        image = np.ones((100, 100, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=100)
+        self.assertEqual(result.shape, (100, 100, 3))
+
+    def test_image_wider_than_max_size_resizes_proportionally(self):
+        image = np.ones((100, 200, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=100)
+        self.assertEqual(result.shape[0], 50)
+        self.assertEqual(result.shape[1], 100)
+
+    def test_image_taller_than_max_size_resizes_proportionally(self):
+        image = np.ones((200, 100, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=100)
+        self.assertEqual(result.shape[0], 100)
+        self.assertEqual(result.shape[1], 50)
+
+    def test_image_larger_than_max_size_both_dimensions_resizes_proportionally(self):
+        image = np.ones((400, 600, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=200)
+        self.assertEqual(result.shape[0], 133)
+        self.assertEqual(result.shape[1], 200)

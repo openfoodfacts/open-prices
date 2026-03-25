@@ -2,10 +2,10 @@ import json
 import logging
 from typing import Literal
 
+import numpy as np
 from django.conf import settings
 from google import genai
 from openfoodfacts.types import JSONType
-from PIL import Image
 from pydantic import BaseModel, Field
 
 from open_prices.common import google as common_google
@@ -14,6 +14,7 @@ from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.common import DiscountType, RawCategory, Unit
 from open_prices.proofs.models import Proof, ProofPrediction, ReceiptItem
+from open_prices.proofs.utils import generate_image_thumbnail_cv2, image_bytes_as_webp
 
 logger = logging.getLogger(__name__)
 
@@ -189,16 +190,13 @@ class Receipt(BaseModel):
     )
 
 
-def extract_from_receipt(image: Image.Image) -> JSONType | None:
+def extract_from_receipt(image: np.ndarray) -> JSONType | None:
     """Extract receipt information from an image."""
     # Gemini model max payload size is 20MB
     # To prevent the payload from being too large, we resize the images before
     # upload
     max_size = 1024
-    if image.width > max_size or image.height > max_size:
-        image = image.copy()
-        image.thumbnail((max_size, max_size))
-
+    image = generate_image_thumbnail_cv2(image, max_size)
     prompt = "Extract all relevant information, use empty strings for unknown values."
     with genai.Client(
         credentials=common_google.get_google_credentials(),
@@ -208,7 +206,10 @@ def extract_from_receipt(image: Image.Image) -> JSONType | None:
             model=common_google.GEMINI_MODEL_VERSION,
             contents=[
                 prompt,
-                image,
+                genai.types.Part.from_bytes(
+                    data=image_bytes_as_webp(image),
+                    mime_type="image/webp",
+                ),
             ],
             config=common_google.get_generation_config(
                 Receipt, thinking_level="minimal"
@@ -289,12 +290,13 @@ def create_receipt_items_from_proof_prediction(
 
 
 def run_and_save_receipt_extraction_prediction(
-    image: Image.Image, proof: Proof, overwrite: bool = False
+    image: np.ndarray, proof: Proof, overwrite: bool = False
 ) -> ProofPrediction | None:
     """Run the receipt extraction model and save the prediction in
     ProofPrediction table.
 
-    :param image: the image to run the model on
+    :param image: the image to run the model on, as a numpy array (uint8, in BGR
+        format).
     :param proof: the Proof instance to associate the ProofPrediction with
     :param overwrite: whether to overwrite existing prediction, defaults to
         False

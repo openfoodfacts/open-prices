@@ -4,13 +4,13 @@ import logging
 from pathlib import Path
 from typing import Literal
 
+import cv2
 import numpy as np
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from google import genai
 from openfoodfacts.barcode import normalize_barcode
 from openfoodfacts.ml.object_detection import ObjectDetectionRawResult, ObjectDetector
-from PIL import Image
 from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
@@ -23,7 +23,11 @@ from open_prices.proofs.models import (
     Proof,
     ProofPrediction,
 )
-from open_prices.proofs.utils import crop_image
+from open_prices.proofs.utils import (
+    crop_image,
+    generate_image_thumbnail_cv2,
+    image_bytes_as_webp,
+)
 
 from .common import DiscountType, RawCategory, Unit
 
@@ -323,16 +327,6 @@ class LabelWithSimilarBarcodes(Label):
     )
 
 
-def preprocess_price_tag(image: Image.Image) -> Image.Image:
-    # Gemini model max payload size is 20MB
-    # To prevent the payload from being too large, we resize the images
-    max_size = 1024
-    if image.width > max_size or image.height > max_size:
-        image = image.copy()
-        image.thumbnail((max_size, max_size))
-    return image
-
-
 EXTRACT_PRICE_TAG_PROMPT = (
     "Here is one picture containing a price label, extract information "
     "from it. If you cannot decode an attribute, set it to an empty string."
@@ -340,15 +334,16 @@ EXTRACT_PRICE_TAG_PROMPT = (
 
 
 def extract_from_price_tag(
-    image: Image.Image,
+    image: np.ndarray,
 ) -> common_google.types.GenerateContentResponse:
     """Extract price tag information from an image.
 
-    :param image: the input Pillow image. Image preprocessing is done
+    :param image: the input image as a numpy array. Image preprocessing is done
         automatically to resize the image if it is too large.
     :return: the Gemini response
     """
-    preprocessed_image = preprocess_price_tag(image)
+    # Limit the image size to 1024 to limit the number of tokens sent to Gemini.
+    image = generate_image_thumbnail_cv2(image, max_size=1024)
 
     with genai.Client(
         credentials=common_google.get_google_credentials(),
@@ -358,14 +353,17 @@ def extract_from_price_tag(
             model=common_google.GEMINI_MODEL_VERSION,
             contents=[
                 EXTRACT_PRICE_TAG_PROMPT,
-                preprocessed_image,
+                genai.types.Part.from_bytes(
+                    data=image_bytes_as_webp(image),
+                    mime_type="image/webp",
+                ),
             ],
             config=common_google.get_generation_config(Label, thinking_level="minimal"),
         )
 
 
 async def extract_from_price_tag_async(
-    client: genai.client.AsyncClient, image: Image.Image
+    client: genai.client.AsyncClient, image: np.ndarray
 ) -> common_google.types.GenerateContentResponse:
     """Asynchronous version of extract_from_price_tag.
 
@@ -373,14 +371,17 @@ async def extract_from_price_tag_async(
     this function.
 
     :param client: the AsyncClient instance to use for the request.
-    :param image: the input Pillow image, already preprocessed.
+    :param image: the input image as a numpy array (uint8, in BGR format), already preprocessed.
     :return: the Gemini response
     """
     response = await client.models.generate_content(
         model=common_google.GEMINI_MODEL_VERSION,
         contents=[
             EXTRACT_PRICE_TAG_PROMPT,
-            image,
+            genai.types.Part.from_bytes(
+                data=image_bytes_as_webp(image),
+                mime_type="image/webp",
+            ),
         ],
         config=common_google.get_generation_config(Label, thinking_level="minimal"),
     )
@@ -388,13 +389,14 @@ async def extract_from_price_tag_async(
 
 
 async def extract_from_price_tag_batch(
-    images: list[Image.Image],
+    images: list[np.ndarray],
 ) -> list[common_google.types.GenerateContentResponse]:
     """Extract price tag information from a batch of images.
 
     This function processes multiple images in parallel using asyncio.
 
-    :param images: a list of Pillow images, already preprocessed (resized).
+    :param images: a list of numpy arrays (uint8, in BGR format),
+        already preprocessed (resized).
     :return: a list of Gemini responses, one for each image
     """
     async with genai.Client(
@@ -413,7 +415,7 @@ sync_extract_from_price_tag_batch = async_to_sync(extract_from_price_tag_batch)
 
 
 def detect_price_tags(
-    image: Image.Image,
+    image: np.ndarray,
     model_name: str = PRICE_TAG_DETECTOR_MODEL_NAME,
     model_version: str = PRICE_TAG_DETECTOR_TRITON_VERSION,
     label_names: list[str] = PRICE_TAG_DETECTOR_LABEL_NAMES,
@@ -423,7 +425,7 @@ def detect_price_tags(
 ) -> ObjectDetectionRawResult:
     """Detect the price tags in a proof image.
 
-    :param image: the input Pillow image
+    :param image: the input image as a numpy array (uint8, in BGR format)
     :param model_version: the version of the model to use, defaults to
         MODEL_VERSION
     :param model_name: the name of the model to use, defaults to MODEL_NAME
@@ -440,10 +442,10 @@ def detect_price_tags(
         label_names=label_names,
         image_size=image_size,
     )
-    # The object detector expects a numpy array as input
-    image_array = np.asarray(image.convert("RGB"))
+    # Convert image from BGR to RGB format, as expected by the model
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return detector.detect_from_image(
-        image_array,
+        image=image,
         triton_uri=triton_uri,
         threshold=threshold,
         model_version=model_version,
@@ -469,7 +471,8 @@ def run_and_save_price_tag_extraction(
     preprocessed_images = []
     for price_tag in price_tags:
         cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
-        preprocessed_images.append(preprocess_price_tag(cropped_image))
+        cropped_image = generate_image_thumbnail_cv2(cropped_image, max_size=1024)
+        preprocessed_images.append(cropped_image)
 
     # Sending requests in parallel using asyncio was responsible to network
     # exceptions in production, so we added here a setting to control
@@ -650,7 +653,7 @@ def create_price_tags_from_proof_prediction(
 
 
 def run_and_save_price_tag_detection(
-    image: Image.Image,
+    image: np.ndarray,
     proof: Proof,
     overwrite: bool = False,
     run_extraction: bool = True,
@@ -658,7 +661,8 @@ def run_and_save_price_tag_detection(
     """Run the price tag object detection model and save the prediction
     in ProofPrediction table.
 
-    :param image: the image to run the model on
+    :param image: the image to run the model on, as a numpy array (uint8, in BGR
+        format)
     :param proof: the Proof instance to associate the ProofPrediction with
     :param overwrite: whether to overwrite existing prediction, defaults to
         False
