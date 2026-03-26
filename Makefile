@@ -147,7 +147,7 @@ create_external_networks:
 
 cp-static-files:
 	@echo "🥫 Copying static files from api container to the host …"
-	docker cp open_prices-api-1:/opt/open-prices/static www/
+	rm -r www/static && docker cp open_prices-api-1:/opt/open-prices/static www/
 
 migrate-db:
 	@echo "🥫 Migrating database …"
