@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.101.0](https://github.com/openfoodfacts/open-prices/compare/v1.100.0...v1.101.0) (2026-03-26)
+
+
+### Features
+
+* improve image preprocessing for ML models ([#1251](https://github.com/openfoodfacts/open-prices/issues/1251)) ([dd5b4b3](https://github.com/openfoodfacts/open-prices/commit/dd5b4b369a65fb84104640a012c89eaff62eb4c1))
+
+
+### Bug Fixes
+
+* **Auth:** Add UserAgent header to auth query ([#1254](https://github.com/openfoodfacts/open-prices/issues/1254)) ([9885f4c](https://github.com/openfoodfacts/open-prices/commit/9885f4cef60d49920108cbfab1d27b3217e2702e))
+
+
+### Technical
+
+* **docs:** Remove .env copy instruction from INSTALL.md ([#1238](https://github.com/openfoodfacts/open-prices/issues/1238)) ([c44231b](https://github.com/openfoodfacts/open-prices/commit/c44231b11b56d723ab09f527444e43f3536bb6b0))
+* **docs:** update documentation to reflect manual env load ([#1248](https://github.com/openfoodfacts/open-prices/issues/1248)) ([c71b5bf](https://github.com/openfoodfacts/open-prices/commit/c71b5bfa70d5966b4bc4872c981c950f1ad9a3bc))
+* **docs:** update INSTALL.md and CONTRIBUTING.md to reflect switch to uv ([#1239](https://github.com/openfoodfacts/open-prices/issues/1239)) ([8007c84](https://github.com/openfoodfacts/open-prices/commit/8007c84fcd8b10d58df2e4cea34a0572e824bf47))
+* on deploy, remove django static content before copying it again (fixes admin css) ([#1256](https://github.com/openfoodfacts/open-prices/issues/1256)) ([4042cd6](https://github.com/openfoodfacts/open-prices/commit/4042cd6c6f1d58343d0ed89b86e226dcde236a36))
+* **settings:** reflect environment default values in settings.py ([#1249](https://github.com/openfoodfacts/open-prices/issues/1249)) ([39c9d81](https://github.com/openfoodfacts/open-prices/commit/39c9d81f1dd8c3f9250bfa25b77bf8776838527e))
+* **Tests:** homogenize API tests on list ordering & pagination ([#1252](https://github.com/openfoodfacts/open-prices/issues/1252)) ([ad4f9d9](https://github.com/openfoodfacts/open-prices/commit/ad4f9d909af6a259cad28411649df78fb7681e4c))
+
 ## [1.100.0](https://github.com/openfoodfacts/open-prices/compare/v1.99.0...v1.100.0) (2026-03-20)
 
 
