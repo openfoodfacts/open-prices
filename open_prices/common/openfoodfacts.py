@@ -95,7 +95,8 @@ def authenticate(username, password):
     - 403: {"status": 0,"status_verbose": "user not signed-in"}
     """
     data = {"user_id": username, "password": password, "body": 1}
-    return requests.post(f"{settings.OAUTH2_SERVER_URL}", data=data)
+    headers = {"User-Agent": settings.OFF_USER_AGENT}
+    return requests.post(f"{settings.OAUTH2_SERVER_URL}", data=data, headers=headers)
 
 
 def build_product_dict(product: JSONType, flavor) -> JSONType:
