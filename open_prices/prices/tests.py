@@ -1088,9 +1088,9 @@ class PriceModelUpdateTest(TestCase):
         # after
         self.assertEqual(self.price.product_code, "8001505005707")
         product_8850187002197.refresh_from_db()
-        self.assertEqual(product_8850187002197.price_count, 1)  # TODO: should be 0
+        self.assertEqual(product_8850187002197.price_count, 0)  # We now enfore 0
         product_8001505005707 = Product.objects.get(code="8001505005707")
-        self.assertEqual(product_8001505005707.price_count, 0)  # TODO: should be 1
+        self.assertEqual(product_8001505005707.price_count, 1)  # We now enfore 1
         self.assertEqual(self.price.product, product_8001505005707)
 
 
