@@ -23,6 +23,7 @@ PRODUCT_OFF = {
     "product_name": "Nutella",
     "product_quantity": 1000,
     "product_quantity_unit": "g",
+    "quantity": "1 kg",
     "categories_tags": [
         "en:breakfasts",
         "en:fats",
@@ -255,6 +256,7 @@ class TestProcessUpdate(TestCase):
             "image_url": "https://images.openfoodfacts.org/images/products/123/1.jpg",
             "product_quantity": 1000,
             "product_quantity_unit": "g",
+            "quantity": "1 kg",
             "categories_tags": ["en:apples"],
             "unique_scans_n": 42,
             "owner": "test",
@@ -287,6 +289,7 @@ class TestProcessUpdate(TestCase):
             "image_url": "https://images.openfoodfacts.org/images/products/123/1.jpg",
             "product_quantity": 1000,
             "product_quantity_unit": "g",
+            "quantity": "1 kg",
             "categories_tags": ["en:apples"],
             "unique_scans_n": 42,
             "owner": "test",
