@@ -20,6 +20,9 @@ class PriceFilter(django_filters.FilterSet):
         field_name="product__source",
         choices=product_constants.SOURCE_CHOICES,
     )
+    product__source__isnull = django_filters.BooleanFilter(
+        field_name="product__source", lookup_expr="isnull"
+    )
     product__categories_tags__contains = django_filters.CharFilter(
         field_name="product__categories_tags",
         lookup_expr="any",
