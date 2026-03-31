@@ -87,6 +87,30 @@ def normalize_taxonomized_tags(taxonomy_type: str, value_tags: list[str]) -> lis
     return [mapped_tags[k] for k in mapped_tags]
 
 
+def get_category_children(parent: str) -> list[str]:
+    """Gets a list of all children of a given category."""
+    taxonomy = _cached_get_taxonomy("category")
+    all_children = []
+    seen: Set[str] = set()
+
+    parent = taxonomy[parent]
+
+    if not parent.children:
+        return []
+
+    for child in parent.children:
+        if child.id not in seen:
+            all_children.append(child.id)
+            seen.add(child.id)
+
+        for child_child in get_category_children(child.id):
+            if child_child not in seen:
+                all_children.append(child_child)
+                seen.add(child_child)
+
+    return all_children
+
+
 def authenticate(username, password):
     """
     Request: POST with form data

@@ -119,11 +119,11 @@ class PriceQuerySet(models.QuerySet):
             queryset = queryset.filter(
                 Q(
                     type=price_constants.TYPE_CATEGORY,
-                    category_tag__in=challenge.categories,
+                    category_tag__in=challenge.categories_with_children,
                 )
                 | Q(
                     type=price_constants.TYPE_PRODUCT,
-                    product__categories_tags__overlap=challenge.categories,
+                    product__categories_tags__overlap=challenge.categories_with_children,
                 )
             )
         if challenge.locations.exists():

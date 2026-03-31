@@ -10,6 +10,7 @@ from django.utils import timezone
 from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges import validators as challenge_validators
 from open_prices.common import utils
+from open_prices.common.openfoodfacts import get_category_children
 from open_prices.locations.models import Location
 
 
@@ -121,6 +122,16 @@ class Challenge(models.Model):
     @property
     def tag(self):
         return f"{challenge_constants.CHALLENGE_TAG_PREFIX}{self.id}"
+
+    @property
+    def categories_with_children(self) -> list[str]:
+        """A list of a challenge’s categories including the children categories of these."""
+        all_children = self.categories.copy()
+        for category in self.categories:
+            all_children.append(get_category_children(category))
+
+        # Turn into a set before returning to drop duplicates
+        return list(set(all_children))
 
     def location_id_list(self):
         return list(self.locations.values_list("id", flat=True))
