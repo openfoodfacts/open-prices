@@ -304,12 +304,13 @@ class PriceListFilterApiTest(TestCase):
         # product__source__isnull
         url = self.url + "?product__source__isnull=true"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["total"], 4)
         self.assertEqual(response.data["items"][0]["category_tag"], "en:apples")
         # Products without source, but with a product id -> barcode products not yet created
-        url = self.url + "?product__source__isnull=false&product_id__isnull=false"
+        url = self.url + "?product__source__isnull=true&product_id__isnull=false"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 0)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["product_code"], "8850187002197")
         # category_tag
         url = self.url + "?category_tag=apples"
         response = self.client.get(url)
