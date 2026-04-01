@@ -109,7 +109,7 @@ mypy:
 	${DOCKER_COMPOSE} run --rm --no-deps api mypy .
 
 docs:
-	@echo "🥫 Generationg doc…"
+	@echo "🥫 Generating doc…"
 	${DOCKER_COMPOSE} run --rm --no-deps api ./build_mkdocs.sh
 
 checks: toml-check mypy docs
