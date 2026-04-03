@@ -22,6 +22,7 @@ DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=open_prices_test COMMON_NET_NAME=po_tes
 # avoid target corresponding to file names, to depends on them
 .PHONY: *
 
+
 #-----------#
 # Utilities #
 #-----------#
@@ -32,6 +33,7 @@ guard-%: # guard clause for targets that require an environment variable (usuall
    		echo use "make ${MAKECMDGOALS} $*=you-args"; \
    		exit 1; \
 	fi;
+
 
 #------------#
 # Production #
@@ -55,11 +57,9 @@ livecheck:
 	[ $$exit_code -eq 0 ] && echo "Success !"; \
 	exit $$exit_code;
 
-
 build:
 	@echo "🥫 building docker (for dev)"
 	${DOCKER_COMPOSE} build
-
 
 up:
 ifdef service
@@ -73,14 +73,12 @@ down:
 	@echo "🥫 Bringing down containers …"
 	${DOCKER_COMPOSE} down
 
-
 hdown:
 	@echo "🥫 Bringing down containers and associated volumes …"
 	${DOCKER_COMPOSE} down -v
 
-
-# pull images from image repository
 pull:
+	@echo "🥫 Pulling images from repository …"
 	${DOCKER_COMPOSE} pull
 
 restart:
@@ -99,6 +97,7 @@ log:
 #------------#
 # Quality    #
 #------------#
+
 toml-check:
 	${DOCKER_COMPOSE} run --rm --no-deps api toml-sort --check pyproject.toml
 
@@ -123,10 +122,10 @@ django-tests:
 	# See https://github.com/openfoodfacts/open-prices/issues/962
 	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api python3 manage.py test -v 2
 
-
 django-tests-single: guard-args
 	@echo "🥫 Running specific tests …"
 	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api python3 manage.py test -v 2 ${args}
+
 
 #------------#
 # Production #
@@ -147,7 +146,7 @@ create_external_networks:
 
 cp-static-files:
 	@echo "🥫 Copying static files from api container to the host …"
-	rm -r www/static && docker cp open_prices-api-1:/opt/open-prices/static www/
+	rm -rf www/static && docker cp open_prices-api-1:/opt/open-prices/static www/
 
 migrate-db:
 	@echo "🥫 Migrating database …"
@@ -156,13 +155,14 @@ migrate-db:
 cli: guard-args
 	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py ${args}
 
-
 makemigrations:
 	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py makemigrations ${args}
+
 
 #---------#
 # Cleanup #
 #---------#
+
 prune:
 	@echo "🥫 Pruning unused Docker artifacts (save space) …"
 	docker system prune -af
