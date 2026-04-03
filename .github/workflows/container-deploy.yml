@@ -49,15 +49,15 @@ jobs:
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
-        echo "SSH_PROXY_HOST=ovh2.openfoodfacts.org" >> $GITHUB_ENV
-        echo "SSH_HOST=10.1.0.201" >> $GITHUB_ENV
+        echo "SSH_PROXY_HOST=scaleway-proxy.openfoodfacts.org" >> $GITHUB_ENV
+        echo "SSH_HOST=10.13.1.201" >> $GITHUB_ENV
         echo "ENVIRONMENT=org" >> $GITHUB_ENV
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.org" >> $GITHUB_ENV
         # Triton server is on Moji datacenter, so we use the stunnel client running
         # on the OVH datacenter to access it
         # The associated Triton server (mapped with port 5504 by Stunnel) is running on GPU
-        echo "TRITON_URI=10.1.0.113:5504" >> $GITHUB_ENV
-        echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
+        echo "TRITON_URI=10.13.1.101:5504" >> $GITHUB_ENV
+        echo "REDIS_HOST=10.13.1.200" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
         echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.org/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
