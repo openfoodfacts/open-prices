@@ -1,4 +1,5 @@
 import asyncio
+import dataclasses
 import enum
 import logging
 from pathlib import Path
@@ -17,6 +18,10 @@ from open_prices.common import google as common_google
 from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
+from open_prices.proofs.ml.classification import (
+    predict_price_tag_type,
+    price_tag_classification_model_config,
+)
 from open_prices.proofs.models import (
     PriceTag,
     PriceTagPrediction,
@@ -39,6 +44,14 @@ PRICE_TAG_DETECTOR_IMAGE_SIZE = 960
 
 
 logger = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass
+class PriceTagWithImage:
+    """A price tag with its associated cropped image, as a numpy array (uint8, in BGR format)."""
+
+    price_tag: PriceTag
+    image: np.ndarray
 
 
 # TODO: what about other origins?
@@ -453,13 +466,13 @@ def detect_price_tags(
 
 
 def run_and_save_price_tag_extraction(
-    price_tags: list[PriceTag], proof: Proof
+    price_tags: list[PriceTag] | list[PriceTagWithImage], proof: Proof
 ) -> list[PriceTagPrediction]:
     """Extract information from price tags using the Gemini model and save the
     predictions in the database.
 
-    :param price_tags: the list of PriceTag instances to extract information
-        from
+    :param price_tags: the list of PriceTag (or PriceTagWithImage) instances to
+        extract information from
     :param proof: the Proof instance associated with the price tags
     :return: the list of PriceTagPrediction instances created
     """
@@ -469,10 +482,22 @@ def run_and_save_price_tag_extraction(
 
     predictions = []
     preprocessed_images = []
+    _price_tags = []
     for price_tag in price_tags:
-        cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
+        if isinstance(price_tag, PriceTagWithImage):
+            cropped_image = price_tag.image
+            _price_tags.append(price_tag.price_tag)
+        else:
+            cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
+
         cropped_image = generate_image_thumbnail_cv2(cropped_image, max_size=1024)
         preprocessed_images.append(cropped_image)
+
+    # Below, price_tags is expected to be a list of PriceTag, so if the input is a
+    # list of PriceTagWithImage, we extract the PriceTag instances in a separate list
+    # and use it for the rest of the function.
+    if _price_tags:
+        price_tags = _price_tags
 
     # Sending requests in parallel using asyncio was responsible to network
     # exceptions in production, so we added here a setting to control
@@ -615,7 +640,12 @@ def create_price_tags_from_proof_prediction(
     run_extraction: bool = True,
 ) -> list[PriceTag]:
     """Create price tags from a proof prediction containing price tag object
-    detections.
+    detections. The following steps are performed:
+
+    1. Create PriceTag instances from the price tag detections
+    2. Run the price tag type prediction model on each price tag
+    3. Run the price tag extraction model on each price tag, only on price tags
+       with predicted type 'medium-quality' or 'high-quality'.
 
     :param proof: the Proof instance to associate the PriceTag instances with
     :param proof_prediction: the ProofPrediction instance containing the
@@ -633,23 +663,55 @@ def create_price_tags_from_proof_prediction(
         )
         return []
 
-    created = []
+    created_price_tags: list[PriceTag] = []
+    to_process: list[PriceTagWithImage] = []
     for detected_object in proof_prediction.data["objects"]:
-        if detected_object["score"] >= threshold:
-            price_tag = PriceTag.objects.create(
-                proof=proof,
-                proof_prediction=proof_prediction,
-                bounding_box=detected_object["bounding_box"],
-                status=None,
-                created_by=None,
-                updated_by=None,
-            )
-            created.append(price_tag)
+        if detected_object["score"] < threshold:
+            continue
+        # To speed up preprocessing, we only crop the image once here, for both model
+        # (price tag classification and extraction)
+        bounding_box = detected_object["bounding_box"]
+        cropped_image = crop_image(proof.file_path_full, bounding_box)
+        price_tag_type_prediction = predict_price_tag_type(cropped_image)
+        predicted_price_tag_type = price_tag_type_prediction[0][0]
+        price_tag = PriceTag.objects.create(
+            proof=proof,
+            proof_prediction=proof_prediction,
+            bounding_box=bounding_box,
+            status=None,
+            created_by=None,
+            updated_by=None,
+            # Save the price tag type prediction as a tag on the PriceTag instance, to be
+            # able to easily filter price tags by predicted type on the front-end.
+            tags=[predicted_price_tag_type],
+        )
+        created_price_tags.append(price_tag)
+        price_tag_with_image = PriceTagWithImage(price_tag, cropped_image)
+        PriceTagPrediction.objects.create(
+            price_tag=price_tag,
+            type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE,
+            model_name=price_tag_classification_model_config.model_name,
+            model_version=price_tag_classification_model_config.model_version,
+            data={
+                "prediction": [
+                    {"label": label, "score": confidence}
+                    for label, confidence in price_tag_type_prediction
+                ]
+            },
+        )
+
+        # Price tag type prediction can have three possible values: "invalid",
+        # "medium-quality" and "high-quality". We only run the extraction model
+        # on price tags that are not predicted as "invalid" as there is nothing
+        # to extract on these image crops: either the price tag is too blurry or
+        # the crop is not actually a price tag.
+        if predicted_price_tag_type != "invalid":
+            to_process.append(price_tag_with_image)
 
     if run_extraction:
-        run_and_save_price_tag_extraction(created, proof)
+        run_and_save_price_tag_extraction(to_process, proof)
 
-    return created
+    return created_price_tags
 
 
 def run_and_save_price_tag_detection(
