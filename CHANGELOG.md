@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.101.1](https://github.com/openfoodfacts/open-prices/compare/v1.101.0...v1.101.1) (2026-04-07)
+
+
+### Technical
+
+* migrate Open Prices from docker-prod to scaleway-docker-prod-2 ([e5f4001](https://github.com/openfoodfacts/open-prices/commit/e5f40015929e461a3c324524ed4f590be17f334b))
+
 ## [1.101.0](https://github.com/openfoodfacts/open-prices/compare/v1.100.0...v1.101.0) (2026-04-03)
 
 
