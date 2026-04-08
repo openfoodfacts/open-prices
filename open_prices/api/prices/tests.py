@@ -806,7 +806,7 @@ class PriceCreateApiTest(TestCase):
                 "web - /prices/add/multiple",
             ),
         ]:
-            with self.subTest(INPUT_OUPUT=(params, result)):
+            with self.subTest(INPUT_OUTPUT=(params, result)):
                 response = self.client.post(
                     self.url + params,
                     self.data,
