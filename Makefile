@@ -30,7 +30,7 @@ DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=open_prices_test COMMON_NET_NAME=po_tes
 guard-%: # guard clause for targets that require an environment variable (usually used as an argument)
 	@ if [ "${${*}}" = "" ]; then \
    		echo "Environment variable '$*' is mandatory"; \
-   		echo use "make ${MAKECMDGOALS} $*=you-args"; \
+   		echo use "make ${MAKECMDGOALS} $*=your-args"; \
    		exit 1; \
 	fi;
 
@@ -108,7 +108,7 @@ mypy:
 	${DOCKER_COMPOSE} run --rm --no-deps api mypy .
 
 docs:
-	@echo "🥫 Generationg doc…"
+	@echo "🥫 Generating doc…"
 	${DOCKER_COMPOSE} run --rm --no-deps api ./build_mkdocs.sh
 
 checks: toml-check mypy docs
