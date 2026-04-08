@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - deploy-*
+      # FIXME temporary
+      - fix-prod-release-on-scaleway
     tags:
       - v*.*.*
 
@@ -24,7 +26,7 @@ jobs:
       matrix:
         env:
           # Note: env is also the name of the directory on the server
-          - ${{ startsWith(github.ref, 'refs/tags/v') && 'open-prices-org' || 'open-prices-net' }}
+          - ${{ startsWith(github.ref, 'refs/tags/v') && 'open-prices-org' || startsWith(github.ref, 'fix-prod-release-on-scaleway') && 'open-prices-org' || 'open-prices-net' }}
     environment: ${{ matrix.env }}
     concurrency: ${{ matrix.env }}
     steps:
@@ -49,7 +51,7 @@ jobs:
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
-        echo "SSH_PROXY_HOST=scaleway-proxy.openfoodfacts.org" >> $GITHUB_ENV
+        echo "SSH_PROXY_HOST=scaleway-03.infra..openfoodfacts.org" >> $GITHUB_ENV
         echo "SSH_HOST=10.13.1.201" >> $GITHUB_ENV
         echo "ENVIRONMENT=org" >> $GITHUB_ENV
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.org" >> $GITHUB_ENV
