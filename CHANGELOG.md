@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.101.2](https://github.com/openfoodfacts/open-prices/compare/v1.101.1...v1.101.2) (2026-04-08)
+
+
+### Technical
+
+* fix proxy jump on prod ([#1267](https://github.com/openfoodfacts/open-prices/issues/1267)) ([a9715c7](https://github.com/openfoodfacts/open-prices/commit/a9715c783cd5a3c0df59050076d357d6cf11b304))
+* **Makefile:** Fix 2 spelling typos ([#1263](https://github.com/openfoodfacts/open-prices/issues/1263)) ([29adec6](https://github.com/openfoodfacts/open-prices/commit/29adec6262f3bd8a87878f6e5cfb9478b9c1ad28))
+
 ## [1.101.1](https://github.com/openfoodfacts/open-prices/compare/v1.101.0...v1.101.1) (2026-04-07)
 
 
