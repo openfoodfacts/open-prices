@@ -51,7 +51,7 @@ jobs:
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
-        echo "SSH_PROXY_HOST=scaleway-03.infra..openfoodfacts.org" >> $GITHUB_ENV
+        echo "SSH_PROXY_HOST=scaleway-03.infra.openfoodfacts.org" >> $GITHUB_ENV
         echo "SSH_HOST=10.13.1.201" >> $GITHUB_ENV
         echo "ENVIRONMENT=org" >> $GITHUB_ENV
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.org" >> $GITHUB_ENV
