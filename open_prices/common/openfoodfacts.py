@@ -53,15 +53,11 @@ _cached_get_taxonomy = functools.lru_cache()(get_taxonomy)
 def normalize_taxonomized_tags(taxonomy_type: str, value_tags: list[str]) -> list[str]:
     """Normalizes a list of tags based on the taxonomy type.
 
-    :param taxonomy_type: The type of taxonomy ('category', 'label', or
-        'origin').
-    :param value_tags: A list of tag values to normalize (e.g.,
-        ["fr: Boissons"]).
-    :raises RuntimeError: If the taxonomy type is not one of 'category',
-        'label', or 'origin'
+    :param taxonomy_type: The type of taxonomy ('category', 'label', or 'origin').
+    :param value_tags: A list of tag values to normalize (e.g. ["fr: Boissons"]).
+    :raises RuntimeError: If the taxonomy type is not one of 'category', 'label', or 'origin'
     :raises ValueError: If the value_tag could not be mapped to a canonical ID.
-    :return: The normalized tags (e.g., ["en:beverages"]). The order of the
-        tags is the same as the input list.
+    :return: The normalized tags (e.g., ["en:beverages"]). The order of the tags is the same as the input list.
     """
     if taxonomy_type not in ("category", "label", "origin"):
         raise RuntimeError(
@@ -85,6 +81,45 @@ def normalize_taxonomized_tags(taxonomy_type: str, value_tags: list[str]) -> lis
     mapped_tags = map_to_canonical_id(taxonomy_mapping, value_tags)
     # Keep the order of the tags as they were provided
     return [mapped_tags[k] for k in mapped_tags]
+
+
+def get_taxonomy_children_tags_from_parent_list(
+    taxonomy_type: str, parent_list: list[str], include_parent_list: bool = False
+) -> list[str]:
+    """Gets a list of all children for a given taxonomy type and parent list.
+
+    :param taxonomy_type: The type of taxonomy ('category', 'label', 'origin'...).
+    :param parent_list: A list of parent tags (e.g., ["en:beverages"]).
+    :param include_parent_list: Whether to include the parent tags in the result.
+    :return: A list of all children tags (e.g., ["en:beverages", "en:sodas", "en:juices"]).
+
+    TODO: manage parent_list categories coming from different taxonomies (food & non-food)
+    """
+    taxonomy = _cached_get_taxonomy(taxonomy_type)
+    children_tags = [] if not include_parent_list else list(parent_list)
+    seen = set(children_tags)
+
+    for parent in parent_list:
+        parent_node = taxonomy[parent]
+
+        # the parent node might not be in this taxonomy (e.g. non-food)
+        # the parent node might not have children
+        if not (parent_node and parent_node.children):
+            continue
+
+        for child_node in parent_node.children:
+            if child_node.id not in seen:
+                children_tags.append(child_node.id)
+                seen.add(child_node.id)
+
+            for child_child_id in get_taxonomy_children_tags_from_parent_list(
+                taxonomy_type, [child_node.id]
+            ):
+                if child_child_id not in seen:
+                    children_tags.append(child_child_id)
+                    seen.add(child_child_id)
+
+    return children_tags
 
 
 def authenticate(username, password):
