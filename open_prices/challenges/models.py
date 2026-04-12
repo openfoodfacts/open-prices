@@ -69,7 +69,7 @@ class Challenge(models.Model):
         base_field=models.CharField(),
         blank=True,
         default=list,
-        help_text="Full category tags with parents, used for matching & stats (read-only)",
+        help_text="Full category tags with parents, used for matching & stats (readonly)",
     )
 
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)

@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 base_field=models.CharField(),
                 blank=True,
                 default=list,
-                help_text="Full category tags with parents, used for matching & stats (read-only)",
+                help_text="Full category tags with parents, used for matching & stats (readonly)",
                 size=None,
             ),
         ),
