@@ -51,8 +51,24 @@ class Challenge(models.Model):
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
 
-    categories = ArrayField(base_field=models.CharField(), blank=True, default=list)
-    locations = models.ManyToManyField(Location, blank=True)
+    categories = ArrayField(
+        base_field=models.CharField(),
+        blank=True,
+        default=list,
+        help_text="Restrict to one or multiple categories (optional)",
+    )
+    categories_full = ArrayField(
+        base_field=models.CharField(),
+        blank=True,
+        default=list,
+        help_text="Full category tags with parents, used for matching & stats (read-only)",
+    )
+    locations = models.ManyToManyField(
+        Location,
+        blank=True,
+        related_name="challenges",
+        help_text="Restrict to one or multiple locations (optional)",
+    )
 
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)
 
