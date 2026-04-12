@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.102.0](https://github.com/openfoodfacts/open-prices/compare/v1.101.2...v1.102.0) (2026-04-12)
+
+
+### Features
+
+* **Challenges:** new categories_full field to store the full list of categories (parents + children) ([#1270](https://github.com/openfoodfacts/open-prices/issues/1270)) ([a566f16](https://github.com/openfoodfacts/open-prices/commit/a566f166e761033e0d1a85a89e1ef8d32c4dbaf5))
+* **OpenFoodFacts:** new taxonomy helper method to get the full list of children from a parent list ([#1269](https://github.com/openfoodfacts/open-prices/issues/1269)) ([7486035](https://github.com/openfoodfacts/open-prices/commit/748603569e9abc0bd2c356e3555343c4cb39a6fa))
+
+
+### Technical
+
+* **Challenges:** match CATEGORY prices on categories_full (instead of categories) ([#1273](https://github.com/openfoodfacts/open-prices/issues/1273)) ([2c1a1a8](https://github.com/openfoodfacts/open-prices/commit/2c1a1a80aa66c454d5ea43c760bde7a157e1b609))
+* **Challenges:** prettier admin display (fieldset, JSON & image formatting) ([#1274](https://github.com/openfoodfacts/open-prices/issues/1274)) ([4be58d9](https://github.com/openfoodfacts/open-prices/commit/4be58d91591b17de4f02758b20f0619c7fa16070))
+
 ## [1.101.2](https://github.com/openfoodfacts/open-prices/compare/v1.101.1...v1.101.2) (2026-04-08)
 
 
