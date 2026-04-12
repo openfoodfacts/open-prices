@@ -97,6 +97,7 @@ class ChallengeAdmin(admin.ModelAdmin):
                 f'<img src="{obj.example_proof_url}" title="{obj.example_proof_url}" height=300 />'  # noqa
                 f"</a>"
             )
+        return None
 
     @admin.display(description="Categories full")
     def categories_full_count_annotated(self, obj):
@@ -112,5 +113,7 @@ class ChallengeAdmin(admin.ModelAdmin):
 
     @admin.display(description="Stats (pretty)")
     def stats_pretty(self, obj):
-        data = json.dumps(obj.stats, indent=2)
-        return mark_safe(f"<pre>{data}</pre>")
+        if obj.stats:
+            data = json.dumps(obj.stats, indent=2)
+            return mark_safe(f"<pre>{data}</pre>")
+        return None
