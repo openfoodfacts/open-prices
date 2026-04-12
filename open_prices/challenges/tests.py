@@ -92,7 +92,7 @@ class ChallengeModelSaveTest(TestCase):
             categories=["en:breakfasts", "en:spreads"],
         )
         print(c.categories_full)
-        self.assertTrue(len(c.categories_full) > len(c.categories))
+        self.assertGreater(len(c.categories_full), len(c.categories))
 
     def test_challenge_post_create_calculate_stats(self):
         c = ChallengeFactory(is_published=False, start_date=None, end_date=None)
