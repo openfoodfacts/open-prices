@@ -95,7 +95,7 @@ def get_taxonomy_children_tags_from_parent_list(
     """
     taxonomy = _cached_get_taxonomy(taxonomy_type)
     children_tags = [] if not include_parent_list else list(parent_list)
-    seen = set()
+    seen = set(children_tags)
 
     for parent in parent_list:
         parent_node = taxonomy[parent]
