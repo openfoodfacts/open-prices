@@ -92,6 +92,8 @@ def get_taxonomy_children_tags_from_parent_list(
     :param parent_list: A list of parent tags (e.g., ["en:beverages"]).
     :param include_parent_list: Whether to include the parent tags in the result.
     :return: A list of all children tags (e.g., ["en:beverages", "en:sodas", "en:juices"]).
+
+    TODO: manage parent_list categories coming from different taxonomies (food & non-food)
     """
     taxonomy = _cached_get_taxonomy(taxonomy_type)
     children_tags = [] if not include_parent_list else list(parent_list)
@@ -100,9 +102,9 @@ def get_taxonomy_children_tags_from_parent_list(
     for parent in parent_list:
         parent_node = taxonomy[parent]
 
-        if not parent_node:
-            continue
-        if not parent_node.children:
+        # the parent node might not be in this taxonomy (e.g. non-food)
+        # the parent node might not have children
+        if not (parent_node and parent_node.children):
             continue
 
         for child_node in parent_node.children:
