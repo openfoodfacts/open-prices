@@ -85,13 +85,11 @@ class ChallengeModelSaveTest(TestCase):
         )
 
     def test_challenge_post_create_calculate_categories(self):
-        c = ChallengeFactory(
-            is_published=False,
-            start_date="2024-06-30",
-            end_date="2024-07-30",
-            categories=["en:breakfasts", "en:spreads"],
-        )
-        print(c.categories_full)
+        # challenge without categories
+        c = ChallengeFactory(categories=[])
+        self.assertEqual(c.categories_full, [])
+        # challenge with categories
+        c = ChallengeFactory(categories=["en:breakfasts", "en:spreads"])
         self.assertGreater(len(c.categories_full), len(c.categories))
 
     def test_challenge_post_create_calculate_stats(self):
