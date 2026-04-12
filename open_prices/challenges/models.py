@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges import validators as challenge_validators
+from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.common import utils
 from open_prices.locations.models import Location
 
@@ -51,8 +52,25 @@ class Challenge(models.Model):
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
 
-    categories = ArrayField(base_field=models.CharField(), blank=True, default=list)
-    locations = models.ManyToManyField(Location, blank=True)
+    categories = ArrayField(
+        base_field=models.CharField(),
+        blank=True,
+        default=list,
+        help_text="Restrict to one or multiple categories (optional)",
+    )
+    locations = models.ManyToManyField(
+        Location,
+        blank=True,
+        related_name="challenges",
+        help_text="Restrict to one or multiple locations (optional)",
+    )
+
+    categories_full = ArrayField(
+        base_field=models.CharField(),
+        blank=True,
+        default=list,
+        help_text="Full category tags with parents, used for matching & stats (readonly)",
+    )
 
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)
 
@@ -121,6 +139,17 @@ class Challenge(models.Model):
     @property
     def tag(self):
         return f"{challenge_constants.CHALLENGE_TAG_PREFIX}{self.id}"
+
+    def calculate_categories_full(self):
+        categories_full = (
+            common_openfoodfacts.get_taxonomy_children_tags_from_parent_list(
+                taxonomy_type="category",
+                parent_list=self.categories,
+                include_parent_list=True,
+            )
+        )
+        self.categories_full = categories_full
+        self.save(update_fields=["categories_full"])
 
     def location_id_list(self):
         return list(self.locations.values_list("id", flat=True))
@@ -314,6 +343,9 @@ class Challenge(models.Model):
 
 
 @receiver(signals.post_save, sender=Challenge)
-def location_post_create_init_stats(sender, instance, created, **kwargs):
+def challenge_post_create_init_categories_full_and_stats(
+    sender, instance, created, **kwargs
+):
     if created:
+        instance.calculate_categories_full()
         instance.calculate_stats()
