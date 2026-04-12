@@ -7,7 +7,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("challenges", "0005_challenge_locations"),
-        ("locations", "0009_alter_location_unique_together"),
     ]
 
     operations = [
