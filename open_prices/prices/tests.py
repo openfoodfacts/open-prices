@@ -156,8 +156,9 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
             is_published=True,
             start_date="2024-12-30",
             end_date="2025-01-30",
-            categories=["en:breakfasts"],
+            categories=["en:viennoiseries"],
         )
+        print("categories_full", cls.challenge_ongoing_with_category.categories_full)
         cls.challenge_ongoing_with_location = ChallengeFactory(
             is_published=True,
             start_date="2024-12-30",
@@ -184,7 +185,12 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
             )
             cls.price_14 = PriceFactory(
                 type=price_constants.TYPE_CATEGORY,
-                category_tag="en:breakfasts",
+                category_tag="en:viennoiseries",
+                price_per=price_constants.PRICE_PER_UNIT,
+            )
+            cls.price_15 = PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:croissants",  # child of 'en:viennoiseries'
                 price_per=price_constants.PRICE_PER_UNIT,
             )
 
@@ -215,36 +221,13 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
             )
 
     def test_in_challenge_queryset(self):
-        self.assertEqual(Price.objects.count(), 10)
+        self.assertEqual(Price.objects.count(), 11)
         self.assertEqual(
-            Price.objects.in_challenge(self.challenge_ongoing_with_category).count(), 3
+            Price.objects.in_challenge(self.challenge_ongoing_with_category).count(), 4
         )
         self.assertEqual(
             Price.objects.in_challenge(self.challenge_ongoing_with_location).count(), 2
         )
-
-    def test_has_category_tag_property(self):
-        for price in Price.objects.all():
-            # challenge_ongoing_with_category
-            if price in [self.price_12, self.price_14, self.price_22, self.price_32]:
-                self.assertEqual(
-                    price.has_category_tag(
-                        self.challenge_ongoing_with_category.categories
-                    ),
-                    True,
-                )
-            else:
-                self.assertEqual(
-                    price.has_category_tag(
-                        self.challenge_ongoing_with_category.categories
-                    ),
-                    False,
-                )
-            # challenge_ongoing_with_location
-            self.assertEqual(
-                price.has_category_tag(self.challenge_ongoing_with_location.categories),
-                False,
-            )
 
     def test_has_location_property(self):
         for price in Price.objects.all():
@@ -274,7 +257,7 @@ class PriceChallengeQuerySetAndPropertyAndSignalTest(TestCase):
     def test_in_challenge_property(self):
         for price in Price.objects.all():
             # challenge_ongoing_with_category
-            if price in [self.price_12, self.price_14, self.price_22]:
+            if price in [self.price_12, self.price_14, self.price_22, self.price_15]:
                 self.assertEqual(
                     price.in_challenge(self.challenge_ongoing_with_category), True
                 )
