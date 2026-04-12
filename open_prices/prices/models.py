@@ -383,32 +383,36 @@ class Price(models.Model):
             self._change_reason = "Price.update_tags() method"
             self.save(update_fields=["tags"])
 
-    def has_location(self, location_id_list: list):
+    def has_location(self, location_id_list: list) -> bool:
         if self.location_id and self.location_id in location_id_list:
             return True
         return False
 
-    def in_challenge(self, challenge: Challenge):
+    def in_challenge(self, challenge: Challenge) -> bool:
         """
         Mirror of the in_challenge queryset
         """
-        return (
+        dates_match = (
             self.created >= challenge.start_date_with_time
             and self.created <= challenge.end_date_with_time
-            and (
-                not challenge.categories
-                or self.type == price_constants.TYPE_CATEGORY
+        )
+        categories_match = (
+            not challenge.categories
+            or (
+                self.type == price_constants.TYPE_CATEGORY
                 and self.category_tag in challenge.categories_full
-                or self.type == price_constants.TYPE_PRODUCT
-                and self.product
-                and self.product.categories_tags
-                and set(self.product.categories_tags) & set(challenge.categories)
             )
-            and (
-                not challenge.location_id_list()
-                or self.has_location(challenge.location_id_list())
+            or (
+                self.type == price_constants.TYPE_PRODUCT
+                and self.product
+                and bool(self.product.categories_tags)
+                and bool(set(self.product.categories_tags) & set(challenge.categories))
             )
         )
+        locations_match = not challenge.locations.exists() or (
+            self.location_id and self.location_id in challenge.location_id_list()
+        )
+        return dates_match and categories_match and locations_match
 
     def set_is_duplicate_of(self):
         """Look for duplicate prices and set the duplicate_of field
