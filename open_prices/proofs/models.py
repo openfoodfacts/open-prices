@@ -104,6 +104,10 @@ class ProofQuerySet(models.QuerySet):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
+        """
+        Return proofs that are in the given challenge, based on:
+        - if the proof has prices with the challenge tag
+        """
         return (
             self.prefetch_related("prices")
             .filter(prices__tags__contains=[challenge.tag])

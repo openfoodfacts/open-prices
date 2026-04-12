@@ -111,6 +111,12 @@ class PriceQuerySet(models.QuerySet):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
+        """
+        Return prices that are in the given challenge, based on:
+        - the price creation date
+        - the price category tag or product categories tags (if the challenge has categories)
+        - the price location (if the challenge has locations)
+        """
         queryset = self.select_related("product").filter(
             created__gte=challenge.start_date_with_time,
             created__lte=challenge.end_date_with_time,
@@ -119,7 +125,7 @@ class PriceQuerySet(models.QuerySet):
             queryset = queryset.filter(
                 Q(
                     type=price_constants.TYPE_CATEGORY,
-                    category_tag__in=challenge.categories,
+                    category_tag__in=challenge.categories_full,
                 )
                 | Q(
                     type=price_constants.TYPE_PRODUCT,
@@ -377,38 +383,36 @@ class Price(models.Model):
             self._change_reason = "Price.update_tags() method"
             self.save(update_fields=["tags"])
 
-    def has_category_tag(self, category_tag_list: list):
-        if (
-            self.type == price_constants.TYPE_CATEGORY
-            and self.category_tag in category_tag_list
-        ):
-            return True
-        elif (
-            self.type == price_constants.TYPE_PRODUCT
-            and self.product
-            and self.product.categories_tags
-        ):
-            if set(self.product.categories_tags) & set(category_tag_list):
-                return True
-        return False
-
-    def has_location(self, location_id_list: list):
+    def has_location(self, location_id_list: list) -> bool:
         if self.location_id and self.location_id in location_id_list:
             return True
         return False
 
-    def in_challenge(self, challenge: Challenge):
-        return (
+    def in_challenge(self, challenge: Challenge) -> bool:
+        """
+        Mirror of the in_challenge queryset
+        """
+        dates_match = (
             self.created >= challenge.start_date_with_time
             and self.created <= challenge.end_date_with_time
-            and (
-                not challenge.categories or self.has_category_tag(challenge.categories)
+        )
+        categories_match = (
+            not challenge.categories
+            or (
+                self.type == price_constants.TYPE_CATEGORY
+                and self.category_tag in challenge.categories_full
             )
-            and (
-                not challenge.location_id_list()
-                or self.has_location(challenge.location_id_list())
+            or (
+                self.type == price_constants.TYPE_PRODUCT
+                and self.product
+                and bool(self.product.categories_tags)
+                and bool(set(self.product.categories_tags) & set(challenge.categories))
             )
         )
+        locations_match = not challenge.locations.exists() or (
+            self.location_id and self.location_id in challenge.location_id_list()
+        )
+        return dates_match and categories_match and locations_match
 
     def set_is_duplicate_of(self):
         """Look for duplicate prices and set the duplicate_of field
