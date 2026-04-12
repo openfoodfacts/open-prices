@@ -38,6 +38,17 @@ class ChallengeQuerySet(models.QuerySet):
             )
         )
 
+    def with_extra_fields(self):
+        return self.with_status().annotate(
+            categories_full_count_annotated=Func(
+                F("categories_full"),
+                1,
+                function="array_length",
+                output_field=models.IntegerField(),
+            ),
+            location_count_annotated=Count("locations"),
+        )
+
     def is_ongoing(self):
         return self.with_status().filter(
             status_annotated=challenge_constants.CHALLENGE_STATUS_ONGOING

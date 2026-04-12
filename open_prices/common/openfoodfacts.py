@@ -96,7 +96,7 @@ def get_taxonomy_children_tags_from_parent_list(
     TODO: manage parent_list categories coming from different taxonomies (food & non-food)
     """
     taxonomy = _cached_get_taxonomy(taxonomy_type)
-    children_tags = [] if not include_parent_list else list(parent_list)
+    children_tags = [] if not include_parent_list else parent_list.copy()
     seen = set(children_tags)
 
     for parent in parent_list:
