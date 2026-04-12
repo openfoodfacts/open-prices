@@ -94,7 +94,7 @@ def get_taxonomy_children_tags_from_parent_list(
     :return: A list of all children tags (e.g., ["en:beverages", "en:sodas", "en:juices"]).
     """
     taxonomy = _cached_get_taxonomy(taxonomy_type)
-    children_tags = [] if not include_parent_list else parent_list
+    children_tags = [] if not include_parent_list else list(parent_list)
     seen = set()
 
     for parent in parent_list:
