@@ -105,9 +105,9 @@ class PriceListPaginationApiTest(TestCase):
     def test_price_list_size(self):
         # default
         response = self.client.get(self.url)
-        for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
-            with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
-                self.assertTrue(PAGINATION_KEY in response.data)
+        for pagination_key in ["items", "page", "pages", "size", "total"]:
+            with self.subTest(pagination_key=pagination_key):
+                self.assertTrue(pagination_key in response.data)
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(len(response.data["items"]), 3)
         self.assertEqual(response.data["page"], 1)
@@ -806,7 +806,7 @@ class PriceCreateApiTest(TestCase):
                 "web - /prices/add/multiple",
             ),
         ]:
-            with self.subTest(INPUT_OUPUT=(params, result)):
+            with self.subTest(INPUT_OUTPUT=(params, result)):
                 response = self.client.post(
                     self.url + params,
                     self.data,
