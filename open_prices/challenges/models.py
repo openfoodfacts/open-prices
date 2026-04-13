@@ -56,12 +56,15 @@ class ChallengeQuerySet(models.QuerySet):
 
     def to_update_in_daily_task(self):
         """
-        Goal: freeze completed challenges (categories, tags, stats) after a delay.
+        Goal: Choose which challenges stats we want to update.
+        - Data updated? categories_full, price/proof tags, stats
+        - We stop updating ("freeze") completed challenges after a delay
+
         Usage: see open_prices/common/tasks.py:challenge_tasks
         """
         CHALLENGE_COMPLETED_FREEZE_DELAY_IN_DAYS = 7
         return self.with_status().filter(
-            ~Q(status_annotated=challenge_constants.CHALLENGE_STATUS_COMPLETED)
+            Q(end_date=None)
             | Q(
                 end_date__gte=timezone.now().date()
                 - timedelta(days=CHALLENGE_COMPLETED_FREEZE_DELAY_IN_DAYS)

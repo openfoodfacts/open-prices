@@ -118,7 +118,7 @@ class ChallengeQuerySetTest(TestCase):
 class ChallengeStatusQuerySetAndPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.challenge_draft = ChallengeFactory(is_published=False)
+        cls.challenge_draft = ChallengeFactory(is_published=False, end_date=None)
         cls.challenge_upcoming = ChallengeFactory(
             is_published=True, start_date="2025-01-20", end_date="2025-02-20"
         )
