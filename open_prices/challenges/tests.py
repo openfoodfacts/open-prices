@@ -118,7 +118,7 @@ class ChallengeQuerySetTest(TestCase):
 class ChallengeStatusQuerySetAndPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.challenge_draft = ChallengeFactory(is_published=False)
+        cls.challenge_draft = ChallengeFactory(is_published=False, end_date=None)
         cls.challenge_upcoming = ChallengeFactory(
             is_published=True, start_date="2025-01-20", end_date="2025-02-20"
         )
@@ -193,6 +193,21 @@ class ChallengeStatusQuerySetAndPropertyTest(TestCase):
     def test_challenge_is_ongoing_queryset(self):
         self.assertEqual(Challenge.objects.count(), 4)
         self.assertEqual(Challenge.objects.is_ongoing().count(), 1)
+
+    def test_challenge_to_update_in_daily_task_queryset(self):
+        self.assertEqual(Challenge.objects.count(), 4)
+        with freeze_time("2024-06-15"):
+            # challenge_completed hasn't started yet
+            self.assertEqual(Challenge.objects.to_update_in_daily_task().count(), 4)
+        with freeze_time("2024-07-15"):
+            # challenge_completed is ongoing
+            self.assertEqual(Challenge.objects.to_update_in_daily_task().count(), 4)
+        with freeze_time("2024-07-31"):
+            # challenge_completed has been over for less than X days
+            self.assertEqual(Challenge.objects.to_update_in_daily_task().count(), 4)
+        with freeze_time("2025-01-01"):
+            # challenge_completed has been over for more than X days
+            self.assertEqual(Challenge.objects.to_update_in_daily_task().count(), 3)
 
 
 class ChallengePropertyTest(TestCase):
