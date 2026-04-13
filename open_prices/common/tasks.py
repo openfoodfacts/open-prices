@@ -117,6 +117,7 @@ def moderation_tasks():
 
 def challenge_tasks():
     for challenge in Challenge.objects.all():
+        challenge.calculate_categories_full()
         challenge.set_price_tags()
         challenge.set_proof_tags()
         challenge.calculate_stats()

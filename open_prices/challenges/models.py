@@ -359,4 +359,4 @@ def challenge_post_create_init_categories_full_and_stats(
 ):
     if created:
         instance.calculate_categories_full()
-        instance.calculate_stats()
+        instance.calculate_stats()  # init
