@@ -21,6 +21,15 @@ class ProductQuerySet(ApproximateCountQuerySet):
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
+    def to_update_in_weekly_task(self):
+        """
+        Goal: only update products that have prices, to save (some) time.
+        We use the annotated price_count instead of the denormalized price_count field to be sure to have up-to-date information.
+
+        Usage: open_prices/common/tasks.py:update_product_counts_task
+        """
+        return self.with_stats().filter(price_count_annotated__gte=1)
+
     def fuzzy_barcode_search(
         self,
         code: str,

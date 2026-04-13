@@ -69,9 +69,9 @@ def update_total_stats_task():
 
 def update_product_counts_task():
     """
-    Update all product field counts
+    Update product field counts
     """
-    for product in Product.objects.with_stats().filter(price_count_annotated__gte=1):
+    for product in Product.objects.to_update_in_weekly_task():
         product.update_price_count()
         product.update_location_count()
         product.update_user_count()
@@ -80,7 +80,7 @@ def update_product_counts_task():
 
 def update_user_counts_task():
     """
-    Update all user field counts
+    Update user field counts
     """
     for user in User.objects.all():
         user.update_price_count()
@@ -92,7 +92,7 @@ def update_user_counts_task():
 
 def update_location_counts_task():
     """
-    Update all location field counts
+    Update location field counts
     """
     for location in Location.objects.all():
         for field in Location.COUNT_FIELDS:
