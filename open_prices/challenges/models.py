@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Case, Count, F, Func, Value, When, signals
+from django.db.models import Case, Count, F, Func, Q, Value, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -52,6 +52,20 @@ class ChallengeQuerySet(models.QuerySet):
     def is_ongoing(self):
         return self.with_status().filter(
             status_annotated=challenge_constants.CHALLENGE_STATUS_ONGOING
+        )
+
+    def to_update_in_daily_task(self):
+        """
+        Goal: freeze completed challenges (categories, tags, stats) after a delay.
+        Usage: see open_prices/common/tasks.py:challenge_tasks
+        """
+        CHALLENGE_COMPLETED_FREEZE_DELAY_IN_DAYS = 7
+        return self.with_status().filter(
+            ~Q(status_annotated=challenge_constants.CHALLENGE_STATUS_COMPLETED)
+            | Q(
+                end_date__gte=timezone.now().date()
+                - timedelta(days=CHALLENGE_COMPLETED_FREEZE_DELAY_IN_DAYS)
+            )
         )
 
 
@@ -359,4 +373,4 @@ def challenge_post_create_init_categories_full_and_stats(
 ):
     if created:
         instance.calculate_categories_full()
-        instance.calculate_stats()
+        instance.calculate_stats()  # init
