@@ -116,10 +116,10 @@ def moderation_tasks():
 
 
 def challenge_tasks():
-    for challenge in Challenge.objects.all():
+    for challenge in Challenge.objects.to_update_in_daily_task():
         challenge.calculate_categories_full()
-        challenge.set_price_tags()
-        challenge.set_proof_tags()
+        challenge.set_price_tags()  # will only apply on 'ONGOING' challenges
+        challenge.set_proof_tags()  # will only apply based on price 'challenge' tags
         challenge.calculate_stats()
 
 
