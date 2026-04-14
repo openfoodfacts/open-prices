@@ -100,6 +100,12 @@ class PriceQuerySetTest(TestCase):
     def with_extra_fields(self):
         self.assertEqual(Price.objects.count(), 3)
         self.assertEqual(
+            Price.objects.with_extra_fields().filter(
+                price_without_discount_annotated=10
+            ),
+            2,
+        )
+        self.assertEqual(
             Price.objects.with_extra_fields().filter(date_year_annotated=2024).count(),
             1,
         )
