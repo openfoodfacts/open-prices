@@ -279,8 +279,9 @@ class PriceTagViewSet(
 
         user_id = self.request.user.user_id
         price_tag = serializer.save(updated_by=user_id, created_by=user_id)
+        use_ai = request.data.get("use_ai", False)
 
-        if not settings.TESTING:
+        if not settings.TESTING and use_ai:
             async_task(
                 "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
                 price_tag.id,
@@ -299,12 +300,14 @@ class PriceTagViewSet(
             previous_price_tag, data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
+        use_ai = request.data.get("use_ai", False)
         # save
         price_tag = serializer.save(updated_by=self.request.user.user_id)
         if (
             not settings.TESTING
             # Only run the extraction if the bounding box has changed
             and previous_bounding_box != price_tag.bounding_box
+            and use_ai
         ):
             async_task(
                 "open_prices.proofs.ml.price_tags.update_price_tag_extraction",

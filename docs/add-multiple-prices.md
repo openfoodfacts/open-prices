@@ -30,3 +30,13 @@ The date is when you found the prices. It can be different from the date you act
 If the products contain barcodes, you can now click on "Add a price", and start adding the product prices one by one. It's fast, as we need only 2 information per product: it's barcode, and it's price.
 
 If it doesn't have a barcode (raw products), you should select the category among the dropdown list. Not all categories are available yet, so if you can't find the right one, please let us know. Support for other units (e.g. 1 apple) is not yet available, but will be added soon.
+
+### Optional: Add price tags without AI
+
+You can add or edit price tags manually without using AI extraction.
+
+Use this option when the price tag is clear, when AI is not needed, or when you want to correct the price tag yourself.
+
+To add a price tag without AI, select the price tag area on the proof image and save it without enabling AI. The price tag will be saved directly and can be linked to a product price manually.
+
+If you later edit the bounding box while AI is still disabled, the system only updates the price tag and does not run AI extraction.

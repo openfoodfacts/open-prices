@@ -2,9 +2,10 @@ import os
 import shutil
 from decimal import Decimal
 from io import BytesIO
+from unittest.mock import patch
 
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 
@@ -1044,6 +1045,31 @@ class PriceTagCreateApiTest(TestCase):
             proof_constants.PriceTagStatus.linked_to_price.value,
         )
 
+    @override_settings(TESTING=False)
+    @patch("open_prices.api.proofs.views.async_task")
+    def test_price_tag_create_with_ai_runs_async_task(self, mock_async_task):
+        response = self.client.post(
+            self.url,
+            data={
+                "bounding_box": self.default_bounding_box,
+                "proof_id": self.proof.id,
+                "use_ai": True,
+            },
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+        price_tag = PriceTag.objects.get(id=response.data["id"])
+
+        self.assertEqual(response.data["created_by"], self.user_session.user.user_id)
+        self.assertEqual(response.data["updated_by"], self.user_session.user.user_id)
+
+        mock_async_task.assert_called_once_with(
+            "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
+            price_tag.id,
+        )
+
 
 class PriceTagUpdateApiTest(TestCase):
     @classmethod
@@ -1161,6 +1187,48 @@ class PriceTagUpdateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {"bounding_box": ["Should have 4 values."]})
+
+    @override_settings(TESTING=False)
+    @patch("open_prices.api.proofs.views.async_task")
+    def test_price_tag_update_with_ai_and_changed_bounding_box_runs_async_task(
+        self, mock_async_task
+    ):
+        response = self.client.patch(
+            self.url,
+            data={
+                "bounding_box": self.new_bounding_box,
+                "use_ai": True,
+            },
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["bounding_box"], self.new_bounding_box)
+
+        mock_async_task.assert_called_once_with(
+            "open_prices.proofs.ml.price_tags.update_price_tag_extraction",
+            self.price_tag.id,
+        )
+
+    @override_settings(TESTING=False)
+    @patch("open_prices.api.proofs.views.async_task")
+    def test_price_tag_update_with_ai_but_same_bounding_box_does_not_run_async_task(
+        self, mock_async_task
+    ):
+        response = self.client.patch(
+            self.url,
+            data={
+                "bounding_box": self.price_tag.bounding_box,
+                "use_ai": True,
+            },
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        mock_async_task.assert_not_called()
 
 
 class PriceTagDeleteApiTest(TestCase):
