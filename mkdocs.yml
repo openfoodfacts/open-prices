@@ -36,10 +36,9 @@ nav:
   - Tutorials:
       - "Add a price": tutorials/add-a-price.md
       - "Add multiple prices": tutorials/add-multiple-prices.md
-  - Maintenance: maintenance.md
-  - "Local development": local-development.md
   - Dev:
       - Contributing: dev/contributing.md
+      - Install: dev/install.md
 
 plugins:
   - search

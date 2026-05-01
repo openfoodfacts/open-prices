@@ -1,0 +1,7 @@
+nav:
+    - README.md
+    - "Tutorial: add a price": "add-a-price"
+    - "Tutorial: add multiple prices": "add-multiple-prices"
+    - "Maintenance": "maintenance"
+    - "Local development": "local-development"
+    - "Dev": "dev"
