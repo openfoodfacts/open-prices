@@ -40,5 +40,6 @@ class ProductFilter(django_filters.FilterSet):
             "nutriscore_grade",
             "ecoscore_grade",
             "nova_group",
+            "creator",
             "price_count",
         ]

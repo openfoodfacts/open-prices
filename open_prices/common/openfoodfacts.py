@@ -38,6 +38,7 @@ OFF_CREATE_FIELDS = [
     "nutriscore_grade",
     "ecoscore_grade",
     "nova_group",
+    "creator",
     "unique_scans_n",
 ]
 OFF_UPDATE_FIELDS = OFF_CREATE_FIELDS + ["source", "source_last_synced"]
