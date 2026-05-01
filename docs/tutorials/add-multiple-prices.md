@@ -16,8 +16,8 @@ We need a picture of the shelf, showing the products with their price tags. This
 
 |Good|Bad|
 |---|---|
-|![image](assets/img/proof-example-good-multiple.png)||
-|![image](assets/img/proof-example-good-multiple-2.png)||
+|![image](../assets/img/proof-example-good-multiple.png)||
+|![image](../assets/img/proof-example-good-multiple-2.png)||
 
 ### Step 2: Add the location & date
 

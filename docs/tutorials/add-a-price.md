@@ -30,7 +30,7 @@ We need a picture of the price tag that acts as a proof so that the data can be 
 
 |Good|Bad|
 |---|---|
-|![image](assets/img/proof-example-good.png)|![image](assets/img/proof-example-bad.png)|
+|![image](../assets/img/proof-example-good.png)|![image](../assets/img/proof-example-bad.png)|
 |Both the price tag and the product are visible|Here it's difficult to recognize the product using the photo alone|
 
 ### Step 3: Add the location & date
