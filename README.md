@@ -36,7 +36,7 @@ A Python Django REST API designed to interact with the Open Food Facts _Open Pri
 
 ## How to install on your local machine and help develop Open Prices
 
-Follow the steps in [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.md), [local-development.md](https://github.com/openfoodfacts/open-prices/blob/main/docs/local-development.md) and [maintenance.md](https://github.com/openfoodfacts/open-prices/blob/main/docs/maintenance.md)
+see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Contribute
 

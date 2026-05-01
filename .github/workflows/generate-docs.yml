@@ -8,6 +8,9 @@
         # on pull request we just want to build to see nothing is broken
         paths:
         - "docs/**"
+        - "CONTRIBUTING.md"
+        - "INSTALL.md"
+        - "build_mkdocs.sh"
         - ".github/workflows/generate-docs.yml"
         - "mkdocs.yml"
       push:

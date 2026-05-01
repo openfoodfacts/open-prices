@@ -31,6 +31,14 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
 
+nav:
+  - Home: README.md
+  - Tutorials:
+      - "Add a price": tutorials/add-a-price.md
+      - "Add multiple prices": tutorials/add-multiple-prices.md
+  - Dev:
+      - Contributing: dev/contributing.md
+      - Install: dev/install.md
+
 plugins:
-  - awesome-pages
   - search
