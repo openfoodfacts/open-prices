@@ -9,6 +9,7 @@
         paths:
         - "docs/**"
         - "CONTRIBUTING.md"
+        - "INSTALL.md"
         - "build_mkdocs.sh"
         - ".github/workflows/generate-docs.yml"
         - "mkdocs.yml"
