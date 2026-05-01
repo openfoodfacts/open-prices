@@ -113,6 +113,7 @@ class Product(models.Model):
     nutriscore_grade = models.CharField(blank=True, null=True)
     ecoscore_grade = models.CharField(blank=True, null=True)
     nova_group = models.PositiveIntegerField(blank=True, null=True)
+    creator = models.CharField(blank=True, null=True)
     unique_scans_n = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     # denormalized counts (updated with signals and/or cronjobs)

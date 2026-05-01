@@ -48,6 +48,7 @@ PRODUCT_OFF = {
     "nutriscore_grade": "e",
     "ecoscore_grade": "d",
     "nova_group": 4,
+    "creator": "openfoodfacts-contributors",
     "unique_scans_n": 1051,
 }
 
@@ -258,10 +259,11 @@ class TestProcessUpdate(TestCase):
             "product_quantity_unit": "g",
             "quantity": "1 kg",
             "categories_tags": ["en:apples"],
+            "creator": "openfoodfacts-contributors",
             "unique_scans_n": 42,
-            "owner": "test",
+            "misc_tags": ["en:nutriscore-computed"],
         }
-        fields_to_ignore = ["owner"]
+        fields_to_ignore = ["misc_tags"]
         mock_get_product.return_value = product_details
 
         before = timezone.now()
@@ -291,10 +293,11 @@ class TestProcessUpdate(TestCase):
             "product_quantity_unit": "g",
             "quantity": "1 kg",
             "categories_tags": ["en:apples"],
+            "creator": "openfoodfacts-contributors",
             "unique_scans_n": 42,
-            "owner": "test",
+            "misc_tags": ["en:nutriscore-computed"],
         }
-        fields_to_ignore = ["owner"]
+        fields_to_ignore = ["misc_tags"]
         mock_get_product.return_value = product_details
 
         before = timezone.now()
