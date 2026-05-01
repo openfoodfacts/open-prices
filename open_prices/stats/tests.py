@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import IntegrityError
 from django.test import TestCase
 
@@ -43,7 +44,11 @@ class TotalStatsTest(TestCase):
         cls.user_2 = UserFactory()
         cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.location_2 = LocationFactory()
-        ProductFactory(code="0123456789100", source=product_constants.SOURCE_OFF)
+        ProductFactory(
+            code="0123456789100",
+            source=product_constants.SOURCE_OFF,
+            creator=settings.OFF_DEFAULT_USER,
+        )
         cls.proof_price_tag = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
             location_osm_id=cls.location.osm_id,
@@ -127,8 +132,9 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_source_mobile_count, 0)
         self.assertEqual(self.total_stats.price_source_api_count, 0)
         self.assertEqual(self.total_stats.price_source_other_count, 0)
-        # update_price_stats() will update price_counts
+
         self.total_stats.update_price_stats()
+
         self.assertEqual(self.total_stats.price_count, 3)
         self.assertEqual(self.total_stats.price_type_product_code_count, 2)
         self.assertEqual(self.total_stats.price_type_category_tag_count, 1)
@@ -148,8 +154,9 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.product_source_off_count, 0)
         self.assertEqual(self.total_stats.product_with_price_count, 0)
         self.assertEqual(self.total_stats.product_source_off_with_price_count, 0)
-        # update_product_stats() will update product_counts
+
         self.total_stats.update_product_stats()
+
         self.assertEqual(self.total_stats.product_count, 2)
         self.assertEqual(self.total_stats.product_source_off_count, 1)
         self.assertEqual(self.total_stats.product_with_price_count, 2)
@@ -158,8 +165,9 @@ class TotalStatsTest(TestCase):
     def test_update_location_stats(self):
         self.assertEqual(self.total_stats.location_count, 0)
         self.assertEqual(self.total_stats.location_with_price_count, 0)
-        # update_location_stats() will update location_counts
+
         self.total_stats.update_location_stats()
+
         self.assertEqual(self.total_stats.location_count, 2)
         self.assertEqual(self.total_stats.location_with_price_count, 1)
         self.assertEqual(self.total_stats.location_type_osm_count, 2)
@@ -179,8 +187,9 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.proof_source_api_count, 0)
         self.assertEqual(self.total_stats.proof_source_other_count, 0)
         self.assertEqual(self.total_stats.proof_currency_count, 0)
-        # update_proof_stats() will update proof_counts
+
         self.total_stats.update_proof_stats()
+
         self.assertEqual(self.total_stats.proof_count, 3)
         self.assertEqual(self.total_stats.proof_with_price_count, 2)
         self.assertEqual(self.total_stats.proof_type_price_tag_count, 1)
@@ -199,8 +208,9 @@ class TotalStatsTest(TestCase):
         self.assertEqual(self.total_stats.price_tag_count, 0)
         self.assertEqual(self.total_stats.price_tag_status_unknown_count, 0)
         self.assertEqual(self.total_stats.price_tag_status_linked_to_price_count, 0)
-        # update_price_tag_stats() will update price_tag_counts
+
         self.total_stats.update_price_tag_stats()
+
         self.assertEqual(self.total_stats.price_tag_count, 2)
         self.assertEqual(self.total_stats.price_tag_status_unknown_count, 1)
         self.assertEqual(self.total_stats.price_tag_status_linked_to_price_count, 1)
@@ -208,13 +218,52 @@ class TotalStatsTest(TestCase):
     def test_update_user_stats(self):
         self.assertEqual(self.total_stats.user_count, 0)
         self.assertEqual(self.total_stats.user_with_price_count, 0)
-        # update_user_stats() will update user_counts
+
         self.total_stats.update_user_stats()
+
         self.assertEqual(self.total_stats.user_count, 2)
         self.assertEqual(self.total_stats.user_with_price_count, 2)
 
-    def update_challenge_stats(self):
+    def test_update_challenge_stats(self):
         self.assertEqual(self.total_stats.challenge_count, 0)
-        # update_challenge_stats() will update challenge_counts
+
         self.total_stats.update_challenge_stats()
+
         self.assertEqual(self.total_stats.challenge_count, 1)
+
+    def test_update_other_stats(self):
+        # self.assertEqual(self.total_stats.off_contributions_stats["product_created_count"], 0)
+        # self.assertEqual(self.total_stats.off_contributions_stats["product_source_off_created_count"], 0)
+        # self.assertEqual(self.total_stats.off_contributions_stats["product_source_obf_created_count"], 0)
+        # self.assertEqual(self.total_stats.off_contributions_stats["product_source_opff_created_count"], 0)
+        # self.assertEqual(self.total_stats.off_contributions_stats["product_source_opf_created_count"], 0)
+
+        self.total_stats.update_other_stats()
+
+        self.assertEqual(
+            self.total_stats.off_contributions_stats["product_created_count"], 1
+        )
+        self.assertEqual(
+            self.total_stats.off_contributions_stats[
+                "product_source_off_created_count"
+            ],
+            1,
+        )
+        self.assertEqual(
+            self.total_stats.off_contributions_stats[
+                "product_source_obf_created_count"
+            ],
+            0,
+        )
+        self.assertEqual(
+            self.total_stats.off_contributions_stats[
+                "product_source_opff_created_count"
+            ],
+            0,
+        )
+        self.assertEqual(
+            self.total_stats.off_contributions_stats[
+                "product_source_opf_created_count"
+            ],
+            0,
+        )

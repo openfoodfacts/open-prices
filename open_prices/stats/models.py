@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from solo.models import SingletonModel
@@ -64,6 +65,7 @@ class TotalStats(SingletonModel):
     ]
     USER_COUNT_FIELDS = ["user_count", "user_with_price_count"]
     CHALLENGE_COUNT_FIELDS = ["challenge_count"]
+    OTHER_COUNT_FIELDS = ["off_contributions_stats"]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
         + PRODUCT_COUNT_FIELDS
@@ -123,6 +125,7 @@ class TotalStats(SingletonModel):
     user_count = models.PositiveIntegerField(default=0)
     user_with_price_count = models.PositiveIntegerField(default=0)
     challenge_count = models.PositiveIntegerField(default=0)
+    off_contributions_stats = models.JSONField(default=dict)
 
     # Ideas
     # - price count per discount type
@@ -260,3 +263,20 @@ class TotalStats(SingletonModel):
 
         self.challenge_count = Challenge.objects.published().count()
         self.save(update_fields=self.CHALLENGE_COUNT_FIELDS + ["updated"])
+
+    def update_other_stats(self):
+        from open_prices.products import constants as product_constants
+        from open_prices.products.models import Product
+
+        # off_contributions_stats
+        self.off_contributions_stats["user_id"] = settings.OFF_DEFAULT_USER
+        self.off_contributions_stats["product_created_count"] = Product.objects.filter(
+            creator=settings.OFF_DEFAULT_USER
+        ).count()
+        for source in product_constants.SOURCE_LIST:
+            self.off_contributions_stats[
+                f"product_source_{source.value}_created_count"
+            ] = Product.objects.filter(
+                creator=settings.OFF_DEFAULT_USER, source=source.value
+            ).count()  # noqa
+        self.save(update_fields=self.OTHER_COUNT_FIELDS + ["updated"])
