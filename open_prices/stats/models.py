@@ -74,6 +74,7 @@ class TotalStats(SingletonModel):
         + PRICE_TAG_COUNT_FIELDS
         + USER_COUNT_FIELDS
         + CHALLENGE_COUNT_FIELDS
+        + OTHER_COUNT_FIELDS
     )
 
     price_count = models.PositiveIntegerField(default=0)
