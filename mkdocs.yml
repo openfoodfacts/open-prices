@@ -34,8 +34,8 @@ markdown_extensions:
 nav:
   - Home: README.md
   - Tutorials:
-      - "Add a price": tutorials/add-a-price.md
-      - "Add multiple prices": tutorials/add-multiple-prices.md
+      - "Add multiple prices (from shelf images)": tutorials/add-multiple-prices-shelf.md
+      - "Add multiple prices (from a receipt)": tutorials/add-multiple-prices-receipt.md
   - Dev:
       - Contributing: dev/contributing.md
       - Install: dev/install.md
