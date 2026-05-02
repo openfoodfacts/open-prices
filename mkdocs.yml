@@ -34,8 +34,8 @@ markdown_extensions:
 nav:
   - Home: README.md
   - Tutorials:
-      - "Add multiple prices through shelf": tutorials/add-multiple-prices-shelf.md
-      - "Add multiple prices through receipt": tutorials/add-multiple-prices-receipt.md
+      - "Add multiple prices (from shelf images)": tutorials/add-multiple-prices-shelf.md
+      - "Add multiple prices (from a receipt)": tutorials/add-multiple-prices-receipt.md
   - Dev:
       - Contributing: dev/contributing.md
       - Install: dev/install.md
