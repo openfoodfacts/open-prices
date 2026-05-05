@@ -13,6 +13,7 @@ from open_prices.api.moderation.views import FlagViewSet
 from open_prices.api.prices.views import PriceViewSet
 from open_prices.api.products.views import ProductViewSet
 from open_prices.api.proofs.views import (
+    DraftViewSet,
     PriceTagViewSet,
     ProofViewSet,
     ReceiptItemViewSet,
@@ -28,6 +29,7 @@ router.register(r"v1/users", UserViewSet, basename="users")
 router.register(r"v1/locations", LocationViewSet, basename="locations")
 router.register(r"v1/products", ProductViewSet, basename="products")
 router.register(r"v1/proofs", ProofViewSet, basename="proofs")
+router.register(r"v1/drafts", DraftViewSet, basename="drafts")
 router.register(r"v1/prices", PriceViewSet, basename="prices")
 router.register(r"v1/price-tags", PriceTagViewSet, basename="price-tags")
 router.register(r"v1/receipt-items", ReceiptItemViewSet, basename="receipt-items")

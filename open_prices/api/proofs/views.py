@@ -1,12 +1,16 @@
 import PIL.Image
 from django.conf import settings
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from django_q.tasks import async_task
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -21,6 +25,7 @@ from open_prices.api.proofs.serializers import (
     PriceTagFullSerializer,
     PriceTagUpdateSerializer,
     ProofCreateSerializer,
+    ProofDraftUploadSerializer,
     ProofFullSerializer,
     ProofHalfFullSerializer,
     ProofHistorySerializer,
@@ -35,11 +40,101 @@ from open_prices.common.authentication import (
     CustomAuthentication,
     has_token_from_cookie_or_header,
 )
-from open_prices.common.permission import OnlyObjectOwnerOrModeratorIsAllowedWrite
+from open_prices.common.permission import OnlyObjectOwnerIsAllowedReadWrite, OnlyObjectOwnerOrModeratorIsAllowedWrite
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.price_tags import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
 from open_prices.proofs.utils import compute_file_md5, store_file
+
+
+def base_upload(request: Request, draft: bool = False) -> Response:
+    # build proof
+    file = request.data.get("file")
+    if not file:
+        return Response(
+            {"file": ["This field is required."]},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    # NOTE: image will be stored even if the proof serializer fails...
+    file_path, mimetype, image_thumb_path = store_file(file)
+    image_md5_hash = compute_file_md5(file)
+    proof_create_data = {
+        "file_path": file_path,
+        "mimetype": mimetype,
+        "image_thumb_path": image_thumb_path,
+        "draft": draft,
+        **{
+            key: request.data.get(key)
+            for key in Proof.CREATE_FIELDS
+            if key in request.data
+        },
+    }
+    # validate
+    serializer = ProofCreateSerializer(data=proof_create_data)
+    serializer.is_valid(raise_exception=True)
+
+    # get owner (we allow anonymous upload, only if token is not present)
+    if request.user.is_authenticated:
+        owner = request.user.user_id
+    else:
+        if draft:
+            # It's not possible to upload a draft proof anonymously, as the user needs to be able to finalize it later
+            return Response(
+                {
+                    "detail": "Authentication is required to upload a draft proof. Please pass a valid token."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if has_token_from_cookie_or_header(request):
+            return Response(
+                {
+                    "detail": "Authentication failed. Please pass a valid token, or remove it to upload the proof anonymously."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            owner = settings.ANONYMOUS_USER_ID
+
+    # get source
+    source = get_source_from_request(request)
+
+    # We check if a proof with the same MD5 hash already exists,
+    # uploaded by the same user, with the same type, location and date.
+    # If yes, we return it instead of creating a new one
+    duplicate_proof = Proof.objects.filter(
+        image_md5_hash=image_md5_hash,
+        owner=owner,
+        type=serializer.validated_data.get("type"),
+        # location OSM id/type can be null (for online stores)
+        location_osm_id=serializer.validated_data.get("location_osm_id"),
+        location_osm_type=serializer.validated_data.get("location_osm_type"),
+        date=serializer.validated_data.get("date"),
+    ).first()
+    if duplicate_proof:
+        # We remove the uploaded file as it's a duplicate
+        (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
+        response_status_code = status.HTTP_200_OK
+        # see note in common/openfoodfacts.py
+        if common_openfoodfacts.is_smoothie_app_version_leq_4_20(source):
+            response_status_code = status.HTTP_201_CREATED
+
+        return Response(
+            {**ProofFullSerializer(duplicate_proof).data, "detail": "duplicate"},
+            status=response_status_code,
+        )
+
+    save_kwargs = {
+        "owner": owner,
+        "image_md5_hash": image_md5_hash,
+        "source": source,
+    }
+    # see note in common/openfoodfacts.py
+    if common_openfoodfacts.is_smoothie_app_version_4_20(source):
+        save_kwargs["ready_for_price_tag_validation"] = False
+    # save
+    proof = serializer.save(**save_kwargs)
+    # return full proof
+    return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)
 
 
 class ProofViewSet(
@@ -69,7 +164,8 @@ class ProofViewSet(
         return [CustomAuthentication()]
 
     def get_queryset(self):
-        queryset = self.queryset
+        # Filter out draft proofs, as we use a dedicated draft endpoint to handle them
+        queryset = self.queryset.filter(draft=False)
         if self.request.method in ["GET"]:
             queryset = queryset.select_related("location")
             if self.action == "retrieve":
@@ -101,84 +197,7 @@ class ProofViewSet(
         permission_classes=[],  # allow anonymous upload
     )
     def upload(self, request: Request) -> Response:
-        # build proof
-        file = request.data.get("file")
-        if not file:
-            return Response(
-                {"file": ["This field is required."]},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        # NOTE: image will be stored even if the proof serializer fails...
-        file_path, mimetype, image_thumb_path = store_file(file)
-        image_md5_hash = compute_file_md5(file)
-        proof_create_data = {
-            "file_path": file_path,
-            "mimetype": mimetype,
-            "image_thumb_path": image_thumb_path,
-            **{
-                key: request.data.get(key)
-                for key in Proof.CREATE_FIELDS
-                if key in request.data
-            },
-        }
-        # validate
-        serializer = ProofCreateSerializer(data=proof_create_data)
-        serializer.is_valid(raise_exception=True)
-
-        # get owner (we allow anonymous upload, only if token is not present)
-        if self.request.user.is_authenticated:
-            owner = self.request.user.user_id
-        else:
-            if has_token_from_cookie_or_header(self.request):
-                return Response(
-                    {
-                        "detail": "Authentication failed. Please pass a valid token, or remove it to upload the proof anonymously."
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            else:
-                owner = settings.ANONYMOUS_USER_ID
-
-        # get source
-        source = get_source_from_request(self.request)
-
-        # We check if a proof with the same MD5 hash already exists,
-        # uploaded by the same user, with the same type, location and date.
-        # If yes, we return it instead of creating a new one
-        duplicate_proof = Proof.objects.filter(
-            image_md5_hash=image_md5_hash,
-            owner=owner,
-            type=serializer.validated_data.get("type"),
-            # location OSM id/type can be null (for online stores)
-            location_osm_id=serializer.validated_data.get("location_osm_id"),
-            location_osm_type=serializer.validated_data.get("location_osm_type"),
-            date=serializer.validated_data.get("date"),
-        ).first()
-        if duplicate_proof:
-            # We remove the uploaded file as it's a duplicate
-            (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
-            response_status_code = status.HTTP_200_OK
-            # see note in common/openfoodfacts.py
-            if common_openfoodfacts.is_smoothie_app_version_leq_4_20(source):
-                response_status_code = status.HTTP_201_CREATED
-
-            return Response(
-                {**ProofFullSerializer(duplicate_proof).data, "detail": "duplicate"},
-                status=response_status_code,
-            )
-
-        save_kwargs = {
-            "owner": owner,
-            "image_md5_hash": image_md5_hash,
-            "source": source,
-        }
-        # see note in common/openfoodfacts.py
-        if common_openfoodfacts.is_smoothie_app_version_4_20(source):
-            save_kwargs["ready_for_price_tag_validation"] = False
-        # save
-        proof = serializer.save(**save_kwargs)
-        # return full proof
-        return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)
+        return base_upload(request, draft=False)
 
     @extend_schema(request=ProofProcessWithGeminiSerializer)
     @action(
@@ -219,6 +238,84 @@ class ProofViewSet(
         return Response(FlagSerializer(flag).data, status=status.HTTP_201_CREATED)
 
 
+class DraftViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [
+        IsAuthenticated,
+        OnlyObjectOwnerIsAllowedReadWrite,
+    ]
+    http_method_names = [
+        "get",
+        "post",
+        "patch",
+        "delete",
+    ]  # disable "put" (full update)
+    serializer_class = ProofFullSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = ProofFilter
+    ordering_fields = ["id", "date", "created"]
+    ordering = ["id"]
+
+    def get_queryset(self):
+        # Only keep draft proofs owned by the user
+        user_id = self.request.user.user_id
+        queryset = Proof.objects.filter(Q(draft=True) & Q(owner=user_id))
+        if self.request.method in ["GET"] and self.action == "retrieve":
+            queryset = queryset.prefetch_related("predictions")
+        return queryset
+
+    @extend_schema(request=ProofDraftUploadSerializer, responses=ProofFullSerializer)
+    @action(
+        detail=False,
+        methods=["POST"],
+        url_path="upload",
+        parser_classes=[MultiPartParser],
+    )
+    def upload(self, request: Request) -> Response:
+        """Upload a draft proof.
+
+        Only the file and type fields are expected. ML models runs immediately asynchronously."""
+        return base_upload(request, draft=True)
+
+    @extend_schema(request=ProofUpdateSerializer, responses=ProofFullSerializer)
+    def partial_update(self, request: Request, pk=None) -> Response:
+        """Finalize a draft proof - set draft=False and add full metadata."""
+        proof = self.get_object()
+        # Validate required fields
+        serializer = self.get_serializer(proof, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        # Update fields
+        for field in Proof.UPDATE_FIELDS:
+            if field in serializer.validated_data:
+                setattr(proof, field, serializer.validated_data[field])
+
+        # Check required fields for finalization
+        missing_fields = []
+        if not proof.date:
+            missing_fields.append("date")
+        if not proof.currency:
+            missing_fields.append("currency")
+
+        if missing_fields:
+            return Response(
+                {"detail": f"Missing required fields: {', '.join(missing_fields)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        proof.draft = False
+        proof._change_reason = "Finalize draft proof"
+        proof.save()
+
+        return Response(ProofFullSerializer(proof).data, status=status.HTTP_200_OK)
+
+
 class PriceTagViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -246,12 +343,21 @@ class PriceTagViewSet(
         return [CustomAuthentication()]
 
     def get_queryset(self):
+        # Filter out draft proofs for non-owners
+        if self.request.user.is_authenticated:
+            user_id = self.request.user.user_id
+            base_queryset = self.queryset.filter(
+                Q(proof__draft=False) | Q(proof__owner=user_id)
+            )
+        else:
+            base_queryset = self.queryset.filter(proof__draft=False)
+
         if self.action in ["create", "update"]:
             # We need to prefetch the price object if it exists to validate the
             # price_id field, and the proof object to validate the proof_id
             # field
-            return PriceTag.objects.select_related("proof", "price").all()
-        return super().get_queryset()
+            return base_queryset.select_related("price")
+        return base_queryset
 
     def get_serializer_class(self):
         if self.request.method == "POST":
