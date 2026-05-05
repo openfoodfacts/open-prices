@@ -40,8 +40,7 @@ from open_prices.proofs.factories import (
 )
 from open_prices.proofs.ml import run_and_save_proof_prediction
 from open_prices.proofs.ml.classification import (
-    PROOF_CLASSIFICATION_MODEL_NAME,
-    PROOF_CLASSIFICATION_MODEL_VERSION,
+    proof_classification_model_config,
     run_and_save_proof_type_prediction,
 )
 from open_prices.proofs.ml.ocr import fetch_and_save_ocr_data
@@ -962,6 +961,14 @@ class MLModelTest(TestCase):
                         "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.price_tags.predict_price_tag_type",
+                        return_value=[
+                            ("high-quality", 0.96),
+                            ("medium-quality", 0.03),
+                            ("invalid", 0.01),
+                        ],
+                    ) as mock_predict_price_tag_type,
                 ):
                     run_and_save_proof_prediction(
                         proof,
@@ -970,6 +977,9 @@ class MLModelTest(TestCase):
                     )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_called_once()
+                    self.assertEqual(
+                        mock_predict_price_tag_type.call_count, 1
+                    )  # should be called for the detected price tag
 
                 proof_type_prediction = proof.predictions.filter(
                     type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
@@ -1001,26 +1011,50 @@ class MLModelTest(TestCase):
                     },
                 )
 
-                price_tag_prediction = proof.predictions.filter(
+                price_tag_objects_prediction = proof.predictions.filter(
                     type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE
                 ).first()
-                self.assertIsNotNone(price_tag_prediction)
+                self.assertIsNotNone(price_tag_objects_prediction)
                 self.assertEqual(
-                    price_tag_prediction.type,
+                    price_tag_objects_prediction.type,
                     proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
                 )
-                self.assertEqual(price_tag_prediction.model_name, "price_tag_detection")
                 self.assertEqual(
-                    price_tag_prediction.model_version, "price_tag_detection-1.0"
+                    price_tag_objects_prediction.model_name, "price_tag_detection"
                 )
-                self.assertIsNone(price_tag_prediction.value)
-                self.assertAlmostEqual(price_tag_prediction.max_confidence, 0.98)
-                self.assertIn("objects", price_tag_prediction.data)
-                objects = price_tag_prediction.data["objects"]
+                self.assertEqual(
+                    price_tag_objects_prediction.model_version,
+                    "price_tag_detection-1.0",
+                )
+                self.assertIsNone(price_tag_objects_prediction.value)
+                self.assertAlmostEqual(
+                    price_tag_objects_prediction.max_confidence, 0.98
+                )
+                self.assertIn("objects", price_tag_objects_prediction.data)
+                objects = price_tag_objects_prediction.data["objects"]
                 self.assertEqual(len(objects), 1)
                 self.assertEqual(objects[0]["label"], "price-tag")
                 self.assertAlmostEqual(objects[0]["score"], 0.98)
                 self.assertEqual(objects[0]["bounding_box"], [0.5, 0.5, 1.0, 1.0])
+
+                price_tag_type_prediction = PriceTagPrediction.objects.filter(
+                    type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE
+                ).first()
+                self.assertIsNotNone(price_tag_type_prediction)
+                self.assertEqual(
+                    price_tag_type_prediction.type,
+                    proof_constants.PRICE_TAG_CLASSIFICATION_TYPE,
+                )
+                self.assertEqual(
+                    price_tag_type_prediction.data,
+                    {
+                        "prediction": [
+                            {"label": "high-quality", "score": 0.96},
+                            {"label": "medium-quality", "score": 0.03},
+                            {"label": "invalid", "score": 0.01},
+                        ]
+                    },
+                )
 
                 # prediction_count was incremented
                 proof.refresh_from_db()
@@ -1028,7 +1062,7 @@ class MLModelTest(TestCase):
 
                 # cleanup
                 proof_type_prediction.delete()
-                price_tag_prediction.delete()
+                price_tag_objects_prediction.delete()
                 proof.delete()
 
     def test_run_and_save_proof_type_prediction_already_exists(self):
@@ -1036,89 +1070,127 @@ class MLModelTest(TestCase):
         ProofPredictionFactory(
             proof=proof,
             type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
-            model_name=PROOF_CLASSIFICATION_MODEL_NAME,
-            model_version=PROOF_CLASSIFICATION_MODEL_VERSION,
+            model_name=proof_classification_model_config.model_name,
+            model_version=proof_classification_model_config.model_version,
         )
         result = run_and_save_proof_type_prediction(self.image, proof)
         self.assertIsNone(result)
 
     def test_run_and_save_price_tag_detection_already_exists(self):
-        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        ProofPredictionFactory(
-            proof=proof,
-            type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
-            model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
-            model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
-            data={
-                "objects": [
-                    {
-                        "label": "price_tag",
-                        "score": 0.98,
-                        "bounding_box": [0.5, 0.5, 1.0, 1.0],
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                ProofPredictionFactory(
+                    proof=proof,
+                    type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+                    model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
+                    model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
+                    data={
+                        "objects": [
+                            {
+                                "label": "price_tag",
+                                "score": 0.98,
+                                "bounding_box": [0.5, 0.5, 1.0, 1.0],
+                            },
+                            {
+                                "label": "price_tag",
+                                "score": 0.8,
+                                "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                            },
+                        ]
                     },
-                    {
-                        "label": "price_tag",
-                        "score": 0.8,
-                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
-                    },
-                ]
-            },
-        )
-        result = run_and_save_price_tag_detection(
-            self.image, proof, run_extraction=False
-        )
+                )
+
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
+                    return_value=[
+                        ("invalid", 0.96),
+                        ("medium-quality", 0.03),
+                        ("high-quality", 0.01),
+                    ],
+                ):
+                    result = run_and_save_price_tag_detection(
+                        self.image, proof, run_extraction=False
+                    )
         self.assertIsNone(result)
         price_tags = PriceTag.objects.filter(proof=proof).all()
         self.assertEqual(len(price_tags), 2)
         self.assertEqual(price_tags[0].bounding_box, [0.5, 0.5, 1.0, 1.0])
+        self.assertEqual(price_tags[0].tags, ["invalid"])
         self.assertEqual(price_tags[1].bounding_box, [0.1, 0.1, 0.2, 0.2])
+        self.assertEqual(price_tags[1].tags, ["invalid"])
 
-    def create_price_tags_from_proof_prediction(self):
-        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        proof_prediction = ProofPredictionFactory(
-            proof=proof,
-            type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
-            model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
-            model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
-            data={
-                "objects": [
-                    {
-                        "label": "price_tag",
-                        "score": 0.98,
-                        "bounding_box": [0.5, 0.5, 1.0, 1.0],
+    def test_create_price_tags_from_proof_prediction(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                proof_prediction = ProofPredictionFactory(
+                    proof=proof,
+                    type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+                    model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
+                    model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
+                    data={
+                        "objects": [
+                            {
+                                "label": "price_tag",
+                                "score": 0.98,
+                                "bounding_box": [0.5, 0.5, 1.0, 1.0],
+                            },
+                            {
+                                "label": "price_tag",
+                                "score": 0.45,
+                                "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                            },
+                            {
+                                "label": "price_tag",
+                                "score": 0.4,
+                                "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                            },
+                        ]
                     },
-                    {
-                        "label": "price_tag",
-                        "score": 0.45,
-                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
-                    },
-                    {
-                        "label": "price_tag",
-                        "score": 0.4,
-                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
-                    },
-                ]
-            },
-        )
-        before = timezone.now()
-        results = create_price_tags_from_proof_prediction(
-            proof, proof_prediction, threshold=0.4, run_extraction=False
-        )
+                )
+                before = timezone.now()
+
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
+                    return_value=[
+                        ("high-quality", 0.96),
+                        ("medium-quality", 0.03),
+                        ("invalid", 0.01),
+                    ],
+                ):
+                    results = create_price_tags_from_proof_prediction(
+                        proof, proof_prediction, threshold=0.41, run_extraction=False
+                    )
         after = timezone.now()
         self.assertEqual(len(results), 2)
         price_tags = PriceTag.objects.filter(proof=proof).all()
         self.assertEqual(len(price_tags), 2)
 
-        price_tag_1 = results[0]
-        self.assertEqual(price_tag_1.bounding_box, [0.5, 0.5, 1.0, 1.0])
-        self.assertGreater(price_tag_1.created, before)
-        self.assertLess(price_tag_1.created, after)
-        self.assertGreater(price_tag_1.updated, before)
-        self.assertLess(price_tag_1.updated, after)
-        self.assertEqual(price_tag_1.status, None)
-        self.assertEqual(price_tag_1.created_by, None)
-        self.assertEqual(price_tag_1.updated_by, None)
-        self.assertEqual(price_tag_1.model_version, PRICE_TAG_DETECTOR_MODEL_VERSION)
+        price_tag = results[0]
+        self.assertEqual(price_tag.bounding_box, [0.5, 0.5, 1.0, 1.0])
+        self.assertGreater(price_tag.created, before)
+        self.assertLess(price_tag.created, after)
+        self.assertGreater(price_tag.updated, before)
+        self.assertLess(price_tag.updated, after)
+        self.assertEqual(price_tag.status, None)
+        self.assertEqual(price_tag.created_by, None)
+        self.assertEqual(price_tag.updated_by, None)
+        self.assertEqual(price_tag.tags, ["high-quality"])
 
     def test_extract_from_price_tag(self):
         with unittest.mock.patch(
