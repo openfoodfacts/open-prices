@@ -55,6 +55,7 @@ class TotalStats(SingletonModel):
         "proof_source_api_count",
         "proof_source_other_count",
         "proof_in_challenge_count",
+        "proof_currency_count",
     ]
     PRICE_TAG_COUNT_FIELDS = [
         "price_tag_count",
@@ -114,6 +115,7 @@ class TotalStats(SingletonModel):
     proof_source_mobile_count = models.PositiveIntegerField(default=0)
     proof_source_api_count = models.PositiveIntegerField(default=0)
     proof_source_other_count = models.PositiveIntegerField(default=0)
+    proof_currency_count = models.PositiveIntegerField(default=0)
     proof_in_challenge_count = models.PositiveIntegerField(default=0)
     price_tag_count = models.PositiveIntegerField(default=0)
     price_tag_status_unknown_count = models.PositiveIntegerField(default=0)
@@ -143,21 +145,17 @@ class TotalStats(SingletonModel):
             category_tag__isnull=False
         ).count()
         self.price_with_discount_count = Price.objects.has_discount().count()
-        self.price_currency_count = (
-            Price.objects.values_list("currency", flat=True).distinct().count()
+        self.price_currency_count = Price.objects.calculate_field_distinct_count(
+            "currency"
         )
         self.price_year_count = (
-            Price.objects.with_extra_fields()
-            .values_list("date_year_annotated", flat=True)
-            .distinct()
-            .count()
+            Price.objects.with_extra_fields().calculate_field_distinct_count(
+                "date_year_annotated"
+            )
         )
-        self.price_location_country_count = (
-            Price.objects.select_related("location")
-            .values_list("location__osm_address_country", flat=True)
-            .distinct()
-            .count()
-        )
+        self.price_location_country_count = Price.objects.select_related(
+            "location"
+        ).calculate_field_distinct_count("location__osm_address_country")
         self.price_kind_community_count = Price.objects.has_kind_community().count()
         self.price_kind_consumption_count = Price.objects.has_kind_consumption().count()
         for source in constants.SOURCE_LIST:
@@ -179,7 +177,7 @@ class TotalStats(SingletonModel):
 
         self.product_count = Product.objects.count()
         self.product_with_price_count = Product.objects.has_prices().count()
-        # self.product_with_price_count = User.objects.values_list("product_id", flat=True).distinct().count()  # noqa
+        # self.product_with_price_count = User.objects.calculate_field_distinct_count("product_id")  # noqa
         for source in product_constants.SOURCE_LIST:
             setattr(
                 self,
@@ -198,14 +196,13 @@ class TotalStats(SingletonModel):
 
         self.location_count = Location.objects.count()
         self.location_with_price_count = Location.objects.has_prices().count()
-        # self.location_with_price_count = User.objects.values_list("location_id", flat=True).distinct().count()  # noqa
+        # self.location_with_price_count = User.objects.calculate_field_distinct_count("location_id")  # noqa
         self.location_type_osm_count = Location.objects.has_type_osm().count()
         self.location_type_online_count = Location.objects.has_type_online().count()
         self.location_type_osm_country_count = (
-            Location.objects.has_type_osm()
-            .values_list("osm_address_country", flat=True)
-            .distinct()
-            .count()
+            Location.objects.has_type_osm().calculate_field_distinct_count(
+                "osm_address_country"
+            )
         )
         self.save(update_fields=self.LOCATION_COUNT_FIELDS + ["updated"])
 
@@ -214,7 +211,7 @@ class TotalStats(SingletonModel):
 
         self.proof_count = Proof.objects.count()
         self.proof_with_price_count = Proof.objects.has_prices().count()
-        # self.proof_with_price_count = User.objects.values_list("proof_id", flat=True).distinct().count()  # noqa
+        # self.proof_with_price_count = User.objects.calculate_field_distinct_count("proof_id")  # noqa
         self.proof_type_price_tag_count = Proof.objects.has_type_price_tag().count()
         self.proof_type_receipt_count = Proof.objects.has_type_receipt().count()
         self.proof_type_gdpr_request_count = (
@@ -234,6 +231,10 @@ class TotalStats(SingletonModel):
         self.proof_in_challenge_count = Proof.objects.filter(
             tags__icontains="challenge"
         ).count()
+        # should we filter on proof with prices only?
+        self.proof_currency_count = Proof.objects.calculate_field_distinct_count(
+            "currency"
+        )
         self.save(update_fields=self.PROOF_COUNT_FIELDS + ["updated"])
 
     def update_price_tag_stats(self):
@@ -251,7 +252,7 @@ class TotalStats(SingletonModel):
 
         self.user_count = User.objects.count()
         self.user_with_price_count = User.objects.has_prices().count()
-        # self.user_with_price_count = User.objects.values_list("owner", flat=True).distinct().count()  # noqa
+        # self.user_with_price_count = User.objects.calculate_field_distinct_count("owner")  # noqa
         self.save(update_fields=self.USER_COUNT_FIELDS + ["updated"])
 
     def update_challenge_stats(self):

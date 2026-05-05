@@ -1,4 +1,6 @@
 import datetime
+import functools
+import re
 
 import openfoodfacts
 import requests
@@ -16,12 +18,18 @@ from openfoodfacts import (
     ProductDataset,
 )
 from openfoodfacts.images import generate_image_url
-from openfoodfacts.types import JSONType
+from openfoodfacts.taxonomy import (
+    create_taxonomy_mapping,
+    get_taxonomy,
+    map_to_canonical_id,
+)
+from openfoodfacts.types import COUNTRY_CODE_TO_NAME, JSONType
 
 OFF_CREATE_FIELDS = [
     "product_name",
     "product_quantity",
     "product_quantity_unit",
+    "quantity",
     "categories_tags",
     "brands",
     "brands_tags",
@@ -30,9 +38,90 @@ OFF_CREATE_FIELDS = [
     "nutriscore_grade",
     "ecoscore_grade",
     "nova_group",
+    "creator",
     "unique_scans_n",
 ]
 OFF_UPDATE_FIELDS = OFF_CREATE_FIELDS + ["source", "source_last_synced"]
+
+
+# Taxonomy mapping generation takes ~200ms, so we cache it to avoid
+# recomputing it for each request.
+_cached_create_taxonomy_mapping = functools.lru_cache()(create_taxonomy_mapping)
+# Also cache the get_taxonomy function to avoid reading from disk at each
+# request.
+_cached_get_taxonomy = functools.lru_cache()(get_taxonomy)
+
+
+def normalize_taxonomized_tags(taxonomy_type: str, value_tags: list[str]) -> list[str]:
+    """Normalizes a list of tags based on the taxonomy type.
+
+    :param taxonomy_type: The type of taxonomy ('category', 'label', or 'origin').
+    :param value_tags: A list of tag values to normalize (e.g. ["fr: Boissons"]).
+    :raises RuntimeError: If the taxonomy type is not one of 'category', 'label', or 'origin'
+    :raises ValueError: If the value_tag could not be mapped to a canonical ID.
+    :return: The normalized tags (e.g., ["en:beverages"]). The order of the tags is the same as the input list.
+    """
+    if taxonomy_type not in ("category", "label", "origin"):
+        raise RuntimeError(
+            f"Invalid taxonomy type: {taxonomy_type}. Expected one of 'category', 'label', or 'origin'."
+        )
+
+    # Use the cached version of the get_taxonomy function to avoid
+    # creating it multiple times.
+    category_taxonomy = _cached_get_taxonomy(taxonomy_type)
+    # the tag (category or label tag) can be provided by the mobile app in any
+    # language, with language prefix (ex: `fr: Boissons`).
+    # We need to map it to the canonical id (ex: `en:beverages`) to store it
+    # in the database.
+    # The `map_to_canonical_id` function maps the value (ex:
+    # `fr: Boissons`) to the canonical id (ex: `en:beverages`).
+    # We use the cached version of this function to avoid
+    # creating it multiple times.
+    # If the entry does not exist in the taxonomy, the tag will
+    # be set to the tag version of the value (ex: `fr:boissons`).
+    taxonomy_mapping = _cached_create_taxonomy_mapping(category_taxonomy)
+    mapped_tags = map_to_canonical_id(taxonomy_mapping, value_tags)
+    # Keep the order of the tags as they were provided
+    return [mapped_tags[k] for k in mapped_tags]
+
+
+def get_taxonomy_children_tags_from_parent_list(
+    taxonomy_type: str, parent_list: list[str], include_parent_list: bool = False
+) -> list[str]:
+    """Gets a list of all children for a given taxonomy type and parent list.
+
+    :param taxonomy_type: The type of taxonomy ('category', 'label', 'origin'...).
+    :param parent_list: A list of parent tags (e.g., ["en:beverages"]).
+    :param include_parent_list: Whether to include the parent tags in the result.
+    :return: A list of all children tags (e.g., ["en:beverages", "en:sodas", "en:juices"]).
+
+    TODO: manage parent_list categories coming from different taxonomies (food & non-food)
+    """
+    taxonomy = _cached_get_taxonomy(taxonomy_type)
+    children_tags = [] if not include_parent_list else parent_list.copy()
+    seen = set(children_tags)
+
+    for parent in parent_list:
+        parent_node = taxonomy[parent]
+
+        # the parent node might not be in this taxonomy (e.g. non-food)
+        # the parent node might not have children
+        if not (parent_node and parent_node.children):
+            continue
+
+        for child_node in parent_node.children:
+            if child_node.id not in seen:
+                children_tags.append(child_node.id)
+                seen.add(child_node.id)
+
+            for child_child_id in get_taxonomy_children_tags_from_parent_list(
+                taxonomy_type, [child_node.id]
+            ):
+                if child_child_id not in seen:
+                    children_tags.append(child_child_id)
+                    seen.add(child_child_id)
+
+    return children_tags
 
 
 def authenticate(username, password):
@@ -43,7 +132,8 @@ def authenticate(username, password):
     - 403: {"status": 0,"status_verbose": "user not signed-in"}
     """
     data = {"user_id": username, "password": password, "body": 1}
-    return requests.post(f"{settings.OAUTH2_SERVER_URL}", data=data)
+    headers = {"User-Agent": settings.OFF_USER_AGENT}
+    return requests.post(f"{settings.OAUTH2_SERVER_URL}", data=data, headers=headers)
 
 
 def build_product_dict(product: JSONType, flavor) -> JSONType:
@@ -94,7 +184,10 @@ def generate_main_image_url(
         image_rev = images[image_key]["rev"]
         image_id = f"{image_key}.{image_rev}.400"
         return generate_image_url(
-            code, image_id=image_id, flavor=flavor, environment=Environment.org
+            code,
+            image_id=image_id,
+            flavor=flavor,
+            environment=Environment[settings.ENVIRONMENT],
         )
 
     return None
@@ -108,7 +201,7 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
         country=Country.world,
         flavor=flavor,
         version=APIVersion.v2,
-        environment=Environment.org,
+        environment=Environment[settings.ENVIRONMENT],
     )
     return client.product.get(code)
 
@@ -136,7 +229,7 @@ def import_product_db(
     """
     from open_prices.products.models import Product
 
-    print((f"Launching import_product_db (flavor={flavor}, obsolete={obsolete})"))
+    print(f"Launching import_product_db (flavor={flavor}, obsolete={obsolete})")
     existing_product_codes = set(Product.objects.values_list("code", flat=True))
     existing_product_flavor_codes = set(
         Product.objects.filter(source=flavor).values_list("code", flat=True)
@@ -160,7 +253,7 @@ def import_product_db(
     # the dataset was created after the start of the day, every product updated
     # after should be skipped, as we don't know the exact creation time of the
     # dump
-    start_datetime = datetime.datetime.now(tz=datetime.timezone.utc).replace(
+    start_datetime = datetime.datetime.now(tz=datetime.UTC).replace(
         hour=0, minute=0, second=0
     )
 
@@ -186,9 +279,7 @@ def import_product_db(
         if isinstance(product_last_modified_t, str):
             product_last_modified_t = int(product_last_modified_t)
         product_source_last_modified = (
-            datetime.datetime.fromtimestamp(
-                product_last_modified_t, tz=datetime.timezone.utc
-            )
+            datetime.datetime.fromtimestamp(product_last_modified_t, tz=datetime.UTC)
             if product_last_modified_t
             else None
         )
@@ -277,3 +368,139 @@ def barcode_is_valid(barcode: str) -> bool:
         and len(barcode) >= 6
         and openfoodfacts.barcode.has_valid_check_digit(barcode)
     )
+
+
+def barcode_fix_short_codes_from_usa(barcode: str) -> str:
+    """
+    Fix short barcodes from USA
+
+    10 or 11 digits: pad them to 12 digits and calculate their check digit
+    12 digits: add a leading zero
+
+    This function is based on the fact that most of the short barcodes are from
+    the USA, and that they can be converted to a valid EAN-13 barcode by
+    padding them with zeros to the left, and adding a leading zero.
+
+    :param barcode: the barcode to fix
+    :return: the 13-digit fixed and valid barcode, or the original barcode if
+    it cannot be fixed
+    """
+    if not barcode.isnumeric():
+        return barcode
+
+    if len(barcode) in (10, 11, 12):
+        barcode_temp = barcode.zfill(12)
+        barcode_check_digit = openfoodfacts.barcode.calculate_check_digit(barcode + "0")
+        barcode_temp = barcode_temp + barcode_check_digit
+        if barcode_is_valid(barcode_temp):
+            return barcode_temp
+    elif len(barcode) == 12:
+        barcode_temp = "0" + barcode
+        if barcode_is_valid(barcode_temp):
+            return barcode_temp
+    return barcode
+
+
+def country_code_to_Country(country_code: str) -> Country:
+    try:
+        return Country[country_code]
+    except KeyError:
+        return Country.world
+
+
+def create_or_update_product_in_off(
+    code: str,
+    flavor: str = Flavor.off,
+    country_code: str = "en",
+    owner: str = None,
+    update_params: dict = None,
+) -> JSONType | None:
+    if update_params is None:
+        update_params = {}
+    client = API(
+        username=settings.OFF_DEFAULT_USER,
+        password=settings.OFF_DEFAULT_PASSWORD,
+        user_agent=settings.OFF_USER_AGENT,
+        country=country_code_to_Country(country_code),
+        flavor=flavor,
+        version=APIVersion.v2,
+        environment=Environment[settings.ENVIRONMENT],
+    )
+    countries = update_params.get("countries")
+    if countries:
+        countries_list = countries.split(",")
+        taxonomized_countries_list = [
+            COUNTRY_CODE_TO_NAME[country_code_to_Country(country_code)]
+            for country_code in countries_list
+        ]
+        update_params["countries"] = ",".join(taxonomized_countries_list)
+    if owner:
+        comment = f"[Open Prices, user: {owner}]"
+    else:
+        comment = "[Open Prices]"
+    return client.product.update({"code": code, "comment": comment, **update_params})
+
+
+def upload_product_image_in_off(
+    code: str,
+    flavor: str = Flavor.off,
+    country_code: str = "en",
+    image_data_base64: str = None,
+    selected: JSONType | None = None,
+) -> JSONType | None:
+    client = API(
+        user_agent=settings.OFF_USER_AGENT,
+        username=settings.OFF_DEFAULT_USER,
+        password=settings.OFF_DEFAULT_PASSWORD,
+        country=country_code_to_Country(country_code),
+        flavor=flavor,
+        version=APIVersion.v3,
+        environment=Environment[settings.ENVIRONMENT],
+    )
+    return client.product.upload_image(
+        code, image_data_base64=image_data_base64, selected=selected
+    )
+
+
+def get_smoothie_app_version(source: str | None) -> tuple[int | None, int | None]:
+    """
+    Return the Smoothie app version
+
+    Input: "Smoothie - OpenFoodFacts (4.18.1+1434)...""
+    Output: (major, minor) if the request comes from Smoothie app. (None, None) otherwise.  # noqa
+    """
+    if source and (
+        match := re.search(r"^Smoothie - OpenFoodFacts \((\d+)\.(\d+)\.(\d+)", source)
+    ):
+        smoothie_major = int(match.group(1))
+        smoothie_minor = int(match.group(2))
+        return smoothie_major, smoothie_minor
+
+    return None, None
+
+
+def is_smoothie_app_version_4_20(source: str | None) -> bool:
+    """
+    Return True if the requests comes from Smoothie app version 4.20.
+
+    Why?
+    - Smoothie app version 4.20 has a bug where it sets the
+    `Proof.ready_for_price_tag_validation` flag to True when
+    uploading price tag proofs, even when it should not be set.
+    see https://github.com/openfoodfacts/smooth-app/pull/6794
+    """
+    smoothie_version = get_smoothie_app_version(source)
+    return smoothie_version == (4, 20)
+
+
+def is_smoothie_app_version_leq_4_20(source: str | None) -> bool:
+    """
+    Return True if the requests comes from Smoothie app version <= 4.20.
+
+    Why?
+    - Smoothie app version <= 4.20: for the proof upload request we need to
+    return HTTP 200 instead of 201, if not the user's background task fails.
+    see https://github.com/openfoodfacts/smooth-app/issues/6855#issuecomment-3265072440  # noqa
+    """
+    smoothie_version = get_smoothie_app_version(source)
+    return smoothie_version[0] is not None and (smoothie_version <= (4, 20))

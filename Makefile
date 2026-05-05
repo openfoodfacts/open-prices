@@ -22,6 +22,7 @@ DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=open_prices_test COMMON_NET_NAME=po_tes
 # avoid target corresponding to file names, to depends on them
 .PHONY: *
 
+
 #-----------#
 # Utilities #
 #-----------#
@@ -29,9 +30,10 @@ DOCKER_COMPOSE_TEST=COMPOSE_PROJECT_NAME=open_prices_test COMMON_NET_NAME=po_tes
 guard-%: # guard clause for targets that require an environment variable (usually used as an argument)
 	@ if [ "${${*}}" = "" ]; then \
    		echo "Environment variable '$*' is mandatory"; \
-   		echo use "make ${MAKECMDGOALS} $*=you-args"; \
+   		echo use "make ${MAKECMDGOALS} $*=your-args"; \
    		exit 1; \
 	fi;
+
 
 #------------#
 # Production #
@@ -55,11 +57,9 @@ livecheck:
 	[ $$exit_code -eq 0 ] && echo "Success !"; \
 	exit $$exit_code;
 
-
 build:
 	@echo "🥫 building docker (for dev)"
 	${DOCKER_COMPOSE} build
-
 
 up:
 ifdef service
@@ -73,14 +73,12 @@ down:
 	@echo "🥫 Bringing down containers …"
 	${DOCKER_COMPOSE} down
 
-
 hdown:
 	@echo "🥫 Bringing down containers and associated volumes …"
 	${DOCKER_COMPOSE} down -v
 
-
-# pull images from image repository
 pull:
+	@echo "🥫 Pulling images from repository …"
 	${DOCKER_COMPOSE} pull
 
 restart:
@@ -99,47 +97,35 @@ log:
 #------------#
 # Quality    #
 #------------#
+
 toml-check:
-	${DOCKER_COMPOSE} run --rm --no-deps api poetry run toml-sort --check pyproject.toml
+	${DOCKER_COMPOSE} run --rm --no-deps api toml-sort --check pyproject.toml
 
 toml-lint:
-	${DOCKER_COMPOSE} run --rm --no-deps api poetry run toml-sort --in-place pyproject.toml
-
-flake8:
-	${DOCKER_COMPOSE} run --rm --no-deps api flake8
-
-black-check:
-	${DOCKER_COMPOSE} run --rm --no-deps api black --check .
-
-black:
-	${DOCKER_COMPOSE} run --rm --no-deps api black .
+	${DOCKER_COMPOSE} run --rm --no-deps api toml-sort --in-place pyproject.toml
 
 mypy:
 	${DOCKER_COMPOSE} run --rm --no-deps api mypy .
 
-isort-check:
-	${DOCKER_COMPOSE} run --rm --no-deps api isort --check .
-
-isort:
-	${DOCKER_COMPOSE} run --rm --no-deps api isort .
-
 docs:
-	@echo "🥫 Generationg doc…"
+	@echo "🥫 Generating doc…"
 	${DOCKER_COMPOSE} run --rm --no-deps api ./build_mkdocs.sh
 
-checks: toml-check flake8 black-check mypy isort-check docs
+checks: toml-check mypy docs
 
 tests: django-tests
 
 django-tests:
 	@echo "🥫 Running tests …"
 	# change project name to run in isolation
-	${DOCKER_COMPOSE_TEST} run --rm api poetry run python3 manage.py test
-
+	# Override Q2_SYNC to make sure that async tasks are run synchronously during tests
+	# See https://github.com/openfoodfacts/open-prices/issues/962
+	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api python3 manage.py test -v 2
 
 django-tests-single: guard-args
 	@echo "🥫 Running specific tests …"
-	${DOCKER_COMPOSE_TEST} run --rm api poetry run python3 manage.py test -v 2 ${args}
+	${DOCKER_COMPOSE_TEST} run -e 'Q2_SYNC=True' --rm api python3 manage.py test -v 2 ${args}
+
 
 #------------#
 # Production #
@@ -160,7 +146,7 @@ create_external_networks:
 
 cp-static-files:
 	@echo "🥫 Copying static files from api container to the host …"
-	docker cp open_prices-api-1:/opt/open-prices/static www/
+	rm -rf www/static && docker cp open_prices-api-1:/opt/open-prices/static www/
 
 migrate-db:
 	@echo "🥫 Migrating database …"
@@ -169,13 +155,14 @@ migrate-db:
 cli: guard-args
 	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py ${args}
 
-
-makemigrations: guard-args
+makemigrations:
 	${DOCKER_COMPOSE} run --rm --no-deps api python3 manage.py makemigrations ${args}
+
 
 #---------#
 # Cleanup #
 #---------#
+
 prune:
 	@echo "🥫 Pruning unused Docker artifacts (save space) …"
 	docker system prune -af

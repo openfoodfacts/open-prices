@@ -5,16 +5,73 @@ from django.db.models import Count, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
+from openfoodfacts.barcode import normalize_barcode
 
+# Import custom lookups so that they are registered
+from open_prices.common import lookups  # noqa: F401
+from open_prices.common.db_func import LevenshteinLessEqual
+from open_prices.common.managers import ApproximateCountQuerySet
 from open_prices.products import constants as product_constants
 
 
-class ProductQuerySet(models.QuerySet):
+class ProductQuerySet(ApproximateCountQuerySet):
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
+
+    def to_update_in_weekly_task(self):
+        """
+        Goal: only update products that have prices, to save (some) time.
+        We use the annotated price_count instead of the denormalized price_count field to be sure to have up-to-date information.
+
+        Usage: open_prices/common/tasks.py:update_product_counts_task
+        """
+        return self.with_stats().filter(price_count_annotated__gte=1)
+
+    def fuzzy_barcode_search(
+        self,
+        code: str,
+        max_distance: int = 3,
+        limit: int | None = None,
+        exclude_distance_0: bool = True,
+    ):
+        """Use the `levenshtein_less_equal` from the fuzzystrmatch extension
+        to find Products with barcode that are similar to the given barcode.
+
+        Results are ordered by increasing Levenshtein distance.
+
+        :param code: The barcode to search for
+        :param max_distance: The maximum Levenshtein distance to consider
+        :param limit: The maximum number of results to return, or None for no
+            limit
+        :param exclude_distance_0: Whether to exclude results with distance 0
+            (i.e. exact matches)
+        :return: A queryset of Product with similar barcodes
+        """
+
+        # Easy way to prevent SQL injection and useless queries
+        if not code.isdigit():
+            return self.none()
+
+        qs = (
+            self.annotate(
+                distance=LevenshteinLessEqual(
+                    "code", code, max_distance, output_field=models.IntegerField()
+                ),
+            )
+            .filter(distance__lte=max_distance)
+            .order_by("distance")
+        )
+
+        if exclude_distance_0:
+            qs = qs.exclude(distance=0)
+
+        if limit:
+            qs = qs[:limit]
+
+        return qs
 
 
 class Product(models.Model):
@@ -45,6 +102,7 @@ class Product(models.Model):
     image_url = models.CharField(blank=True, null=True)
     product_quantity = models.IntegerField(blank=True, null=True)
     product_quantity_unit = models.CharField(blank=True, null=True)
+    quantity = models.CharField(blank=True, null=True)
     categories_tags = ArrayField(
         base_field=models.CharField(), blank=True, default=list
     )
@@ -55,16 +113,16 @@ class Product(models.Model):
     nutriscore_grade = models.CharField(blank=True, null=True)
     ecoscore_grade = models.CharField(blank=True, null=True)
     nova_group = models.PositiveIntegerField(blank=True, null=True)
+    creator = models.CharField(blank=True, null=True)
     unique_scans_n = models.PositiveIntegerField(default=0, blank=True, null=True)
 
-    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    location_type_osm_country_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    user_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    # denormalized counts (updated with signals and/or cronjobs)
+    price_count = models.PositiveIntegerField(default=0)
+    price_currency_count = models.PositiveIntegerField(default=0)
+    location_count = models.PositiveIntegerField(default=0)
+    location_type_osm_country_count = models.PositiveIntegerField(default=0)
+    user_count = models.PositiveIntegerField(default=0)
+    proof_count = models.PositiveIntegerField(default=0)
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -72,7 +130,6 @@ class Product(models.Model):
     objects = models.Manager.from_queryset(ProductQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "products"
         verbose_name = "Product"
         verbose_name_plural = "Products"
@@ -82,12 +139,21 @@ class Product(models.Model):
             if getattr(self, field_name) is None:
                 setattr(self, field_name, [])
 
+    def normalize_code(self):
+        """
+        Normalize the barcode (remove leading zeros, pad to 8 or 13 digits)
+        """
+        if self.code and isinstance(self.code, str) and self.code.isdigit():
+            self.code = normalize_barcode(self.code)
+
     def save(self, *args, **kwargs):
         """
         - set default values
+        - normalize code
         - run validations
         """
         self.set_default_values()
+        self.normalize_code()
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -113,8 +179,8 @@ class Product(models.Model):
 
     def update_price_count(self):
         self.price_count = self.prices.count()
-        self.price_currency_count = (
-            self.prices.values_list("currency", flat=True).distinct().count()
+        self.price_currency_count = self.prices.calculate_field_distinct_count(
+            "currency"
         )
         self.save(update_fields=["price_count", "price_currency_count"])
 
@@ -122,44 +188,30 @@ class Product(models.Model):
         from open_prices.locations import constants as location_constants
         from open_prices.prices.models import Price
 
-        self.location_count = (
-            Price.objects.filter(product=self, location_id__isnull=False)
-            .values_list("location_id", flat=True)
-            .distinct()
-            .count()
-        )
-        self.location_type_osm_country_count = (
-            Price.objects.filter(
-                product=self,
-                location_id__isnull=False,
-                location__type=location_constants.TYPE_OSM,
-            )
-            .values_list("location__osm_address_country", flat=True)
-            .distinct()
-            .count()
-        )
+        self.location_count = Price.objects.filter(
+            product=self
+        ).calculate_field_distinct_count("location_id")
+        self.location_type_osm_country_count = Price.objects.filter(
+            product=self,
+            location_id__isnull=False,
+            location__type=location_constants.TYPE_OSM,
+        ).calculate_field_distinct_count("location__osm_address_country")
         self.save(update_fields=["location_count", "location_type_osm_country_count"])
 
     def update_user_count(self):
         from open_prices.prices.models import Price
 
-        self.user_count = (
-            Price.objects.filter(product=self, owner__isnull=False)
-            .values_list("owner", flat=True)
-            .distinct()
-            .count()
-        )
+        self.user_count = Price.objects.filter(
+            product=self
+        ).calculate_field_distinct_count("owner")
         self.save(update_fields=["user_count"])
 
     def update_proof_count(self):
         from open_prices.prices.models import Price
 
-        self.proof_count = (
-            Price.objects.filter(product=self, proof_id__isnull=False)
-            .values_list("proof_id", flat=True)
-            .distinct()
-            .count()
-        )
+        self.proof_count = Price.objects.filter(
+            product=self
+        ).calculate_field_distinct_count("proof_id")
         self.save(update_fields=["proof_count"])
 
 

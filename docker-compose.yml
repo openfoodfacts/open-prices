@@ -2,7 +2,6 @@ x-api-common: &api-common
   image: ghcr.io/openfoodfacts/open-prices/api:${TAG:-dev}
   restart: $RESTART_POLICY
   environment:
-    - ENVIRONMENT
     - POSTGRES_DB
     - POSTGRES_USER
     - POSTGRES_PASSWORD
@@ -10,16 +9,24 @@ x-api-common: &api-common
     - POSTGRES_PORT
     - SECRET_KEY
     - DEBUG
+    - Q2_SYNC
+    - Q2_WORKERS
     - ALLOWED_HOSTS
     - CSRF_TRUSTED_ORIGINS
+    - ENVIRONMENT
     - OAUTH2_SERVER_URL
+    - OFF_DEFAULT_PASSWORD
     - SENTRY_DSN
     - LOG_LEVEL
     - GOOGLE_CLOUD_VISION_API_KEY
     - GOOGLE_GENAI_USE_VERTEXAI
     - GOOGLE_CLOUD_LOCATION
     - GOOGLE_CREDENTIALS
+    - GOOGLE_PROJECT
+    - PRICE_TAG_EXTRACTION_ASYNC_REQUESTS
+    - GEMINI_API_KEY
     - TRITON_URI
+    - ENABLE_OCR
     - ENABLE_ML_PREDICTIONS
     - ENABLE_IMPORT_OFF_DB_TASK
     - ENABLE_IMPORT_OBF_DB_TASK
@@ -28,8 +35,10 @@ x-api-common: &api-common
     - ENABLE_REDIS_UPDATES
     - REDIS_HOST
     - REDIS_PORT
-    - REDIS_STREAM_NAME
+    - REDIS_PRODUCT_UPDATES_STREAM_NAME
     - REDIS_LATEST_ID_KEY
+    - KEYCLOAK_OIDC_CONFIG_URL
+    - KEYCLOAK_AUDIENCE
   networks:
     - default
     - common_net

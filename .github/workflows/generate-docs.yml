@@ -8,6 +8,9 @@
         # on pull request we just want to build to see nothing is broken
         paths:
         - "docs/**"
+        - "CONTRIBUTING.md"
+        - "INSTALL.md"
+        - "build_mkdocs.sh"
         - ".github/workflows/generate-docs.yml"
         - "mkdocs.yml"
       push:
@@ -16,35 +19,30 @@
 
     jobs:
       publish-docs:
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-slim
         strategy:
           matrix:
             python-version: [3.11]
         steps:
           - name: Check out the repo
-            uses: actions/checkout@v4
+            uses: actions/checkout@v6
 
           - name: Setup Python version
-            uses: actions/setup-python@v5
+            uses: actions/setup-python@v6
             with:
               python-version: ${{ matrix.python-version }}
 
-          - name: Install Poetry
-            uses: snok/install-poetry@v1.3
-            with:
-              virtualenvs-create: true
-              virtualenvs-in-project: true
+          - name: Install uv
+            uses: astral-sh/setup-uv@v7
 
-          - name: Load cached venv
-            id: cached-poetry-dependencies
-            uses: actions/cache@v4
+          - name: Load cached uv
+            uses: actions/cache@v5
             with:
-              path: .venv
-              key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+              path: ~/.cache/uv
+              key: uv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/uv.lock') }}
 
           - name: Install dependencies
-            run: poetry install
-            if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+            run: uv sync --group dev --frozen
 
           - name: Generate documentation
             run: bash ./build_mkdocs.sh
@@ -52,12 +50,12 @@
           # Deploy docs to gh_pages if we are pushing to main
           # Example from https://github.com/marketplace/actions/deploy-to-github-pages
           - name: Deploy 🚀
-            # we only deploy on push to main
+            # we only deploy on push to main from the main repository
             if: |
-              github.event_name == 'push' && github.event.ref == 'refs/heads/main'
-            uses: JamesIves/github-pages-deploy-action@v4.7.3
+              github.repository_owner == 'openfoodfacts' && github.event_name == 'push' && github.event.ref == 'refs/heads/main'
+            uses: JamesIves/github-pages-deploy-action@v4.8.0
             with:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              BRANCH: gh-pages # The branch the action should deploy to.
-              FOLDER: gh_pages # The folder the action should deploy.
-              CLEAN: true # Automatically remove deleted files from the deploy branch
+              token: ${{ secrets.GITHUB_TOKEN }}
+              branch: gh-pages # The branch the action should deploy to.
+              folder: gh_pages # The folder the action should deploy.
+              clean: true # Automatically remove deleted files from the deploy branch

@@ -1,5 +1,715 @@
 # Changelog
 
+## [1.102.0](https://github.com/openfoodfacts/open-prices/compare/v1.101.2...v1.102.0) (2026-04-16)
+
+
+### Features
+
+* **Challenges:** new categories_full field to store the full list of categories (parents + children) ([#1270](https://github.com/openfoodfacts/open-prices/issues/1270)) ([a566f16](https://github.com/openfoodfacts/open-prices/commit/a566f166e761033e0d1a85a89e1ef8d32c4dbaf5))
+* **OpenFoodFacts:** new taxonomy helper method to get the full list of children from a parent list ([#1269](https://github.com/openfoodfacts/open-prices/issues/1269)) ([7486035](https://github.com/openfoodfacts/open-prices/commit/748603569e9abc0bd2c356e3555343c4cb39a6fa))
+
+
+### Technical
+
+* **Challenges:** improve daily update task to update categories_full & ignore past (completed) challenges ([#1275](https://github.com/openfoodfacts/open-prices/issues/1275)) ([8cc69f7](https://github.com/openfoodfacts/open-prices/commit/8cc69f79bf0a966b64e45a53234b2f23a3c57dc1))
+* **Challenges:** match CATEGORY prices on categories_full (instead of categories) ([#1273](https://github.com/openfoodfacts/open-prices/issues/1273)) ([2c1a1a8](https://github.com/openfoodfacts/open-prices/commit/2c1a1a80aa66c454d5ea43c760bde7a157e1b609))
+* **Challenges:** prettier admin display (fieldset, JSON & image formatting) ([#1274](https://github.com/openfoodfacts/open-prices/issues/1274)) ([4be58d9](https://github.com/openfoodfacts/open-prices/commit/4be58d91591b17de4f02758b20f0619c7fa16070))
+* **deps:** pin Django-related package versions (so that dependabot opens PRs on new versions) ([#1278](https://github.com/openfoodfacts/open-prices/issues/1278)) ([d8171ff](https://github.com/openfoodfacts/open-prices/commit/d8171ffd7cd9aa5b26d2ef8f5f3b437876bdd69e))
+* **Products:** move update task queryset to model ([#1276](https://github.com/openfoodfacts/open-prices/issues/1276)) ([63f4976](https://github.com/openfoodfacts/open-prices/commit/63f497642f398a405d2527a1f3163de744720c69))
+
+## [1.101.2](https://github.com/openfoodfacts/open-prices/compare/v1.101.1...v1.101.2) (2026-04-08)
+
+
+### Technical
+
+* fix proxy jump on prod ([#1267](https://github.com/openfoodfacts/open-prices/issues/1267)) ([a9715c7](https://github.com/openfoodfacts/open-prices/commit/a9715c783cd5a3c0df59050076d357d6cf11b304))
+* **Makefile:** Fix 2 spelling typos ([#1263](https://github.com/openfoodfacts/open-prices/issues/1263)) ([29adec6](https://github.com/openfoodfacts/open-prices/commit/29adec6262f3bd8a87878f6e5cfb9478b9c1ad28))
+
+## [1.101.1](https://github.com/openfoodfacts/open-prices/compare/v1.101.0...v1.101.1) (2026-04-07)
+
+
+### Technical
+
+* migrate Open Prices from docker-prod to scaleway-docker-prod-2 ([e5f4001](https://github.com/openfoodfacts/open-prices/commit/e5f40015929e461a3c324524ed4f590be17f334b))
+
+## [1.101.0](https://github.com/openfoodfacts/open-prices/compare/v1.100.0...v1.101.0) (2026-04-03)
+
+
+### Features
+
+* improve image preprocessing for ML models ([#1251](https://github.com/openfoodfacts/open-prices/issues/1251)) ([dd5b4b3](https://github.com/openfoodfacts/open-prices/commit/dd5b4b369a65fb84104640a012c89eaff62eb4c1))
+* **Prices:** API: Filter on product source being null ([#1262](https://github.com/openfoodfacts/open-prices/issues/1262)) ([89934d2](https://github.com/openfoodfacts/open-prices/commit/89934d2d6bb5779fe96da5abf86dc5b63406b5c1))
+
+
+### Bug Fixes
+
+* **Auth:** Add UserAgent header to auth query ([#1254](https://github.com/openfoodfacts/open-prices/issues/1254)) ([9885f4c](https://github.com/openfoodfacts/open-prices/commit/9885f4cef60d49920108cbfab1d27b3217e2702e))
+
+
+### Technical
+
+* **docs:** Remove .env copy instruction from INSTALL.md ([#1238](https://github.com/openfoodfacts/open-prices/issues/1238)) ([c44231b](https://github.com/openfoodfacts/open-prices/commit/c44231b11b56d723ab09f527444e43f3536bb6b0))
+* **docs:** update documentation to reflect manual env load ([#1248](https://github.com/openfoodfacts/open-prices/issues/1248)) ([c71b5bf](https://github.com/openfoodfacts/open-prices/commit/c71b5bfa70d5966b4bc4872c981c950f1ad9a3bc))
+* **docs:** update INSTALL.md and CONTRIBUTING.md to reflect switch to uv ([#1239](https://github.com/openfoodfacts/open-prices/issues/1239)) ([8007c84](https://github.com/openfoodfacts/open-prices/commit/8007c84fcd8b10d58df2e4cea34a0572e824bf47))
+* on deploy, remove django static content before copying it again (fixes admin css) ([#1256](https://github.com/openfoodfacts/open-prices/issues/1256)) ([4042cd6](https://github.com/openfoodfacts/open-prices/commit/4042cd6c6f1d58343d0ed89b86e226dcde236a36))
+* on deploy, remove django static content before copying it again (fixes admin css) (fix) ([#1264](https://github.com/openfoodfacts/open-prices/issues/1264)) ([cad14f6](https://github.com/openfoodfacts/open-prices/commit/cad14f67d3f679695d72dc0029a4ef1b49d28356))
+* **settings:** reflect environment default values in settings.py ([#1249](https://github.com/openfoodfacts/open-prices/issues/1249)) ([39c9d81](https://github.com/openfoodfacts/open-prices/commit/39c9d81f1dd8c3f9250bfa25b77bf8776838527e))
+* **Tests:** homogenize API tests on list ordering & pagination ([#1252](https://github.com/openfoodfacts/open-prices/issues/1252)) ([ad4f9d9](https://github.com/openfoodfacts/open-prices/commit/ad4f9d909af6a259cad28411649df78fb7681e4c))
+
+## [1.100.0](https://github.com/openfoodfacts/open-prices/compare/v1.99.0...v1.100.0) (2026-03-20)
+
+
+### Features
+
+* **Auth:** Support for keycloak tokens ([#1235](https://github.com/openfoodfacts/open-prices/issues/1235)) ([1c7f06b](https://github.com/openfoodfacts/open-prices/commit/1c7f06b2d787b29f409bb955f4959462e25ce9df))
+
+
+### Bug Fixes
+
+* **deploy:** Update Keycloak OIDC config URL to use HTTPS ([#1250](https://github.com/openfoodfacts/open-prices/issues/1250)) ([11d03d5](https://github.com/openfoodfacts/open-prices/commit/11d03d577fcdc641f463e233e792008e7cbb8798))
+* timeout by adding index ([#1199](https://github.com/openfoodfacts/open-prices/issues/1199)) ([197802d](https://github.com/openfoodfacts/open-prices/commit/197802d9bf2738dd54b7f90ccc70be5b24c3b73e))
+
+
+### Technical
+
+* **docs:** Fixing a typo in docker/dev.yml  ([#1240](https://github.com/openfoodfacts/open-prices/issues/1240)) ([7e0c168](https://github.com/openfoodfacts/open-prices/commit/7e0c168a4587fbcd69e4282df16cf5083b7d824a))
+* remove auto-label-merge-conflict action ([#1232](https://github.com/openfoodfacts/open-prices/issues/1232)) ([785fd60](https://github.com/openfoodfacts/open-prices/commit/785fd6080f285e6b20099c5322048dd3e8713cb1))
+
+## [1.99.0](https://github.com/openfoodfacts/open-prices/compare/v1.98.0...v1.99.0) (2026-02-17)
+
+
+### Features
+
+* **Locations:** API: new cities endpoint that returns the list of cities for a given country code (ordered by name) ([#1226](https://github.com/openfoodfacts/open-prices/issues/1226)) ([61aaa2c](https://github.com/openfoodfacts/open-prices/commit/61aaa2c41a7094835927ed0a0b96fe97abd7dc6c))
+* **Locations:** API: new endpoint to compare 2 locations (in a single SQL query) (with date & discount filters) ([#1227](https://github.com/openfoodfacts/open-prices/issues/1227)) ([fa5c111](https://github.com/openfoodfacts/open-prices/commit/fa5c11110bf0a8b42421c6b805114eb0b4645dd7))
+
+
+### Technical
+
+* **Currencies:** update list of available currencies (babel) ([#1222](https://github.com/openfoodfacts/open-prices/issues/1222)) ([0c9cccf](https://github.com/openfoodfacts/open-prices/commit/0c9cccf5273b0fd518ea0ee7dc0b8dcd8993097a))
+* **Stats:** exclude None when counting distinct values ([#1217](https://github.com/openfoodfacts/open-prices/issues/1217)) ([1d64438](https://github.com/openfoodfacts/open-prices/commit/1d64438a063bbae230bd6549b3422cf177df8f29))
+* switch from poetry to uv ([#1225](https://github.com/openfoodfacts/open-prices/issues/1225)) ([a175538](https://github.com/openfoodfacts/open-prices/commit/a175538ab968d7abbc3f7d9d6e48091a4f1acbcd))
+* **Tests:** avoid running the test CI twice when opening a PR ([#1228](https://github.com/openfoodfacts/open-prices/issues/1228)) ([062d15b](https://github.com/openfoodfacts/open-prices/commit/062d15bd936fbfe69819e00555fa611115ef5ef9))
+* update buildx version in container-build.yml workflow file ([#1230](https://github.com/openfoodfacts/open-prices/issues/1230)) ([c03b78f](https://github.com/openfoodfacts/open-prices/commit/c03b78fc6b074d649dbae687dc2408ad9e93ce0c))
+
+## [1.98.0](https://github.com/openfoodfacts/open-prices/compare/v1.97.1...v1.98.0) (2026-02-06)
+
+
+### Features
+
+* approximate counting with pg_class.reltuples ([#1208](https://github.com/openfoodfacts/open-prices/issues/1208)) ([21c15bd](https://github.com/openfoodfacts/open-prices/commit/21c15bdb4b03a7cd877c3f656a683ce6d5ae516a))
+
+
+### Bug Fixes
+
+* decrease threshold for price tag detection to 0.1 ([#1216](https://github.com/openfoodfacts/open-prices/issues/1216)) ([8a252dd](https://github.com/openfoodfacts/open-prices/commit/8a252dda4e6c16ad3f103b83f4c43f7c997114ab))
+* prevent foreign key violation for deleted proofs ([#1201](https://github.com/openfoodfacts/open-prices/issues/1201)) ([a0ad233](https://github.com/openfoodfacts/open-prices/commit/a0ad233a49b9683a86b129e3d2b8399fead533c0))
+
+
+### Technical
+
+* standardize repository checks ([#1200](https://github.com/openfoodfacts/open-prices/issues/1200)) ([141b85c](https://github.com/openfoodfacts/open-prices/commit/141b85cacfcd6030835aa4d308961bb9d8c3eabd))
+
+## [1.97.1](https://github.com/openfoodfacts/open-prices/compare/v1.97.0...v1.97.1) (2026-02-04)
+
+
+### Bug Fixes
+
+* **ml:** fix bug in price tag detection post-processing ([#1214](https://github.com/openfoodfacts/open-prices/issues/1214)) ([c6301a3](https://github.com/openfoodfacts/open-prices/commit/c6301a3e82de6cfd614f6ad86e19267b4bae9eaa))
+* **ML:** fix incorrect discount_type value for prices without discount ([#1213](https://github.com/openfoodfacts/open-prices/issues/1213)) ([03702c2](https://github.com/openfoodfacts/open-prices/commit/03702c2d44c9cebcf909f8ee53baf462cc94d99b))
+* OSError when generating JPEG thumbnails from LA mode images ([#1198](https://github.com/openfoodfacts/open-prices/issues/1198)) ([0b0fb88](https://github.com/openfoodfacts/open-prices/commit/0b0fb888083cb360c8776e2aaebed3731648fc5d))
+* ValueError when processing non-numeric barcodes in proof prediction ([#1211](https://github.com/openfoodfacts/open-prices/issues/1211)) ([84a5bbc](https://github.com/openfoodfacts/open-prices/commit/84a5bbc1f87c0e89c29aae913803fd8ab3bc047c))
+
+
+### Technical
+
+* also run test workflow on PRs coming from forks ([#1205](https://github.com/openfoodfacts/open-prices/issues/1205)) ([b973c2c](https://github.com/openfoodfacts/open-prices/commit/b973c2c66c96198a8415e36d613c7e4628d240b2))
+* **deps:** upgrade Django to 5.2 ([#1194](https://github.com/openfoodfacts/open-prices/issues/1194)) ([954cc24](https://github.com/openfoodfacts/open-prices/commit/954cc24d5fb7a3fd2e8de4e1654a2acd18b2ba6a))
+
+## [1.97.0](https://github.com/openfoodfacts/open-prices/compare/v1.96.0...v1.97.0) (2026-01-25)
+
+
+### Features
+
+* **Locations:** API: new /locations/osm/countries endpoints that returns the full list of countries (with location & price counts) ([#1195](https://github.com/openfoodfacts/open-prices/issues/1195)) ([159f6da](https://github.com/openfoodfacts/open-prices/commit/159f6da5a9844d90918d75be9f682de6c2686dd9))
+* **Locations:** script to generate a list of countries (JSON, from the OFF taxonomy, enriched with OSM name) ([#1192](https://github.com/openfoodfacts/open-prices/issues/1192)) ([d19e764](https://github.com/openfoodfacts/open-prices/commit/d19e7644046e75d762c9b6c3790a21ce9f6eefde))
+* **Prices:** add `duplicate_of` FK field ([#1184](https://github.com/openfoodfacts/open-prices/issues/1184)) ([2b86eae](https://github.com/openfoodfacts/open-prices/commit/2b86eae455dd11cf5ee9d8b274ef918f2450f2e9))
+* **Prices:** API: add a filter on the new duplicate_of field ([#1204](https://github.com/openfoodfacts/open-prices/issues/1204)) ([17452f4](https://github.com/openfoodfacts/open-prices/commit/17452f44356c04c6b893078fc90d4dd20a6aadf9))
+
+
+### Technical
+
+* **Locations:** API: better document the osm url (type & id fields) ([#1189](https://github.com/openfoodfacts/open-prices/issues/1189)) ([57b8b81](https://github.com/openfoodfacts/open-prices/commit/57b8b8131df9095db40ef0d3e1768e4dd2bbd41a))
+* **Locations:** API: cache the new osm countries response ([#1196](https://github.com/openfoodfacts/open-prices/issues/1196)) ([1517508](https://github.com/openfoodfacts/open-prices/commit/1517508e26ef9a7252bfb7cb0f05fe097572a041))
+* run single unit tests with Q2_SYNC=True ([#1203](https://github.com/openfoodfacts/open-prices/issues/1203)) ([55d5f7c](https://github.com/openfoodfacts/open-prices/commit/55d5f7c97bc34592aedf9b5732f51d15e9519d2e))
+
+## [1.96.0](https://github.com/openfoodfacts/open-prices/compare/v1.95.0...v1.96.0) (2026-01-13)
+
+
+### Features
+
+* improve receipt extraction ([#1185](https://github.com/openfoodfacts/open-prices/issues/1185)) ([a82f29e](https://github.com/openfoodfacts/open-prices/commit/a82f29ef1d738a891051711c917d0bd73c3b83b0))
+* **PriceTags:** Allow filtering on proof location ([#1186](https://github.com/openfoodfacts/open-prices/issues/1186)) ([9d43301](https://github.com/openfoodfacts/open-prices/commit/9d4330190eefe7e9621aeb2cf978c97ed763315f))
+
+
+### Bug Fixes
+
+* **scheduler:** increase number of workers ([#1182](https://github.com/openfoodfacts/open-prices/issues/1182)) ([3e0d212](https://github.com/openfoodfacts/open-prices/commit/3e0d2120552b4e09c65d11962f4014cd79b4b0c2))
+* **scheduler:** increase timeout for specific task ([#1181](https://github.com/openfoodfacts/open-prices/issues/1181)) ([ec28150](https://github.com/openfoodfacts/open-prices/commit/ec2815002a6230859375e16a3baca2dfc24ea346))
+
+
+### Technical
+
+* **Shop Import:** add config for Graoucoop prices ([#1179](https://github.com/openfoodfacts/open-prices/issues/1179)) ([f9b033c](https://github.com/openfoodfacts/open-prices/commit/f9b033c30bf434fbf95b9000f78ca0b7395bf396))
+
+## [1.95.0](https://github.com/openfoodfacts/open-prices/compare/v1.94.1...v1.95.0) (2025-12-27)
+
+
+### Features
+
+* **ml:** upgrade to gemini-3-flash-preview ([#1169](https://github.com/openfoodfacts/open-prices/issues/1169)) ([bcc35ed](https://github.com/openfoodfacts/open-prices/commit/bcc35ed9932d9bf24b084d58acddd382e6a32589))
+* **Prices:** API: New filter by location__type & product__source ([#1176](https://github.com/openfoodfacts/open-prices/issues/1176)) ([7419592](https://github.com/openfoodfacts/open-prices/commit/741959260d485aa5ec5e632d42bd2d17b3158a0f))
+* **Proofs:** API: new filters by location (osm_id, osm_type, exact, in, type) ([#1175](https://github.com/openfoodfacts/open-prices/issues/1175)) ([07058ee](https://github.com/openfoodfacts/open-prices/commit/07058ee40df267251d2934e8977689f72c85a601))
+
+
+### Bug Fixes
+
+* **PriceTag:** actually store barcode normalization (post-ML) ([#1165](https://github.com/openfoodfacts/open-prices/issues/1165)) ([1cd29b3](https://github.com/openfoodfacts/open-prices/commit/1cd29b3b0135a3422cbe9592f3757ae46aa86c55))
+
+
+### Technical
+
+* **ML:** document previous GenAI model versions ([#1177](https://github.com/openfoodfacts/open-prices/issues/1177)) ([6adbc21](https://github.com/openfoodfacts/open-prices/commit/6adbc2124513cf98f0346365e575a63f74d380c0))
+* **ml:** fix .env configuration ([#1171](https://github.com/openfoodfacts/open-prices/issues/1171)) ([aadd105](https://github.com/openfoodfacts/open-prices/commit/aadd105a1bf62241c3186b831e3e601be79ca6b0))
+* **Proofs:** API: simplify filter definition. Add tests ([#1174](https://github.com/openfoodfacts/open-prices/issues/1174)) ([77003ca](https://github.com/openfoodfacts/open-prices/commit/77003ca448ccc4a12c1a8f8faf046f382f51ee1b))
+
+## [1.94.1](https://github.com/openfoodfacts/open-prices/compare/v1.94.0...v1.94.1) (2025-12-22)
+
+
+### Bug Fixes
+
+* **ML:** close the genai.Client after using it ([#1163](https://github.com/openfoodfacts/open-prices/issues/1163)) ([1f6bbd9](https://github.com/openfoodfacts/open-prices/commit/1f6bbd9f84788600a0bbc522fa3c4bb71f378d2b))
+* **Products:** API: normalize code before fetching corresponding product ([#1164](https://github.com/openfoodfacts/open-prices/issues/1164)) ([c262f17](https://github.com/openfoodfacts/open-prices/commit/c262f1714e1b947374aebce185deac170c22f8a4))
+
+## [1.94.0](https://github.com/openfoodfacts/open-prices/compare/v1.93.0...v1.94.0) (2025-12-17)
+
+
+### Features
+
+* **Prices:** API: allow editing the product_code ([#1157](https://github.com/openfoodfacts/open-prices/issues/1157)) ([d2ae13c](https://github.com/openfoodfacts/open-prices/commit/d2ae13cee5252c1bb1f1144f1241240316a6f20c))
+* **Prices:** API: allow filtering by multiple product_code, product_id, proof_id & location_id ([#1156](https://github.com/openfoodfacts/open-prices/issues/1156)) ([f36d66f](https://github.com/openfoodfacts/open-prices/commit/f36d66fbe3361ef2661a331b768824946b7d755f))
+* **Proofs:** on create, increment location & user proof counts (and decrement on delete) ([#1158](https://github.com/openfoodfacts/open-prices/issues/1158)) ([9112127](https://github.com/openfoodfacts/open-prices/commit/911212764f17afa6f46945196e2ca1c41e4d349f))
+
+
+### Bug Fixes
+
+* **ML:** disable OCR extraction because we don't use it ([#1162](https://github.com/openfoodfacts/open-prices/issues/1162)) ([ed1dc0a](https://github.com/openfoodfacts/open-prices/commit/ed1dc0af3d0de7be6ac2c9af6bc8443405c6448d))
+
+
+### Technical
+
+* **API:** improve the Enum documentation (and avoid warnings) in the swagger ([#1155](https://github.com/openfoodfacts/open-prices/issues/1155)) ([e0b3f45](https://github.com/openfoodfacts/open-prices/commit/e0b3f450fe8ffda723f7080d051f37f30cf54e14))
+* fixes following the switch to ruff in [#1150](https://github.com/openfoodfacts/open-prices/issues/1150) ([#1153](https://github.com/openfoodfacts/open-prices/issues/1153)) ([d33a8a8](https://github.com/openfoodfacts/open-prices/commit/d33a8a8ce3ffe4b0ad4633405cb6b51d79f8da1e))
+* **Moderation:** API: group endpoints together (in the swagger) ([#1154](https://github.com/openfoodfacts/open-prices/issues/1154)) ([cacfeec](https://github.com/openfoodfacts/open-prices/commit/cacfeeca5bed528686ffd07f3770bcb5ddd03597))
+* **Prices:** Small cleanup of the price_count increment/decrement logic post save/delete ([#1159](https://github.com/openfoodfacts/open-prices/issues/1159)) ([aaa241b](https://github.com/openfoodfacts/open-prices/commit/aaa241b5d600ff5cbdde61565c58a1fda399b52d))
+* replace black, flake8 & isort with ruff ([#1150](https://github.com/openfoodfacts/open-prices/issues/1150)) ([79e90b9](https://github.com/openfoodfacts/open-prices/commit/79e90b91218436ffe8f4c5a19abd54a3b1d77d1a))
+
+## [1.93.0](https://github.com/openfoodfacts/open-prices/compare/v1.92.1...v1.93.0) (2025-12-04)
+
+
+### Features
+
+* **Proofs:** create a cropped image of the price tag after DB instance creation ([#1138](https://github.com/openfoodfacts/open-prices/issues/1138)) ([89347e3](https://github.com/openfoodfacts/open-prices/commit/89347e395b9b23f63918262e087c42a45f1bd5cb))
+
+
+### Technical
+
+* **format:** reformat some files with black ([#1139](https://github.com/openfoodfacts/open-prices/issues/1139)) ([b5230c6](https://github.com/openfoodfacts/open-prices/commit/b5230c62e02103e40ec28a1695f61865bd03fb53))
+* **Prices:** set labels_tags & origins_tags to None or empty list depending on price type. Add tests ([#1135](https://github.com/openfoodfacts/open-prices/issues/1135)) ([ef2a85e](https://github.com/openfoodfacts/open-prices/commit/ef2a85e978c05f8685cee0832d1758051e351bee))
+* **Proofs:** API: return PriceTag cropped image_path ([#1143](https://github.com/openfoodfacts/open-prices/issues/1143)) ([ecf0ae9](https://github.com/openfoodfacts/open-prices/commit/ecf0ae989fc91d08a942262ab7fd4cd1ff395654))
+
+## [1.92.1](https://github.com/openfoodfacts/open-prices/compare/v1.92.0...v1.92.1) (2025-11-23)
+
+
+### Technical
+
+* **Moderation:** auto-fix rules: take into account the frontend Price Validation renaming ([#1133](https://github.com/openfoodfacts/open-prices/issues/1133)) ([e162116](https://github.com/openfoodfacts/open-prices/commit/e162116cb35a8dfa03014317e207927d4a48eb7c))
+* **OpenFoodFacts:** move Smoothie-specific utils to `openfoodfacts.py` ([#1117](https://github.com/openfoodfacts/open-prices/issues/1117)) ([7192df4](https://github.com/openfoodfacts/open-prices/commit/7192df45d8882d841f52bfeea7522a87f2f47a46))
+
+## [1.92.0](https://github.com/openfoodfacts/open-prices/compare/v1.91.0...v1.92.0) (2025-11-22)
+
+
+### Features
+
+* improve price tag detection ([#1128](https://github.com/openfoodfacts/open-prices/issues/1128)) ([ada31cf](https://github.com/openfoodfacts/open-prices/commit/ada31cfe443e56b5389a6ce5bf859188ded54f5b))
+* **Moderation:** allow moderators to edit flag's status field ([#1129](https://github.com/openfoodfacts/open-prices/issues/1129)) ([89ebb89](https://github.com/openfoodfacts/open-prices/commit/89ebb89cb27fb265af8f0e55ddc51d311d151008))
+* **Moderation:** new endpoint to list all flags (restricted to moderators) ([#1123](https://github.com/openfoodfacts/open-prices/issues/1123)) ([84f8e69](https://github.com/openfoodfacts/open-prices/commit/84f8e690240e5b0d31bc8d182c26d5da93b4a0b4))
+
+
+### Bug Fixes
+
+* fix command in README for running anonymize_receipts ([#1126](https://github.com/openfoodfacts/open-prices/issues/1126)) ([dbbdd76](https://github.com/openfoodfacts/open-prices/commit/dbbdd765facfe87a9ddf80b751e9a2961b9baae0))
+* use TypedDict from typing_extensions ([#1131](https://github.com/openfoodfacts/open-prices/issues/1131)) ([96b89f4](https://github.com/openfoodfacts/open-prices/commit/96b89f4db35378d26f1b5159db6c9365529d31b0))
+
+
+### Technical
+
+* **ml:** split open_prices.proofs.ml into submodules ([#1130](https://github.com/openfoodfacts/open-prices/issues/1130)) ([c45ffd3](https://github.com/openfoodfacts/open-prices/commit/c45ffd31ac461b98044dfce3479d852f62b17d0a))
+
+## [1.91.0](https://github.com/openfoodfacts/open-prices/compare/v1.90.1...v1.91.0) (2025-11-15)
+
+
+### Features
+
+* **Moderation:** new Flag table to store upcoming issues ([#1115](https://github.com/openfoodfacts/open-prices/issues/1115)) ([c4c1d46](https://github.com/openfoodfacts/open-prices/commit/c4c1d46993763feb8dfea7cffc19c18c29c8b207))
+* **Moderation:** Prices: new endpoint to add a Flag for a given price ([#1116](https://github.com/openfoodfacts/open-prices/issues/1116)) ([e06896e](https://github.com/openfoodfacts/open-prices/commit/e06896eb9dd68b10fbabf0995b239e0d88b6077f))
+* **Moderation:** Proofs: new endpoint to add a Flag for a given proof ([#1120](https://github.com/openfoodfacts/open-prices/issues/1120)) ([fee667e](https://github.com/openfoodfacts/open-prices/commit/fee667ec039a1fe5e65c2aa53fa6a8db76bdb966))
+
+## [1.90.1](https://github.com/openfoodfacts/open-prices/compare/v1.90.0...v1.90.1) (2025-11-10)
+
+
+### Bug Fixes
+
+* **Django:** only import debug_toolbar if DEBUG (following [#1106](https://github.com/openfoodfacts/open-prices/issues/1106)) ([#1109](https://github.com/openfoodfacts/open-prices/issues/1109)) ([479aa68](https://github.com/openfoodfacts/open-prices/commit/479aa6853ee1d0056aa009b60033fd2a9bb67e3c))
+* set timeout properly for scheduled task ([#1102](https://github.com/openfoodfacts/open-prices/issues/1102)) ([c8d005c](https://github.com/openfoodfacts/open-prices/commit/c8d005cbd4792ac07a11b3c51c2c7f4eb214da64))
+
+
+### Technical
+
+* **deps:** Update dependencies ([#1106](https://github.com/openfoodfacts/open-prices/issues/1106)) ([f9c4cd3](https://github.com/openfoodfacts/open-prices/commit/f9c4cd3afbabbbb6687fbea50f706b83ea68b184))
+* **deps:** Update dependencies (partial revert of [#1106](https://github.com/openfoodfacts/open-prices/issues/1106) to fix issues) ([#1107](https://github.com/openfoodfacts/open-prices/issues/1107)) ([fb63a44](https://github.com/openfoodfacts/open-prices/commit/fb63a446ad074d26cfe5b1ff3ea3ac83ba270ba8))
+* **Github Actions:** Replace ubuntu-latest with ubuntu-slim in simple workflow runners ([#1105](https://github.com/openfoodfacts/open-prices/issues/1105)) ([ac8a60e](https://github.com/openfoodfacts/open-prices/commit/ac8a60e269f2cfebba3b0f95d787330296a628be))
+* increase the number of workers from 2 to 4 ([#1113](https://github.com/openfoodfacts/open-prices/issues/1113)) ([d049a6e](https://github.com/openfoodfacts/open-prices/commit/d049a6e1637b890dbe2b8a0d3d159ba02e2b1078))
+
+## [1.90.0](https://github.com/openfoodfacts/open-prices/compare/v1.89.0...v1.90.0) (2025-10-25)
+
+
+### Features
+
+* **Prices:** allow moderators to edit & delete any price ([#1086](https://github.com/openfoodfacts/open-prices/issues/1086)) ([fde4a9c](https://github.com/openfoodfacts/open-prices/commit/fde4a9cce9cb754d7685471137f627465c8c72c0))
+* **Proofs:** allow moderators to edit & delete any proof ([#1087](https://github.com/openfoodfacts/open-prices/issues/1087)) ([97366a5](https://github.com/openfoodfacts/open-prices/commit/97366a565802d1544fe62b7d0c4f5a3380990e92))
+
+
+### Bug Fixes
+
+* increase timeout for `update_product_counts_task` ([#1100](https://github.com/openfoodfacts/open-prices/issues/1100)) ([33d2d4f](https://github.com/openfoodfacts/open-prices/commit/33d2d4f3d5ccca7b5b0e0fde30b4469d29160c70))
+* **ML:** catch JSONDecodeError in Gemini's response ([#1091](https://github.com/openfoodfacts/open-prices/issues/1091)) ([4e59d05](https://github.com/openfoodfacts/open-prices/commit/4e59d056050905b2b9fffef19c6bd644dde90b79))
+* **Proofs:** Prevent exception if there is any problem with the img thumbnail processing ([#1068](https://github.com/openfoodfacts/open-prices/issues/1068)) ([0fa9a1f](https://github.com/openfoodfacts/open-prices/commit/0fa9a1fa92369f407afedd4ee9c70028b07acbde))
+* Wait 2s before fetching data using OFF API ([#1099](https://github.com/openfoodfacts/open-prices/issues/1099)) ([142fc56](https://github.com/openfoodfacts/open-prices/commit/142fc566df4be6658651917ecbc346050e4c7816))
+
+
+### Technical
+
+* **deps:** upgrade google-genai ([#1101](https://github.com/openfoodfacts/open-prices/issues/1101)) ([38d8098](https://github.com/openfoodfacts/open-prices/commit/38d8098fa284f798f9e2eb210fcf68b6ae4013e1))
+* **Login:** return user_id & is_moderator info ([#1097](https://github.com/openfoodfacts/open-prices/issues/1097)) ([c8377ed](https://github.com/openfoodfacts/open-prices/commit/c8377ed9ed055e54142bb833741b289d6bf13073))
+* update Triton URI ([#1093](https://github.com/openfoodfacts/open-prices/issues/1093)) ([5bb9a8e](https://github.com/openfoodfacts/open-prices/commit/5bb9a8e400a95fd3101777cbb375da9e8e4a25af))
+
+## [1.89.0](https://github.com/openfoodfacts/open-prices/compare/v1.88.3...v1.89.0) (2025-10-18)
+
+
+### Features
+
+* **Prices:** API: new endpoint to fetch a price's history ([#1058](https://github.com/openfoodfacts/open-prices/issues/1058)) ([2f785b4](https://github.com/openfoodfacts/open-prices/commit/2f785b4fff82922c0f7d67deaaf613c27dcf1ed7))
+* **Proofs:** API: new endpoint to fetch a proof's history ([#1083](https://github.com/openfoodfacts/open-prices/issues/1083)) ([6d62515](https://github.com/openfoodfacts/open-prices/commit/6d625159fd708b587560e529cde40e1833e8b82b))
+
+
+### Technical
+
+* **Challenges:** on create, init stats object ([#1079](https://github.com/openfoodfacts/open-prices/issues/1079)) ([0a4fa44](https://github.com/openfoodfacts/open-prices/commit/0a4fa44c5221970811f9d8fa8c00d912e62c9209))
+* **History:** new method to get Price & Proof instance history list ([#1057](https://github.com/openfoodfacts/open-prices/issues/1057)) ([51dc616](https://github.com/openfoodfacts/open-prices/commit/51dc6163f039d2bf533433bdd0ba2894ec2b641f))
+* **PriceTag:** post-prediction, normalize barcodes ([#1085](https://github.com/openfoodfacts/open-prices/issues/1085)) ([3fec3e5](https://github.com/openfoodfacts/open-prices/commit/3fec3e5f07465990789c3f6689b0fa926e494274))
+* **Products:** Create in Product Opener: languages and country support ([#1081](https://github.com/openfoodfacts/open-prices/issues/1081)) ([860035c](https://github.com/openfoodfacts/open-prices/commit/860035c2fb82346b586c1ba97ff9d73974067974))
+* **Users:** manage moderators ourselves. Don't sync with OFF ([#1077](https://github.com/openfoodfacts/open-prices/issues/1077)) ([11fcc66](https://github.com/openfoodfacts/open-prices/commit/11fcc666e2c0437ec31c30ba365660167e416a81))
+
+## [1.88.3](https://github.com/openfoodfacts/open-prices/compare/v1.88.2...v1.88.3) (2025-10-16)
+
+
+### Bug Fixes
+
+* **Challenges:** fix filtering by status (annotated) ([#1078](https://github.com/openfoodfacts/open-prices/issues/1078)) ([3f655a9](https://github.com/openfoodfacts/open-prices/commit/3f655a971a513dbda1a21772d76e92ead87c2672))
+
+
+### Technical
+
+* **History:** add more tests on Proof.location & Price.product changes ([#1076](https://github.com/openfoodfacts/open-prices/issues/1076)) ([0d4ffea](https://github.com/openfoodfacts/open-prices/commit/0d4ffea3e8dd4b1440afac7b676ac6041db77440))
+* **Shop Import:** move config data to a mapping file (JSON) for reuse ([#1070](https://github.com/openfoodfacts/open-prices/issues/1070)) ([278393e](https://github.com/openfoodfacts/open-prices/commit/278393e1a86aaaa120a189c3a66cd60378f45a07))
+
+## [1.88.2](https://github.com/openfoodfacts/open-prices/compare/v1.88.1...v1.88.2) (2025-10-12)
+
+
+### Technical
+
+* **Challenges:** move validations to a seperate file ([#1064](https://github.com/openfoodfacts/open-prices/issues/1064)) ([796af93](https://github.com/openfoodfacts/open-prices/commit/796af93a4207506c0a67882696f493cc47793ab5))
+* **Locations:** move validations to a dedicated file ([#1062](https://github.com/openfoodfacts/open-prices/issues/1062)) ([1c229f3](https://github.com/openfoodfacts/open-prices/commit/1c229f3233d2e6cfd2e94828364ca84f85835256))
+* **OpenFoodFacts:** move cached taxonomy logic to common_openfoodfacts ([#1069](https://github.com/openfoodfacts/open-prices/issues/1069)) ([55ac249](https://github.com/openfoodfacts/open-prices/commit/55ac2498538f794d71fa55dbe267e11ac9764307))
+* **Price Tags:** move validations to a seperate file ([#1065](https://github.com/openfoodfacts/open-prices/issues/1065)) ([44fdc9e](https://github.com/openfoodfacts/open-prices/commit/44fdc9ec63053a4af8a47e58c8dcd5b0043cf9c2))
+* **Prices:** move validations to a seperate file ([#1067](https://github.com/openfoodfacts/open-prices/issues/1067)) ([9fdcd11](https://github.com/openfoodfacts/open-prices/commit/9fdcd11d6c097f64944494c7d9799e80baf6ccec))
+* **Proofs:** move validations to a seperate file ([#1066](https://github.com/openfoodfacts/open-prices/issues/1066)) ([b7285ea](https://github.com/openfoodfacts/open-prices/commit/b7285eafc4ba72e55485771319329141b0395f93))
+
+## [1.88.1](https://github.com/openfoodfacts/open-prices/compare/v1.88.0...v1.88.1) (2025-10-11)
+
+
+### Bug Fixes
+
+* **Proofs:** API: fix 500 error if date field missing ([#1059](https://github.com/openfoodfacts/open-prices/issues/1059)) ([72e362a](https://github.com/openfoodfacts/open-prices/commit/72e362a90ec6bd168c8df5cf0c0937f594387636))
+
+
+### Technical
+
+* **API:** Price & Proof create: add more tests ([#1061](https://github.com/openfoodfacts/open-prices/issues/1061)) ([e963aaa](https://github.com/openfoodfacts/open-prices/commit/e963aaa44b02202161d0ef00f5b37713df79878f))
+* **History:** fix cleanup command. run more often (every night) ([#1055](https://github.com/openfoodfacts/open-prices/issues/1055)) ([c6df656](https://github.com/openfoodfacts/open-prices/commit/c6df656f66d6cf029b6c07f96ef1a7afeb664e40))
+* **Products:** Product Opener API endpoints: restrict to PATCH method ([#1056](https://github.com/openfoodfacts/open-prices/issues/1056)) ([b9fc9d0](https://github.com/openfoodfacts/open-prices/commit/b9fc9d0a5e3caddbd4c3615f89955868ada55e60))
+
+## [1.88.0](https://github.com/openfoodfacts/open-prices/compare/v1.87.0...v1.88.0) (2025-10-10)
+
+
+### Features
+
+* **Proofs:** track changes in a history table ([#1048](https://github.com/openfoodfacts/open-prices/issues/1048)) ([73f28f6](https://github.com/openfoodfacts/open-prices/commit/73f28f673e95bdb459ee67a3a98b8c34ab527102))
+
+
+### Bug Fixes
+
+* **similar-barcode:** remove barcodes with invalid checksum ([#1053](https://github.com/openfoodfacts/open-prices/issues/1053)) ([1cc9c2f](https://github.com/openfoodfacts/open-prices/commit/1cc9c2fc4982113b89e84deb707e838e77306189))
+
+
+### Technical
+
+* **History:** command to cleanup duplicate entries on a weekly basis ([#1051](https://github.com/openfoodfacts/open-prices/issues/1051)) ([6b36fbf](https://github.com/openfoodfacts/open-prices/commit/6b36fbf58f433dd84125796f0063f5337bb8b4e5))
+* **Proofs:** History: add change_reason messages for context ([#1052](https://github.com/openfoodfacts/open-prices/issues/1052)) ([0db4476](https://github.com/openfoodfacts/open-prices/commit/0db4476ed5bc5be171a0db7f966bae5fb1d2152d))
+
+## [1.87.0](https://github.com/openfoodfacts/open-prices/compare/v1.86.4...v1.87.0) (2025-10-09)
+
+
+### Features
+
+* **Prices:** track changes in a history table ([#976](https://github.com/openfoodfacts/open-prices/issues/976)) ([df31839](https://github.com/openfoodfacts/open-prices/commit/df31839a558e31c0fd92bf1c7a6fd25993ee6c8c))
+
+
+### Bug Fixes
+
+* **Challenges:** cron: call the challenge_tasks at 1:30 instead of 1:20. ref [#988](https://github.com/openfoodfacts/open-prices/issues/988) ([4498c93](https://github.com/openfoodfacts/open-prices/commit/4498c932fcb5bbeba692ff627b1b03473acfa622))
+
+
+### Technical
+
+* following normalize PR, add test on command and additional cleanup ([#1047](https://github.com/openfoodfacts/open-prices/issues/1047)) ([3cfb39f](https://github.com/openfoodfacts/open-prices/commit/3cfb39f0e6a281733b008b4fa7a03e7ad6917321))
+* **Prices:** History: add change_reason messages for context ([#1016](https://github.com/openfoodfacts/open-prices/issues/1016)) ([9bb68fb](https://github.com/openfoodfacts/open-prices/commit/9bb68fb65c8c7d40984cbf861066173b51a85d63))
+
+## [1.86.4](https://github.com/openfoodfacts/open-prices/compare/v1.86.3...v1.86.4) (2025-10-09)
+
+
+### Bug Fixes
+
+* normalize barcodes in prices and products tables ([#1045](https://github.com/openfoodfacts/open-prices/issues/1045)) ([04cb683](https://github.com/openfoodfacts/open-prices/commit/04cb6830affdbc14e3491d2257d17c048b44b8a4))
+
+## [1.86.3](https://github.com/openfoodfacts/open-prices/compare/v1.86.2...v1.86.3) (2025-10-07)
+
+
+### Technical
+
+* **Products:** Automatically set the uploaded image as the selected front (english) ([#1041](https://github.com/openfoodfacts/open-prices/issues/1041)) ([981933a](https://github.com/openfoodfacts/open-prices/commit/981933a46b6ce80ddbed761681f649e949ba0d5d))
+
+## [1.86.2](https://github.com/openfoodfacts/open-prices/compare/v1.86.1...v1.86.2) (2025-10-04)
+
+
+### Bug Fixes
+
+* **deps:** fix Redis import following upgrade of openfoodfacts-python ([#1038](https://github.com/openfoodfacts/open-prices/issues/1038)) ([f63cd31](https://github.com/openfoodfacts/open-prices/commit/f63cd31671eea6852f817df9e1d550d7e85a8af9))
+* **deps:** fix Redis params following upgrade of openfoodfacts-python (2/2) ([#1040](https://github.com/openfoodfacts/open-prices/issues/1040)) ([8be9dc0](https://github.com/openfoodfacts/open-prices/commit/8be9dc04c8234484b327ab1c8af5b8e688e258cf))
+
+## [1.86.1](https://github.com/openfoodfacts/open-prices/compare/v1.86.0...v1.86.1) (2025-10-04)
+
+
+### Bug Fixes
+
+* **settings:** rename OFF_ENVIRONEMENT to ENVIRONMENT ([#1036](https://github.com/openfoodfacts/open-prices/issues/1036)) ([d1b4d5d](https://github.com/openfoodfacts/open-prices/commit/d1b4d5d0601929e10cf7373a6c15ffd8dda39b1a))
+
+## [1.86.0](https://github.com/openfoodfacts/open-prices/compare/v1.85.1...v1.86.0) (2025-10-04)
+
+
+### Features
+
+* **Products:** New API endpoints to update/add Product Opener products and images ([#1012](https://github.com/openfoodfacts/open-prices/issues/1012)) ([6851f91](https://github.com/openfoodfacts/open-prices/commit/6851f917e286fa5efe7314c4ff4b333da617daf3))
+
+
+### Technical
+
+* add missing OFF_DEFAULT_PASSWORD from secrets to .env (following [#1012](https://github.com/openfoodfacts/open-prices/issues/1012)) ([0c4eb96](https://github.com/openfoodfacts/open-prices/commit/0c4eb9638d05880e3958f89b1b512057253c4247))
+* add more tests for non-available endpoints ([c2f4104](https://github.com/openfoodfacts/open-prices/commit/c2f410463887c6c4aa144b2eaa5194fd2c07bbcf))
+* **Price Tags:** API: new filter by price_id ([#1033](https://github.com/openfoodfacts/open-prices/issues/1033)) ([7c460ba](https://github.com/openfoodfacts/open-prices/commit/7c460ba625161ba46e4c2530522adcedbf16ad79))
+* **settings:** new OFF_ENVIRONMENT env variable ([89c6899](https://github.com/openfoodfacts/open-prices/commit/89c68994ea2492355e12102a9f3783f9224fa136))
+
+## [1.85.1](https://github.com/openfoodfacts/open-prices/compare/v1.85.0...v1.85.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* **Price Tags:** fix bug introduced by a small refactoring in the barcode similarity queryset ([#1032](https://github.com/openfoodfacts/open-prices/issues/1032)) ([5bab096](https://github.com/openfoodfacts/open-prices/commit/5bab0966fbb6719f901af65238a3649fb09c5c7a))
+
+
+### Technical
+
+* **Products:** API: new filter by source__isnull ([#1030](https://github.com/openfoodfacts/open-prices/issues/1030)) ([d758b78](https://github.com/openfoodfacts/open-prices/commit/d758b78535f6e8c0f3e0224e58e187b92d5d3e51))
+
+## [1.85.0](https://github.com/openfoodfacts/open-prices/compare/v1.84.2...v1.85.0) (2025-10-02)
+
+
+### Features
+
+* implement a barcode similarity search feature for price tags ([#1009](https://github.com/openfoodfacts/open-prices/issues/1009)) ([da79d80](https://github.com/openfoodfacts/open-prices/commit/da79d80e627e0c9eae48826bad4006e64cf33bc8))
+* **PriceTag:** fix some barcodes post-prediction with USD-specific rules ([#1022](https://github.com/openfoodfacts/open-prices/issues/1022)) ([8cd94e9](https://github.com/openfoodfacts/open-prices/commit/8cd94e931c6606a086f25799fc4c04d345c788b9))
+
+
+### Bug Fixes
+
+* **API:** Locations: order by ID by default instead of created ([#1017](https://github.com/openfoodfacts/open-prices/issues/1017)) ([71592ea](https://github.com/openfoodfacts/open-prices/commit/71592eab519888d6f36163d389137143a4d94e9b))
+* **API:** Prices: order by ID by default instead of created ([#1015](https://github.com/openfoodfacts/open-prices/issues/1015)) ([df97f53](https://github.com/openfoodfacts/open-prices/commit/df97f53d6c76ca17bc4d18f77a86c8fe751ae254))
+* **API:** Proofs: order by ID by default instead of created ([#1014](https://github.com/openfoodfacts/open-prices/issues/1014)) ([a27a40a](https://github.com/openfoodfacts/open-prices/commit/a27a40a3ed34a8bea4f950718b8d7c30c958d3cd))
+* **Migration:** fix price migration 0012 (ArrayField) ([#1005](https://github.com/openfoodfacts/open-prices/issues/1005)) ([f6112e6](https://github.com/openfoodfacts/open-prices/commit/f6112e667a33a26aa034c0173d7842f0494cb294))
+* return "status": "duplicate" when a duplicate proof is uploaded ([#983](https://github.com/openfoodfacts/open-prices/issues/983)) ([79a8e99](https://github.com/openfoodfacts/open-prices/commit/79a8e99ad884de7a0b241949eca3b40e96b819f9))
+
+
+### Technical
+
+* **Challenges:** improve set_tags methods. new reset_tags methods ([#1007](https://github.com/openfoodfacts/open-prices/issues/1007)) ([cb61549](https://github.com/openfoodfacts/open-prices/commit/cb61549520988e47684de4d6eb4c30d340a5e038))
+* **Locations:** return "detail": "duplicate" when a duplicate location is created ([#1019](https://github.com/openfoodfacts/open-prices/issues/1019)) ([52ea4f4](https://github.com/openfoodfacts/open-prices/commit/52ea4f40f015510b679aa41ab5c5555e145b4eb4))
+* **Price Tags:** small refactoring in the barcode similarity queryset. ref [#1009](https://github.com/openfoodfacts/open-prices/issues/1009) ([83fed73](https://github.com/openfoodfacts/open-prices/commit/83fed735678783db58070e0ac9ba3cfc1df8f78e))
+* **README:** Add more info on Open Prices API & reuse ([#1013](https://github.com/openfoodfacts/open-prices/issues/1013)) ([47aba2b](https://github.com/openfoodfacts/open-prices/commit/47aba2bc74953a8c2410606cde5a4ea09f25b3b8))
+* **README:** new weekly meeting day (Thursday instead of Wednesday). closes [#1026](https://github.com/openfoodfacts/open-prices/issues/1026) ([5dd4349](https://github.com/openfoodfacts/open-prices/commit/5dd43498f0fb19e29909b9fd2c3e0229e45f9d05))
+* **Stats:** avoid count fields being None (default 0) ([#1027](https://github.com/openfoodfacts/open-prices/issues/1027)) ([c3d6791](https://github.com/openfoodfacts/open-prices/commit/c3d6791843ceb04f94fbf8d0c9c4747a8b316781))
+
+## [1.84.2](https://github.com/openfoodfacts/open-prices/compare/v1.84.1...v1.84.2) (2025-09-20)
+
+
+### Bug Fixes
+
+* **Challenges:** in product ranking stats store brands instead of brands_tags. ref [#1003](https://github.com/openfoodfacts/open-prices/issues/1003) ([dad91d4](https://github.com/openfoodfacts/open-prices/commit/dad91d41e6a36f2c705a1eeeb31206624d56c5f5))
+
+
+### Technical
+
+* **Users:** Stats: new year_count & challenge_count ([#1006](https://github.com/openfoodfacts/open-prices/issues/1006)) ([a55b4ef](https://github.com/openfoodfacts/open-prices/commit/a55b4efee84feb18f4bfd2faf94bbbc677b80f71))
+
+## [1.84.1](https://github.com/openfoodfacts/open-prices/compare/v1.84.0...v1.84.1) (2025-09-20)
+
+
+### Technical
+
+* **Challenges:** enrich location ranking stats with extra fields (for display in the frontend) ([#1001](https://github.com/openfoodfacts/open-prices/issues/1001)) ([3e0bc35](https://github.com/openfoodfacts/open-prices/commit/3e0bc358594ca9ea16b2fc45e760425b51b4fe48))
+* **Challenges:** new product price count ranking ([#1003](https://github.com/openfoodfacts/open-prices/issues/1003)) ([d3122d9](https://github.com/openfoodfacts/open-prices/commit/d3122d9477efe6eddc41e20c4a3073bc0d779878))
+
+## [1.84.0](https://github.com/openfoodfacts/open-prices/compare/v1.83.3...v1.84.0) (2025-09-19)
+
+
+### Features
+
+* **Challenges:** allow to restrict on a list of locations (for local challenges) ([#992](https://github.com/openfoodfacts/open-prices/issues/992)) ([0f30bf3](https://github.com/openfoodfacts/open-prices/commit/0f30bf35c275137d8450c5fa5c25631164dd9d57))
+* **Proofs:** allow to filter by `image_md5_hash` ([#984](https://github.com/openfoodfacts/open-prices/issues/984)) ([b11d5ff](https://github.com/openfoodfacts/open-prices/commit/b11d5ff0c5aac1f681634513624b1eabc8391298))
+
+
+### Technical
+
+* Add labeler rule for challenges directory ([25a39c5](https://github.com/openfoodfacts/open-prices/commit/25a39c53de8436a9c946a26aa8d225d426391727))
+* Add labeler rules for Challenges files ([49cee56](https://github.com/openfoodfacts/open-prices/commit/49cee56b568c4b5cb3168b9d768e4660d836a3bd))
+* **Challenges:** new location price count rankings (location id, city & country) ([#995](https://github.com/openfoodfacts/open-prices/issues/995)) ([7d1f0ee](https://github.com/openfoodfacts/open-prices/commit/7d1f0ee8c65d7ff18ebf49dbb63854a847f2ebfc))
+* **Challenges:** new user_count stat ([#997](https://github.com/openfoodfacts/open-prices/issues/997)) ([e909aa3](https://github.com/openfoodfacts/open-prices/commit/e909aa31509c6035a690859faa3a3f1d53f74c33))
+* **Challenges:** rename the user ranking stats to clarify ([#993](https://github.com/openfoodfacts/open-prices/issues/993)) ([d0ea8f7](https://github.com/openfoodfacts/open-prices/commit/d0ea8f799cdd6d9be6aecbcbf9b7339bd4844aba))
+* **Prices:** transform labels_tags & origins_tags from JSONField to ArrayField ([#998](https://github.com/openfoodfacts/open-prices/issues/998)) ([7318cf4](https://github.com/openfoodfacts/open-prices/commit/7318cf461f86f9544d623ed86ca6b39e00cc1347))
+* update the remove_duplicate_proofs.py script ([#981](https://github.com/openfoodfacts/open-prices/issues/981)) ([e57adb7](https://github.com/openfoodfacts/open-prices/commit/e57adb70d665fa4de36dfbc875d2387332e4b831))
+* use Triton server running on GPU for ML inference ([#1000](https://github.com/openfoodfacts/open-prices/issues/1000)) ([791ac19](https://github.com/openfoodfacts/open-prices/commit/791ac19f0041a466ac422a8e3cf62aec4e918ed9))
+
+## [1.83.3](https://github.com/openfoodfacts/open-prices/compare/v1.83.2...v1.83.3) (2025-09-14)
+
+
+### Technical
+
+* **Challenges:** new price_count & price_from_user_proof_count ranking stats ([#991](https://github.com/openfoodfacts/open-prices/issues/991)) ([205708e](https://github.com/openfoodfacts/open-prices/commit/205708e0fdbf677e4aad39087e0736f47ed1a45f))
+* **Challenges:** new proof_count ranking stat ([#989](https://github.com/openfoodfacts/open-prices/issues/989)) ([1c1a28c](https://github.com/openfoodfacts/open-prices/commit/1c1a28c7c2f936351f9d3d6cb26e060fe7716e42))
+
+## [1.83.2](https://github.com/openfoodfacts/open-prices/compare/v1.83.1...v1.83.2) (2025-09-14)
+
+
+### Bug Fixes
+
+* **Challenges:** forgot to call the update stats task every night ([#988](https://github.com/openfoodfacts/open-prices/issues/988)) ([e4c404a](https://github.com/openfoodfacts/open-prices/commit/e4c404a6aeef0c9b730c33573d1e973210c40c9b))
+* **Prices:** allow to create prices with 3 decimals ([#973](https://github.com/openfoodfacts/open-prices/issues/973)) ([0e946d3](https://github.com/openfoodfacts/open-prices/commit/0e946d3e0833803eade151bcbddc4d91073bd0eb))
+
+
+### Technical
+
+* **Proofs:** add a CLI command to compute the MD5 hash of image files ([#980](https://github.com/openfoodfacts/open-prices/issues/980)) ([38a48c5](https://github.com/openfoodfacts/open-prices/commit/38a48c5ce9bac2281ff0cc209257e0ae39ec1268))
+* **Stats:** User & TotalStats: new proof_currency_count ([#986](https://github.com/openfoodfacts/open-prices/issues/986)) ([53ed493](https://github.com/openfoodfacts/open-prices/commit/53ed4936a25b9959e92aebfbcb26f93094752c3b))
+
+## [1.83.1](https://github.com/openfoodfacts/open-prices/compare/v1.83.0...v1.83.1) (2025-09-09)
+
+
+### Bug Fixes
+
+* return HTTP 201 when uploading duplicate proof on Smooth app ([#978](https://github.com/openfoodfacts/open-prices/issues/978)) ([84e1c19](https://github.com/openfoodfacts/open-prices/commit/84e1c19a3c8f6993e2733c7a366f4c0c48a75325))
+
+
+### Technical
+
+* ignore .envrc in .gitignore ([#982](https://github.com/openfoodfacts/open-prices/issues/982)) ([354db7d](https://github.com/openfoodfacts/open-prices/commit/354db7d9b7eabb56e6593cd8da4fd8f9644f1c88))
+
+## [1.83.0](https://github.com/openfoodfacts/open-prices/compare/v1.82.1...v1.83.0) (2025-09-05)
+
+
+### Features
+
+* **Ml,ReceiptItems:** lookup product code using product names ([#952](https://github.com/openfoodfacts/open-prices/issues/952)) ([58902c6](https://github.com/openfoodfacts/open-prices/commit/58902c67087c400c1852ce1a112ab513b876d448))
+* prevent duplicate proof upload ([#964](https://github.com/openfoodfacts/open-prices/issues/964)) ([8e6319e](https://github.com/openfoodfacts/open-prices/commit/8e6319efb13157368e4f178cb6c52826607b4125))
+
+
+### Bug Fixes
+
+* **API:** Make the Bearer token prefix case-insensitive ([#971](https://github.com/openfoodfacts/open-prices/issues/971)) ([fe57e5d](https://github.com/openfoodfacts/open-prices/commit/fe57e5d427998f386c4563013b424f997555311c))
+* **API:** Proof upload: if the token is wrong, return a 400 instead of a 201 (and creating it anonymously) ([#969](https://github.com/openfoodfacts/open-prices/issues/969)) ([1385f7b](https://github.com/openfoodfacts/open-prices/commit/1385f7bd40a458d604938b00c813b9c00dd54831))
+* **Proofs:** allow a date of tomorrow to manage users in future time zones ([#972](https://github.com/openfoodfacts/open-prices/issues/972)) ([152f456](https://github.com/openfoodfacts/open-prices/commit/152f456871027623471ccca0db0fb68013fcf6a1))
+* using 'type: ' makes mypy crashes ([#968](https://github.com/openfoodfacts/open-prices/issues/968)) ([9e0329c](https://github.com/openfoodfacts/open-prices/commit/9e0329c576ffeb1cde19027ebdcd2b5d65d556a0))
+
+
+### Technical
+
+* add `anonymize_receipts.py` script ([#970](https://github.com/openfoodfacts/open-prices/issues/970)) ([d73db67](https://github.com/openfoodfacts/open-prices/commit/d73db67b770a340e8100788aae23e89aac77ba3b))
+* **Challenges:** add extra stats: proof_location_count & price_product_count ([#960](https://github.com/openfoodfacts/open-prices/issues/960)) ([f032172](https://github.com/openfoodfacts/open-prices/commit/f0321724296407d0c4722175e64be21943ec909b))
+* **Django:** cleanup remaining comments regarding DB mgmt ([#966](https://github.com/openfoodfacts/open-prices/issues/966)) ([0c6e109](https://github.com/openfoodfacts/open-prices/commit/0c6e1096288eb5fff50c42459ce36adefc401beb))
+* **Locations:** improve the duplicate mechanism (catch the ValidationError) ([#965](https://github.com/openfoodfacts/open-prices/issues/965)) ([87da4c1](https://github.com/openfoodfacts/open-prices/commit/87da4c19d457828e9729987de50682954871b74b))
+* remove ref to latest release please hash ([#955](https://github.com/openfoodfacts/open-prices/issues/955)) ([54785f3](https://github.com/openfoodfacts/open-prices/commit/54785f3f98ee59489a32930dc6049bc5b2ae4431))
+* remove required arguments for makemigrations ([#967](https://github.com/openfoodfacts/open-prices/issues/967)) ([5ef62b8](https://github.com/openfoodfacts/open-prices/commit/5ef62b8e2a0b48085f2863ead4f1e20909f82d32))
+* use Q2_SYNC=True when running tests ([4748af5](https://github.com/openfoodfacts/open-prices/commit/4748af5a290e948692217b92cb461fde4577f337))
+
+## [1.82.1](https://github.com/openfoodfacts/open-prices/compare/v1.82.0...v1.82.1) (2025-08-25)
+
+
+### Bug Fixes
+
+* **API:** Products: order by ID by default instead of `created` ([#947](https://github.com/openfoodfacts/open-prices/issues/947)) ([25db18f](https://github.com/openfoodfacts/open-prices/commit/25db18f9dc9582e159428a23f96ccac2066e0eb8))
+* **API:** use ANY instead if ILIKE queries for Postgres ARRAY fields filters ([#945](https://github.com/openfoodfacts/open-prices/issues/945)) ([0b91004](https://github.com/openfoodfacts/open-prices/commit/0b9100465e4e7a10c8aceda6fecc4d9660a5c21e))
+
+
+### Technical
+
+* update to release please v4.3 ([#953](https://github.com/openfoodfacts/open-prices/issues/953)) ([13d9c09](https://github.com/openfoodfacts/open-prices/commit/13d9c095c346e62cb6bab29d35172db6dada859e))
+
+## [1.82.0](https://github.com/openfoodfacts/open-prices/compare/v1.81.8...v1.82.0) (2025-08-17)
+
+
+### Features
+
+* **Challenges:** new stats field. calculated every night. stored in a JSONField. ([#941](https://github.com/openfoodfacts/open-prices/issues/941)) ([9161c86](https://github.com/openfoodfacts/open-prices/commit/9161c8650d08d31c47dbdb687cc0db631df0f365))
+
+
+### Bug Fixes
+
+* add new environment variables ([#923](https://github.com/openfoodfacts/open-prices/issues/923)) ([4ec3f27](https://github.com/openfoodfacts/open-prices/commit/4ec3f27336fbcd0b0c61506def9d1dd5c452bb6a))
+
+
+### Technical
+
+* **Proofs:** move duplicate queryset to model + test ([#937](https://github.com/openfoodfacts/open-prices/issues/937)) ([542832a](https://github.com/openfoodfacts/open-prices/commit/542832a7ca028ae80b0c2b543e47630fe0e8dd2f))
+
+## [1.81.8](https://github.com/openfoodfacts/open-prices/compare/v1.81.7...v1.81.8) (2025-08-13)
+
+
+### Bug Fixes
+
+* associate prices to ref proof (remove_duplicate_proofs) ([#935](https://github.com/openfoodfacts/open-prices/issues/935)) ([87cc1ac](https://github.com/openfoodfacts/open-prices/commit/87cc1aca18b51c573cf1799f4dd711efcb7e12f3))
+* check raw image MD5 in script to delete duplicate proofs ([#920](https://github.com/openfoodfacts/open-prices/issues/920)) ([055eea2](https://github.com/openfoodfacts/open-prices/commit/055eea250bb8fa7d9636f50532cfa06e6a83d3f8))
+* update `remove_duplicates` script ([#928](https://github.com/openfoodfacts/open-prices/issues/928)) ([6736354](https://github.com/openfoodfacts/open-prices/commit/6736354ef22d4f7666c8c424db73df859d9a66e2))
+
+
+### Technical
+
+* add new documentation pages ([#925](https://github.com/openfoodfacts/open-prices/issues/925)) ([a518104](https://github.com/openfoodfacts/open-prices/commit/a518104b5549ee8e8ff9b0a14fdb1b40ace3f4b1))
+* add new pages to menu ([#927](https://github.com/openfoodfacts/open-prices/issues/927)) ([ab1df90](https://github.com/openfoodfacts/open-prices/commit/ab1df90bb76fc36fbbe5ebe06e70f747dbe62c13))
+* fix missing line return in local-development.md ([#932](https://github.com/openfoodfacts/open-prices/issues/932)) ([5cb3cab](https://github.com/openfoodfacts/open-prices/commit/5cb3caba814e97bdf12098de2a092f20ee231335))
+* Update README.md ([#929](https://github.com/openfoodfacts/open-prices/issues/929)) ([fe31c3b](https://github.com/openfoodfacts/open-prices/commit/fe31c3b2bb885c06de275d256392a2cdda470dfe))
+
+## [1.81.7](https://github.com/openfoodfacts/open-prices/compare/v1.81.6...v1.81.7) (2025-08-12)
+
+
+### Bug Fixes
+
+* add an envvar to control async requests to Gemini for price tags ([#921](https://github.com/openfoodfacts/open-prices/issues/921)) ([605f043](https://github.com/openfoodfacts/open-prices/commit/605f043aa0aecfc35025a3d3fa6eba36dc6723d4))
+
+## [1.81.6](https://github.com/openfoodfacts/open-prices/compare/v1.81.5...v1.81.6) (2025-08-11)
+
+
+### Bug Fixes
+
+* fix INVALID_ARGUMENT when calling Gemini ([#918](https://github.com/openfoodfacts/open-prices/issues/918)) ([de36a0a](https://github.com/openfoodfacts/open-prices/commit/de36a0a9a73ed4c55826b4383505b799451e2bb0))
+* override `ready_for_validation_price_tag` to False for Smoothie ([#908](https://github.com/openfoodfacts/open-prices/issues/908)) ([f9e234f](https://github.com/openfoodfacts/open-prices/commit/f9e234f8a9814de5e5027388a941581a764b8de7))
+
+
+### Technical
+
+* **Proofs:** move cropping logic to utils ([#914](https://github.com/openfoodfacts/open-prices/issues/914)) ([b89c98a](https://github.com/openfoodfacts/open-prices/commit/b89c98a94d2d96a8f4f6d6d64f2d0ed36d8a032d))
+* use `europe-west1` location ([#919](https://github.com/openfoodfacts/open-prices/issues/919)) ([b366ba4](https://github.com/openfoodfacts/open-prices/commit/b366ba419c0ae70aaa2e3a87bd9f3f817e315650))
+
+## [1.81.5](https://github.com/openfoodfacts/open-prices/compare/v1.81.4...v1.81.5) (2025-08-10)
+
+
+### Bug Fixes
+
+* fix proof extraction script and extract_from_receipt function ([#911](https://github.com/openfoodfacts/open-prices/issues/911)) ([fb69a0f](https://github.com/openfoodfacts/open-prices/commit/fb69a0f5bc207bbd5d6438950a2ee07d8d9c7752))
+* improve cleanup scripts ([#906](https://github.com/openfoodfacts/open-prices/issues/906)) ([0f08eec](https://github.com/openfoodfacts/open-prices/commit/0f08eecf7f3bbdc2e4ff6b97485861e649116f58))
+
+
+### Technical
+
+* **Proofs:** add admin integration for prediction models ([#913](https://github.com/openfoodfacts/open-prices/issues/913)) ([3e19a4d](https://github.com/openfoodfacts/open-prices/commit/3e19a4d6378339e5e171633ec41f50976e45c56f))
+
+## [1.81.4](https://github.com/openfoodfacts/open-prices/compare/v1.81.3...v1.81.4) (2025-08-08)
+
+
+### Bug Fixes
+
+* fix `get_predicted_price` method ([#904](https://github.com/openfoodfacts/open-prices/issues/904)) ([973ea75](https://github.com/openfoodfacts/open-prices/commit/973ea75f6017a9f9cf08f012b292ac43213ff400))
+* fix AttributeError in get_predicted_price ([#907](https://github.com/openfoodfacts/open-prices/issues/907)) ([70fdc73](https://github.com/openfoodfacts/open-prices/commit/70fdc73787e370b8819e6ac6d7aaeb7325b974fc))
+* fix JSONDecodeError when parsing receipt prediction ([#910](https://github.com/openfoodfacts/open-prices/issues/910)) ([f76882e](https://github.com/openfoodfacts/open-prices/commit/f76882e2f21101bc947fc4a88671ec4ed03e4f42))
+
+
+### Technical
+
+* add script to remove duplicate proofs ([#902](https://github.com/openfoodfacts/open-prices/issues/902)) ([b4d6e6b](https://github.com/openfoodfacts/open-prices/commit/b4d6e6b14db7a7557cb4d367f57ac00e84574122))
+
+## [1.81.3](https://github.com/openfoodfacts/open-prices/compare/v1.81.2...v1.81.3) (2025-08-07)
+
+
+### Bug Fixes
+
+* don't process proofs that were just uploaded ([#901](https://github.com/openfoodfacts/open-prices/issues/901)) ([95f587a](https://github.com/openfoodfacts/open-prices/commit/95f587ac04a5af8418914893c9d3c0f596a9615d))
+
+
+### Technical
+
+* add a script to detect duplicated prices ([#900](https://github.com/openfoodfacts/open-prices/issues/900)) ([5e37adc](https://github.com/openfoodfacts/open-prices/commit/5e37adc7355eceb2e4a2b1727d9c6ad7c58715e0))
+* **Price Tag:** predictions: move the tags helper methods to ml. Adapt to schema v2 ([#897](https://github.com/openfoodfacts/open-prices/issues/897)) ([937d1e4](https://github.com/openfoodfacts/open-prices/commit/937d1e4fff6a977489041d0b22de80fff45379aa))
+* **Price Tags:** predictions: update the matching script logic following changes in the schema ([#898](https://github.com/openfoodfacts/open-prices/issues/898)) ([fd92aa4](https://github.com/openfoodfacts/open-prices/commit/fd92aa421ea2915ed68bcb347e2da375c35c05da))
+
+## [1.81.2](https://github.com/openfoodfacts/open-prices/compare/v1.81.1...v1.81.2) (2025-08-04)
+
+
+### Bug Fixes
+
+* only create once the Google genai client ([#891](https://github.com/openfoodfacts/open-prices/issues/891)) ([5dc9230](https://github.com/openfoodfacts/open-prices/commit/5dc9230dbb81184f1df2fd8a66231c646ef4031c))
+
+## [1.81.1](https://github.com/openfoodfacts/open-prices/compare/v1.81.0...v1.81.1) (2025-08-04)
+
+
+### Bug Fixes
+
+* upgrade certifi version ([#889](https://github.com/openfoodfacts/open-prices/issues/889)) ([9159bfd](https://github.com/openfoodfacts/open-prices/commit/9159bfd3e141dd09b3dbaeadd48bd3ccfd684b02))
+
+## [1.81.0](https://github.com/openfoodfacts/open-prices/compare/v1.80.2...v1.81.0) (2025-07-24)
+
+
+### Features
+
+* **Price tags:** improve price tag extraction using Gemini (new schema, async, store thought tokens) ([#885](https://github.com/openfoodfacts/open-prices/issues/885)) ([6a8ebfb](https://github.com/openfoodfacts/open-prices/commit/6a8ebfb90fc9eb8b9cb96ac1748ae3c689ab2c2c))
+
 ## [1.80.2](https://github.com/openfoodfacts/open-prices/compare/v1.80.1...v1.80.2) (2025-07-23)
 
 

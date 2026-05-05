@@ -9,6 +9,7 @@ from django_q.tasks import async_task
 from open_prices.common import utils
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
+from open_prices.locations import validators as location_validators
 
 
 class LocationQuerySet(models.QuerySet):
@@ -24,6 +25,14 @@ class LocationQuerySet(models.QuerySet):
     def with_stats(self):
         return self.prefetch_related("prices").annotate(
             price_count_annotated=Count("prices", distinct=True)
+        )
+
+    def calculate_field_distinct_count(self, field_name: str):
+        return (
+            self.exclude(**{f"{field_name}__isnull": True})
+            .values(field_name)
+            .distinct()
+            .count()
         )
 
 
@@ -51,7 +60,7 @@ class Location(models.Model):
 
     type = models.CharField(max_length=20, choices=location_constants.TYPE_CHOICES)
 
-    # type: OSM
+    # type OSM
     osm_id = models.PositiveBigIntegerField(blank=True, null=True)
     osm_type = models.CharField(
         max_length=10,
@@ -76,13 +85,14 @@ class Location(models.Model):
     )
     osm_version = models.PositiveIntegerField(blank=True, null=True)
 
-    # type: ONLINE
+    # type ONLINE
     website_url = models.URLField(blank=True, null=True)
 
-    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    user_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    # denormalized counts (updated with signals and/or cronjobs)
+    price_count = models.PositiveIntegerField(default=0)
+    user_count = models.PositiveIntegerField(default=0)
+    product_count = models.PositiveIntegerField(default=0)
+    proof_count = models.PositiveIntegerField(default=0)
 
     source = models.CharField(blank=True, null=True)
 
@@ -92,16 +102,15 @@ class Location(models.Model):
     objects = models.Manager.from_queryset(LocationQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "locations"
         constraints = [
             UniqueConstraint(
-                name="unique_osm_constraint",
+                name=location_constants.TYPE_OSM_UNIQUE_CONSTRAINT_NAME,
                 fields=["osm_id", "osm_type"],
                 condition=Q(type=location_constants.TYPE_OSM),
             ),
             UniqueConstraint(
-                name="unique_online_constraint",
+                name=location_constants.TYPE_ONLINE_UNIQUE_CONSTRAINT_NAME,
                 fields=["website_url"],
                 condition=Q(type=location_constants.TYPE_ONLINE),
             ),
@@ -129,47 +138,11 @@ class Location(models.Model):
                 setattr(self, field_name, url)
 
     def clean(self, *args, **kwargs):
-        # dict to store all ValidationErrors
-        validation_errors = dict()
-        # osm rules
-        if self.type == location_constants.TYPE_OSM:
-            for field_name in self.TYPE_OSM_MANDATORY_FIELDS:
-                if not getattr(self, field_name):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        field_name,
-                        f"Should be set (type = {self.type})",
-                    )
-            if self.osm_id in [True, "true", "false", "none", "null"]:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "osm_id",
-                    "Should not be a boolean or an invalid string",
-                )
-            for field_name in self.TYPE_ONLINE_MANDATORY_FIELDS:
-                if getattr(self, field_name):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        field_name,
-                        f"Should not be set (type = {self.type})",
-                    )
-        # online rules
-        elif self.type == location_constants.TYPE_ONLINE:
-            for field_name in self.TYPE_ONLINE_MANDATORY_FIELDS:
-                if not getattr(self, field_name):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        field_name,
-                        f"Should be set (type = {self.type})",
-                    )
-            for field_name in self.TYPE_OSM_MANDATORY_FIELDS:
-                if getattr(self, field_name):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        field_name,
-                        f"Should not be set (type = {self.type})",
-                    )
-
+        # store all ValidationError in a dict
+        validation_errors = utils.merge_validation_errors(
+            location_validators.validate_location_type_osm_rules(self),
+            location_validators.validate_location_type_online_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
@@ -177,7 +150,8 @@ class Location(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        - truncate decimal fields
+        - OSM: cleanup lat/lon fields
+        - ONLINE: cleanup URL fields
         - run validations
         """
         if self.type == location_constants.TYPE_OSM:
@@ -202,23 +176,17 @@ class Location(models.Model):
     def update_user_count(self):
         from open_prices.proofs.models import Proof
 
-        self.user_count = (
-            Proof.objects.filter(location=self, owner__isnull=False)
-            .values_list("owner", flat=True)
-            .distinct()
-            .count()
-        )
+        self.user_count = Proof.objects.filter(
+            location=self
+        ).calculate_field_distinct_count("owner")
         self.save(update_fields=["user_count"])
 
     def update_product_count(self):
         from open_prices.prices.models import Price
 
-        self.product_count = (
-            Price.objects.filter(location=self, product_id__isnull=False)
-            .values_list("product_id", flat=True)
-            .distinct()
-            .count()
-        )
+        self.product_count = Price.objects.filter(
+            location=self
+        ).calculate_field_distinct_count("product_id")
         self.save(update_fields=["product_count"])
 
     def update_proof_count(self):

@@ -18,11 +18,16 @@ SECRET_KEY = os.getenv("SECRET_KEY", "set-in-production")
 DEBUG = os.getenv("DEBUG") == "True"
 TESTING = "test" in sys.argv
 
-ALLOWED_HOSTS = [x.strip() for x in os.getenv("ALLOWED_HOSTS", "").split(",")]
+ALLOWED_HOSTS = [
+    x.strip() for x in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+]
 
 # CSRF trusted origins is only used for admin interface, as the rest of
 # front-end is using Vue.js and Django REST Framework
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1:8000").split(
+    ","
+)
+
 
 # App config
 # ------------------------------------------------------------------------------
@@ -43,6 +48,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",  # drf-spectacular
     "django_q",  # django-q2
     "solo",  # django-solo
+    "simple_history",  # django-simple-history
     # "debug_toolbar",  # django-debug-toolbar (see below)
     "django_extensions",  # django-extensions
 ]
@@ -56,6 +62,7 @@ LOCAL_APPS = [
     "open_prices.challenges",
     "open_prices.users",
     "open_prices.stats",
+    "open_prices.moderation",
     "open_prices.api",
     "open_prices.www",
 ]
@@ -71,6 +78,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",  # django-simple-history
 ]
 
 APPEND_SLASH = False
@@ -103,11 +111,13 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "USER": os.getenv("POSTGRES_USER"),
-        "NAME": os.getenv("POSTGRES_DB"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST"),
-        "PORT": os.getenv("POSTGRES_PORT"),
+        "USER": os.getenv("POSTGRES_USER", "postgres"),
+        "NAME": os.getenv("POSTGRES_DB", "postgres"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+        "HOST": os.getenv(
+            "POSTGRES_HOST", "postgres"
+        ),  # Defaults to postgres since we are using docker and the service is named postgres
+        "PORT": os.getenv("POSTGRES_PORT", 5432),
         "CONN_MAX_AGE": 60,
     }
 }
@@ -189,7 +199,7 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "ORDERING_PARAM": "order_by",
     "DEFAULT_PAGINATION_CLASS": "open_prices.api.pagination.CustomPagination",
-    "COERCE_DECIMAL_TO_STRING": False,
+    "COERCE_DECIMAL_TO_STRING": False,  # return floats instead
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
 }
@@ -208,7 +218,12 @@ SPECTACULAR_SETTINGS = {
     },
     "SCHEMA_PATH_PREFIX": "/api/v[0-9]",
     "ENUM_NAME_OVERRIDES": {
-        "LocationOsmTypeEnum": "open_prices.locations.constants.OSM_TYPE_CHOICES"
+        "PriceTypeEnum": "open_prices.prices.constants.TYPE_CHOICES",
+        "ProofTypeEnum": "open_prices.proofs.constants.TYPE_CHOICES",
+        "PriceTagStatusEnum": "open_prices.proofs.constants.PRICE_TAG_STATUS_CHOICES",
+        "LocationTypeEnum": "open_prices.locations.constants.TYPE_CHOICES",
+        "LocationOsmTypeEnum": "open_prices.locations.constants.OSM_TYPE_CHOICES",
+        "FlagStatusEnum": "open_prices.moderation.models.FlagStatus.choices",
     },
 }
 
@@ -219,7 +234,7 @@ SPECTACULAR_SETTINGS = {
 
 Q_CLUSTER = {
     "name": "DjangORM",
-    "workers": 2,
+    "workers": int(os.getenv("Q2_WORKERS", 8)),
     # timeout is set to 2h (OFF daily sync is long)
     "timeout": 2 * 60 * 60,
     # retry must be less than timeout & less than it takes to finish a task
@@ -228,7 +243,8 @@ Q_CLUSTER = {
     "queue_limit": 50,
     "bulk": 10,
     "orm": "default",
-    "sync": True if DEBUG else False,
+    # if True, tasks will be executed synchronously. set to False in production
+    "sync": os.getenv("Q2_SYNC") == "True",
 }
 
 
@@ -241,9 +257,9 @@ if not DEBUG:
     from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
-        dsn=os.getenv("SENTRY_DSN"),
+        dsn=os.getenv("SENTRY_DSN", ""),
         integrations=[DjangoIntegration()],
-        environment=os.getenv("ENVIRONMENT"),
+        environment=os.getenv("ENVIRONMENT", "net"),
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for tracing.  # noqa
         traces_sample_rate=1.0,
         # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.  # noqa
@@ -276,14 +292,6 @@ SHELL_PLUS_POST_IMPORTS = [
 ]
 
 
-# Authentication
-# ------------------------------------------------------------------------------
-
-OAUTH2_SERVER_URL = os.getenv("OAUTH2_SERVER_URL")
-SESSION_COOKIE_NAME = "opsession"
-OFF_USER_AGENT = "open-prices/0.1.0"
-
-
 # Google Cloud Vision API
 # ------------------------------------------------------------------------------
 
@@ -296,16 +304,37 @@ GOOGLE_CLOUD_VISION_API_KEY = os.getenv("GOOGLE_CLOUD_VISION_API_KEY")
 # Google service account credentials. This is a base64-encoded version of the
 # JSON file
 GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")
+# The project to use on Google Cloud
+GOOGLE_PROJECT = os.getenv("GOOGLE_PROJECT", "robotoff")
+
+# If True, requests to the Vertex AI (or Gemini) API will be made
+# asynchronously using asyncio.
+PRICE_TAG_EXTRACTION_ASYNC_REQUESTS = (
+    os.getenv("PRICE_TAG_EXTRACTION_ASYNC_REQUESTS") == "True"
+)
 
 # Triton Inference Server (ML)
 # ------------------------------------------------------------------------------
 
 TRITON_URI = os.getenv("TRITON_URI", "localhost:5504")
+ENABLE_OCR = os.getenv("ENABLE_OCR") == "True"
 ENABLE_ML_PREDICTIONS = os.getenv("ENABLE_ML_PREDICTIONS") == "True"
-
 
 # Open Food Facts
 # ------------------------------------------------------------------------------
+
+OAUTH2_SERVER_URL = os.getenv(
+    "OAUTH2_SERVER_URL", "https://world.openfoodfacts.org/cgi/auth.pl"
+)
+KEYCLOAK_OIDC_CONFIG_URL = os.getenv("KEYCLOAK_OIDC_CONFIG_URL", "")
+KEYCLOAK_AUDIENCE = os.getenv("KEYCLOAK_AUDIENCE", "")
+SESSION_COOKIE_NAME = "opsession"
+OFF_USER_AGENT = "open-prices/0.1.0"
+
+ENVIRONMENT = os.getenv("ENVIRONMENT", "net")  # or "org"
+
+OFF_DEFAULT_USER = os.getenv("OFF_DEFAULT_USER", "open-prices")
+OFF_DEFAULT_PASSWORD = os.getenv("OFF_DEFAULT_PASSWORD")
 
 # https://world.openfoodfacts.org/contributor/openfoodfacts-contributors
 ANONYMOUS_USER_ID = "openfoodfacts-contributors"
@@ -321,7 +350,9 @@ ENABLE_IMPORT_OPF_DB_TASK = os.getenv("ENABLE_IMPORT_OPF_DB_TASK") == "True"
 
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
-REDIS_STREAM_NAME = os.getenv("REDIS_STREAM_NAME", "product_updates")
+REDIS_PRODUCT_UPDATES_STREAM_NAME = os.getenv(
+    "REDIS_PRODUCT_UPDATES_STREAM_NAME", "product_updates"
+)
 REDIS_LATEST_ID_KEY = os.getenv(
     "REDIS_LATEST_ID_KEY", "open-prices:product_updates:latest_id"
 )

@@ -42,6 +42,9 @@ class Command(BaseCommand):
         for price_tag in price_tag_qs.all():
             if price_tag.get_predicted_product_name():
                 price_tag.price.product_name = price_tag.get_predicted_product_name()
+                price_tag.price._change_reason = (
+                    "set_price_product_name_from_proof_predictions command"
+                )
                 price_tag.price.save(update_fields=["product_name"])
 
         # Step 2: ReceiptItem
@@ -50,6 +53,9 @@ class Command(BaseCommand):
             if receipt_item.get_predicted_product_name():
                 receipt_item.price.product_name = (
                     receipt_item.get_predicted_product_name()
+                )
+                receipt_item.price._change_reason = (
+                    "set_price_product_name_from_proof_predictions command"
                 )
                 receipt_item.price.save(update_fields=["product_name"])
 

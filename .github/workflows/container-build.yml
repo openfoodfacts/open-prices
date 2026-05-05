@@ -11,19 +11,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'openfoodfacts'
     strategy:
       matrix:
         image_name:
         - api
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       with:
-        version: v0.6.0
+        version: v0.31.1
         buildkitd-flags: --debug
 
     - name: Login to DockerHub

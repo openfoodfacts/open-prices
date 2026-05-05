@@ -1,15 +1,26 @@
-# Open Prices API
+# Open Prices backend
 
-A REST API designed to interact with the Open Food Facts _Open Prices_ database.
+A Python Django REST API designed to interact with the Open Food Facts _Open Prices_ database.
 
-## Links
+## Project documentation
 
-- Backend API Swagger: https://prices.openfoodfacts.org/api/docs
-- Frontend app: https://prices.openfoodfacts.org
-- Frontend repo: https://github.com/openfoodfacts/open-prices-frontend
-- Documentation: https://openfoodfacts.github.io/open-prices/
+### Links
 
-## 🎨 Design & User interface
+- Open Prices Frontend app: https://prices.openfoodfacts.org
+- Open Prices Frontend repository: https://github.com/openfoodfacts/open-prices-frontend
+- Open Prices API: https://prices.openfoodfacts.org/api/docs
+- Documentation: https://openfoodfacts.github.io/open-prices
+- Wiki: https://wiki.openfoodfacts.org/Project:Open-Prices
+
+### Looking for the Open Prices API?
+
+- Open Prices API Documentation: https://prices.openfoodfacts.org/api/docs
+- Make sure you comply with the OdBL licence, mentioning the source of your data, and ensuring to avoid combining non free data you can't release legally as open data. Another requirement is contributing back any product you add using this SDK.
+- Please get in touch at reuse@openfoodfacts.org
+- We are very interested in learning what the Open Prices data is used for. It is not mandatory, but we would very much appreciate it if you tell us about your re-uses (https://forms.gle/hwaeqBfs8ywwhbTg8) so that we can share them with the Open Food Facts community. And we would be happy to feature it here: https://prices.openfoodfacts.org/community
+
+### 🎨 Design & User interface
+
 - The Open Prices server is exposed through the Mobile App and the Open Prices frontend (and probably elsewhere in the future, thanks to web components)
 - We strive to thoughtfully design every feature before we move on to implementation, so that we respect Open Food Facts' graphic charter and nascent design system, while having efficient user flows.
 - [![Figma](https://img.shields.io/badge/figma-%23F24E1E.svg?logo=figma&logoColor=white) Mockups for Open Prices](https://www.figma.com/design/cIB7CInl2BfueMzWnz09t6/Open-Prices?node-id=0-1&p=f&t=LC7UvPjngw57NGSs-0)
@@ -23,17 +34,17 @@ A REST API designed to interact with the Open Food Facts _Open Prices_ database.
 * [Django](https://www.djangoproject.com/) framework
 * PostgreSQL database
 
-## How to install on your local machine
+## How to install on your local machine and help develop Open Prices
 
-Follow the steps in [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.md)
+see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Contribute
 
 See [CONTRIBUTING.md](https://github.com/openfoodfacts/open-prices/blob/main/CONTRIBUTING.md)
 
-<details><summary><h2>Weekly meetings</h2></summary>
-
-* We e-meet Wednesdays at 14:00 Paris Time
+<details>
+<summary><h2>Weekly meetings</h2></summary>
+* We e-meet Thrusdays at 14:00 Paris Time
 * ![Google Meet](https://img.shields.io/badge/Google%20Meet-00897B?logo=google-meet&logoColor=white) Video call link: https://meet.google.com/oin-hiqp-tmd
 * Join by phone: https://tel.meet/oin-hiqp-tmd?pin=5784334159966
 * Add the Event to your Calendar by [adding the Open Food Facts community calendar to your calendar](https://wiki.openfoodfacts.org/Events)

@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import F, Func
+from django.db.models.functions import ExtractYear
 from django.utils import timezone
 
 
@@ -14,7 +16,6 @@ class User(models.Model):
         "price_type_category_count",
         "price_kind_community_count",
         "price_kind_consumption_count",
-        "price_currency_count",
         "price_in_proof_owned_count",
         "price_in_proof_not_owned_count",
         "price_not_owned_in_proof_owned_count",
@@ -24,14 +25,24 @@ class User(models.Model):
         "proof_kind_community_count",
         "proof_kind_consumption_count",
     ]
+    LOCATION_COUNT_FIELDS = [
+        "location_count",
+        "location_type_osm_country_count",
+    ]
+    PRODUCT_COUNT_FIELDS = [
+        "product_count",
+    ]
+    OTHER_COUNT_FIELDS = [
+        "currency_count",
+        "year_count",
+        "challenge_count",
+    ]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
         + PROOF_COUNT_FIELDS
-        + [
-            "location_count",
-            "location_type_osm_country_count",
-            "product_count",
-        ]
+        + LOCATION_COUNT_FIELDS
+        + PRODUCT_COUNT_FIELDS
+        + OTHER_COUNT_FIELDS
     )
     SERIALIZED_FIELDS = [
         "user_id",
@@ -41,33 +52,24 @@ class User(models.Model):
 
     is_moderator = models.BooleanField(default=False)
 
-    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    price_type_product_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    price_type_category_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
+    # denormalized counts (updated with signals and/or cronjobs)
+    price_count = models.PositiveIntegerField(default=0)
+    price_type_product_count = models.PositiveIntegerField(default=0)
+    price_type_category_count = models.PositiveIntegerField(default=0)
     price_kind_community_count = models.PositiveIntegerField(default=0)
     price_kind_consumption_count = models.PositiveIntegerField(default=0)
-    price_currency_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    price_in_proof_owned_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    price_in_proof_not_owned_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    price_not_owned_in_proof_owned_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    location_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    location_type_osm_country_count = models.PositiveIntegerField(
-        default=0, blank=True, null=True
-    )
-    product_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    proof_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    price_in_proof_owned_count = models.PositiveIntegerField(default=0)
+    price_in_proof_not_owned_count = models.PositiveIntegerField(default=0)
+    price_not_owned_in_proof_owned_count = models.PositiveIntegerField(default=0)
+    location_count = models.PositiveIntegerField(default=0)
+    location_type_osm_country_count = models.PositiveIntegerField(default=0)
+    product_count = models.PositiveIntegerField(default=0)
+    proof_count = models.PositiveIntegerField(default=0)
     proof_kind_community_count = models.PositiveIntegerField(default=0)
     proof_kind_consumption_count = models.PositiveIntegerField(default=0)
+    currency_count = models.PositiveIntegerField(default=0)
+    year_count = models.PositiveIntegerField(default=0)
+    challenge_count = models.PositiveIntegerField(default=0)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -75,7 +77,6 @@ class User(models.Model):
     objects = models.Manager.from_queryset(UserQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "users"
         verbose_name = "User"
         verbose_name_plural = "Users"
@@ -99,32 +100,23 @@ class User(models.Model):
         self.price_kind_consumption_count = (
             Price.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
-        self.price_currency_count = (
-            Price.objects.filter(owner=self.user_id)
-            .values_list("currency", flat=True)
-            .distinct()
-            .count()
-        )
         self.price_in_proof_owned_count = (
             Price.objects.select_related("proof")
             .filter(owner=self.user_id)
             .filter(proof__owner=self.user_id)
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("id")
         )
         self.price_in_proof_not_owned_count = (
             Price.objects.select_related("proof")
             .filter(owner=self.user_id)
             .exclude(proof__owner=self.user_id)
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("id")
         )
         self.price_not_owned_in_proof_owned_count = (
             Price.objects.select_related("proof")
             .exclude(owner=self.user_id)
             .filter(proof__owner=self.user_id)
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("id")
         )
         self.save(update_fields=self.PRICE_COUNT_FIELDS)
 
@@ -132,12 +124,9 @@ class User(models.Model):
         from open_prices.locations import constants as location_constants
         from open_prices.proofs.models import Proof
 
-        self.location_count = (
-            Proof.objects.filter(owner=self.user_id, location_id__isnull=False)
-            .values_list("location_id", flat=True)
-            .distinct()
-            .count()
-        )
+        self.location_count = Proof.objects.filter(
+            owner=self.user_id
+        ).calculate_field_distinct_count("location_id")
         self.location_type_osm_country_count = (
             Proof.objects.select_related("location")
             .filter(
@@ -145,22 +134,17 @@ class User(models.Model):
                 location_id__isnull=False,
                 location__type=location_constants.TYPE_OSM,
             )
-            .values_list("location__osm_address_country", flat=True)
-            .distinct()
-            .count()
+            .calculate_field_distinct_count("location__osm_address_country")
         )
-        self.save(update_fields=["location_count", "location_type_osm_country_count"])
+        self.save(update_fields=self.LOCATION_COUNT_FIELDS)
 
     def update_product_count(self):
         from open_prices.prices.models import Price
 
-        self.product_count = (
-            Price.objects.filter(owner=self.user_id, product_id__isnull=False)
-            .values_list("product_id", flat=True)
-            .distinct()
-            .count()
-        )
-        self.save(update_fields=["product_count"])
+        self.product_count = Price.objects.filter(
+            owner=self.user_id
+        ).calculate_field_distinct_count("product_id")
+        self.save(update_fields=self.PRODUCT_COUNT_FIELDS)
 
     def update_proof_count(self):
         from open_prices.proofs.models import Proof
@@ -174,6 +158,46 @@ class User(models.Model):
         )
         self.save(update_fields=self.PROOF_COUNT_FIELDS)
 
+    def update_other_count(self):
+        from open_prices.challenges import constants as challenge_constants
+        from open_prices.prices.models import Price
+        from open_prices.proofs.models import Proof
+
+        self.currency_count = (  # should we filter on proof with prices only?
+            Proof.objects.filter(owner=self.user_id).calculate_field_distinct_count(
+                "currency"
+            )
+        )
+        self.year_count = (
+            Proof.objects.filter(owner=self.user_id)
+            .annotate(date_year_annotated=ExtractYear("date"))
+            .calculate_field_distinct_count("date_year_annotated")
+        )
+        proof_in_challenge_tag_list = (
+            Proof.objects.exclude(tags=[])
+            .filter(
+                owner=self.user_id,
+                tags__icontains=challenge_constants.CHALLENGE_TAG_PREFIX,
+            )
+            .annotate(tags_unnest=Func(F("tags"), function="unnest"))
+            .values_list("tags_unnest", flat=True)
+            .distinct()
+        )
+        price_in_challenge_tag_list = (
+            Price.objects.exclude(tags=[])
+            .filter(
+                owner=self.user_id,
+                tags__icontains=challenge_constants.CHALLENGE_TAG_PREFIX,
+            )
+            .annotate(tags_unnest=Func(F("tags"), function="unnest"))
+            .values_list("tags_unnest", flat=True)
+            .distinct()
+        )
+        self.challenge_count = len(
+            set(proof_in_challenge_tag_list) | set(price_in_challenge_tag_list)
+        )
+        self.save(update_fields=self.OTHER_COUNT_FIELDS)
+
 
 class Session(models.Model):
     user = models.ForeignKey(
@@ -185,7 +209,6 @@ class Session(models.Model):
     last_used = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        # managed = False
         db_table = "sessions"
         verbose_name = "Session"
         verbose_name_plural = "Sessions"

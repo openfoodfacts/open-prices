@@ -14,7 +14,7 @@ class UserViewSet(
     lookup_field = "user_id"
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = UserFilter
-    ordering_fields = User.SERIALIZED_FIELDS
+    ordering_fields = ["user_id"] + User.COUNT_FIELDS
     ordering = ["user_id"]
 
     def get_queryset(self):

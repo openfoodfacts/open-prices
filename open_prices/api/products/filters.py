@@ -8,13 +8,13 @@ class ProductFilter(django_filters.FilterSet):
         field_name="product_name", lookup_expr="icontains"
     )
     categories_tags__contains = django_filters.CharFilter(
-        field_name="categories_tags", lookup_expr="icontains"
+        field_name="categories_tags", lookup_expr="any"
     )
     labels_tags__contains = django_filters.CharFilter(
-        field_name="labels_tags", lookup_expr="icontains"
+        field_name="labels_tags", lookup_expr="any"
     )
     brands_tags__contains = django_filters.CharFilter(
-        field_name="brands_tags", lookup_expr="icontains"
+        field_name="brands_tags", lookup_expr="any"
     )
     brands__like = django_filters.CharFilter(
         field_name="brands", lookup_expr="icontains"
@@ -28,6 +28,9 @@ class ProductFilter(django_filters.FilterSet):
     price_count__lte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="lte"
     )
+    source__isnull = django_filters.BooleanFilter(
+        field_name="source", lookup_expr="isnull"
+    )
 
     class Meta:
         model = Product
@@ -37,5 +40,6 @@ class ProductFilter(django_filters.FilterSet):
             "nutriscore_grade",
             "ecoscore_grade",
             "nova_group",
+            "creator",
             "price_count",
         ]

@@ -2,6 +2,9 @@ name: Open Prices unit and integration tests
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,7 +23,7 @@ jobs:
       #       check-out repo
       #----------------------------------------------
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       #----------------------------------------------
       # Launch checks and tests
@@ -32,6 +35,7 @@ jobs:
           # align user id
           echo "USER_UID=$UID" >> .env
           echo "PYTHON_VERSION=${{ matrix.python-version }}" >> .env
+          echo "Q2_SYNC=True" >> .env
 
       - name: Launch tests
         run: |

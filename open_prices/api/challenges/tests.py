@@ -15,12 +15,10 @@ class ChallengeListApiTest(TestCase):
         cls.challenge_2 = ChallengeFactory()
 
     def test_challenge_list(self):
+        # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(len(response.data["items"]), 2)
-        self.assertEqual(
-            response.data["items"][0]["id"], self.challenge_1.id
-        )  # default order
         # extra fields: status, tag
         self.assertTrue("status" in response.data["items"][0])
         self.assertTrue("tag" in response.data["items"][0])
@@ -42,7 +40,25 @@ class ChallengeListPaginationApiTest(TestCase):
         self.assertEqual(response.data["size"], 10)  # default
 
 
-@freeze_time("2025-01-01")
+class ChallengeListOrderApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:challenges-list")
+        cls.challenge_1 = ChallengeFactory()
+        cls.challenge_2 = ChallengeFactory()
+
+    def test_challenge_list_default_order_by_id(self):
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.data["items"]), 2)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_1.id)
+
+    def test_challenge_list_order_by(self):
+        url = self.url + "?order_by=-id"
+        response = self.client.get(url)
+        self.assertEqual(len(response.data["items"]), 2)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_2.id)
+
+
 class ChallengeListFilterApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -88,6 +104,7 @@ class ChallengeListFilterApiTest(TestCase):
             response.data["items"][0]["id"], self.challenge_draft_upcoming.id
         )
 
+    @freeze_time("2025-01-01")
     def test_challenge_list_filter_by_status(self):
         response = self.client.get(self.url)
         response = self.client.get(
@@ -101,10 +118,23 @@ class ChallengeListFilterApiTest(TestCase):
             self.url + f"?status={challenge_constants.CHALLENGE_STATUS_UPCOMING}"
         )
         self.assertEqual(response.data["total"], 0)
-        # TODO: the following doesn't work, strange...
-        # response = self.client.get(self.url + f"?status={challenge_constants.CHALLENGE_STATUS_ONGOING}")  # noqa
-        # self.assertEqual(response.data["total"], 1)
-        # self.assertEqual(response.data["items"][0]["id"], self.challenge_ongoing.id)  # noqa
-        # response = self.client.get(self.url + f"?status={challenge_constants.CHALLENGE_STATUS_COMPLETED}")  # noqa
-        # self.assertEqual(response.data["total"], 1)
-        # self.assertEqual(response.data["items"][0]["id"], self.challenge_completed.id)  # noqa
+        # change the challenge_draft_upcoming to challenge_upcoming
+        self.challenge_draft_upcoming.is_published = True
+        self.challenge_draft_upcoming.save()
+        response = self.client.get(
+            self.url + f"?status={challenge_constants.CHALLENGE_STATUS_UPCOMING}"
+        )
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["id"], self.challenge_draft_upcoming.id
+        )
+        response = self.client.get(
+            self.url + f"?status={challenge_constants.CHALLENGE_STATUS_ONGOING}"
+        )  # noqa
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_ongoing.id)  # noqa
+        response = self.client.get(
+            self.url + f"?status={challenge_constants.CHALLENGE_STATUS_COMPLETED}"
+        )  # noqa
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], self.challenge_completed.id)  # noqa

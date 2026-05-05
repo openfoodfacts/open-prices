@@ -22,28 +22,34 @@ class LocationFactory(DjangoModelFactory):
     type = location_constants.TYPE_OSM  # random.choice(location_constants.TYPE_LIST)
 
     osm_id = factory.LazyAttributeSequence(
-        lambda x, y: random.randrange(0, 10000000000)
-        if x.type == location_constants.TYPE_OSM
-        else None
+        lambda x, y: (
+            random.randrange(0, 10000000000)
+            if x.type == location_constants.TYPE_OSM
+            else None
+        )
     )
     osm_type = factory.LazyAttribute(
-        lambda x: random.choice(location_constants.OSM_TYPE_LIST)
-        if x.type == location_constants.TYPE_OSM
-        else None
+        lambda x: (
+            random.choice(location_constants.OSM_TYPE_LIST)
+            if x.type == location_constants.TYPE_OSM
+            else None
+        )
     )
     osm_name = factory.LazyAttribute(
         lambda x: x.osm_name_faker if x.type == location_constants.TYPE_OSM else None
     )
     osm_address_country = factory.LazyAttribute(
-        lambda x: x.osm_address_country_faker
-        if x.type == location_constants.TYPE_OSM
-        else None
+        lambda x: (
+            x.osm_address_country_faker
+            if x.type == location_constants.TYPE_OSM
+            else None
+        )
     )
 
     website_url = factory.LazyAttribute(
-        lambda x: x.website_url_faker
-        if x.type == location_constants.TYPE_ONLINE
-        else None
+        lambda x: (
+            x.website_url_faker if x.type == location_constants.TYPE_ONLINE else None
+        )
     )
 
     # price_count = factory.LazyAttribute(lambda l: random.randrange(0, 100))

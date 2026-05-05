@@ -1,16 +1,27 @@
 import gzip
+import hashlib
+import io
 import json
+import os
+import shutil
 import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
 
+import cv2
 import numpy as np
+from django.conf import settings
+from django.core import management
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from freezegun import freeze_time
+from google.genai import types
+from openfoodfacts.ml.object_detection import ObjectDetectionRawResult
 from PIL import Image
+from simple_history.utils import bulk_update_with_history
 
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.common import constants
@@ -27,26 +38,31 @@ from open_prices.proofs.factories import (
     ProofPredictionFactory,
     ReceiptItemFactory,
 )
-from open_prices.proofs.ml import (
+from open_prices.proofs.ml import run_and_save_proof_prediction
+from open_prices.proofs.ml.classification import (
+    proof_classification_model_config,
+    run_and_save_proof_type_prediction,
+)
+from open_prices.proofs.ml.ocr import fetch_and_save_ocr_data
+from open_prices.proofs.ml.price_tags import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
     PRICE_TAG_DETECTOR_MODEL_VERSION,
-    PROOF_CLASSIFICATION_MODEL_NAME,
-    PROOF_CLASSIFICATION_MODEL_VERSION,
-    ObjectDetectionRawResult,
     create_price_tags_from_proof_prediction,
-    fetch_and_save_ocr_data,
+    extract_from_price_tag,
     run_and_save_price_tag_detection,
-    run_and_save_proof_prediction,
-    run_and_save_proof_type_prediction,
 )
 from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
 from open_prices.proofs.utils import (
+    compute_file_md5,
+    crop_image,
+    generate_image_thumbnail_cv2,
     match_category_price_tag_with_category_price,
     match_price_tag_with_price,
     match_product_price_tag_with_product_price,
     match_receipt_item_with_price,
     select_proof_image_dir,
 )
+from open_prices.users.factories import SessionFactory
 
 PRODUCT_8001505005707 = {
     "code": "8001505005707",
@@ -208,16 +224,80 @@ class ProofChallengeQuerySetAndPropertyTest(TestCase):
         )
 
 
+class ProofDuplicatesQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        location_osm = LocationFactory()
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        cls.proof_1_1 = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-01",
+            owner="user_1",
+        )
+        cls.proof_1_2 = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-01",
+            owner="user_1",
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,  # changed
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-01",
+            owner="user_1",
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_online.id,  # changed
+            date="2024-01-01",
+            owner="user_1",
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-02",  # changed
+            owner="user_1",
+        )
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=location_osm.id,
+            location_osm_id=location_osm.osm_id,
+            location_osm_type=location_osm.osm_type,
+            date="2024-01-01",
+            owner="user_2",  # changed
+        )
+
+    def test_duplicates(self):
+        self.assertEqual(Proof.objects.count(), 6)
+        duplicates = Proof.objects.duplicates(self.proof_1_1)
+        self.assertEqual(duplicates.count(), 1)
+        self.assertEqual(duplicates.first().id, self.proof_1_2.id)
+
+
 class ProofModelSaveTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         pass
 
     def test_proof_date_validation(self):
-        for DATE_OK in [None, "2024-01-01"]:
+        for DATE_OK in [None, "2024-01-01", "20240101", "2024-1-1", "1000-01-01"]:
             ProofFactory(date=DATE_OK)
         for DATE_NOT_OK in ["3000-01-01", "01-01-2000"]:
-            self.assertRaises(ValidationError, ProofFactory, date=DATE_NOT_OK)
+            with self.subTest(DATE_NOT_OK=DATE_NOT_OK):
+                self.assertRaises(ValidationError, ProofFactory, date=DATE_NOT_OK)
+        with freeze_time("2025-01-01"):
+            ProofFactory(date="2025-01-01")  # today
+            ProofFactory(date="2025-01-02")  # tomorrow accepted as well
+            self.assertRaises(ValidationError, ProofFactory, date="2025-01-03")
 
     def test_proof_location_validation(self):
         location_osm = LocationFactory()
@@ -385,6 +465,26 @@ class ProofModelSaveTest(TestCase):
         for OWNER_COMMENT_OK in [None, "", "test"]:
             ProofFactory(owner_comment=OWNER_COMMENT_OK)
 
+    def test_proof_count_increment(self):
+        user_session = SessionFactory()
+        location = LocationFactory()
+        # before
+        self.assertEqual(user_session.user.proof_count, 0)
+        self.assertEqual(location.proof_count, 0)
+        # create proof
+        ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            date="2024-01-01",
+            owner=user_session.user.user_id,
+        )
+        # after
+        user_session.user.refresh_from_db()
+        location.refresh_from_db()
+        self.assertEqual(user_session.user.proof_count, 1)
+        self.assertEqual(location.proof_count, 1)
+
 
 class ProofPropertyTest(TestCase):
     @classmethod
@@ -510,16 +610,25 @@ class ProofModelUpdateTest(TestCase):
         )
 
     def test_proof_update(self):
-        # currency
         self.assertEqual(self.proof_price_tag.prices.count(), 1)
+        # currency
+        self.assertEqual(self.proof_price_tag.currency, "EUR")
         self.proof_price_tag.currency = "USD"
         self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.currency, "USD")
         self.assertEqual(self.proof_price_tag.prices.first().currency, "USD")
         # date
+        self.assertEqual(str(self.proof_price_tag.prices.first().date), "2024-06-30")
         self.proof_price_tag.date = "2024-07-01"
         self.proof_price_tag.save()
+        self.proof_price_tag.refresh_from_db()
+        self.assertEqual(str(self.proof_price_tag.date), "2024-07-01")
         self.assertEqual(str(self.proof_price_tag.prices.first().date), "2024-07-01")
         # location
+        self.location_osm_1.refresh_from_db()
+        self.assertEqual(self.proof_price_tag.location, self.location_osm_1)
+        self.assertEqual(self.location_osm_1.proof_count, 1)
         self.proof_price_tag.location_osm_id = self.location_osm_2.osm_id
         self.proof_price_tag.location_osm_type = self.location_osm_2.osm_type
         self.proof_price_tag.save()
@@ -528,6 +637,131 @@ class ProofModelUpdateTest(TestCase):
         self.assertEqual(
             self.proof_price_tag.prices.first().location, self.location_osm_2
         )
+        self.location_osm_1.refresh_from_db()
+        self.location_osm_2.refresh_from_db()
+        self.assertEqual(self.location_osm_1.proof_count, 1)  # TODO: should be 0
+        self.assertEqual(self.location_osm_2.proof_count, 0)  # TODO: should be 1
+
+
+class ProofModelDeleteTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.location = LocationFactory()
+        cls.proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            date="2024-01-01",
+            owner=cls.user_session.user.user_id,
+        )
+
+    def test_proof_count_decrement(self):
+        # before
+        self.user_session.user.refresh_from_db()
+        self.location.refresh_from_db()
+        self.assertEqual(self.user_session.user.proof_count, 1)
+        self.assertEqual(self.location.proof_count, 1)
+        # delete proof
+        self.proof.delete()
+        # after
+        self.user_session.user.refresh_from_db()
+        self.location.refresh_from_db()
+        self.assertEqual(self.user_session.user.proof_count, 0)
+        self.assertEqual(self.location.proof_count, 0)
+
+
+class ProofModelHistoryTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.location_osm_1 = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_osm_2 = LocationFactory(**LOCATION_OSM_NODE_6509705997)
+        cls.proof = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location_osm_1.osm_id,
+            location_osm_type=cls.location_osm_1.osm_type,
+            date="2024-01-01",
+            owner=cls.user_session.user.user_id,
+        )
+
+    def test_proof_history(self):
+        self.assertEqual(self.proof.history.count(), 1)
+        self.assertEqual(self.proof.history.first().history_type, "+")
+        self.assertEqual(self.proof.history.first().history_user_id, None)
+        # update the proof (date & location)
+        self.proof.date = "2024-06-15"
+        self.proof.location_osm_id = self.location_osm_2.osm_id
+        self.proof.location_osm_type = self.location_osm_2.osm_type
+        self.proof.save()
+        self.assertEqual(self.proof.history.count(), 2)
+        self.assertEqual(self.proof.history.first().history_type, "~")
+        self.assertEqual(self.proof.history.first().history_user_id, None)
+        fields_changed_list = [
+            change.field
+            for change in self.proof.history.first()
+            .diff_against(self.proof.history.first().prev_record)
+            .changes
+        ]
+        self.assertEqual(fields_changed_list, ["date", "location", "location_osm_id"])
+        # update the proof on a field that does not trigger history
+        self.proof.price_count += 1
+        self.proof.save(update_fields=["price_count"])
+        self.assertEqual(self.proof.history.count(), 3)  # empty change
+        fields_changed_list = [
+            change.field
+            for change in self.proof.history.first()
+            .diff_against(self.proof.history.first().prev_record)
+            .changes
+        ]
+        self.assertEqual(fields_changed_list, [])
+        # command to cleanup historical instances with 0 changes
+        management.call_command("clean_duplicate_history", "--auto")
+        self.assertEqual(Proof.history.filter(id=self.proof.id).count(), 2)  # removed
+        # bulk update the proof (date)
+        self.proof.date = "2024-08-30"
+        bulk_update_with_history(
+            [self.proof], Proof, ["date"], default_user="moderator-2"
+        )
+        self.assertEqual(self.proof.history.count(), 3)
+        self.assertEqual(self.proof.history.first().history_type, "~")
+        self.assertEqual(self.proof.history.first().history_user_id, "moderator-2")
+        fields_changed_list = [
+            change.field
+            for change in self.proof.history.first()
+            .diff_against(self.proof.history.first().prev_record)
+            .changes
+        ]
+        self.assertEqual(fields_changed_list, ["date"])
+        # delete the proof
+        proof_id = self.proof.id
+        self.proof._history_user = "moderator-3"
+        self.proof.delete()
+        self.assertEqual(Proof.history.filter(id=proof_id).count(), 4)
+        self.assertEqual(Proof.history.filter(id=proof_id).first().history_type, "-")
+        self.assertEqual(
+            Proof.history.filter(id=proof_id).first().history_user_id, "moderator-3"
+        )
+
+    def test_proof_get_history_list(self):
+        history_list = self.proof.get_history_list()
+        self.assertEqual(len(history_list), 1)
+        self.assertEqual(history_list[0]["history_type"], "+")
+        self.assertEqual(len(history_list[0]["changes"]), 0)
+        # update the proof
+        self.proof.date = "2024-06-15"
+        self.proof.save()
+        history_list = self.proof.get_history_list()
+        self.assertEqual(len(history_list), 2)
+        self.assertEqual(history_list[0]["history_type"], "~")
+        self.assertEqual(len(history_list[0]["changes"]), 1)
+        self.assertEqual(history_list[0]["changes"][0]["field"], "date")
+        self.assertEqual(str(history_list[0]["changes"][0]["old"]), "2024-01-01")
+        self.assertEqual(str(history_list[0]["changes"][0]["new"]), "2024-06-15")
+        # save the proof without changes
+        self.proof.save()
+        history_list = self.proof.get_history_list()
+        self.assertEqual(len(history_list), 2)  # empty history entry ignored
 
 
 class RunOCRTaskTest(TestCase):
@@ -536,7 +770,7 @@ class RunOCRTaskTest(TestCase):
         with self.settings(GOOGLE_CLOUD_VISION_API_KEY="test_api_key"):
             # mock call to run_ocr_on_image
             with unittest.mock.patch(
-                "open_prices.proofs.ml.run_ocr_on_image",
+                "open_prices.proofs.ml.ocr.run_ocr_on_image",
                 return_value=response_data,
             ) as mock_run_ocr_on_image:
                 with tempfile.TemporaryDirectory() as tmpdirname:
@@ -574,8 +808,8 @@ class RunOCRTaskTest(TestCase):
 class MLModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        # Create a white blank image with Pillow
-        cls.image = Image.new("RGB", (100, 100), "white")
+        # Create a white blank image
+        cls.image = np.ones((100, 100, 3), dtype=np.uint8) * 255
 
     def test_run_and_save_proof_prediction_proof_file_not_found(self):
         proof = ProofFactory()
@@ -589,6 +823,29 @@ class MLModelTest(TestCase):
                 ],
             )
 
+    def test_run_and_save_price_tag_detection_proof_deleted(self):
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        proof_id = proof.id
+        proof.delete()
+        from open_prices.proofs.models import Proof
+
+        deleted_proof = Proof(id=proof_id)
+        detect_price_tags_response = ObjectDetectionRawResult(
+            num_detections=1,
+            detection_boxes=np.array([[0.5, 0.5, 1.0, 1.0]]),
+            detection_classes=np.array([0], dtype=int),
+            detection_scores=np.array([0.98], dtype=np.float32),
+            label_names=["price-tag"],
+        )
+        with unittest.mock.patch(
+            "open_prices.proofs.ml.price_tags.detect_price_tags",
+            return_value=detect_price_tags_response,
+        ):
+            result = run_and_save_price_tag_detection(
+                self.image, deleted_proof, run_extraction=False
+            )
+            self.assertIsNone(result)
+
     def test_run_and_save_proof_prediction_for_receipt_proof(self):
         predict_proof_type_response = [
             ("RECEIPT", 0.9786477088928223),
@@ -599,7 +856,7 @@ class MLModelTest(TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             NEW_IMAGE_DIR = Path(tmpdirname)
             file_path = NEW_IMAGE_DIR / "1.jpg"
-            self.image.save(file_path)
+            cv2.imwrite(file_path.as_posix(), self.image)
 
             # change temporarily settings.IMAGE_DIR
             with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
@@ -610,11 +867,11 @@ class MLModelTest(TestCase):
                 # Patch predict_proof_type to return a fixed response
                 with (
                     unittest.mock.patch(
-                        "open_prices.proofs.ml.predict_proof_type",
+                        "open_prices.proofs.ml.classification.predict_proof_type",
                         return_value=predict_proof_type_response,
                     ) as mock_predict_proof_type,
                     unittest.mock.patch(
-                        "open_prices.proofs.ml.detect_price_tags",
+                        "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=None,
                     ) as mock_detect_price_tags,
                 ):
@@ -686,7 +943,7 @@ class MLModelTest(TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             NEW_IMAGE_DIR = Path(tmpdirname)
             file_path = NEW_IMAGE_DIR / "1.jpg"
-            self.image.save(file_path)
+            cv2.imwrite(file_path.as_posix(), self.image)
 
             # change temporarily settings.IMAGE_DIR
             with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
@@ -697,13 +954,21 @@ class MLModelTest(TestCase):
                 # Patch predict_proof_type to return a fixed response
                 with (
                     unittest.mock.patch(
-                        "open_prices.proofs.ml.predict_proof_type",
+                        "open_prices.proofs.ml.classification.predict_proof_type",
                         return_value=predict_proof_type_response,
                     ) as mock_predict_proof_type,
                     unittest.mock.patch(
-                        "open_prices.proofs.ml.detect_price_tags",
+                        "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.price_tags.predict_price_tag_type",
+                        return_value=[
+                            ("high-quality", 0.96),
+                            ("medium-quality", 0.03),
+                            ("invalid", 0.01),
+                        ],
+                    ) as mock_predict_price_tag_type,
                 ):
                     run_and_save_proof_prediction(
                         proof,
@@ -712,6 +977,9 @@ class MLModelTest(TestCase):
                     )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_called_once()
+                    self.assertEqual(
+                        mock_predict_price_tag_type.call_count, 1
+                    )  # should be called for the detected price tag
 
                 proof_type_prediction = proof.predictions.filter(
                     type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
@@ -743,26 +1011,50 @@ class MLModelTest(TestCase):
                     },
                 )
 
-                price_tag_prediction = proof.predictions.filter(
+                price_tag_objects_prediction = proof.predictions.filter(
                     type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE
                 ).first()
-                self.assertIsNotNone(price_tag_prediction)
+                self.assertIsNotNone(price_tag_objects_prediction)
                 self.assertEqual(
-                    price_tag_prediction.type,
+                    price_tag_objects_prediction.type,
                     proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
                 )
-                self.assertEqual(price_tag_prediction.model_name, "price_tag_detection")
                 self.assertEqual(
-                    price_tag_prediction.model_version, "price_tag_detection-1.0"
+                    price_tag_objects_prediction.model_name, "price_tag_detection"
                 )
-                self.assertIsNone(price_tag_prediction.value)
-                self.assertAlmostEqual(price_tag_prediction.max_confidence, 0.98)
-                self.assertIn("objects", price_tag_prediction.data)
-                objects = price_tag_prediction.data["objects"]
+                self.assertEqual(
+                    price_tag_objects_prediction.model_version,
+                    "price_tag_detection-1.0",
+                )
+                self.assertIsNone(price_tag_objects_prediction.value)
+                self.assertAlmostEqual(
+                    price_tag_objects_prediction.max_confidence, 0.98
+                )
+                self.assertIn("objects", price_tag_objects_prediction.data)
+                objects = price_tag_objects_prediction.data["objects"]
                 self.assertEqual(len(objects), 1)
                 self.assertEqual(objects[0]["label"], "price-tag")
                 self.assertAlmostEqual(objects[0]["score"], 0.98)
                 self.assertEqual(objects[0]["bounding_box"], [0.5, 0.5, 1.0, 1.0])
+
+                price_tag_type_prediction = PriceTagPrediction.objects.filter(
+                    type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE
+                ).first()
+                self.assertIsNotNone(price_tag_type_prediction)
+                self.assertEqual(
+                    price_tag_type_prediction.type,
+                    proof_constants.PRICE_TAG_CLASSIFICATION_TYPE,
+                )
+                self.assertEqual(
+                    price_tag_type_prediction.data,
+                    {
+                        "prediction": [
+                            {"label": "high-quality", "score": 0.96},
+                            {"label": "medium-quality", "score": 0.03},
+                            {"label": "invalid", "score": 0.01},
+                        ]
+                    },
+                )
 
                 # prediction_count was incremented
                 proof.refresh_from_db()
@@ -770,7 +1062,7 @@ class MLModelTest(TestCase):
 
                 # cleanup
                 proof_type_prediction.delete()
-                price_tag_prediction.delete()
+                price_tag_objects_prediction.delete()
                 proof.delete()
 
     def test_run_and_save_proof_type_prediction_already_exists(self):
@@ -778,89 +1070,167 @@ class MLModelTest(TestCase):
         ProofPredictionFactory(
             proof=proof,
             type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE,
-            model_name=PROOF_CLASSIFICATION_MODEL_NAME,
-            model_version=PROOF_CLASSIFICATION_MODEL_VERSION,
+            model_name=proof_classification_model_config.model_name,
+            model_version=proof_classification_model_config.model_version,
         )
         result = run_and_save_proof_type_prediction(self.image, proof)
         self.assertIsNone(result)
 
     def test_run_and_save_price_tag_detection_already_exists(self):
-        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        ProofPredictionFactory(
-            proof=proof,
-            type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
-            model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
-            model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
-            data={
-                "objects": [
-                    {
-                        "label": "price_tag",
-                        "score": 0.98,
-                        "bounding_box": [0.5, 0.5, 1.0, 1.0],
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                ProofPredictionFactory(
+                    proof=proof,
+                    type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+                    model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
+                    model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
+                    data={
+                        "objects": [
+                            {
+                                "label": "price_tag",
+                                "score": 0.98,
+                                "bounding_box": [0.5, 0.5, 1.0, 1.0],
+                            },
+                            {
+                                "label": "price_tag",
+                                "score": 0.8,
+                                "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                            },
+                        ]
                     },
-                    {
-                        "label": "price_tag",
-                        "score": 0.8,
-                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
-                    },
-                ]
-            },
-        )
-        result = run_and_save_price_tag_detection(
-            self.image, proof, run_extraction=False
-        )
+                )
+
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
+                    return_value=[
+                        ("invalid", 0.96),
+                        ("medium-quality", 0.03),
+                        ("high-quality", 0.01),
+                    ],
+                ):
+                    result = run_and_save_price_tag_detection(
+                        self.image, proof, run_extraction=False
+                    )
         self.assertIsNone(result)
         price_tags = PriceTag.objects.filter(proof=proof).all()
         self.assertEqual(len(price_tags), 2)
         self.assertEqual(price_tags[0].bounding_box, [0.5, 0.5, 1.0, 1.0])
+        self.assertEqual(price_tags[0].tags, ["invalid"])
         self.assertEqual(price_tags[1].bounding_box, [0.1, 0.1, 0.2, 0.2])
+        self.assertEqual(price_tags[1].tags, ["invalid"])
 
-    def create_price_tags_from_proof_prediction(self):
-        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        proof_prediction = ProofPredictionFactory(
-            proof=proof,
-            type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
-            model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
-            model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
-            data={
-                "objects": [
-                    {
-                        "label": "price_tag",
-                        "score": 0.98,
-                        "bounding_box": [0.5, 0.5, 1.0, 1.0],
+    def test_create_price_tags_from_proof_prediction(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                proof_prediction = ProofPredictionFactory(
+                    proof=proof,
+                    type=proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE,
+                    model_name=PRICE_TAG_DETECTOR_MODEL_NAME,
+                    model_version=PRICE_TAG_DETECTOR_MODEL_VERSION,
+                    data={
+                        "objects": [
+                            {
+                                "label": "price_tag",
+                                "score": 0.98,
+                                "bounding_box": [0.5, 0.5, 1.0, 1.0],
+                            },
+                            {
+                                "label": "price_tag",
+                                "score": 0.45,
+                                "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                            },
+                            {
+                                "label": "price_tag",
+                                "score": 0.4,
+                                "bounding_box": [0.1, 0.1, 0.2, 0.2],
+                            },
+                        ]
                     },
-                    {
-                        "label": "price_tag",
-                        "score": 0.45,
-                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
-                    },
-                    {
-                        "label": "price_tag",
-                        "score": 0.4,
-                        "bounding_box": [0.1, 0.1, 0.2, 0.2],
-                    },
-                ]
-            },
-        )
-        before = timezone.now()
-        results = create_price_tags_from_proof_prediction(
-            proof, proof_prediction, threshold=0.4, run_extraction=False
-        )
+                )
+                before = timezone.now()
+
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
+                    return_value=[
+                        ("high-quality", 0.96),
+                        ("medium-quality", 0.03),
+                        ("invalid", 0.01),
+                    ],
+                ):
+                    results = create_price_tags_from_proof_prediction(
+                        proof, proof_prediction, threshold=0.41, run_extraction=False
+                    )
         after = timezone.now()
         self.assertEqual(len(results), 2)
         price_tags = PriceTag.objects.filter(proof=proof).all()
         self.assertEqual(len(price_tags), 2)
 
-        price_tag_1 = results[0]
-        self.assertEqual(price_tag_1.bounding_box, [0.5, 0.5, 1.0, 1.0])
-        self.assertGreater(price_tag_1.created, before)
-        self.assertLess(price_tag_1.created, after)
-        self.assertGreater(price_tag_1.updated, before)
-        self.assertLess(price_tag_1.updated, after)
-        self.assertEqual(price_tag_1.status, None)
-        self.assertEqual(price_tag_1.created_by, None)
-        self.assertEqual(price_tag_1.updated_by, None)
-        self.assertEqual(price_tag_1.model_version, PRICE_TAG_DETECTOR_MODEL_VERSION)
+        price_tag = results[0]
+        self.assertEqual(price_tag.bounding_box, [0.5, 0.5, 1.0, 1.0])
+        self.assertGreater(price_tag.created, before)
+        self.assertLess(price_tag.created, after)
+        self.assertGreater(price_tag.updated, before)
+        self.assertLess(price_tag.updated, after)
+        self.assertEqual(price_tag.status, None)
+        self.assertEqual(price_tag.created_by, None)
+        self.assertEqual(price_tag.updated_by, None)
+        self.assertEqual(price_tag.tags, ["high-quality"])
+
+    def test_extract_from_price_tag(self):
+        with unittest.mock.patch(
+            "open_prices.proofs.ml.price_tags.genai.Client"
+        ) as mock_client_class:
+            mock_generate_content = unittest.mock.MagicMock()
+            mock_client = unittest.mock.MagicMock()
+            mock_client.models.generate_content = mock_generate_content
+            # we use a context manager around Client() to open/close the underlying
+            # connection. That's why we need to set the return value of __enter__
+            # to our mock_client, so that when the context manager is entered, it
+            # returns our mock_client that has the mocked generate_content method.
+            mock_client_class.return_value.__enter__.return_value = mock_client
+            extract_from_price_tag(self.image)
+            client_creation_kwargs = mock_client_class.call_args.kwargs
+            self.assertEqual(
+                set(client_creation_kwargs.keys()), {"credentials", "project"}
+            )
+            self.assertEqual(client_creation_kwargs["project"], "robotoff")
+
+            generate_content_kwargs = mock_generate_content.call_args.kwargs
+            self.assertEqual(
+                set(generate_content_kwargs.keys()), {"model", "contents", "config"}
+            )
+            self.assertEqual(generate_content_kwargs["model"], "gemini-3-flash-preview")
+            self.assertEqual(len(generate_content_kwargs["contents"]), 2)
+            self.assertEqual(
+                generate_content_kwargs["contents"][0],
+                "Here is one picture containing a price label, extract information from it. If you cannot decode an attribute, set it to an empty string.",
+            )
+            # Validate the image part is now a genai.types.Part with WebP bytes
+            self.assertIsInstance(generate_content_kwargs["contents"][1], types.Part)
+            self.assertEqual(
+                generate_content_kwargs["contents"][1].inline_data.mime_type,
+                "image/webp",
+            )
+            self.assertEqual(
+                generate_content_kwargs["config"].thinking_config.thinking_level.name,
+                "MINIMAL",
+            )
 
 
 class TestSelectProofImageDir(TestCase):
@@ -920,10 +1290,17 @@ class PriceTagQuerySetTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
-                "price": 1.5,
+                "selected_price": {
+                    "price": 1.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
                 "barcode": "0123456789100",
-                "product": "other",
+                "category": "other",
                 "product_name": "NAME",
             },
         )
@@ -962,7 +1339,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'bounding_box': ['Bounding box should have 4 values.']}",
+            "{'bounding_box': ['Should have 4 values.']}",
         )
 
     def test_create_price_tag_invalid_bounding_box_value(self):
@@ -982,7 +1359,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'bounding_box': ['Bounding box values should be floats.']}",
+            "{'bounding_box': ['Values should be floats.']}",
         )
 
         with self.assertRaises(ValidationError) as cm:
@@ -992,7 +1369,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'bounding_box': ['Bounding box values should be between 0 and 1.']}",
+            "{'bounding_box': ['Values should be between 0 and 1.']}",
         )
 
         with self.assertRaises(ValidationError) as cm:
@@ -1002,7 +1379,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'bounding_box': ['Bounding box values should be in the format [y_min, x_min, y_max, x_max].']}",
+            "{'bounding_box': ['Values should be in the format [y_min, x_min, y_max, x_max].']}",
         )
 
     def test_create_price_tag_invalid_proof_type(self):
@@ -1013,7 +1390,7 @@ class PriceTagModelTest(TestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "{'proof': ['Proof should have type PRICE_TAG.']}",
+            "{'proof': ['Should have type PRICE_TAG.']}",
         )
 
     def test_delete_price_should_update_price_tag(self):
@@ -1042,10 +1419,17 @@ class PriceTagPropertyTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
-                "price": 10,
+                "selected_price": {
+                    "price": 10,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
                 "barcode": "8001505005707",
-                "product": "other",
+                "category": "other",
                 "product_name": "NOCCIOLATA 700G",
             },
         )
@@ -1056,10 +1440,17 @@ class PriceTagPropertyTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
-                "price": 2.5,
+                "selected_price": {
+                    "price": 2.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "KILOGRAM",
+                    "price_is_discounted": False,
+                },
                 "barcode": "",
-                "product": "en:tomatoes",  # category_tag
+                "category": "en:tomatoes",
                 "product_name": "TOMATES",
             },
         )
@@ -1070,6 +1461,7 @@ class PriceTagPropertyTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={},
         )
 
@@ -1085,10 +1477,12 @@ class PriceTagPropertyTest(TestCase):
         self.assertEqual(self.price_tag_category.get_predicted_barcode(), "")
         self.assertEqual(self.price_tag_empty.get_predicted_barcode(), None)
 
-    def test_get_predicted_product(self):
-        self.assertEqual(self.price_tag_product.get_predicted_product(), "other")
-        self.assertEqual(self.price_tag_category.get_predicted_product(), "en:tomatoes")
-        self.assertEqual(self.price_tag_empty.get_predicted_product(), None)
+    def test_get_predicted_category(self):
+        self.assertEqual(self.price_tag_product.get_predicted_category(), "other")
+        self.assertEqual(
+            self.price_tag_category.get_predicted_category(), "en:tomatoes"
+        )
+        self.assertEqual(self.price_tag_empty.get_predicted_category(), None)
 
     def test_get_predicted_product_name(self):
         self.assertEqual(
@@ -1113,10 +1507,17 @@ class PriceTagPredictionTest(TestCase):
         cls.price_tag_product_prediction = PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
-                "price": 10,
+                "selected_price": {
+                    "price": 10,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
                 "barcode": "8001505005707",
-                "product": "other",
+                "category": "other",
                 "product_name": "NOCCIOLATA 700G",
             },
         )
@@ -1127,10 +1528,17 @@ class PriceTagPredictionTest(TestCase):
         cls.price_tag_category_prediction = PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
-                "price": 2.5,
+                "selected_price": {
+                    "price": 2.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "KILOGRAM",
+                    "price_is_discounted": False,
+                },
                 "barcode": "",
-                "product": "en:tomatoes",  # category_tag
+                "category": "en:tomatoes",  # product in schema_version 1.0
                 "product_name": "TOMATES",
             },
         )
@@ -1141,6 +1549,7 @@ class PriceTagPredictionTest(TestCase):
         cls.price_tag_empty_prediction = PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_empty,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={},
         )
         cls.price_tag_without = PriceTagFactory(
@@ -1219,7 +1628,18 @@ class PriceTagMatchingUtilsTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_product,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-            data={"price": 1.5, "barcode": "0123456789100", "product": "other"},
+            schema_version="2.0",
+            data={
+                "selected_price": {
+                    "price": 1.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
+                "barcode": "0123456789100",
+                "category": "",
+            },
         )
         cls.price_product = PriceFactory(
             type=price_constants.TYPE_PRODUCT,
@@ -1235,10 +1655,17 @@ class PriceTagMatchingUtilsTest(TestCase):
         PriceTagPrediction.objects.create(
             price_tag=cls.price_tag_category,
             type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
             data={
-                "price": 2.5,
+                "selected_price": {
+                    "price": 2.5,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "KILOGRAM",
+                    "price_is_discounted": False,
+                },
                 "barcode": "",
-                "product": "en:tomatoes",  # category_tag
+                "category": "en:tomatoes",
                 "product_name": "TOMATES",
             },
         )
@@ -1266,6 +1693,27 @@ class PriceTagMatchingUtilsTest(TestCase):
             match_product_price_tag_with_product_price(
                 self.price_tag_category, self.price_category
             )
+        )
+        self.assertFalse(
+            match_product_price_tag_with_product_price(
+                self.price_tag_category, self.price_product
+            )
+        )
+
+        # Test when the selected_price field is null
+        price_tag_2 = PriceTagFactory(
+            bounding_box=[0.1, 0.1, 0.2, 0.2],
+            proof=self.proof,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=price_tag_2,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
+            data={
+                "selected_price": None,
+                "barcode": "0123456789100",
+                "category": "",
+            },
         )
         self.assertFalse(
             match_product_price_tag_with_product_price(
@@ -1429,3 +1877,178 @@ class ReceiptItemMatchingUtilsTest(TestCase):
             location=self.proof.location,
         )
         self.assertFalse(match_receipt_item_with_price(self.receipt_item, self.price))
+
+
+class TestComputeFileMd5(TestCase):
+    def test_compute_file_md5(self):
+        # Create a temporary file with known content
+        content = b"Hello, world!"
+        expected_md5 = hashlib.md5(content).hexdigest()
+        f = io.BytesIO(content)
+        f.seek(0)
+        django_file = InMemoryUploadedFile(
+            file=f,
+            field_name="file",
+            name="test.txt",
+            content_type="text/plain",
+            size=len(content),
+            charset=None,
+        )
+        # Compute MD5 using the function
+        computed_md5 = compute_file_md5(django_file)
+        self.assertEqual(computed_md5, expected_md5)
+
+
+@override_settings(IMAGES_DIR=Path(tempfile.mkdtemp()))
+class PriceTagImageTest(TestCase):
+    def setUp(self):
+        self.temp_dir = settings.IMAGES_DIR
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+
+    def test_generate_price_tag_image(self):
+        # Create a dummy proof image
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        proof.file_path = "proofs/test_proof.jpg"
+        proof.save()
+
+        os.makedirs(os.path.dirname(proof.file_path_full), exist_ok=True)
+
+        # Create a 100x100 red image
+        img = Image.new("RGB", (100, 100), color="red")
+        img.save(proof.file_path_full)
+
+        # Create a PriceTag with bounding box covering top-left quarter
+        # [y_min, x_min, y_max, x_max]
+        price_tag = PriceTagFactory(proof=proof, bounding_box=[0.0, 0.0, 0.5, 0.5])
+
+        # Check if image is generated (signal runs synchronously)
+        self.assertTrue(os.path.exists(price_tag.image_path_full))
+
+        # Verify cropped image size
+        with Image.open(price_tag.image_path_full) as cropped:
+            self.assertEqual(cropped.size, (50, 50))
+
+    def test_delete_price_tag_image(self):
+        # Setup similar to above
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        proof.file_path = "proofs/test_proof.jpg"
+        proof.save()
+
+        os.makedirs(os.path.dirname(proof.file_path_full), exist_ok=True)
+        img = Image.new("RGB", (100, 100), color="red")
+        img.save(proof.file_path_full)
+
+        price_tag = PriceTagFactory(proof=proof, bounding_box=[0.0, 0.0, 0.5, 0.5])
+
+        self.assertTrue(os.path.exists(price_tag.image_path_full))
+
+        # Delete price tag
+        price_tag.delete()
+
+        # Check if image is deleted (signal runs synchronously)
+        self.assertFalse(os.path.exists(price_tag.image_path_full))
+
+
+class CropImageTest(TestCase):
+    def test_crop_image_full_image(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 200, 3), dtype=np.uint8)
+            image[:, :] = [255, 0, 0]
+            cv2.imwrite(image_path.as_posix(), image)
+            result = crop_image(image_path, (0.0, 0.0, 1.0, 1.0))
+            self.assertEqual(result.shape, (100, 200, 3))
+            # check that the image is in BGR format (OpenCV default)
+            self.assertTrue(np.all(result[:, :, 0] == 255))
+            self.assertTrue(np.all(result[:, :, 1] == 0))
+            self.assertTrue(np.all(result[:, :, 2] == 0))
+
+    def test_crop_image_half_image(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 200, 3), dtype=np.uint8)
+            image[:, :] = [255, 0, 0]
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.0, 0.0, 0.5, 0.5))
+
+            self.assertEqual(result.shape, (50, 100, 3))
+
+    def test_crop_image_center(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 200, 3), dtype=np.uint8)
+            image[25:75, 50:150] = [255, 0, 0]
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.25, 0.25, 0.75, 0.75))
+
+            self.assertEqual(result.shape, (50, 100, 3))
+            self.assertTrue(np.all(result == [255, 0, 0]))
+
+    def test_crop_image_small_bbox(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 200, 3), dtype=np.uint8)
+            image[10:20, 20:30] = [0, 255, 0]
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.1, 0.1, 0.2, 0.15))
+
+            self.assertEqual(result.shape, (10, 10, 3))
+            self.assertTrue(np.all(result == [0, 255, 0]))
+
+    def test_crop_image_with_pathlib(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((100, 100, 3), dtype=np.uint8)
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.0, 0.0, 1.0, 1.0))
+
+            self.assertEqual(result.shape, (100, 100, 3))
+
+    def test_crop_image_returns_bgr_format(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_path = Path(tmpdir) / "test.png"
+            image = np.zeros((50, 50, 3), dtype=np.uint8)
+            image[:, :] = [255, 128, 64]
+            cv2.imwrite(image_path.as_posix(), image)
+
+            result = crop_image(image_path, (0.0, 0.0, 1.0, 1.0))
+
+            self.assertEqual(result[0, 0, 0], 255)
+            self.assertEqual(result[0, 0, 1], 128)
+            self.assertEqual(result[0, 0, 2], 64)
+
+
+class GenerateImageThumbnailCv2Test(TestCase):
+    def test_image_smaller_than_max_size_returns_unchanged(self):
+        image = np.ones((100, 100, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=200)
+        self.assertEqual(result.shape, (100, 100, 3))
+
+    def test_image_equal_to_max_size_returns_unchanged(self):
+        image = np.ones((100, 100, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=100)
+        self.assertEqual(result.shape, (100, 100, 3))
+
+    def test_image_wider_than_max_size_resizes_proportionally(self):
+        image = np.ones((100, 200, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=100)
+        self.assertEqual(result.shape[0], 50)
+        self.assertEqual(result.shape[1], 100)
+
+    def test_image_taller_than_max_size_resizes_proportionally(self):
+        image = np.ones((200, 100, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=100)
+        self.assertEqual(result.shape[0], 100)
+        self.assertEqual(result.shape[1], 50)
+
+    def test_image_larger_than_max_size_both_dimensions_resizes_proportionally(self):
+        image = np.ones((400, 600, 3), dtype=np.uint8) * 255
+        result = generate_image_thumbnail_cv2(image, max_size=200)
+        self.assertEqual(result.shape[0], 133)
+        self.assertEqual(result.shape[1], 200)

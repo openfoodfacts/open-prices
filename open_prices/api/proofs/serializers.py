@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from open_prices.api.locations.serializers import LocationSerializer
+from open_prices.common import history
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
 from open_prices.proofs.models import (
@@ -85,9 +86,11 @@ class ProofProcessWithGeminiSerializer(serializers.Serializer):
     files = serializers.ListField(
         child=serializers.FileField(required=True, use_url=False)
     )
-    mode = (
-        serializers.CharField()
-    )  # TODO: this mode param should be used to select the prompt to execute, unimplemented for now
+    mode = serializers.CharField()  # TODO: this mode param should be used to select the prompt to execute, unimplemented for now
+
+
+class ProofHistorySerializer(history.HistorySerializer):
+    pass
 
 
 class PriceTagPredictionSerializer(serializers.ModelSerializer):
@@ -107,6 +110,7 @@ class PriceTagFullSerializer(serializers.ModelSerializer):
     price_id = serializers.PrimaryKeyRelatedField(read_only=True)
     predictions = PriceTagPredictionSerializer(many=True, read_only=True)
     proof = ProofHalfFullSerializer()
+    image_path = serializers.CharField(read_only=True)  # from model property
 
     class Meta:
         model = PriceTag
