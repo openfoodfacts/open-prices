@@ -19,7 +19,6 @@ class UserListApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)  # only users with prices
         self.assertEqual(len(response.data["items"]), 2)
         self.assertFalse("id" in response.data["items"][0])
-        self.assertEqual(response.data["items"][0]["user_id"], "bob")  # default order
         for field_name in User.SERIALIZED_FIELDS:
             self.assertTrue(field_name in response.data["items"][0])
 
@@ -28,33 +27,49 @@ class UserListOrderApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:users-list")
-        UserFactory(price_count=15)
-        UserFactory(price_count=0)
-        UserFactory(price_count=50, location_count=5, product_count=25, proof_count=10)
+        cls.user_1 = UserFactory(user_id="dan", price_count=15)
+        cls.user_2 = UserFactory(user_id="alice", price_count=0)
+        cls.user_3 = UserFactory(
+            user_id="bob",
+            price_count=50,
+            location_count=5,
+            product_count=25,
+            proof_count=10,
+        )
+
+    def test_user_list_default_order_by_user_id(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.data["total"], 2)  # only users with prices
+        self.assertEqual(len(response.data["items"]), 2)
+        self.assertEqual(response.data["items"][0]["user_id"], self.user_3.user_id)
 
     def test_user_list_order_by_price_count(self):
         url = self.url + "?order_by=-price_count"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)  # only users with prices
         self.assertEqual(response.data["items"][0]["price_count"], 50)
+        self.assertEqual(response.data["items"][0]["user_id"], self.user_3.user_id)
 
     def test_user_list_order_by_location_count(self):
         url = self.url + "?order_by=-location_count"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)  # only users with prices
         self.assertEqual(response.data["items"][0]["location_count"], 5)
+        self.assertEqual(response.data["items"][0]["user_id"], self.user_3.user_id)
 
     def test_user_list_order_by_product_count(self):
         url = self.url + "?order_by=-product_count"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)  # only users with prices
         self.assertEqual(response.data["items"][0]["product_count"], 25)
+        self.assertEqual(response.data["items"][0]["user_id"], self.user_3.user_id)
 
     def test_user_list_order_by_proof_count(self):
         url = self.url + "?order_by=-proof_count"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)  # only users with prices
         self.assertEqual(response.data["items"][0]["proof_count"], 10)
+        self.assertEqual(response.data["items"][0]["user_id"], self.user_3.user_id)
 
 
 class UserListFilterApiTest(TestCase):

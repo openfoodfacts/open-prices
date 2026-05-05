@@ -1,6 +1,8 @@
 import decimal
+import os
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -9,11 +11,19 @@ from django.db.models import Case, Count, F, Q, Value, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
+from simple_history.models import HistoricalRecords
 
 from open_prices.challenges.models import Challenge
-from open_prices.common import constants, utils
+from open_prices.common import (
+    constants,
+    history,
+    utils,
+)
 from open_prices.locations import constants as location_constants
+from open_prices.locations.models import Location
 from open_prices.proofs import constants as proof_constants
+from open_prices.proofs import validators as proof_validators
+from open_prices.users.models import User
 
 
 class ProofQuerySet(models.QuerySet):
@@ -79,10 +89,22 @@ class ProofQuerySet(models.QuerySet):
             )
         )
 
+    def calculate_field_distinct_count(self, field_name: str):
+        return (
+            self.exclude(**{f"{field_name}__isnull": True})
+            .values(field_name)
+            .distinct()
+            .count()
+        )
+
     def has_tag(self, tag: str):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
+        """
+        Return proofs that are in the given challenge, based on:
+        - if the proof has prices with the challenge tag
+        """
         return (
             self.prefetch_related("prices")
             .filter(prices__tags__contains=[challenge.tag])
@@ -132,6 +154,9 @@ class Proof(models.Model):
     mimetype = models.CharField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=proof_constants.TYPE_CHOICES)
 
+    image_md5_hash = models.CharField(
+        max_length=32, blank=True, null=True, db_index=True
+    )
     image_thumb_path = models.CharField(blank=True, null=True)
 
     location_osm_id = models.PositiveBigIntegerField(blank=True, null=True)
@@ -159,7 +184,7 @@ class Proof(models.Model):
     receipt_price_total = models.DecimalField(
         verbose_name="Receipt's total amount (user input)",
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
@@ -167,7 +192,7 @@ class Proof(models.Model):
     receipt_online_delivery_costs = models.DecimalField(
         verbose_name="Receipt's online delivery costs (user input)",
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
@@ -178,146 +203,44 @@ class Proof(models.Model):
     owner_consumption = models.BooleanField(blank=True, null=True)
     owner_comment = models.TextField(blank=True, null=True)
 
-    price_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    prediction_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    # denormalized counts (updated with signals and/or cronjobs)
+    price_count = models.PositiveIntegerField(default=0)
+    prediction_count = models.PositiveIntegerField(default=0)
 
     owner = models.CharField(blank=True, null=True)
     source = models.CharField(blank=True, null=True)
 
     tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
+    flags = GenericRelation("moderation.Flag", related_query_name="proof")
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
+    history = HistoricalRecords(
+        excluded_fields=COUNT_FIELDS,
+        get_user=history.get_history_user_from_request,
+        history_user_id_field=models.CharField(null=True),
+        history_user_getter=history.history_user_getter,
+        history_user_setter=history.history_user_setter,
+        # cascade_delete_history=False,  # default
+    )
+
     objects = models.Manager.from_queryset(ProofQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "proofs"
         verbose_name = "Proof"
         verbose_name_plural = "Proofs"
 
     def clean(self, *args, **kwargs):
-        # dict to store all ValidationErrors
-        validation_errors = dict()
-        # proof rules
-        # - date should have the right format & not be in the future
-        if self.date:
-            if type(self.date) is str:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "date",
-                    "Parsing error. Expected format: YYYY-MM-DD",
-                )
-            elif self.date > timezone.now().date():
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "date",
-                    "Should not be in the future",
-                )
-        # location rules
-        # - allow passing a location_id
-        # - location_osm_id should be set if location_osm_type is set
-        # - location_osm_type should be set if location_osm_id is set
-        # - some location fields should match the proof fields (on create)
-        if self.location_id:
-            location = None
-            from open_prices.locations.models import Location
-
-            try:
-                location = Location.objects.get(id=self.location_id)
-            except Location.DoesNotExist:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "location",
-                    "Location not found",
-                )
-
-            if location:
-                if location.type == location_constants.TYPE_ONLINE:
-                    if self.location_osm_id:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "location_osm_id",
-                            "Can only be set if location type is OSM",
-                        )
-                    if self.location_osm_type:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "location_osm_type",
-                            "Can only be set if location type is OSM",
-                        )
-                elif location.type == location_constants.TYPE_OSM:
-                    if not self.id:  # skip these checks on update
-                        for LOCATION_FIELD in Proof.DUPLICATE_LOCATION_FIELDS:
-                            location_field_value = getattr(
-                                self.location, LOCATION_FIELD.replace("location_", "")
-                            )
-                            if location_field_value:
-                                proof_field_value = getattr(self, LOCATION_FIELD)
-                                if str(location_field_value) != str(proof_field_value):
-                                    validation_errors = utils.add_validation_error(
-                                        validation_errors,
-                                        "location",
-                                        f"Location {LOCATION_FIELD} ({location_field_value}) does not match the proof {LOCATION_FIELD} ({proof_field_value})",
-                                    )
-        else:
-            if self.location_osm_id:
-                if not self.location_osm_type:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_type",
-                        "Should be set if `location_osm_id` is filled",
-                    )
-            if self.location_osm_type:
-                if not self.location_osm_id:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_id",
-                        "Should be set if `location_osm_type` is filled",
-                    )
-                elif self.location_osm_id in [True, "true", "false", "none", "null"]:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_id",
-                        "Should not be a boolean or an invalid string",
-                    )
-        # price-tag specific rules
-        if not self.type == proof_constants.TYPE_PRICE_TAG:
-            if self.ready_for_price_tag_validation:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "ready_for_price_tag_validation",
-                    "Can only be set if type PRICE_TAG",
-                )
-        # receipt specific rules
-        if not self.type == proof_constants.TYPE_RECEIPT:
-            if self.receipt_price_count is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "receipt_price_count",
-                    "Can only be set if type RECEIPT",
-                )
-            if self.receipt_price_total is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "receipt_price_total",
-                    "Can only be set if type RECEIPT",
-                )
-            if self.receipt_online_delivery_costs is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "receipt_online_delivery_costs",
-                    "Can only be set if type RECEIPT",
-                )
-        # consumption specific rules
-        if self.type not in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
-            if self.owner_consumption is not None:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "owner_consumption",
-                    f"Can only be set if type is consumption ({proof_constants.TYPE_GROUP_CONSUMPTION_LIST})",
-                )
+        # store all ValidationError in a dict
+        validation_errors = utils.merge_validation_errors(
+            proof_validators.validate_proof_date_rules(self),
+            proof_validators.validate_proof_location_rules(self),
+            proof_validators.validate_proof_type_price_tag_rules(self),
+            proof_validators.validate_proof_type_receipt_rules(self),
+            proof_validators.validate_proof_type_consumption_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
@@ -336,6 +259,10 @@ class Proof(models.Model):
             self.location = location
 
     def save(self, *args, **kwargs):
+        """
+        - run validations
+        - set location (create if needed)
+        """
         self.full_clean()
         self.set_location()
         super().save(*args, **kwargs)
@@ -372,6 +299,7 @@ class Proof(models.Model):
         self.location_osm_id = location_osm_id
         self.location_osm_type = location_osm_type
         self.set_location()
+        self._change_reason = "Proof.update_location() method"
         self.save()
         self.refresh_from_db()
         new_location = self.location
@@ -410,12 +338,14 @@ class Proof(models.Model):
                             proof_prices_field_list,
                         )
         if len(fields_to_update):
+            self._change_reason = "Proof.set_missing_fields_from_prices() method"
             self.save()
 
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:
             self.tags.append(tag)
             if save:
+                self._change_reason = "Proof.set_tag() method"
                 self.save(update_fields=["tags"])
             return True
         return False
@@ -423,13 +353,33 @@ class Proof(models.Model):
     def in_challenge(self, challenge: Challenge):
         return self.prices.filter(tags__contains=[challenge.tag]).exists()
 
+    def get_history_list(self):
+        return history.build_instance_history_list(self)
+
+
+@receiver(signals.post_save, sender=Proof)
+def proof_post_create_increment_counts(sender, instance, created, **kwargs):
+    if created:
+        if instance.owner:
+            User.objects.filter(user_id=instance.owner).update(
+                proof_count=F("proof_count") + 1
+            )
+        if instance.location_id:
+            Location.objects.filter(id=instance.location_id).update(
+                proof_count=F("proof_count") + 1
+            )
+    else:
+        # what about if we update location? (owner cannot be updated)
+        # the update_fields is often not set, so we cannot rely on it
+        pass
+
 
 @receiver(signals.post_save, sender=Proof)
 def proof_post_save_run_ocr(sender, instance, created, **kwargs):
-    if not settings.TESTING:
+    if not settings.TESTING and settings.ENABLE_OCR:
         if created:
             async_task(
-                "open_prices.proofs.ml.fetch_and_save_ocr_data",
+                "open_prices.proofs.ml.ocr.fetch_and_save_ocr_data",
                 f"{settings.IMAGES_DIR}/{instance.file_path}",
             )
 
@@ -458,7 +408,20 @@ def proof_post_save_update_prices(sender, instance, created, **kwargs):
             for price in instance.prices.all():
                 for field in Price.DUPLICATE_PROOF_FIELDS:
                     setattr(price, field, getattr(instance, field))
+                    price._change_reason = "Proof.update_location() method"
                     price.save()
+
+
+@receiver(signals.post_delete, sender=Proof)
+def proof_post_delete_decrement_counts(sender, instance, **kwargs):
+    if instance.owner:
+        User.objects.filter(user_id=instance.owner, proof_count__gt=0).update(
+            proof_count=F("proof_count") - 1
+        )
+    if instance.location_id:
+        Location.objects.filter(id=instance.location.id, proof_count__gt=0).update(
+            proof_count=F("proof_count") - 1
+        )
 
 
 @receiver(signals.post_delete, sender=Proof)
@@ -592,7 +555,7 @@ class PriceTag(models.Model):
         help_text="The annotation status",
     )
 
-    prediction_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    prediction_count = models.PositiveIntegerField(default=0)
 
     created_by = models.CharField(
         max_length=100,
@@ -629,80 +592,32 @@ class PriceTag(models.Model):
         return f"{self.proof} - {self.id} - {self.status}"
 
     def clean(self, *args, **kwargs):
-        validation_errors = dict()
-        if self.bounding_box is not None:
-            if len(self.bounding_box) != 4:
-                utils.add_validation_error(
-                    validation_errors,
-                    "bounding_box",
-                    "Bounding box should have 4 values.",
-                )
-            else:
-                if not all(isinstance(value, float) for value in self.bounding_box):
-                    utils.add_validation_error(
-                        validation_errors,
-                        "bounding_box",
-                        "Bounding box values should be floats.",
-                    )
-                elif not all(value >= 0 and value <= 1 for value in self.bounding_box):
-                    utils.add_validation_error(
-                        validation_errors,
-                        "bounding_box",
-                        "Bounding box values should be between 0 and 1.",
-                    )
-                else:
-                    y_min, x_min, y_max, x_max = self.bounding_box
-                    if y_min >= y_max or x_min >= x_max:
-                        utils.add_validation_error(
-                            validation_errors,
-                            "bounding_box",
-                            "Bounding box values should be in the format [y_min, x_min, y_max, x_max].",
-                        )
-
-        # self.proof and self.price are fetched with select_related in the view
-        # when the action is "create" or "update"
-        # We therefore only check the validity of the relationship if the user
-        # tries to update the price tag
-        if self.proof:
-            if self.proof.type != proof_constants.TYPE_PRICE_TAG:
-                utils.add_validation_error(
-                    validation_errors,
-                    "proof",
-                    "Proof should have type PRICE_TAG.",
-                )
-
-        if self.proof_prediction:
-            if self.proof_prediction.proof_id != self.proof.id:
-                utils.add_validation_error(
-                    validation_errors,
-                    "proof_prediction",
-                    "Proof prediction should belong to the same proof.",
-                )
-
-        if self.price:
-            if self.proof and self.price.proof_id != self.proof.id:
-                utils.add_validation_error(
-                    validation_errors,
-                    "price",
-                    "Price should belong to the same proof.",
-                )
-            if self.status is None:
-                self.status = proof_constants.PriceTagStatus.linked_to_price.value
-            elif self.status != proof_constants.PriceTagStatus.linked_to_price.value:
-                utils.add_validation_error(
-                    validation_errors,
-                    "status",
-                    "Status should be `linked_to_price` when price_id is set.",
-                )
-
+        # store all ValidationError in a dict
+        validation_errors = utils.merge_validation_errors(
+            proof_validators.validate_price_tag_bounding_box_rules(self),
+            proof_validators.validate_price_tag_relationship_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        """
+        - run validations
+        """
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def image_path(self):
+        from open_prices.proofs.utils import get_price_tag_image_path
+
+        return get_price_tag_image_path(self.id)
+
+    @property
+    def image_path_full(self):
+        return str(settings.IMAGES_DIR / self.image_path)
 
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:
@@ -715,7 +630,7 @@ class PriceTag(models.Model):
     def update_tags(self):
         changes = False
         # prediction tags
-        from open_prices.proofs.ml import (
+        from open_prices.proofs.ml.price_tags import (
             price_tag_prediction_has_predicted_barcode_valid,
             price_tag_prediction_has_predicted_category_tag_valid,
             price_tag_prediction_has_predicted_product_exists,
@@ -770,6 +685,29 @@ class PriceTag(models.Model):
         return None
 
 
+@receiver(signals.post_save, sender=PriceTag)
+def price_tag_post_save_generate_image(sender, instance, created, **kwargs):
+    from open_prices.proofs.utils import generate_price_tag_image
+
+    update_fields = kwargs.get("update_fields")
+    if (
+        created
+        or (update_fields and "bounding_box" in update_fields)
+        or update_fields is None
+    ):
+        # Cropping is fast, run synchronously
+        generate_price_tag_image(instance)
+
+
+@receiver(signals.post_delete, sender=PriceTag)
+def price_tag_post_delete_remove_image(sender, instance, **kwargs):
+    if os.path.exists(instance.image_path_full):
+        try:
+            os.remove(instance.image_path_full)
+        except OSError:
+            pass
+
+
 class PriceTagPrediction(models.Model):
     """A machine learning prediction for a price tag."""
 
@@ -797,7 +735,7 @@ class PriceTagPrediction(models.Model):
         blank=True,
         max_length=20,
         help_text="The schema version of the prediction data. Used to handle changes in the "
-        "prediction data structure. It is currently used when calling Gemine API to extract price tags.",
+        "prediction data structure. It is currently used when calling Gemini API to extract price tags.",
     )
     data = models.JSONField(
         null=False,
@@ -924,6 +862,13 @@ class ReceiptItem(models.Model):
         null=True,
         blank=True,
         help_text="The current status of the item",
+    )
+    schema_version = models.CharField(
+        null=True,
+        blank=True,
+        max_length=20,
+        help_text="The schema version of the predicted data. Used to handle changes in the "
+        "prediction data structure.",
     )
 
     created = models.DateTimeField(

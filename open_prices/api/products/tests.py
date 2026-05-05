@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from open_prices.products.factories import ProductFactory
+from open_prices.users.factories import SessionFactory
 
 PRODUCT_8001505005707 = {
     "code": "8001505005707",
@@ -10,6 +11,7 @@ PRODUCT_8001505005707 = {
     "labels_tags": ["en:no-gluten", "en:organic"],
     "brands_tags": ["rigoni-di-asiago"],
     "price_count": 15,
+    "source": "off",
 }
 
 
@@ -27,10 +29,9 @@ class ProductListApiTest(TestCase):
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(len(response.data["items"]), 3)
         self.assertTrue("id" in response.data["items"][0])
-        self.assertEqual(response.data["items"][0]["price_count"], 15)  # default order
 
 
-class ProductListOrderApiTest(TestCase):
+class ProductListPaginationApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:products-list")
@@ -38,11 +39,34 @@ class ProductListOrderApiTest(TestCase):
         ProductFactory(price_count=0)
         ProductFactory(price_count=50)
 
+    def test_product_list_size(self):
+        # default
+        response = self.client.get(self.url)
+        for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
+            with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
+                self.assertTrue(PAGINATION_KEY in response.data)
+        self.assertEqual(response.data["size"], 10)  # default
+
+
+class ProductListOrderApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:products-list")
+        cls.product_1 = ProductFactory(price_count=15)
+        cls.product_2 = ProductFactory(price_count=0)
+        cls.product_3 = ProductFactory(price_count=50)
+
+    def test_product_list_default_order_by_id(self):
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["items"][0]["id"], self.product_1.id)
+
     def test_product_list_order_by(self):
         url = self.url + "?order_by=-price_count"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
         self.assertEqual(response.data["items"][0]["price_count"], 50)
+        self.assertEqual(response.data["items"][0]["id"], self.product_3.id)
 
 
 class ProductListFilterApiTest(TestCase):
@@ -109,6 +133,19 @@ class ProductListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
 
+    def test_product_list_filter_by_source(self):
+        # exact
+        url = self.url + "?source=off"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # isnull True / False
+        url = self.url + "?source__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?source__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
 
 class ProductDetailApiTest(TestCase):
     @classmethod
@@ -138,37 +175,117 @@ class ProductDetailApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.product.id)
+        # existing product with normalization
+        ProductFactory(code="0123456789100")
+        url = reverse("api:products-get-by-code", args=["123456789100"])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["code"], "0123456789100")
 
 
 class ProductCreateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user_session = SessionFactory()
         cls.url = reverse("api:products-list")
+        cls.data = {"code": "8001505005707", "product_name": "Nocciolata"}
 
     def test_product_create_not_allowed(self):
-        data = {"code": "8001505005707", "product_name": "Nocciolata"}
-        response = self.client.post(self.url, data, content_type="application/json")
+        # anonymous
+        response = self.client.post(
+            self.url, self.data, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 403)  # 405 ?
+        # authenticated
+        response = self.client.post(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
         self.assertEqual(response.status_code, 405)
 
 
 class ProductUpdateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user_session = SessionFactory()
         cls.product = ProductFactory(**PRODUCT_8001505005707)
         cls.url = reverse("api:products-detail", args=[cls.product.id])
+        cls.data = {"product_name": "Nutella"}
 
     def test_product_update_not_allowed(self):
-        data = {"product_name": "Nutella"}
-        response = self.client.patch(self.url, data, content_type="application/json")
+        # anonymous
+        response = self.client.patch(
+            self.url, self.data, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 403)  # 405 ?
+        # authenticated
+        response = self.client.patch(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 405)
 
 
 class ProductDeleteApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user_session = SessionFactory()
         cls.product = ProductFactory(**PRODUCT_8001505005707)
         cls.url = reverse("api:products-detail", args=[cls.product.id])
 
     def test_product_delete_not_allowed(self):
+        # anonymous
         response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 403)  # 405 ?
+        # authenticated
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
+        )
         self.assertEqual(response.status_code, 405)
+
+
+class ProductOffCreateOrUpdateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.product = ProductFactory(**PRODUCT_8001505005707)
+        cls.url = reverse(
+            "api:products-create-or-update-in-off", args=[cls.product.code]
+        )
+
+    def test_product_off_create_or_update(self):
+        # anonymous
+        response = self.client.post(self.url, {}, content_type="application/json")
+        self.assertEqual(response.status_code, 403)
+        # authenticated
+        # response = self.client.post(
+        #     self.url,
+        #     {},
+        #     headers={"Authorization": f"Bearer {self.user_session.token}"},
+        #     content_type="application/json",
+        # )
+        # self.assertEqual(response.status_code, 200)
+
+
+class ProductOffUploadImageApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.product = ProductFactory(**PRODUCT_8001505005707)
+        cls.url = reverse("api:products-upload-image-in-off", args=[cls.product.code])
+
+    def test_product_off_upload_image(self):
+        # anonymous
+        response = self.client.post(self.url, {}, content_type="application/json")
+        self.assertEqual(response.status_code, 403)
+        # authenticated
+        # response = self.client.post(
+        #     self.url,
+        #     {},
+        #     headers={"Authorization": f"Bearer {self.user_session.token}"},
+        #     content_type="application/json",
+        # )
+        # self.assertEqual(response.status_code, 200)

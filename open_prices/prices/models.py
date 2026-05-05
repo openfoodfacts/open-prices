@@ -1,6 +1,6 @@
 import decimal
-import functools
 
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
@@ -9,28 +9,23 @@ from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
-from openfoodfacts.taxonomy import (
-    create_taxonomy_mapping,
-    get_taxonomy,
-    map_to_canonical_id,
-)
+from openfoodfacts.barcode import normalize_barcode
+from simple_history.models import HistoricalRecords
 
 from open_prices.challenges.models import Challenge
-from open_prices.common import constants, utils
+from open_prices.common import (
+    constants,
+    history,
+    utils,
+)
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
+from open_prices.prices import validators as price_validators
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof
 from open_prices.users.models import User
-
-# Taxonomy mapping generation takes ~200ms, so we cache it to avoid
-# recomputing it for each request.
-_cached_create_taxonomy_mapping = functools.lru_cache()(create_taxonomy_mapping)
-# Also cache the get_taxonomy function to avoid reading from disk at each
-# request.
-_cached_get_taxonomy = functools.lru_cache()(get_taxonomy)
 
 
 class PriceQuerySet(models.QuerySet):
@@ -101,31 +96,50 @@ class PriceQuerySet(models.QuerySet):
             ),
         )
 
+    def calculate_field_distinct_count(self, field_name: str):
+        return (
+            self.exclude(**{f"{field_name}__isnull": True})
+            .values(field_name)
+            .distinct()
+            .count()
+        )
+
     def has_tag(self, tag: str):
         return self.filter(tags__contains=[tag])
 
     def in_challenge(self, challenge: Challenge):
-        return (
-            self.select_related("product")
-            .filter(
-                created__gte=challenge.start_date_with_time,
-                created__lte=challenge.end_date_with_time,
-            )
-            .filter(
+        """
+        Return prices that are in the given challenge, based on:
+        - the price creation date
+        - the price category tag or product categories tags (if the challenge has categories)
+        - the price location (if the challenge has locations)
+        """
+        queryset = self.select_related("product").filter(
+            created__gte=challenge.start_date_with_time,
+            created__lte=challenge.end_date_with_time,
+        )
+        if challenge.categories:
+            queryset = queryset.filter(
                 Q(
                     type=price_constants.TYPE_CATEGORY,
-                    category_tag__in=challenge.categories,
+                    category_tag__in=challenge.categories_full,
                 )
                 | Q(
                     type=price_constants.TYPE_PRODUCT,
                     product__categories_tags__overlap=challenge.categories,
                 )
             )
-        )
+        if challenge.locations.exists():
+            queryset = queryset.filter(location_id__in=challenge.location_id_list())
+        return queryset
 
 
 class Price(models.Model):
+    TYPE_PRODUCT_FIELDS = ["product_code"]
+    TYPE_CATEGORY_FIELDS = ["category_tag", "labels_tags", "origins_tags"]
     UPDATE_FIELDS = [
+        "product_code",
+        # "product_name",
         "category_tag",
         "labels_tags",
         "origins_tags",
@@ -168,8 +182,8 @@ class Price(models.Model):
     product_code = models.CharField(blank=True, null=True)
     product_name = models.CharField(blank=True, null=True)
     category_tag = models.CharField(blank=True, null=True)
-    labels_tags = models.JSONField(blank=True, null=True)
-    origins_tags = models.JSONField(blank=True, null=True)
+    labels_tags = ArrayField(base_field=models.CharField(), blank=True, null=True)
+    origins_tags = ArrayField(base_field=models.CharField(), blank=True, null=True)
     product = models.ForeignKey(
         "products.Product",
         on_delete=models.SET_NULL,
@@ -180,7 +194,7 @@ class Price(models.Model):
 
     price = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
@@ -188,7 +202,7 @@ class Price(models.Model):
     price_is_discounted = models.BooleanField(default=False)
     price_without_discount = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(decimal.Decimal(0))],
         blank=True,
         null=True,
@@ -246,328 +260,72 @@ class Price(models.Model):
 
     owner_comment = models.TextField(blank=True, null=True)
 
-    owner = models.CharField(blank=True, null=True)
+    owner = models.CharField(blank=True, null=True, db_index=True)
     source = models.CharField(blank=True, null=True)
 
     tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
+    flags = GenericRelation("moderation.Flag", related_query_name="price")
+
+    # If this price is a duplicate of another price, we store the reference
+    duplicate_of = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="duplicates",
+    )
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
 
+    history = HistoricalRecords(
+        get_user=history.get_history_user_from_request,
+        history_user_id_field=models.CharField(null=True),
+        history_user_getter=history.history_user_getter,
+        history_user_setter=history.history_user_setter,
+        # cascade_delete_history=False,  # default
+    )
+
     objects = models.Manager.from_queryset(PriceQuerySet)()
 
     class Meta:
-        # managed = False
         db_table = "prices"
         verbose_name = "Price"
         verbose_name_plural = "Prices"
 
+    def normalize_product_code(self):
+        """
+        Normalize the product_code (remove leading zeros, pad to 8 or 13 digits).  # noqa
+        """
+        if (
+            self.product_code
+            and isinstance(self.product_code, str)
+            and self.product_code.isdigit()
+        ):
+            self.product_code = normalize_barcode(self.product_code)
+
     def clean(self, *args, **kwargs):
         # dict to store all ValidationErrors
-        validation_errors = dict()
-        # product rules
-        # - if product_code is set, then should be a valid string
-        # - if product_code is set, then category_tag/labels_tags/origins_tags should not be set  # noqa
-        if self.product_code:
-            if self.type != price_constants.TYPE_PRODUCT:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "type",
-                    "Should be set to 'PRODUCT' if `product_code` is filled",
-                )
-            if not isinstance(self.product_code, str):
-                validation_errors = utils.add_validation_error(
-                    validation_errors, "product_code", "Should be a string"
-                )
-            if not self.product_code.isalnum():
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "product_code",
-                    "Should only contain numbers (or letters)",
-                )
-            if self.product_code.lower() in ["true", "false", "none", "null"]:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "product_code",
-                    "Should not be a boolean or an invalid string",
-                )
-            if self.category_tag:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "category_tag",
-                    "Should not be set if `product_code` is filled",
-                )
-            if self.labels_tags:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "labels_tags",
-                    "Should not be set if `product_code` is filled",
-                )
-            if self.origins_tags:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "origins_tags",
-                    "Should not be set if `product_code` is filled",
-                )
-        # Tag rules:
-        # - if category_tag is set, it should be language-prefixed
-        # - if labels_tags is set, then all labels_tags should be valid taxonomy strings  # noqa
-        # - if origins_tags is set, then all origins_tags should be valid taxonomy strings  # noqa
-        elif self.category_tag:
-            if self.type != price_constants.TYPE_CATEGORY:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "type",
-                    "Should be set to 'CATEGORY' if `category_tag` is filled",
-                )
-            try:
-                self.category_tag = normalize_taxonomized_tags(
-                    "category", [self.category_tag]
-                )[0]
-            except ValueError as e:
-                # The value is not language-prefixed
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "category_tag",
-                    str(e),
-                )
-            if self.labels_tags:
-                if not isinstance(self.labels_tags, list):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "labels_tags",
-                        "Should be a list",
-                    )
-                else:
-                    try:
-                        self.labels_tags = normalize_taxonomized_tags(
-                            "label", self.labels_tags
-                        )
-                    except ValueError as e:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "labels_tags",
-                            str(e),
-                        )
-            if self.origins_tags:
-                if not isinstance(self.origins_tags, list):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "origins_tags",
-                        "Should be a list",
-                    )
-                else:
-                    try:
-                        self.origins_tags = normalize_taxonomized_tags(
-                            "origin", self.origins_tags
-                        )
-                    except ValueError as e:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "origins_tags",
-                            str(e),
-                        )
-        else:
-            validation_errors = utils.add_validation_error(
-                validation_errors,
-                "product_code",
-                "Should be set if `category_tag` is not filled",
-            )
-        # price rules
-        # - price must be set
-        # - price_is_discounted must be set if price_without_discount is set
-        # - price_without_discount must be greater or equal to price
-        # - price_per should be set if category_tag is set
-        # - discount_type can only be set if price_is_discounted is True
-        if self.price in [None, "true", "false", "none", "null"]:
-            validation_errors = utils.add_validation_error(
-                validation_errors,
-                "price",
-                "Should not be a boolean or an invalid string",
-            )
-        else:
-            if self.price_without_discount:
-                if not self.price_is_discounted:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "price_is_discounted",
-                        "Should be set to True if `price_without_discount` is filled",
-                    )
-                if (
-                    utils.is_float(self.price)
-                    and utils.is_float(self.price_without_discount)
-                    and (self.price_without_discount <= self.price)
-                ):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "price_without_discount",
-                        "Should be greater than `price`",
-                    )
-            if self.discount_type:
-                if not self.price_is_discounted:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "discount_type",
-                        "Should not be set if `price_is_discounted` is False",
-                    )
-        if self.product_code:
-            if self.price_per:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "price_per",
-                    "Should not be set if `product_code` is filled",
-                )
-        if self.category_tag:
-            if not self.price_per:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "price_per",
-                    "Should be set if `category_tag` is filled",
-                )
-        # date rules
-        # - date should have the right format & not be in the future
-        if self.date:
-            if type(self.date) is str:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "date",
-                    "Parsing error. Expected format: YYYY-MM-DD",
-                )
-            elif self.date > timezone.now().date():
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "date",
-                    "Should not be in the future",
-                )
-        # location rules
-        # - allow passing a location_id
-        # - location_osm_id should be set if location_osm_type is set
-        # - location_osm_type should be set if location_osm_id is set
-        # - some location fields should match the price fields (on create)
-        if self.location_id:
-            location = None
-            from open_prices.locations.models import Location
-
-            try:
-                location = Location.objects.get(id=self.location_id)
-            except Location.DoesNotExist:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "location",
-                    "Location not found",
-                )
-
-            if location:
-                if location.type == location_constants.TYPE_ONLINE:
-                    if self.location_osm_id:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "location_osm_id",
-                            "Can only be set if location type is OSM",
-                        )
-                    if self.location_osm_type:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "location_osm_type",
-                            "Can only be set if location type is OSM",
-                        )
-                elif location.type == location_constants.TYPE_OSM:
-                    if not self.id:  # skip these checks on update
-                        for LOCATION_FIELD in Price.DUPLICATE_LOCATION_FIELDS:
-                            location_field_value = getattr(
-                                self.location, LOCATION_FIELD.replace("location_", "")
-                            )
-                            if location_field_value:
-                                price_field_value = getattr(self, LOCATION_FIELD)
-                                if str(location_field_value) != str(price_field_value):
-                                    validation_errors = utils.add_validation_error(
-                                        validation_errors,
-                                        "location",
-                                        f"Location {LOCATION_FIELD} ({location_field_value}) does not match the price {LOCATION_FIELD} ({price_field_value})",
-                                    )
-        else:
-            if self.location_osm_id:
-                if not self.location_osm_type:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_type",
-                        "Should be set if `location_osm_id` is filled",
-                    )
-            if self.location_osm_type:
-                if not self.location_osm_id:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_id",
-                        "Should be set if `location_osm_type` is filled",
-                    )
-                elif self.location_osm_id in [True, "true", "false", "none", "null"]:
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "location_osm_id",
-                        "Should not be a boolean or an invalid string",
-                    )
-        # proof rules
-        # - proof must exist and belong to the price owner
-        # - some proof fields should match the price fields (on create)
-        # - receipt_quantity can only be set for receipts (default to 1)
-        if self.proof_id:
-            proof = None
-            from open_prices.proofs.models import Proof
-
-            try:
-                proof = Proof.objects.get(id=self.proof_id)
-            except Proof.DoesNotExist:
-                validation_errors = utils.add_validation_error(
-                    validation_errors,
-                    "proof",
-                    "Proof not found",
-                )
-            if proof:
-                if (
-                    proof.owner != self.owner
-                    and proof.type
-                    not in proof_constants.TYPE_GROUP_ALLOW_ANY_USER_PRICE_ADD_LIST
-                ):
-                    validation_errors = utils.add_validation_error(
-                        validation_errors,
-                        "proof",
-                        f"Proof does not belong to the current user. Adding a price to a proof a user does not own is only allowed for {proof_constants.TYPE_GROUP_ALLOW_ANY_USER_PRICE_ADD_LIST} proofs",
-                    )
-                if not self.id:  # skip these checks on update
-                    if proof.type in proof_constants.TYPE_GROUP_SINGLE_SHOP_LIST:
-                        for PROOF_FIELD in Price.DUPLICATE_PROOF_FIELDS:
-                            proof_field_value = getattr(proof, PROOF_FIELD)
-                            if proof_field_value:
-                                price_field_value = getattr(self, PROOF_FIELD)
-                                if str(proof_field_value) != str(price_field_value):
-                                    validation_errors = utils.add_validation_error(
-                                        validation_errors,
-                                        "proof",
-                                        f"Proof {PROOF_FIELD} ({proof_field_value}) does not match the price {PROOF_FIELD} ({price_field_value})",
-                                    )
-                if proof.type in proof_constants.TYPE_GROUP_CONSUMPTION_LIST:
-                    if not self.receipt_quantity:
-                        self.receipt_quantity = 1
-                else:
-                    if self.receipt_quantity is not None:
-                        validation_errors = utils.add_validation_error(
-                            validation_errors,
-                            "receipt_quantity",
-                            f"Can only be set if proof type in {proof_constants.TYPE_GROUP_CONSUMPTION_LIST}",
-                        )
+        validation_errors = utils.merge_validation_errors(
+            price_validators.validate_price_product_code_or_category_tag_rules(self),
+            price_validators.validate_price_price_rules(self),
+            price_validators.validate_price_date_rules(self),
+            price_validators.validate_price_location_rules(self),
+            price_validators.validate_price_proof_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def get_or_create_product(self):
+    def set_product(self):
         if self.product_code:
             from open_prices.products.models import Product
 
             product, created = Product.objects.get_or_create(code=self.product_code)
             self.product = product
 
-    def get_or_create_location(self):
+    def set_location(self):
         if self.location_osm_id and self.location_osm_type:
             from open_prices.locations import constants as location_constants
             from open_prices.locations.models import Location
@@ -580,16 +338,25 @@ class Price(models.Model):
             self.location = location
 
     def save(self, *args, **kwargs):
+        """
+        - normalize product_code
+        - run validations
+        - set product (create if needed)
+        - set location (create if needed)
+        """
+        self.normalize_product_code()
         self.full_clean()
         # self.set_proof()  # should already exist
-        self.get_or_create_product()
-        self.get_or_create_location()
+        self.set_product()
+        self.set_location()
+        self.set_is_duplicate_of()
         super().save(*args, **kwargs)
 
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:
             self.tags.append(tag)
             if save:
+                self._change_reason = "Price.set_tag() method"
                 self.save(update_fields=["tags"])
             return True
         return False
@@ -610,29 +377,84 @@ class Price(models.Model):
                         self.proof.set_tag(challenge.tag, save=True)  # important
         # save
         if changes:
+            self._change_reason = "Price.update_tags() method"
             self.save(update_fields=["tags"])
 
-    def has_category_tag(self, category_tag_list: list):
-        if (
-            self.type == price_constants.TYPE_CATEGORY
-            and self.category_tag in category_tag_list
-        ):
+    def has_location(self, location_id_list: list) -> bool:
+        if self.location_id and self.location_id in location_id_list:
             return True
-        elif (
-            self.type == price_constants.TYPE_PRODUCT
-            and self.product
-            and self.product.categories_tags
-        ):
-            if set(self.product.categories_tags) & set(category_tag_list):
-                return True
         return False
 
-    def in_challenge(self, challenge: Challenge):
-        return (
+    def in_challenge(self, challenge: Challenge) -> bool:
+        """
+        Mirror of the in_challenge queryset
+        """
+        dates_match = (
             self.created >= challenge.start_date_with_time
             and self.created <= challenge.end_date_with_time
-            and self.has_category_tag(challenge.categories)
         )
+        categories_match = (
+            not challenge.categories
+            or (
+                self.type == price_constants.TYPE_CATEGORY
+                and self.category_tag in challenge.categories_full
+            )
+            or (
+                self.type == price_constants.TYPE_PRODUCT
+                and self.product
+                and bool(self.product.categories_tags)
+                and bool(set(self.product.categories_tags) & set(challenge.categories))
+            )
+        )
+        locations_match = not challenge.locations.exists() or (
+            self.location_id and self.location_id in challenge.location_id_list()
+        )
+        return dates_match and categories_match and locations_match
+
+    def set_is_duplicate_of(self):
+        """Look for duplicate prices and set the duplicate_of field
+        accordingly.
+
+        We consider `self` to be a duplicate of another price if:
+        - it has the same location (osm_id and osm_type), date, currency and
+          price information (price, discount type, is discounted, price
+          without discount), product code/category tag, labels tags, and
+          origins tags
+        - it was created later than the other price (we keep the first one)
+        """
+        # Look for possible duplicates
+        possible_duplicates = (
+            Price.objects.filter(
+                type=self.type,
+                location_id=self.location_id,
+                date=self.date,
+                currency=self.currency,
+                price=self.price,
+                price_per=self.price_per,
+                price_is_discounted=self.price_is_discounted,
+                price_without_discount=self.price_without_discount,
+                discount_type=self.discount_type,
+                product_code=self.product_code,
+                category_tag=self.category_tag,
+                labels_tags=self.labels_tags,
+                origins_tags=self.origins_tags,
+                # Check that at least location and date are set,
+                # otherwise it doesn't make much sense to consider these
+                # prices as duplicates
+                location_id__isnull=False,
+                date__isnull=False,
+            )
+            .exclude(id=self.id)
+            # oldest first
+            .order_by("id")
+        )
+        duplicate = possible_duplicates.first()
+        if duplicate is not None and duplicate.created < self.created:
+            # Set the duplicate_of field to the first found duplicate
+            self.duplicate_of = duplicate
+
+    def get_history_list(self):
+        return history.build_instance_history_list(self)
 
 
 @receiver(signals.post_save, sender=Price)
@@ -654,6 +476,10 @@ def price_post_create_increment_counts(sender, instance, created, **kwargs):
             Location.objects.filter(id=instance.location_id).update(
                 price_count=F("price_count") + 1
             )
+    else:
+        # what about if we update the proof, product or location? (owner cannot be updated)
+        # the update_fields is often not set, so we cannot rely on it
+        pass
 
 
 @receiver(signals.post_save, sender=Price)
@@ -676,55 +502,31 @@ def price_pre_delete_update_price_tag(sender, instance, **kwargs):
 @receiver(signals.post_delete, sender=Price)
 def price_post_delete_decrement_counts(sender, instance, **kwargs):
     if instance.owner:
-        User.objects.filter(user_id=instance.owner).update(
+        User.objects.filter(user_id=instance.owner, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.proof_id:
-        Proof.objects.filter(id=instance.proof_id).update(
+        Proof.objects.filter(id=instance.proof_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.product_id:
-        Product.objects.filter(id=instance.product_id).update(
+        Product.objects.filter(id=instance.product_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
     if instance.location_id:
-        Location.objects.filter(id=instance.location.id).update(
+        Location.objects.filter(id=instance.location_id, price_count__gt=0).update(
             price_count=F("price_count") - 1
         )
 
 
-def normalize_taxonomized_tags(taxonomy_type: str, value_tags: list[str]) -> list[str]:
-    """Normalizes a list of tags based on the taxonomy type.
-
-    :param taxonomy_type: The type of taxonomy ('category', 'label', or
-        'origin').
-    :param value_tags: A list of tag values to normalize (e.g.,
-        ["fr: Boissons"]).
-    :raises RuntimeError: If the taxonomy type is not one of 'category',
-        'label', or 'origin'
-    :raises ValueError: If the value_tag could not be mapped to a canonical ID.
-    :return: The normalized tags (e.g., ["en:beverages"]). The order of the
-        tags is the same as the input list.
-    """
-    if taxonomy_type not in ("category", "label", "origin"):
-        raise RuntimeError(
-            f"Invalid taxonomy type: {taxonomy_type}. Expected one of 'category', 'label', or 'origin'."
-        )
-
-    # Use the cached version of the get_taxonomy function to avoid
-    # creating it multiple times.
-    category_taxonomy = _cached_get_taxonomy(taxonomy_type)
-    # the tag (category or label tag) can be provided by the mobile app in any
-    # language, with language prefix (ex: `fr: Boissons`).
-    # We need to map it to the canonical id (ex: `en:beverages`) to store it
-    # in the database.
-    # The `map_to_canonical_id` function maps the value (ex:
-    # `fr: Boissons`) to the canonical id (ex: `en:beverages`).
-    # We use the cached version of this function to avoid
-    # creating it multiple times.
-    # If the entry does not exist in the taxonomy, the tag will
-    # be set to the tag version of the value (ex: `fr:boissons`).
-    taxonomy_mapping = _cached_create_taxonomy_mapping(category_taxonomy)
-    mapped_tags = map_to_canonical_id(taxonomy_mapping, value_tags)
-    # Keep the order of the tags as they were provided
-    return [mapped_tags[k] for k in mapped_tags]
+@receiver(signals.post_delete, sender=Price)
+def price_post_delete_update_duplicate_of(sender, instance, **kwargs):
+    """When a price is deleted, we need to update the duplicate_of field
+    of any prices that were marked as duplicates of this price.
+    We set their duplicate_of field to None and save the price, so that
+    the search for possible duplicates is run again."""
+    # Sort by created descending, so that the most recent price is
+    # re-evaluated first
+    for price in Price.objects.filter(duplicate_of_id=instance.id).order_by("-created"):
+        price.duplicate_of = None
+        price.save(update_fields=["duplicate_of"])

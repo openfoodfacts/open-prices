@@ -31,6 +31,14 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
 
+nav:
+  - Home: README.md
+  - Tutorials:
+      - "Add multiple prices (from shelf images)": tutorials/add-multiple-prices-shelf.md
+      - "Add multiple prices (from a receipt)": tutorials/add-multiple-prices-receipt.md
+  - Dev:
+      - Contributing: dev/contributing.md
+      - Install: dev/install.md
+
 plugins:
-  - awesome-pages
   - search

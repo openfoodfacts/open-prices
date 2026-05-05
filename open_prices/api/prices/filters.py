@@ -1,13 +1,27 @@
 import django_filters
 
 from open_prices.common import constants
+from open_prices.locations import constants as location_constants
 from open_prices.prices.models import Price
+from open_prices.products import constants as product_constants
 from open_prices.proofs import constants as proof_constants
 
 
 class PriceFilter(django_filters.FilterSet):
-    product_id__isnull = django_filters.BooleanFilter(
-        field_name="product_id", lookup_expr="isnull"
+    """
+    PriceViewSet GET queryset has select_related on product, location, proof
+    """
+
+    kind = django_filters.ChoiceFilter(
+        choices=constants.KIND_CHOICES,
+        method="filter_kind",
+    )
+    product__source = django_filters.ChoiceFilter(
+        field_name="product__source",
+        choices=product_constants.SOURCE_CHOICES,
+    )
+    product__source__isnull = django_filters.BooleanFilter(
+        field_name="product__source", lookup_expr="isnull"
     )
     product__categories_tags__contains = django_filters.CharFilter(
         field_name="product__categories_tags", lookup_expr="contains"
@@ -15,7 +29,6 @@ class PriceFilter(django_filters.FilterSet):
     product__categories_tags__overlap = django_filters.BaseInFilter(
         field_name="product__categories_tags",
         lookup_expr="overlap",
-        help_text="Provide multiple values as separate query parameters. Example: ?product__categories_tags__overlap=en:breakfasts&product__categories_tags__overlap=en:apples",
     )
     labels_tags__contains = django_filters.CharFilter(
         field_name="labels_tags", lookup_expr="contains"
@@ -23,41 +36,20 @@ class PriceFilter(django_filters.FilterSet):
     origins_tags__contains = django_filters.CharFilter(
         field_name="origins_tags", lookup_expr="contains"
     )
-    price__gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
-    price__gte = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
-    price__lt = django_filters.NumberFilter(field_name="price", lookup_expr="lt")
-    price__lte = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
-    location_id__isnull = django_filters.BooleanFilter(
-        field_name="location_id", lookup_expr="isnull"
-    )
-    proof_id__isnull = django_filters.BooleanFilter(
-        field_name="proof_id", lookup_expr="isnull"
+    location__type = django_filters.ChoiceFilter(
+        field_name="location__type",
+        choices=location_constants.TYPE_CHOICES,
     )
     proof__type = django_filters.MultipleChoiceFilter(
         field_name="proof__type",
         choices=proof_constants.TYPE_CHOICES,
     )
-    kind = django_filters.ChoiceFilter(
-        choices=constants.KIND_CHOICES,
-        method="filter_kind",
-    )
-    date__gt = django_filters.DateFilter(field_name="date", lookup_expr="gt")
-    date__gte = django_filters.DateFilter(field_name="date", lookup_expr="gte")
-    date__lt = django_filters.DateFilter(field_name="date", lookup_expr="lt")
-    date__lte = django_filters.DateFilter(field_name="date", lookup_expr="lte")
-    date__year = django_filters.NumberFilter(field_name="date", lookup_expr="year")
-    date__month = django_filters.NumberFilter(field_name="date", lookup_expr="month")
     tags__contains = django_filters.CharFilter(
         field_name="tags", lookup_expr="contains"
     )
-    created__gte = django_filters.DateTimeFilter(
-        field_name="created", lookup_expr="gte"
-    )
-    created__lte = django_filters.DateTimeFilter(
-        field_name="created", lookup_expr="lte"
-    )
     location__osm_name__contains = django_filters.CharFilter(
-        field_name="location__osm_name", lookup_expr="icontains"
+        field_name="location__osm_name",
+        lookup_expr="icontains",
     )
 
     def filter_kind(self, queryset, name, value):
@@ -69,20 +61,22 @@ class PriceFilter(django_filters.FilterSet):
 
     class Meta:
         model = Price
-        fields = [
-            "type",
-            "product_code",
-            "product_id",
-            "product_name",
-            "category_tag",
-            "location_osm_id",
-            "location_osm_type",
-            "location_id",
-            "price",
-            "price_is_discounted",
-            "discount_type",
-            "currency",
-            "date",
-            "proof_id",
-            "owner",
-        ]
+        fields = {
+            "type": ["exact"],
+            "product_code": ["exact", "in", "isnull"],
+            "product_id": ["exact", "in", "isnull"],
+            "product_name": ["exact"],
+            "category_tag": ["exact"],
+            "location_osm_id": ["exact"],
+            "location_osm_type": ["exact"],
+            "location_id": ["exact", "in", "isnull"],
+            "price": ["exact", "gt", "gte", "lt", "lte"],
+            "price_is_discounted": ["exact"],
+            "discount_type": ["exact"],
+            "currency": ["exact"],
+            "date": ["exact", "gt", "gte", "lt", "lte", "year", "month"],
+            "proof_id": ["exact", "in", "isnull"],
+            "owner": ["exact"],
+            "duplicate_of": ["isnull"],
+            "created": ["gte", "lte"],
+        }

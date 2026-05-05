@@ -1,4 +1,4 @@
-# this file setup various thinks that are for dev environment
+# this file setup various things that are for dev environment
 
 x-api-base: &api-base
   image: openfoodfacts/open-prices/api:dev

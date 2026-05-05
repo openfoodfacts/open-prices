@@ -10,6 +10,7 @@ from open_prices.api.locations.serializers import LocationSerializer
 from open_prices.api.prices.serializers import PriceSerializer
 from open_prices.api.proofs.serializers import ProofSerializer
 from open_prices.challenges.models import Challenge
+from open_prices.common.history import history_clean_duplicate_command
 from open_prices.common.openfoodfacts import import_product_db
 from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
@@ -68,9 +69,9 @@ def update_total_stats_task():
 
 def update_product_counts_task():
     """
-    Update all product field counts
+    Update product field counts
     """
-    for product in Product.objects.with_stats().filter(price_count_annotated__gte=1):
+    for product in Product.objects.to_update_in_weekly_task():
         product.update_price_count()
         product.update_location_count()
         product.update_user_count()
@@ -79,18 +80,19 @@ def update_product_counts_task():
 
 def update_user_counts_task():
     """
-    Update all user field counts
+    Update user field counts
     """
     for user in User.objects.all():
         user.update_price_count()
         user.update_location_count()
         user.update_product_count()
         user.update_proof_count()
+        user.update_other_count()
 
 
 def update_location_counts_task():
     """
-    Update all location field counts
+    Update location field counts
     """
     for location in Location.objects.all():
         for field in Location.COUNT_FIELDS:
@@ -114,9 +116,11 @@ def moderation_tasks():
 
 
 def challenge_tasks():
-    for challenge in Challenge.objects.all():
-        challenge.set_price_tags()
-        challenge.set_proof_tags()
+    for challenge in Challenge.objects.to_update_in_daily_task():
+        challenge.calculate_categories_full()
+        challenge.set_price_tags()  # will only apply on 'ONGOING' challenges
+        challenge.set_proof_tags()  # will only apply based on price 'challenge' tags
+        challenge.calculate_stats()
 
 
 def dump_db_task():
@@ -134,27 +138,39 @@ def dump_db_task():
         export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir)
 
 
+def history_cleanup_task():
+    history_clean_duplicate_command()
+
+
 CRON_SCHEDULES = {
-    "import_obf_db_task": "0 15 * * *",  # daily at 15:00
-    "import_opff_db_task": "10 15 * * *",  # daily at 15:10
-    "import_opf_db_task": "20 15 * * *",  # daily at 15:20
-    "import_off_db_task": "30 15 * * *",  # daily at 15:30
-    "update_total_stats_task": "0 1 * * *",  # daily at 01:00
-    "fix_proof_fields_task": "10 1 * * *",  # daily at 01:10
-    "moderation_tasks": "20 1 * * *",  # daily at 01:20
-    "challenge_tasks": "20 1 * * *",  # daily at 01:30
-    "update_user_counts_task": "0 2 * * 1",  # every start of the week
-    "update_location_counts_task": "10 2 * * 1",  # every start of the week
-    "update_product_counts_task": "20 2 * * 1",  # every start of the week
-    "dump_db_task": "0 23 * * *",  # daily at 23:00
+    "import_obf_db_task": ("0 15 * * *", {}),  # daily at 15:00
+    "import_opff_db_task": ("10 15 * * *", {}),  # daily at 15:10
+    "import_opf_db_task": ("20 15 * * *", {}),  # daily at 15:20
+    "import_off_db_task": ("30 15 * * *", {}),  # daily at 15:30
+    "dump_db_task": ("0 23 * * *", {}),  # daily at 23:00
+    "update_total_stats_task": ("0 1 * * *", {}),  # daily at 01:00
+    "fix_proof_fields_task": ("10 1 * * *", {}),  # daily at 01:10
+    "moderation_tasks": ("20 1 * * *", {}),  # daily at 01:20
+    "challenge_tasks": ("30 1 * * *", {}),  # daily at 01:30
+    "history_cleanup_task": ("0 3 * * 1", {}),  # daily at 03:00
+    "update_user_counts_task": ("0 2 * * 1", {}),  # every start of the week (at 02:00)
+    "update_location_counts_task": (
+        "10 2 * * 1",  # every start of the week (at 02:10)
+        {},
+    ),
+    "update_product_counts_task": (
+        "20 2 * * 1",  # every start of the week (at 02:20)
+        {"timeout": 10 * 60 * 60},  # 10 hours
+    ),
 }
 
-for task_name, task_cron in CRON_SCHEDULES.items():
+for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
     if not Schedule.objects.filter(name=task_name).exists():
         schedule(
             f"open_prices.common.tasks.{task_name}",
             name=task_name,
             schedule_type=Schedule.CRON,
             cron=task_cron,
+            **q_options,
         )
         print(f"Task {task_name} scheduled with cron {task_cron}")

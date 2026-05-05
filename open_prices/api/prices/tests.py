@@ -6,6 +6,7 @@ from django.urls import reverse
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.moderation.models import FlagReason, FlagStatus
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
@@ -17,6 +18,7 @@ from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
 
 PRICE_8001505005707 = {
+    "type": price_constants.TYPE_PRODUCT,
     "product_code": "8001505005707",
     "price": 15,
     "currency": "EUR",
@@ -49,6 +51,7 @@ PRODUCT_8001505005707 = {
     "labels_tags": ["en:no-gluten", "en:organic"],
     "brands_tags": ["rigoni-di-asiago"],
     "price_count": 15,
+    "source": "off",
 }
 
 PRODUCT_8850187002197 = {
@@ -87,7 +90,6 @@ class PriceListApiTest(TestCase):
             self.assertEqual(response.data["total"], 3)
             self.assertEqual(len(response.data["items"]), 3)
             self.assertTrue("id" in response.data["items"][0])
-            self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
             self.assertTrue("proof" in response.data["items"][0])
             self.assertTrue("location" in response.data["items"][0])
 
@@ -111,7 +113,6 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 10)  # default
-        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
         # size=150
         url = self.url + "?size=150"
         response = self.client.get(url)
@@ -120,7 +121,6 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 100)  # max to 100
-        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
         # size=1
         url = self.url + "?size=1"
         response = self.client.get(url)
@@ -129,22 +129,28 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 3)
         self.assertEqual(response.data["size"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 15.00)  # default order
 
 
 class PriceListOrderApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
-        PriceFactory(price=15)
-        PriceFactory(price=0)
-        PriceFactory(price=50)
+        cls.price_1 = PriceFactory(price=15)
+        cls.price_2 = PriceFactory(price=0)
+        cls.price_3 = PriceFactory(price=50)
+
+    def test_price_list_default_order_by_id(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["items"][0]["id"], self.price_1.id)
 
     def test_price_list_order_by(self):
         url = self.url + "?order_by=-price"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
-        self.assertEqual(response.data["items"][0]["price"], 50.00)
+        self.assertEqual(response.data["items"][0]["price"], 50)
+        self.assertEqual(response.data["items"][0]["id"], self.price_3.id)
 
 
 class PriceListFilterApiTest(TestCase):
@@ -152,12 +158,18 @@ class PriceListFilterApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
+        cls.location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         cls.user_proof_price_tag = ProofFactory(
-            type=proof_constants.TYPE_PRICE_TAG, owner=cls.user_session.user.user_id
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
+            owner=cls.user_session.user.user_id,
         )
         cls.user_proof_receipt = ProofFactory(
             type=proof_constants.TYPE_RECEIPT,
             owner_consumption=True,
+            location_id=cls.location_online.id,
             owner=cls.user_session.user.user_id,
         )
         cls.product_8001505005707 = ProductFactory(**PRODUCT_8001505005707)
@@ -166,6 +178,7 @@ class PriceListFilterApiTest(TestCase):
             **PRICE_8001505005707,
             receipt_quantity=2,
             proof_id=cls.user_proof_receipt.id,
+            location_id=cls.user_proof_receipt.location_id,
             owner=cls.user_session.user.user_id,
             product=cls.product_8001505005707,
         )
@@ -174,18 +187,26 @@ class PriceListFilterApiTest(TestCase):
             labels_tags=[],
             origins_tags=["en:spain"],
             proof_id=cls.user_proof_price_tag.id,
+            location_osm_id=cls.user_proof_price_tag.location_osm_id,
+            location_osm_type=cls.user_proof_price_tag.location_osm_type,
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:unknown"],
+            proof_id=None,
+            location_osm_id=None,
+            location_osm_type=None,
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
             **PRICE_APPLES,
             labels_tags=["en:organic"],
             origins_tags=["en:france"],
+            proof_id=None,
+            location_osm_id=None,
+            location_osm_type=None,
             owner=cls.user_session.user.user_id,
         )
         PriceFactory(
@@ -193,7 +214,9 @@ class PriceListFilterApiTest(TestCase):
             price=50,
             price_without_discount=70,
             price_is_discounted=True,
+            discount_type=price_constants.DISCOUNT_TYPE_EXPIRES_SOON,
             currency="USD",
+            proof_id=None,
             location_osm_id=None,
             location_osm_type=None,
             date="2024-06-30",
@@ -207,6 +230,27 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 5)
 
+    def test_price_list_filter_by_type(self):
+        self.assertEqual(Price.objects.count(), 5)
+        # type=PRODUCT
+        url = self.url + f"?type={price_constants.TYPE_PRODUCT}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # type=CATEGORY
+        url = self.url + f"?type={price_constants.TYPE_CATEGORY}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+
+    def test_price_list_filter_by_kind(self):
+        self.assertEqual(Price.objects.count(), 5)
+        # kind
+        url = self.url + "?kind=CONSUMPTION"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?kind=COMMUNITY"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 4)
+
     def test_price_list_filter_by_product(self):
         self.assertEqual(Price.objects.count(), 5)
         # product_code
@@ -214,6 +258,37 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["product_code"], "8001505005707")
+        # product_code__in
+        # url = self.url + "?product_code__in=8001505005707&product_code__in=8850187002197"
+        # response = self.client.get(url)
+        # self.assertEqual(response.data["total"], 2)
+        url = self.url + "?product_code__in=8001505005707,8850187002197"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?product_code__in=8001505005707,0000000000000"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # product_code__isnull
+        url = self.url + "?product_code__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        url = self.url + "?product_code__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # product_id
+        url = self.url + f"?product_id={self.product_8001505005707.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["product_id"], self.product_8001505005707.id
+        )
+        # product_id__in
+        url = (
+            self.url
+            + f"?product_id__in={self.product_8001505005707.id},{self.product_8850187002197.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
         # product_id__isnull
         url = self.url + "?product_id__isnull=true"
         response = self.client.get(url)
@@ -222,6 +297,20 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?product_id__isnull=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
+        # product__source
+        url = self.url + "?product__source=off"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # product__source__isnull
+        url = self.url + "?product__source__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 4)
+        self.assertEqual(response.data["items"][0]["category_tag"], "en:apples")
+        # Products without source, but with a product id -> barcode products not yet created
+        url = self.url + "?product__source__isnull=true&product_id__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["product_code"], "8850187002197")
         # category_tag
         url = self.url + "?category_tag=apples"
         response = self.client.get(url)
@@ -276,24 +365,28 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?price=15"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 15.00)
+        self.assertEqual(response.data["items"][0]["price"], 15)
         # lte / gte
         url = self.url + "?price__gte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 50.00)
+        self.assertEqual(response.data["items"][0]["price"], 50)
         url = self.url + "?price__lte=20"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
-        self.assertEqual(response.data["items"][0]["price"], 15.00)
+        self.assertEqual(response.data["items"][0]["price"], 15)
         # price_is_discounted
         url = self.url + "?price_is_discounted=true"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["price"], 50.00)
+        self.assertEqual(response.data["items"][0]["price"], 50)
         url = self.url + "?price_is_discounted=false"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
+        # discount_type
+        url = self.url + f"?discount_type={price_constants.DISCOUNT_TYPE_EXPIRES_SOON}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_currency(self):
         self.assertEqual(Price.objects.count(), 5)
@@ -304,20 +397,35 @@ class PriceListFilterApiTest(TestCase):
     def test_price_list_filter_by_location(self):
         self.assertEqual(Price.objects.count(), 5)
         # location_osm_id
-        url = self.url + f"?location_osm_id={self.user_price.location_osm_id}"
+        url = self.url + f"?location_osm_id={self.location_osm.osm_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # location_osm_type
+        url = self.url + f"?location_osm_type={self.location_osm.osm_type}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         # location_id
-        url = self.url + f"?location_id={self.user_price.location_id}"
+        url = self.url + f"?location_id={self.location_osm.id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # location_id__in
+        url = (
+            self.url
+            + f"?location_id__in={self.location_osm.id},{self.location_online.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 1)
         # location_id__isnull
         url = self.url + "?location_id__isnull=true"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["total"], 3)
         url = self.url + "?location_id__isnull=false"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 4)
+        self.assertEqual(response.data["total"], 1 + 1)
+        # location__type
+        url = self.url + f"?location__type={location_constants.TYPE_ONLINE}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_proof(self):
         self.assertEqual(Price.objects.count(), 5)
@@ -325,13 +433,20 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + f"?proof_id={self.user_price.proof_id}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # proof_id__in
+        url = (
+            self.url
+            + f"?proof_id__in={self.user_proof_price_tag.id},{self.user_proof_receipt.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1 + 1)
         # proof_id__isnull
         url = self.url + "?proof_id__isnull=true"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
         url = self.url + "?proof_id__isnull=false"
         response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["total"], 1 + 1)
         # proof__type
         url = self.url + f"?proof__type={proof_constants.TYPE_RECEIPT}"
         # thanks to select_related, we only have 2 queries:
@@ -350,16 +465,6 @@ class PriceListFilterApiTest(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1 + 1)
-
-    def test_price_list_filter_by_kind(self):
-        self.assertEqual(Price.objects.count(), 5)
-        # kind
-        url = self.url + "?kind=CONSUMPTION"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
-        url = self.url + "?kind=COMMUNITY"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 4)
 
     def test_price_list_filter_by_date(self):
         self.assertEqual(Price.objects.count(), 5)
@@ -386,11 +491,35 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 4)
 
+    def test_price_list_filter_by_duplicate_of(self):
+        self.assertEqual(Price.objects.count(), 5)
+        # create a duplicate price
+        price_duplicate = PriceFactory(
+            **PRICE_8001505005707,
+            receipt_quantity=2,
+            proof_id=self.user_proof_receipt.id,
+            location_id=self.user_proof_receipt.location_id,
+            owner=self.user_session.user.user_id,
+            product=self.product_8001505005707,
+        )
+        self.assertIsNotNone(price_duplicate.duplicate_of)
+        self.assertEqual(Price.objects.count(), 6)
+        # duplicate_of__isnull=true
+        url = self.url + "?duplicate_of__isnull=true"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 5)
+        # duplicate_of__isnull=false
+        url = self.url + "?duplicate_of__isnull=false"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
     def test_price_list_filter_by_created(self):
+        # created__gte
         self.assertEqual(Price.objects.count(), 5)
         url = self.url + "?created__gte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 5)
+        # created__lte
         url = self.url + "?created__lte=2024-01-01T00:00:00Z"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)
@@ -424,47 +553,130 @@ class PriceCreateApiTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse("api:prices-list")
         cls.user_session = SessionFactory()
+        cls.location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         cls.user_proof_gdpr = ProofFactory(
             type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
         )
         cls.proof_price_tag = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
-        cls.proof_receipt = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        cls.proof_receipt = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            currency="EUR",
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
+            date="2024-01-01",
+        )
         cls.data = {
             **PRICE_8001505005707,
-            "location_osm_id": 652825274,
-            "location_osm_type": "NODE",
+            "location_osm_id": cls.location_osm.osm_id,
+            "location_osm_type": cls.location_osm.osm_type,
             "proof_id": cls.user_proof_gdpr.id,
             "source": "test",
         }
 
-    def test_price_create_without_proof(self):
-        data = self.data.copy()
-        del data["proof_id"]
-        # anonymous
-        response = self.client.post(
-            self.url, self.data, content_type="application/json"
-        )
+    def test_price_create_anonymous(self):
+        response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, 403)
-        # wrong token
+
+    def test_price_create_wrong_token(self):
         response = self.client.post(
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}X"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
-        # proof_id field missing
+
+    def test_price_create_without_fields(self):
+        # without proof_id: NOK
         data = self.data.copy()
         del data["proof_id"]
         response = self.client.post(
             self.url,
             data,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        # without type: OK
+        data = self.data.copy()
+        del data["type"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["type"], price_constants.TYPE_PRODUCT)  # default
+        # without price: NOK
+        data = self.data.copy()
+        del data["price"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # without currency: OK (because proof without currency)
+        data = self.data.copy()
+        del data["currency"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["currency"], None)
+        # without currency: NOK (because proof has a currency)
+        data = self.data.copy()
+        del data["currency"]
+        response = self.client.post(
+            self.url,
+            {**data, "proof_id": self.proof_receipt.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # without location data: OK (because proof without location data)
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["location"], None)
+        # without location data: NOK (because proof has location data)
+        data = self.data.copy()
+        del data["location_osm_id"]
+        del data["location_osm_type"]
+        response = self.client.post(
+            self.url,
+            {**data, "proof_id": self.proof_receipt.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        # without date: OK (because proof without date)
+        data = self.data.copy()
+        del data["date"]
+        response = self.client.post(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["date"], None)
+        # without date: NOK (because proof has a date)
+        data = self.data.copy()
+        del data["date"]
+        response = self.client.post(
+            self.url,
+            {**data, "proof_id": self.proof_receipt.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 400)
 
     def test_price_create_with_proof(self):
+        # without proof: see test above
         # empty proof
         response = self.client.post(
             self.url,
@@ -478,7 +690,6 @@ class PriceCreateApiTest(TestCase):
             self.url,
             {**self.data, "proof_id": 999},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
         # authenticated
@@ -486,11 +697,10 @@ class PriceCreateApiTest(TestCase):
             self.url,
             self.data,
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["product_code"], "8001505005707")
-        self.assertEqual(response.data["price"], 15.00)
+        self.assertEqual(response.data["price"], 15)
         self.assertEqual(response.data["currency"], "EUR")
         self.assertEqual(response.data["date"], "2024-01-01")
         self.assertEqual(response.data["receipt_quantity"], 1)  # default
@@ -525,40 +735,34 @@ class PriceCreateApiTest(TestCase):
             self.url,
             {**self.data, "proof_id": self.proof_receipt.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-        # not proof owner and proof is a PRICE_TAG: OK !
+        # not proof owner and proof is a PRICE_TAG: OK
         response = self.client.post(
             self.url,
             {**self.data, "proof_id": self.proof_price_tag.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
 
     def test_price_create_with_location_id(self):
-        location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
-        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         # with location_id, location_osm_id & location_osm_type: OK
         response = self.client.post(
             self.url,
-            {**self.data, "location_id": location_osm.id},
+            {**self.data, "location_id": self.location_osm.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["location"]["id"], location_osm.id)
+        self.assertEqual(response.data["location"]["id"], self.location_osm.id)
         # with just location_id (OSM): NOK
         data = self.data.copy()
         del data["location_osm_id"]
         del data["location_osm_type"]
         response = self.client.post(
             self.url,
-            {**data, "location_id": location_osm.id},
+            {**data, "location_id": self.location_osm.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
         # with just location_id (ONLINE): OK
@@ -567,21 +771,19 @@ class PriceCreateApiTest(TestCase):
         del data["location_osm_type"]
         response = self.client.post(
             self.url,
-            {**data, "location_id": location_online.id},
+            {**data, "location_id": self.location_online.id},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
 
     def test_price_create_with_type(self):
         data = self.data.copy()
-        # without type? see other tests
+        # without type? see test above
         # correct type
         response = self.client.post(
             self.url,
             {**data, "type": price_constants.TYPE_PRODUCT},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["type"], price_constants.TYPE_PRODUCT)
@@ -590,7 +792,6 @@ class PriceCreateApiTest(TestCase):
             self.url,
             {**data, "type": price_constants.TYPE_CATEGORY},
             headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
 
@@ -610,11 +811,25 @@ class PriceCreateApiTest(TestCase):
                     self.url + params,
                     self.data,
                     headers={"Authorization": f"Bearer {self.user_session.token}"},
-                    content_type="application/json",
                 )
                 self.assertEqual(response.status_code, 201)
                 self.assertEqual(response.data["source"], result)
                 self.assertEqual(Price.objects.last().source, result)
+
+    def test_price_create_history(self):
+        response = self.client.post(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        price_id = response.data["id"]
+        self.assertEqual(Price.history.filter(id=price_id).count(), 1)
+        self.assertEqual(Price.history.filter(id=price_id).first().history_type, "+")
+        self.assertEqual(
+            Price.history.filter(id=price_id).first().history_user_id,
+            self.user_session.user.user_id,
+        )
 
 
 class PriceUpdateApiTest(TestCase):
@@ -634,55 +849,105 @@ class PriceUpdateApiTest(TestCase):
         cls.url_price_category = reverse(
             "api:prices-detail", args=[cls.price_category.id]
         )
-        cls.data = {"currency": "USD", "product_code": "123"}
 
     def test_price_update_authentication_errors(self):
         # anonymous
         response = self.client.patch(
-            self.url_price_product, self.data, content_type="application/json"
+            self.url_price_product, {"currency": "USD"}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 403)
         # wrong token
         response = self.client.patch(
             self.url_price_product,
-            self.data,
+            {"currency": "USD"},
             headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
-        # not price owner
+        # not price owner and not moderator
         response = self.client.patch(
             self.url_price_product,
-            self.data,
+            {"currency": "USD"},
             headers={"Authorization": f"Bearer {self.user_session_2.token}"},
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 404)  # 403 ?
+        self.assertEqual(response.status_code, 403)
 
-    def test_price_update_ok(self):
-        # authenticated
+    def test_price_update_ok_if_owner(self):
+        self.assertEqual(self.price_product.currency, "EUR")
+        # authenticated and price owner
         response = self.client.patch(
             self.url_price_product,
-            self.data,
+            {"currency": "USD"},
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["currency"], "USD")
-        self.assertEqual(
-            Price.objects.get(id=self.price_product.id).product_code, "8001505005707"
-        )  # ignored
-        # update price category
+
+    def test_price_update_ok_if_moderator(self):
+        self.assertEqual(self.price_product.currency, "EUR")
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
         response = self.client.patch(
-            self.url_price_category,
-            {"category_tag": "en:tomatoes"},
+            self.url_price_product,
+            {"currency": "USD"},
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["currency"], "USD")
+
+    def test_price_update_price_fields(self):
+        # before
+        self.assertEqual(self.price_product.price, 15)
+        self.assertEqual(self.price_product.currency, "EUR")
+        self.assertEqual(self.price_product.price_is_discounted, False)
+        self.assertEqual(self.price_product.price_without_discount, None)
+        self.assertEqual(self.price_product.discount_type, None)
+        # update price & currency & discounted info
+        response = self.client.patch(
+            self.url_price_product,
+            {
+                "price": 10,
+                "currency": "USD",
+                "price_is_discounted": True,
+                "price_without_discount": 15,
+                "discount_type": price_constants.DISCOUNT_TYPE_EXPIRES_SOON,
+            },
             headers={"Authorization": f"Bearer {self.user_session_1.token}"},
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["category_tag"], "en:tomatoes")
+        self.assertEqual(response.data["price"], 10)
+        self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(response.data["price_is_discounted"], True)
+        self.assertEqual(response.data["price_without_discount"], 15)
+        self.assertEqual(
+            response.data["discount_type"], price_constants.DISCOUNT_TYPE_EXPIRES_SOON
+        )
 
-    def test_price_update_type_mismatch(self):
+    def test_price_type_product_update_fields(self):
+        # update 'product' price: before
+        self.assertEqual(self.price_product.type, price_constants.TYPE_PRODUCT)
+        self.assertEqual(self.price_product.price, 15)
+        self.assertEqual(self.price_product.currency, "EUR")
+        self.assertEqual(self.price_product.product_code, "8001505005707")
+        # update currency & product_code
+        response = self.client.patch(
+            self.url_price_product,
+            {"currency": "USD", "product_code": "8850187002197"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price"], 15)  # unchanged
+        self.assertEqual(response.data["currency"], "USD")
+        self.assertEqual(
+            Price.objects.get(id=self.price_product.id).product_code, "8850187002197"
+        )
         # cannot add 'category' fields to a 'product' price
         response = self.client.patch(
             self.url_price_product,
@@ -691,6 +956,74 @@ class PriceUpdateApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+        # cannot change the price type into 'category'
+        response = self.client.patch(
+            self.url_price_product,
+            {"type": price_constants.TYPE_CATEGORY, "category_tag": "en:apples"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_price_type_category_update_fields(self):
+        # update 'category' price: before
+        self.assertEqual(self.price_category.type, price_constants.TYPE_CATEGORY)
+        self.assertEqual(self.price_category.price, 1)
+        self.assertEqual(self.price_category.currency, "EUR")
+        self.assertEqual(self.price_category.category_tag, "en:apples")
+        self.assertEqual(self.price_category.labels_tags, [])
+        self.assertEqual(self.price_category.origins_tags, [])
+        # update category_tag
+        response = self.client.patch(
+            self.url_price_category,
+            {
+                "category_tag": "en:tomatoes",
+                "labels_tags": ["en:organic"],
+                "origins_tags": ["en:france"],
+            },
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price"], 1)  # unchanged
+        self.assertEqual(response.data["currency"], "EUR")  # unchanged
+        self.assertEqual(response.data["category_tag"], "en:tomatoes")
+        self.assertEqual(response.data["labels_tags"], ["en:organic"])
+        self.assertEqual(response.data["origins_tags"], ["en:france"])
+        # cannot add 'product' fields to a 'category' price
+        response = self.client.patch(
+            self.url_price_category,
+            {"product_code": "8001505005707"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        # cannot change the price type into 'product'
+        response = self.client.patch(
+            self.url_price_category,
+            {"type": price_constants.TYPE_PRODUCT, "product_code": "8001505005707"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_price_update_history(self):
+        self.assertEqual(Price.history.filter(id=self.price_product.id).count(), 1)
+        response = self.client.patch(
+            self.url_price_product,
+            {"currency": "USD"},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Price.history.filter(id=self.price_product.id).count(), 2)
+        self.assertEqual(
+            Price.history.filter(id=self.price_product.id).first().history_type, "~"
+        )
+        self.assertEqual(
+            Price.history.filter(id=self.price_product.id).first().history_user_id,
+            self.user_session_1.user.user_id,
+        )
 
 
 class PriceDeleteApiTest(TestCase):
@@ -712,13 +1045,13 @@ class PriceDeleteApiTest(TestCase):
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}X"}
         )
         self.assertEqual(response.status_code, 403)
-        # not price owner
+        # not price owner and not moderator
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
-        self.assertEqual(response.status_code, 404)  # 403 ?
+        self.assertEqual(response.status_code, 403)
 
-    def test_price_delete_ok(self):
+    def test_price_delete_ok_if_owner(self):
         # authenticated
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
@@ -727,6 +1060,34 @@ class PriceDeleteApiTest(TestCase):
         self.assertEqual(response.data, None)
         self.assertEqual(
             Price.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )
+
+    def test_price_delete_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(
+            Price.objects.filter(owner=self.user_session_1.user.user_id).count(), 0
+        )
+
+    def test_price_delete_history(self):
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Price.history.filter(id=self.price.id).count(), 2)
+        self.assertEqual(
+            Price.history.filter(id=self.price.id).first().history_type, "-"
+        )
+        self.assertEqual(
+            Price.history.filter(id=self.price.id).first().history_user_id,
+            self.user_session_1.user.user_id,
         )
 
 
@@ -754,16 +1115,80 @@ class PriceStatsApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["price__count"], 4)
-        self.assertEqual(response.data["price__min"], 2.00)
-        self.assertEqual(response.data["price__max"], 30.00)
-        self.assertEqual(response.data["price__avg"], Decimal(18.00))
+        self.assertEqual(response.data["price__min"], 2)
+        self.assertEqual(response.data["price__max"], 30)
+        self.assertEqual(response.data["price__avg"], 18)
         url = self.url + "?price_is_discounted=False"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["price__count"], 3)
-        self.assertEqual(response.data["price__avg"], Decimal(19.00))
+        self.assertEqual(response.data["price__avg"], 19)
         url = self.url + f"?price_is_discounted=false&product_code={self.product.code}"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["price__count"], 2)
-        self.assertEqual(response.data["price__avg"], Decimal(27.50))
+        self.assertEqual(response.data["price__avg"], Decimal(27.5))
+
+
+class PriceHistoryApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.price = PriceFactory(
+            **PRICE_8001505005707, owner=cls.user_session_1.user.user_id
+        )
+        cls.url = reverse("api:prices-history", args=[cls.price.id])
+
+    def test_price_history(self):
+        # 404
+        url = reverse("api:prices-history", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "No Price matches the given query.")
+        # existing price
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["history_type"], "+")
+        self.assertEqual(response.data[0]["changes"], [])
+
+
+class PriceFlagApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session_1 = SessionFactory()
+        cls.user_session_2 = SessionFactory()
+        cls.price = PriceFactory(
+            **PRICE_8001505005707, owner=cls.user_session_1.user.user_id
+        )
+        cls.url = reverse("api:prices-flag", args=[cls.price.id])
+
+    def test_price_flag_authentication_errors(self):
+        # anonymous
+        response = self.client.post(self.url, {"reason": FlagReason.OTHER})
+        self.assertEqual(response.status_code, 403)
+        # wrong token
+        response = self.client.post(
+            self.url,
+            {"reason": FlagReason.OTHER},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}X"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_price_flag_ok_if_authenticated(self):
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This price is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.price.id)
+        self.assertEqual(response.data["content_type"], "PRICE")
+        self.assertEqual(response.data["reason"], FlagReason.OTHER)
+        self.assertEqual(response.data["comment"], "This price is spam")
+        self.assertEqual(response.data["status"], FlagStatus.OPEN)
+        self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)

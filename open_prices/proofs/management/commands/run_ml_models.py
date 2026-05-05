@@ -8,11 +8,11 @@ from django.utils import timezone
 from openfoodfacts.utils import get_logger
 
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.ml import (
+from open_prices.proofs.ml import run_and_save_proof_prediction
+from open_prices.proofs.ml.classification import proof_classification_model_config
+from open_prices.proofs.ml.price_tags import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
-    PROOF_CLASSIFICATION_MODEL_NAME,
     run_and_save_price_tag_extraction,
-    run_and_save_proof_prediction,
 )
 from open_prices.proofs.models import PriceTagPrediction, Proof
 
@@ -83,7 +83,7 @@ class Command(BaseCommand):
         exclusion_filters_list = []
         if "proof_classification" in types:
             exclusion_filters_list.append(
-                Q(predictions__model_name=PROOF_CLASSIFICATION_MODEL_NAME)
+                Q(predictions__model_name=proof_classification_model_config.model_name)
             )
         if "price_tag_detection" in types:
             exclusion_filters_list.append(
@@ -109,7 +109,8 @@ class Command(BaseCommand):
                     predictions__model_name__isnull=True,
                 )
                 | Proof.objects.exclude(exclusion_filter)
-            ).distinct()
+            )
+            .distinct()
             # Order by -id to process the most recent proofs first
             .order_by("-id")
         )

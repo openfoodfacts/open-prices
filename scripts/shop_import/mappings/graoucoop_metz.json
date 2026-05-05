@@ -1,0 +1,22 @@
+{
+  "shop_name": "Graoucoop",
+  "shop_address": "124 avenue André Malraux 57000 Metz",
+  "shop_website": "https://graoucoop.fr",
+  "shop_location_osm_id": "8340403034",
+  "shop_location_osm_type": "NODE",
+  "shop_currency": "EUR",
+  "shop_username": "",
+  "fields": [
+    {
+      "open_prices": "product_code",
+      "shop": "product_variant_ids/barcode",
+      "example": "493047000001"
+    },
+    {
+      "open_prices": "price",
+      "shop": "list_price",
+      "example": "7.01"
+    }
+  ],
+  "filters": []
+}

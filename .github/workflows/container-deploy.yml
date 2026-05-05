@@ -19,6 +19,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'openfoodfacts'
     strategy:
       matrix:
         env:
@@ -43,18 +44,23 @@ jobs:
         # so we use the production redis server
         echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
+        echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.net/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
+        echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
-        echo "SSH_PROXY_HOST=ovh2.openfoodfacts.org" >> $GITHUB_ENV
-        echo "SSH_HOST=10.1.0.201" >> $GITHUB_ENV
+        echo "SSH_PROXY_HOST=scaleway-03.infra.openfoodfacts.org" >> $GITHUB_ENV
+        echo "SSH_HOST=10.13.1.201" >> $GITHUB_ENV
         echo "ENVIRONMENT=org" >> $GITHUB_ENV
         echo "CSRF_TRUSTED_ORIGINS=https://prices.openfoodfacts.org" >> $GITHUB_ENV
         # Triton server is on Moji datacenter, so we use the stunnel client running
         # on the OVH datacenter to access it
-        echo "TRITON_URI=10.1.0.101:5504" >> $GITHUB_ENV
-        echo "REDIS_HOST=10.1.0.113" >> $GITHUB_ENV
+        # The associated Triton server (mapped with port 5504 by Stunnel) is running on GPU
+        echo "TRITON_URI=10.13.1.101:5504" >> $GITHUB_ENV
+        echo "REDIS_HOST=10.13.1.200" >> $GITHUB_ENV
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
+        echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.org/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
+        echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
@@ -135,7 +141,6 @@ jobs:
           echo "CSRF_TRUSTED_ORIGINS=${{ env.CSRF_TRUSTED_ORIGINS }}" >> .env
           # Number of gunicorn workers able to handle requests
           echo "GUNICORN_WORKERS=4" >> .env
-          echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
           echo "SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
           echo "POSTGRES_EXPOSE=127.0.0.1:5433" >> .env
@@ -144,12 +149,16 @@ jobs:
           echo "POSTGRES_USER=postgres" >> .env
           echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
           echo "ENVIRONMENT=${{ env.ENVIRONMENT }}" >> .env
+          echo "OAUTH2_SERVER_URL=https://world.openfoodfacts.org/cgi/auth.pl" >> .env
+          echo "OFF_DEFAULT_PASSWORD=${{ secrets.OFF_DEFAULT_PASSWORD }}" >> .env
           echo "GOOGLE_CLOUD_VISION_API_KEY=${{ secrets.GOOGLE_CLOUD_VISION_API_KEY }}" >> .env
           echo "GOOGLE_GENAI_USE_VERTEXAI=true" >> .env
-          echo "GOOGLE_CLOUD_LOCATION=europe-west1" >> .env
+          echo "GOOGLE_CLOUD_LOCATION=global" >> .env
           echo "GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}" >> .env
-          echo "PRICE_TAG_EXTRACTION_ASYNC_REQUESTS=False" >> .env
+          echo "PRICE_TAG_EXTRACTION_ASYNC_REQUESTS=True" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
+          # Disable OCR temporarily, as we have no use of it
+          echo "ENABLE_OCR=False" >> .env
           echo "ENABLE_ML_PREDICTIONS=True" >> .env
           # echo "ENABLE_IMPORT_OFF_DB_TASK=True" >> .env  # disabled because we have the REDIS live updates
           echo "ENABLE_IMPORT_OBF_DB_TASK=True" >> .env
@@ -157,8 +166,11 @@ jobs:
           echo "ENABLE_IMPORT_OPF_DB_TASK=True" >> .env
           echo "REDIS_HOST=${{ env.REDIS_HOST }}" >> .env
           echo "REDIS_PORT=${{ env.REDIS_PORT }}" >> .env
-          echo "REDIS_STREAM_NAME=product_updates" >> .env
+          echo "REDIS_PRODUCT_UPDATES_STREAM_NAME=product_updates" >> .env
           echo "ENABLE_REDIS_UPDATES=True" >> .env
+          echo "Q2_WORKERS=8" >> .env
+          echo "KEYCLOAK_OIDC_CONFIG_URL=${{ env.KEYCLOAK_OIDC_CONFIG_URL }}" >> .env
+          echo "KEYCLOAK_AUDIENCE=${{ env.KEYCLOAK_AUDIENCE }}" >> .env
 
     - name: Create Docker volumes
       uses: appleboy/ssh-action@master

@@ -1,5 +1,3 @@
-import re
-
 import PIL.Image
 from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,6 +10,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from open_prices.api.moderation.serializers import FlagCreateSerializer, FlagSerializer
 from open_prices.api.proofs.filters import (
     PriceTagFilter,
     ProofFilter,
@@ -24,37 +23,23 @@ from open_prices.api.proofs.serializers import (
     ProofCreateSerializer,
     ProofFullSerializer,
     ProofHalfFullSerializer,
+    ProofHistorySerializer,
     ProofProcessWithGeminiSerializer,
     ProofUpdateSerializer,
     ProofUploadSerializer,
     ReceiptItemFullSerializer,
 )
 from open_prices.api.utils import get_source_from_request
-from open_prices.common.authentication import CustomAuthentication
+from open_prices.common import openfoodfacts as common_openfoodfacts
+from open_prices.common.authentication import (
+    CustomAuthentication,
+    has_token_from_cookie_or_header,
+)
+from open_prices.common.permission import OnlyObjectOwnerOrModeratorIsAllowed
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.ml import extract_from_price_tag
+from open_prices.proofs.ml.price_tags import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
-from open_prices.proofs.utils import store_file
-
-
-def is_smoothie_app_version_4_20(source: str | None) -> bool:
-    """Return True if the requests comes from Smoothie app version 4.20.
-
-    This is used to detect the Smoothie app version 4.20 which has a bug
-    where it sets the `ready_for_price_tag_validation` flag to True when
-    uploading price tag proofs, even when it should not be set.
-    """
-    if source and (
-        match := re.search(r"^Smoothie - OpenFoodFacts \((\d+)\.(\d+)\.(\d+)", source)
-    ):
-        # source is in the format
-        # "Smoothie - OpenFoodFacts (4.18.1+1434)...""
-        smoothie_major = int(match.group(1))
-        smoothie_minor = int(match.group(2))
-
-        return smoothie_major == 4 and smoothie_minor == 20
-
-    return False
+from open_prices.proofs.utils import compute_file_md5, store_file
 
 
 class ProofViewSet(
@@ -65,14 +50,17 @@ class ProofViewSet(
     viewsets.GenericViewSet,
 ):
     authentication_classes = []  # see get_authenticators
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        IsAuthenticatedOrReadOnly,
+        OnlyObjectOwnerOrModeratorIsAllowed,  # for edit & delete
+    ]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = Proof.objects.all()
     serializer_class = ProofFullSerializer  # see get_serializer_class
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
-    ordering_fields = ["date", "price_count", "created"]
-    ordering = ["created"]
+    ordering_fields = ["id", "date", "price_count", "created"]
+    ordering = ["id"]
 
     def get_authenticators(self):
         if self.request and self.request.method in ["GET"]:
@@ -86,10 +74,6 @@ class ProofViewSet(
             queryset = queryset.select_related("location")
             if self.action == "retrieve":
                 queryset = queryset.prefetch_related("predictions")
-        elif self.request.method in ["PATCH", "DELETE"]:
-            # only return proofs owned by the current user
-            if self.request.user.is_authenticated:
-                queryset = queryset.filter(owner=self.request.user.user_id)
         return queryset
 
     def get_serializer_class(self):
@@ -118,13 +102,15 @@ class ProofViewSet(
     )
     def upload(self, request: Request) -> Response:
         # build proof
-        if not request.data.get("file"):
+        file = request.data.get("file")
+        if not file:
             return Response(
                 {"file": ["This field is required."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # NOTE: image will be stored even if the proof serializer fails...
-        file_path, mimetype, image_thumb_path = store_file(request.data.get("file"))
+        file_path, mimetype, image_thumb_path = store_file(file)
+        image_md5_hash = compute_file_md5(file)
         proof_create_data = {
             "file_path": file_path,
             "mimetype": mimetype,
@@ -138,28 +124,60 @@ class ProofViewSet(
         # validate
         serializer = ProofCreateSerializer(data=proof_create_data)
         serializer.is_valid(raise_exception=True)
-        # get owner & source
-        owner = (
-            self.request.user.user_id
-            if self.request.user.is_authenticated
-            else settings.ANONYMOUS_USER_ID
-        )
-        source = get_source_from_request(self.request)
-        save_kwargs = {
-            "source": source,
-            "owner": owner,
-        }
-        # Smoothie sets incorrectly the ready_for_price_tag_validation flag
-        # when uploading price tag proofs on version 4.20.
-        # This should only be set to True for multiple proof upload.
-        # It was fixed in the upcoming release of Smoothie 4.21
-        # (see https://github.com/openfoodfacts/smooth-app/pull/6794)
-        if is_smoothie_app_version_4_20(source):
-            save_kwargs["ready_for_price_tag_validation"] = False
 
+        # get owner (we allow anonymous upload, only if token is not present)
+        if self.request.user.is_authenticated:
+            owner = self.request.user.user_id
+        else:
+            if has_token_from_cookie_or_header(self.request):
+                return Response(
+                    {
+                        "detail": "Authentication failed. Please pass a valid token, or remove it to upload the proof anonymously."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                owner = settings.ANONYMOUS_USER_ID
+
+        # get source
+        source = get_source_from_request(self.request)
+
+        # We check if a proof with the same MD5 hash already exists,
+        # uploaded by the same user, with the same type, location and date.
+        # If yes, we return it instead of creating a new one
+        duplicate_proof = Proof.objects.filter(
+            image_md5_hash=image_md5_hash,
+            owner=owner,
+            type=serializer.validated_data.get("type"),
+            # location OSM id/type can be null (for online stores)
+            location_osm_id=serializer.validated_data.get("location_osm_id"),
+            location_osm_type=serializer.validated_data.get("location_osm_type"),
+            date=serializer.validated_data.get("date"),
+        ).first()
+        if duplicate_proof:
+            # We remove the uploaded file as it's a duplicate
+            (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
+            response_status_code = status.HTTP_200_OK
+            # see note in common/openfoodfacts.py
+            if common_openfoodfacts.is_smoothie_app_version_leq_4_20(source):
+                response_status_code = status.HTTP_201_CREATED
+
+            return Response(
+                {**ProofFullSerializer(duplicate_proof).data, "detail": "duplicate"},
+                status=response_status_code,
+            )
+
+        save_kwargs = {
+            "owner": owner,
+            "image_md5_hash": image_md5_hash,
+            "source": source,
+        }
+        # see note in common/openfoodfacts.py
+        if common_openfoodfacts.is_smoothie_app_version_4_20(source):
+            save_kwargs["ready_for_price_tag_validation"] = False
         # save
         proof = serializer.save(**save_kwargs)
-        # return the full proof
+        # return full proof
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(request=ProofProcessWithGeminiSerializer)
@@ -177,6 +195,28 @@ class ProofViewSet(
             for sample_file in sample_files
         ]
         return Response({"labels": labels}, status=status.HTTP_200_OK)
+
+    @extend_schema(responses=ProofHistorySerializer(many=True))
+    @action(detail=True, methods=["GET"])
+    def history(self, request: Request, pk=None) -> Response:
+        proof = self.get_object()
+        return Response(proof.get_history_list(), status=200)
+
+    @extend_schema(
+        request=FlagCreateSerializer, responses=FlagSerializer, tags=["moderation"]
+    )
+    @action(detail=True, methods=["POST"])
+    def flag(self, request: Request, pk=None) -> Response:
+        proof = self.get_object()
+        serializer = FlagCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # get owner
+        owner = self.request.user.user_id
+        # get source
+        source = get_source_from_request(self.request)
+        # save
+        flag = serializer.save(content_object=proof, owner=owner, source=source)
+        return Response(FlagSerializer(flag).data, status=status.HTTP_201_CREATED)
 
 
 class PriceTagViewSet(
@@ -197,8 +237,8 @@ class PriceTagViewSet(
     serializer_class = PriceTagFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = PriceTagFilter
-    ordering_fields = ["proof_id", "created"]
-    ordering = ["created"]
+    ordering_fields = ["id", "proof_id", "status", "created"]
+    ordering = ["id"]
 
     def get_authenticators(self):
         if self.request and self.request.method in ["GET"]:
@@ -210,9 +250,7 @@ class PriceTagViewSet(
             # We need to prefetch the price object if it exists to validate the
             # price_id field, and the proof object to validate the proof_id
             # field
-            return (
-                PriceTag.objects.select_related("proof").select_related("price").all()
-            )
+            return PriceTag.objects.select_related("proof", "price").all()
         return super().get_queryset()
 
     def get_serializer_class(self):
@@ -244,7 +282,7 @@ class PriceTagViewSet(
 
         if not settings.TESTING:
             async_task(
-                "open_prices.proofs.ml.run_and_save_price_tag_extraction_from_id",
+                "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
                 price_tag.id,
             )
 
@@ -269,7 +307,8 @@ class PriceTagViewSet(
             and previous_bounding_box != price_tag.bounding_box
         ):
             async_task(
-                "open_prices.proofs.ml.update_price_tag_extraction", price_tag.id
+                "open_prices.proofs.ml.price_tags.update_price_tag_extraction",
+                price_tag.id,
             )
 
         # return full price tag
@@ -289,7 +328,7 @@ class ReceiptItemViewSet(
     http_method_names = ["get", "post", "patch", "delete"]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ReceiptItemFilter
-    ordering_fields = ["proof_id", "created", "order"]
+    ordering_fields = ["id", "proof_id", "order", "status", "created"]
     ordering = ["order"]
 
     def get_authenticators(self):

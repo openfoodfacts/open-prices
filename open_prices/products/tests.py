@@ -23,6 +23,7 @@ PRODUCT_OFF = {
     "product_name": "Nutella",
     "product_quantity": 1000,
     "product_quantity_unit": "g",
+    "quantity": "1 kg",
     "categories_tags": [
         "en:breakfasts",
         "en:fats",
@@ -47,6 +48,7 @@ PRODUCT_OFF = {
     "nutriscore_grade": "e",
     "ecoscore_grade": "d",
     "nova_group": 4,
+    "creator": "openfoodfacts-contributors",
     "unique_scans_n": 1051,
 }
 
@@ -93,6 +95,23 @@ class ProductModelSaveTest(TransactionTestCase):
         ProductFactory(code="0123456789106", unique_scans_n=None)
         # full OFF object
         ProductFactory(**PRODUCT_OFF)
+
+    def test_code_normalization_on_save(self):
+        # barcode of length 12 gets padded to 13
+        product = ProductFactory(code="123456789100")
+        self.assertEqual(product.code, "0123456789100")
+        # barcode of length 14 with leading zero gets trimmed to 13
+        product = ProductFactory(code="00123456789101")
+        self.assertEqual(product.code, "0123456789101")
+        # EAN8 without leading 0 stays the same
+        product = ProductFactory(code="51234567")
+        self.assertEqual(product.code, "51234567")
+        # barcode of length < 8 gets padded to 8
+        product = ProductFactory(code="4567")
+        self.assertEqual(product.code, "00004567")
+        # barcode of length > 13 without leading 0 stays the same
+        product = ProductFactory(code="8658585456785867")
+        self.assertEqual(product.code, "8658585456785867")
 
 
 class ProductQuerySetTest(TestCase):
@@ -238,11 +257,13 @@ class TestProcessUpdate(TestCase):
             "image_url": "https://images.openfoodfacts.org/images/products/123/1.jpg",
             "product_quantity": 1000,
             "product_quantity_unit": "g",
+            "quantity": "1 kg",
             "categories_tags": ["en:apples"],
+            "creator": "openfoodfacts-contributors",
             "unique_scans_n": 42,
-            "owner": "test",
+            "misc_tags": ["en:nutriscore-computed"],
         }
-        fields_to_ignore = ["owner"]
+        fields_to_ignore = ["misc_tags"]
         mock_get_product.return_value = product_details
 
         before = timezone.now()
@@ -270,11 +291,13 @@ class TestProcessUpdate(TestCase):
             "image_url": "https://images.openfoodfacts.org/images/products/123/1.jpg",
             "product_quantity": 1000,
             "product_quantity_unit": "g",
+            "quantity": "1 kg",
             "categories_tags": ["en:apples"],
+            "creator": "openfoodfacts-contributors",
             "unique_scans_n": 42,
-            "owner": "test",
+            "misc_tags": ["en:nutriscore-computed"],
         }
-        fields_to_ignore = ["owner"]
+        fields_to_ignore = ["misc_tags"]
         mock_get_product.return_value = product_details
 
         before = timezone.now()
@@ -294,3 +317,59 @@ class TestProcessUpdate(TestCase):
         self.assertEqual(create_product.source, Flavor.opff)
         self.assertGreater(create_product.source_last_synced, before)
         self.assertLess(create_product.source_last_synced, after)
+
+
+class TestProductModel(TestCase):
+    def test_fuzzy_barcode_search(self):
+        ProductFactory(code="0123456789100")
+        ProductFactory(code="0123456789101")
+        ProductFactory(code="0123456789102")
+        ProductFactory(code="0123456789103")
+        ProductFactory(code="1123456789100")
+        ProductFactory(code="1123456789101")
+        ProductFactory(code="1123456789102")
+        ProductFactory(code="1123456789103")
+        ProductFactory(code="2123456789100")
+        ProductFactory(code="2123456789101")
+        ProductFactory(code="2123456789102")
+        ProductFactory(code="2123456789103")
+
+        results = list(
+            Product.objects.fuzzy_barcode_search(
+                "0123456789100", max_distance=0, exclude_distance_0=False
+            )
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].code, "0123456789100")
+
+        results = list(
+            Product.objects.fuzzy_barcode_search(
+                "0123456789100", max_distance=1, exclude_distance_0=False
+            )
+        )
+        self.assertEqual(len(results), 6)
+        self.assertEqual(
+            set(p.code for p in results),
+            {
+                "0123456789100",
+                "0123456789101",
+                "0123456789102",
+                "0123456789103",
+                "1123456789100",
+                "2123456789100",
+            },
+        )
+
+        results = list(
+            Product.objects.fuzzy_barcode_search(
+                "0123456789100", max_distance=2, exclude_distance_0=False
+            )
+        )
+        self.assertEqual(len(results), 12)
+
+        results = list(
+            Product.objects.fuzzy_barcode_search(
+                "0123456789100", max_distance=3, exclude_distance_0=True
+            )
+        )
+        self.assertEqual(len(results), 11)

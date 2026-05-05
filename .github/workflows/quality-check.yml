@@ -2,6 +2,9 @@ name: Open Prices unit and integration tests
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,7 +23,7 @@ jobs:
       #       check-out repo
       #----------------------------------------------
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       #----------------------------------------------
       # Launch checks and tests

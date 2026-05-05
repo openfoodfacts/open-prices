@@ -3,7 +3,7 @@
 set -e
 
 # activate our virtual environment here
-. /opt/pysetup/.venv/bin/activate
+. /opt/open-prices/.venv/bin/activate
 
 PRE_ARGS=()
 

@@ -1,9 +1,13 @@
+import hashlib
 import logging
+import os
 import random
 import string
 from mimetypes import guess_extension
 from pathlib import Path
 
+import cv2
+import numpy as np
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 from PIL import Image, ImageOps
@@ -58,16 +62,25 @@ def generate_relative_path(
     return f"{current_dir_id_str}/{file_stem}{extension}"
 
 
-def crop_image(image_file_path_full, bounding_box):
+def crop_image(
+    image_file_path_full: str | Path, bounding_box: tuple[float, float, float, float]
+) -> np.ndarray:
+    """Crop the image at the given path using the bounding box.
+
+    :param image_file_path_full: the full path to the image file
+    :param bounding_box: the bounding box to crop, in the format
+        (y_min, x_min, y_max, x_max) with values between 0 and 1
+    :return: the cropped image as a numpy array (uint8, BGR format)
+    """
     y_min, x_min, y_max, x_max = bounding_box
-    image = Image.open(image_file_path_full)
+    image = cv2.imread(str(image_file_path_full), cv2.IMREAD_COLOR)
     (left, right, top, bottom) = (
-        x_min * image.width,
-        x_max * image.width,
-        y_min * image.height,
-        y_max * image.height,
+        x_min * image.shape[1],
+        x_max * image.shape[1],
+        y_min * image.shape[0],
+        y_max * image.shape[0],
     )
-    return image.crop((left, top, right, bottom))
+    return image[int(top) : int(bottom), int(left) : int(right)]
 
 
 def generate_thumbnail(
@@ -79,29 +92,31 @@ def generate_thumbnail(
     thumbnail_size: tuple[int, int] = settings.THUMBNAIL_SIZE,
 ) -> str | None:
     """Generate a thumbnail for the image at the given path."""
-    image_thumb_path = None
-    if mimetype.startswith("image"):
-        file_full_path = generate_full_path(current_dir, file_stem, extension)
-        with Image.open(file_full_path) as img:
+    if not mimetype.startswith("image"):
+        return None
+    file_full_path = generate_full_path(current_dir, file_stem, extension)
+    with Image.open(file_full_path) as img:
+        try:
             img_thumb = img.copy()
-            # set any rotation info
-            img_thumb = ImageOps.exif_transpose(img)
-            # transform into a thumbnail
-            img_thumb.thumbnail(thumbnail_size, Image.Resampling.LANCZOS)
-            image_thumb_full_path = generate_full_path(
-                current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
-            )
-            # avoid 'cannot write mode RGBA as JPEG' error
-            if mimetype in ("image/jpeg",) and img_thumb.mode in ("RGBA", "P"):
-                img_thumb = img_thumb.convert("RGB")
-            # save (exif will be stripped)
-            img_thumb.save(image_thumb_full_path)
-            image_thumb_path = generate_relative_path(
-                current_dir_id_str,
-                f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}",
-                extension,
-            )
-    return image_thumb_path
+        except OSError:
+            return None
+        # set any rotation info
+        img_thumb = ImageOps.exif_transpose(img)
+        # transform into a thumbnail
+        img_thumb.thumbnail(thumbnail_size, Image.Resampling.LANCZOS)
+        image_thumb_full_path = generate_full_path(
+            current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
+        )
+        # avoid 'cannot write mode RGBA/LA/P as JPEG' error
+        if mimetype in ("image/jpeg",) and img_thumb.mode in ("RGBA", "LA", "P"):
+            img_thumb = img_thumb.convert("RGB")
+        # save (exif will be stripped)
+        img_thumb.save(image_thumb_full_path)
+        return generate_relative_path(
+            current_dir_id_str,
+            f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}",
+            extension,
+        )
 
 
 def store_file(
@@ -134,6 +149,42 @@ def store_file(
     # Build file_path
     file_path = generate_relative_path(current_dir.name, file_stem, extension)
     return (file_path, mimetype, image_thumb_path)
+
+
+def compute_file_md5(file: InMemoryUploadedFile | TemporaryUploadedFile) -> str:
+    """Compute the MD5 hash of the Django uploaded file.
+
+    :param file: the file to compute the MD5 hash for
+    :return: the MD5 hash of the file as a hexadecimal string
+    """
+
+    md5_hash = hashlib.md5()
+    # Read the file in chunks to avoid using too much memory
+    for chunk in file.chunks():
+        md5_hash.update(chunk)
+    return md5_hash.hexdigest()
+
+
+def compute_file_md5_from_path(file_path: Path) -> str:
+    """Compute the MD5 hash of a file.
+
+    This is the same as `compute_file_md5`, but it takes a file path instead of
+    a Django uploaded file as input.
+
+    :param file_path: the path to the file
+    :return: the MD5 hash of the file as a hexadecimal string
+    """
+
+    md5_hash = hashlib.md5()
+    # Read the file in chunks to avoid using too much memory
+    with file_path.open("rb") as file:
+        while True:
+            chunk = file.read(64 * 2**10)  # 64KB, just as Django's default chunk size
+            if not chunk:
+                break
+            md5_hash.update(chunk)
+
+    return md5_hash.hexdigest()
 
 
 def select_proof_image_dir(images_dir: Path, max_images_per_dir: int = 1_000) -> Path:
@@ -243,3 +294,100 @@ def match_receipt_item_with_price(receipt_item: ReceiptItem, price: Price) -> bo
         and proof_prices.count(price.price) == 1
         and proof_receipt_item_prices.count(receipt_item_prediction_price) == 1
     )
+
+
+def get_price_tag_image_path(price_tag_id: int) -> str:
+    """Generate the relative path for the price tag image based on its ID.
+
+    The path is structured to avoid too many files in a single directory.
+    The ID is zero-padded to 9 digits and split into three parts of three
+    digits each. The image extension is .webp.
+
+    Example: for price_tag_id = 200000, the path will be:
+    price-tags/000/200/000200000.webp
+
+    :param price_tag_id: The ID of the price tag.
+    :return: The relative path to the price tag image.
+    """
+    id_str = str(price_tag_id).zfill(9)
+    part1 = id_str[0:3]
+    part2 = id_str[3:6]
+
+    filename = f"{id_str}.webp"
+    return f"price-tags/{part1}/{part2}/{filename}"
+
+
+def generate_price_tag_image(price_tag: PriceTag) -> None:
+    """Crop the price tag from the proof image and save it to disk.
+
+    The cropped image is saved in WebP format, using the price tag's ID to
+    determine the file path.
+
+    The structure of the path is as follows:
+    /img/price-tags/000/200/000200000.webp (for price_tag_id = 200000)
+
+    :param price_tag: The price tag object containing the proof and bounding
+        box.
+    """
+    if not price_tag.proof.file_path:
+        return
+
+    if not os.path.exists(price_tag.proof.file_path_full):
+        return
+
+    try:
+        cropped_img = crop_image(price_tag.proof.file_path_full, price_tag.bounding_box)
+        output_path = price_tag.image_path_full
+
+        # Ensure output directory exists
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        # Save as WebP
+        # quality=80 is the default on Pillow for WebP, we keep the same value here
+        # imwrite expects image in BGR format, which is what crop_image returns
+        cv2.imwrite(output_path, cropped_img, [cv2.IMWRITE_WEBP_QUALITY, 80])
+    except Exception as e:
+        logger.error(f"Error generating price tag image for {price_tag.id}: {e}")
+
+
+def open_image_cv2(image_path: str | Path, rgb: bool = False) -> np.ndarray:
+    """Open an image using OpenCV.
+
+    :param image_path: the path to the image file
+    :param rgb: whether to convert the image to RGB format
+    :return: the image as a numpy array in RGB format if rgb=True (default is False),
+        otherwise in BGR format
+    """
+    image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)  # type: ignore
+    if rgb:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
+    return image  # type: ignore
+
+
+def generate_image_thumbnail_cv2(image: np.ndarray, max_size: int) -> np.ndarray:
+    """Generate a thumbnail for the given image using OpenCV.
+
+    :param image: the image to generate a thumbnail for, as a numpy array
+    :param max_size: the maximum size of the thumbnail (both width and height)
+    :return: the generated thumbnail as a numpy array
+    """
+    height, width = image.shape[:2]
+    if width > max_size or height > max_size:
+        scaling_factor = max_size / max(width, height)
+        new_width = int(width * scaling_factor)
+        new_height = int(height * scaling_factor)
+        image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+    return image
+
+
+def image_bytes_as_webp(image: np.ndarray, quality: int = 80) -> bytes:
+    """Convert an image as a numpy array to WebP format and return the bytes.
+
+    :param image: the image to convert, as a numpy array
+    :param quality: the quality of the WebP image (0-100)
+    :return: the image in WebP format as bytes
+    """
+    success, buffer = cv2.imencode(".webp", image, [cv2.IMWRITE_WEBP_QUALITY, quality])
+    if not success:
+        raise ValueError("Could not encode image to WebP format")
+    return buffer.tobytes()

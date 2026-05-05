@@ -5,10 +5,12 @@ from freezegun import freeze_time
 from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.challenges.models import Challenge
+from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.products.factories import ProductFactory
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 
@@ -82,6 +84,18 @@ class ChallengeModelSaveTest(TestCase):
             end_date="2024-06-30",
         )
 
+    def test_challenge_post_create_calculate_categories(self):
+        # challenge without categories
+        c = ChallengeFactory(categories=[])
+        self.assertEqual(c.categories_full, [])
+        # challenge with categories
+        c = ChallengeFactory(categories=["en:breakfasts", "en:spreads"])
+        self.assertGreater(len(c.categories_full), len(c.categories))
+
+    def test_challenge_post_create_calculate_stats(self):
+        c = ChallengeFactory(is_published=False, start_date=None, end_date=None)
+        self.assertIsNotNone(c.stats)
+
 
 class ChallengeQuerySetTest(TestCase):
     @classmethod
@@ -104,7 +118,7 @@ class ChallengeQuerySetTest(TestCase):
 class ChallengeStatusQuerySetAndPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.challenge_draft = ChallengeFactory(is_published=False)
+        cls.challenge_draft = ChallengeFactory(is_published=False, end_date=None)
         cls.challenge_upcoming = ChallengeFactory(
             is_published=True, start_date="2025-01-20", end_date="2025-02-20"
         )
@@ -180,43 +194,98 @@ class ChallengeStatusQuerySetAndPropertyTest(TestCase):
         self.assertEqual(Challenge.objects.count(), 4)
         self.assertEqual(Challenge.objects.is_ongoing().count(), 1)
 
+    def test_challenge_to_update_in_daily_task_queryset(self):
+        self.assertEqual(Challenge.objects.count(), 4)
+        with freeze_time("2024-06-15"):
+            # challenge_completed hasn't started yet
+            self.assertEqual(Challenge.objects.to_update_in_daily_task().count(), 4)
+        with freeze_time("2024-07-15"):
+            # challenge_completed is ongoing
+            self.assertEqual(Challenge.objects.to_update_in_daily_task().count(), 4)
+        with freeze_time("2024-07-31"):
+            # challenge_completed has been over for less than X days
+            self.assertEqual(Challenge.objects.to_update_in_daily_task().count(), 4)
+        with freeze_time("2025-01-01"):
+            # challenge_completed has been over for more than X days
+            self.assertEqual(Challenge.objects.to_update_in_daily_task().count(), 3)
+
 
 class ChallengePropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.proof_in_challenge = ProofFactory()
-        cls.proof_not_in_challenge = ProofFactory()
+        cls.location = LocationFactory()
+        cls.proof_in_challenge = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=cls.location.id,
+            location_osm_id=cls.location.osm_id,
+            location_osm_type=cls.location.osm_type,
+            owner="user_1",
+            tags=["test"],
+        )
+        cls.proof_not_in_challenge = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG, owner="user_1"
+        )
         cls.product_8001505005707 = ProductFactory(
             **PRODUCT_8001505005707
         )  # in challenge
         # create prices before the challenge
         # (avoids setting the tag by the signal)
         with freeze_time("2025-01-01"):  # during the challenge
-            PriceFactory(proof=cls.proof_not_in_challenge)
-            PriceFactory(
+            PriceFactory(proof=cls.proof_not_in_challenge, owner="user_1")
+            cls.price_with_existing_tag = PriceFactory(
                 product_code="8001505005707",
                 product=cls.product_8001505005707,
                 proof=cls.proof_in_challenge,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
+                owner="user_1",
+                tags=["test"],
             )
             PriceFactory(
                 type=price_constants.TYPE_CATEGORY,
                 category_tag="en:breakfasts",
                 price_per=price_constants.PRICE_PER_UNIT,
                 proof=cls.proof_in_challenge,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
+                owner="user_1",
+            )
+            PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:spreads",
+                price_per=price_constants.PRICE_PER_UNIT,
+                proof=cls.proof_in_challenge,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
+                owner="user_2",
+            )
+            PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:tomatoes",
+                price_per=price_constants.PRICE_PER_UNIT,
+                proof=cls.proof_in_challenge,
+                location_id=cls.location.id,
+                location_osm_id=cls.location.osm_id,
+                location_osm_type=cls.location.osm_type,
+                owner="user_1",
             )
         # create the challenge afterwards
         cls.challenge_ongoing = ChallengeFactory(
             is_published=True,
             start_date="2024-12-30",
             end_date="2025-01-30",
-            categories=["en:breakfasts"],
+            categories=["en:breakfasts", "en:spreads"],
         )
 
     def test_set_price_tags(self):
-        self.assertEqual(Price.objects.count(), 3)
+        self.assertEqual(Price.objects.count(), 5)
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
-        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 3)
+        self.assertIn("test", self.price_with_existing_tag.tags)
 
     def test_set_proof_tags(self):
         self.assertEqual(Proof.objects.count(), 2)
@@ -224,14 +293,98 @@ class ChallengePropertyTest(TestCase):
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()
         self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.assertIn("test", self.proof_in_challenge.tags)
+
+    def test_reset_price_tags(self):
+        self.assertEqual(Price.objects.count(), 5)
+        self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 3)
+        self.challenge_ongoing.reset_price_tags()
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
+        self.assertIn("test", self.price_with_existing_tag.tags)
+
+    def test_reset_proof_tags(self):
+        self.assertEqual(Proof.objects.count(), 2)
+        self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
+        self.challenge_ongoing.set_proof_tags()
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.challenge_ongoing.reset_proof_tags()
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
+        self.assertIn("test", self.proof_in_challenge.tags)
 
     def test_calculate_stats(self):
-        self.assertIsNone(self.challenge_ongoing.stats)
+        self.assertEqual(self.challenge_ongoing.stats["price_count"], 0)
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()  # we need to set the proof tags first
         self.challenge_ongoing.calculate_stats()
-        self.assertIsNotNone(self.challenge_ongoing.stats)
-        self.assertEqual(self.challenge_ongoing.stats["price_count"], 2)
+        self.assertEqual(self.challenge_ongoing.stats["price_count"], 3)
         self.assertEqual(self.challenge_ongoing.stats["proof_count"], 1)
-        self.assertEqual(self.challenge_ongoing.stats["user_price_count"], 1)
-        self.assertEqual(self.challenge_ongoing.stats["user_proof_count"], 1)
+        self.assertEqual(self.challenge_ongoing.stats["user_count"], 2)
+        self.assertEqual(self.challenge_ongoing.stats["price_user_count"], 2)
+        self.assertEqual(self.challenge_ongoing.stats["proof_user_count"], 1)
+        self.assertEqual(self.challenge_ongoing.stats["price_product_count"], 1 + 2)
+        self.assertEqual(self.challenge_ongoing.stats["proof_location_count"], 1)
+        self.assertEqual(
+            self.challenge_ongoing.stats["user_price_count_ranking"],
+            [{"owner": "user_1", "count": 2}, {"owner": "user_2", "count": 1}],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["user_proof_count_ranking"],
+            [{"owner": "user_1", "count": 1}],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["user_price_from_proof_count_ranking"],
+            [{"owner": "user_1", "count": 3}],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["location_price_count_ranking"],
+            [
+                {
+                    "id": self.location.id,
+                    "type": self.location.type,
+                    "osm_name": self.location.osm_name,
+                    "osm_address_city": self.location.osm_address_city,
+                    "osm_address_country": self.location.osm_address_country,
+                    "osm_address_country_code": self.location.osm_address_country_code,
+                    "website_url": self.location.website_url,
+                    "count": 3,
+                }
+            ],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["location_city_price_count_ranking"],
+            [
+                {
+                    "osm_address_city": self.location.osm_address_city,
+                    "osm_address_country": self.location.osm_address_country,
+                    "osm_address_country_code": self.location.osm_address_country_code,
+                    "count": 3,
+                }
+            ],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["location_country_price_count_ranking"],
+            [
+                {
+                    "osm_address_country": self.location.osm_address_country,
+                    "osm_address_country_code": self.location.osm_address_country_code,
+                    "count": 3,
+                }
+            ],
+        )
+        self.assertEqual(
+            self.challenge_ongoing.stats["product_price_count_ranking"],
+            [
+                {
+                    "id": self.product_8001505005707.id,
+                    "code": self.product_8001505005707.code,
+                    "source": self.product_8001505005707.source,
+                    "product_name": self.product_8001505005707.product_name,
+                    "image_url": self.product_8001505005707.image_url,
+                    "product_quantity": self.product_8001505005707.product_quantity,
+                    "product_quantity_unit": self.product_8001505005707.product_quantity_unit,
+                    "brands": self.product_8001505005707.brands,
+                    "count": 1,
+                }
+            ],
+        )

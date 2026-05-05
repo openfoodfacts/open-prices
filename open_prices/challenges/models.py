@@ -1,13 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Case, Value, When
+from django.db.models import Case, Count, F, Func, Q, Value, When, signals
+from django.dispatch import receiver
 from django.utils import timezone
 
 from open_prices.challenges import constants as challenge_constants
+from open_prices.challenges import validators as challenge_validators
+from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.common import utils
+from open_prices.locations.models import Location
 
 
 class ChallengeQuerySet(models.QuerySet):
@@ -15,7 +19,6 @@ class ChallengeQuerySet(models.QuerySet):
         return self.filter(is_published=True)
 
     def with_status(self):
-        today_date = timezone.now().date()
         return self.annotate(
             status_annotated=Case(
                 When(
@@ -23,11 +26,11 @@ class ChallengeQuerySet(models.QuerySet):
                     then=Value(challenge_constants.CHALLENGE_STATUS_DRAFT),
                 ),
                 When(
-                    start_date__gt=today_date,
+                    start_date__gt=timezone.now().date(),
                     then=Value(challenge_constants.CHALLENGE_STATUS_UPCOMING),
                 ),
                 When(
-                    end_date__lt=today_date,
+                    end_date__lt=timezone.now().date(),
                     then=Value(challenge_constants.CHALLENGE_STATUS_COMPLETED),
                 ),
                 default=Value(challenge_constants.CHALLENGE_STATUS_ONGOING),
@@ -35,9 +38,37 @@ class ChallengeQuerySet(models.QuerySet):
             )
         )
 
+    def with_extra_fields(self):
+        return self.with_status().annotate(
+            categories_full_count_annotated=Func(
+                F("categories_full"),
+                1,
+                function="array_length",
+                output_field=models.IntegerField(),
+            ),
+            location_count_annotated=Count("locations"),
+        )
+
     def is_ongoing(self):
         return self.with_status().filter(
             status_annotated=challenge_constants.CHALLENGE_STATUS_ONGOING
+        )
+
+    def to_update_in_daily_task(self):
+        """
+        Goal: Choose which challenges stats we want to update.
+        - Data updated? categories_full, price/proof tags, stats
+        - We stop updating ("freeze") completed challenges after a delay
+
+        Usage: see open_prices/common/tasks.py:challenge_tasks
+        """
+        CHALLENGE_COMPLETED_FREEZE_DELAY_IN_DAYS = 7
+        return self.with_status().filter(
+            Q(end_date=None)
+            | Q(
+                end_date__gte=timezone.now().date()
+                - timedelta(days=CHALLENGE_COMPLETED_FREEZE_DELAY_IN_DAYS)
+            )
         )
 
 
@@ -49,7 +80,26 @@ class Challenge(models.Model):
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
 
-    categories = ArrayField(base_field=models.CharField(), blank=True, default=list)
+    categories = ArrayField(
+        base_field=models.CharField(),
+        blank=True,
+        default=list,
+        help_text="Restrict to one or multiple categories (optional)",
+    )
+    locations = models.ManyToManyField(
+        Location,
+        blank=True,
+        related_name="challenges",
+        help_text="Restrict to one or multiple locations (optional)",
+    )
+
+    categories_full = ArrayField(
+        base_field=models.CharField(),
+        blank=True,
+        default=list,
+        help_text="Full category tags with parents, used for matching & stats (readonly)",
+    )
+
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)
 
     is_published = models.BooleanField(default=False)
@@ -70,37 +120,20 @@ class Challenge(models.Model):
         verbose_name_plural = "Challenges"
 
     def clean(self, *args, **kwargs):
-        validation_errors = dict()
-        # date rules
-        if self.start_date is not None and self.end_date is not None:
-            if str(self.start_date) > str(self.end_date):
-                utils.add_validation_error(
-                    validation_errors, "start_date", "Must be before end date"
-                )
-        # published rules
-        if self.is_published:
-            if self.title is None:
-                utils.add_validation_error(
-                    validation_errors, "title", "Must be set if challenge is published"
-                )
-            if self.start_date is None:
-                utils.add_validation_error(
-                    validation_errors,
-                    "start_date",
-                    "Must be set if challenge is published",
-                )
-            if self.end_date is None:
-                utils.add_validation_error(
-                    validation_errors,
-                    "end_date",
-                    "Must be set if challenge is published",
-                )
+        # store all ValidationError in a dict
+        validation_errors = utils.merge_validation_errors(
+            challenge_validators.validate_challenge_date_rules(self),
+            challenge_validators.validate_challenge_published_rules(self),
+        )
         # return
         if bool(validation_errors):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        """
+        - run validations
+        """
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -133,23 +166,51 @@ class Challenge(models.Model):
 
     @property
     def tag(self):
-        return f"challenge-{self.id}"
+        return f"{challenge_constants.CHALLENGE_TAG_PREFIX}{self.id}"
+
+    def calculate_categories_full(self):
+        categories_full = (
+            common_openfoodfacts.get_taxonomy_children_tags_from_parent_list(
+                taxonomy_type="category",
+                parent_list=self.categories,
+                include_parent_list=True,
+            )
+        )
+        self.categories_full = categories_full
+        self.save(update_fields=["categories_full"])
+
+    def location_id_list(self):
+        return list(self.locations.values_list("id", flat=True))
+
+    def reset_price_tags(self):
+        from open_prices.prices.models import Price
+
+        Price.objects.filter(tags__contains=[self.tag]).update(
+            tags=Func(F("tags"), Value(self.tag), function="array_remove")
+        )
+
+    def reset_proof_tags(self):
+        from open_prices.proofs.models import Proof
+
+        Proof.objects.filter(tags__contains=[self.tag]).update(
+            tags=Func(F("tags"), Value(self.tag), function="array_remove")
+        )
 
     def set_price_tags(self):
         from open_prices.prices.models import Price
 
-        challenge_prices = Price.objects.in_challenge(self)
-        # TODO: manage cases where prices are removed from the challenge
-        for price in challenge_prices.exclude(tags__contains=[self.tag]):
-            price.set_tag(self.tag, save=True)
+        # TODO: manage cases where prices/proofs are removed from the challenge
+        Price.objects.in_challenge(self).exclude(tags__contains=[self.tag]).update(
+            tags=Func(F("tags"), Value(self.tag), function="array_append")
+        )
 
     def set_proof_tags(self):
         from open_prices.proofs.models import Proof
 
-        challenge_proofs = Proof.objects.in_challenge(self)
         # TODO: manage cases where prices/proofs are removed from the challenge
-        for proof in challenge_proofs.exclude(tags__contains=[self.tag]):
-            proof.set_tag(self.tag, save=True)
+        Proof.objects.in_challenge(self).exclude(tags__contains=[self.tag]).update(
+            tags=Func(F("tags"), Value(self.tag), function="array_append")
+        )
 
     def calculate_stats(self):
         from open_prices.prices.models import Price
@@ -157,14 +218,162 @@ class Challenge(models.Model):
 
         price_count = Price.objects.has_tag(self.tag).count()
         proof_count = Proof.objects.has_tag(self.tag).count()
-        user_price_count = Price.objects.has_tag(self.tag).distinct("owner").count()
-        user_proof_count = Proof.objects.has_tag(self.tag).distinct("owner").count()
+        price_user_list = list(
+            Price.objects.has_tag(self.tag).values_list("owner", flat=True).distinct()
+        )
+        proof_user_list = list(
+            Proof.objects.has_tag(self.tag).values_list("owner", flat=True).distinct()
+        )
+        user_count = len(set(price_user_list + proof_user_list))
+        price_user_count = len(price_user_list)
+        proof_user_count = len(proof_user_list)
+        price_product_code_count = (
+            Price.objects.has_tag(self.tag)
+            .has_type_product()
+            .calculate_field_distinct_count("product_code")
+        )
+        price_category_tag_count = (
+            Price.objects.has_tag(self.tag)
+            .has_type_category()
+            .calculate_field_distinct_count("category_tag")
+        )
+        price_product_count = price_product_code_count + price_category_tag_count
+        proof_location_count = Proof.objects.has_tag(
+            self.tag
+        ).calculate_field_distinct_count("location_id")
+        user_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .values("owner")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:10]
+        )
+        user_proof_count_ranking = list(
+            Proof.objects.has_tag(self.tag)
+            .values("owner")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:10]
+        )
+        user_price_from_proof_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .select_related("proof")
+            .values("proof__owner")
+            .annotate(owner=F("proof__owner"), count=Count("id"))
+            .values("owner", "count")
+            .order_by("-count")[:10]
+        )
+        location_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .select_related("location")
+            .values("location_id")
+            .annotate(
+                id=F("location_id"),
+                type=F("location__type"),
+                osm_name=F("location__osm_name"),
+                osm_address_city=F("location__osm_address_city"),
+                osm_address_country=F("location__osm_address_country"),
+                osm_address_country_code=F("location__osm_address_country_code"),
+                website_url=F("location__website_url"),
+                count=Count("id"),
+            )
+            .values(
+                "id",
+                "type",
+                "osm_name",
+                "osm_address_city",
+                "osm_address_country",
+                "osm_address_country_code",
+                "website_url",
+                "count",
+            )
+            .order_by("-count")[:10]
+        )
+        location_city_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .select_related("location")
+            .values("location__osm_address_city", "location__osm_address_country")
+            .annotate(
+                osm_address_city=F("location__osm_address_city"),
+                osm_address_country=F("location__osm_address_country"),
+                osm_address_country_code=F("location__osm_address_country_code"),
+                count=Count("id"),
+            )
+            .values(
+                "osm_address_city",
+                "osm_address_country",
+                "osm_address_country_code",
+                "count",
+            )
+            .order_by("-count")[:10]
+        )
+        location_country_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .select_related("location")
+            .values("location__osm_address_country")
+            .annotate(
+                osm_address_country=F("location__osm_address_country"),
+                osm_address_country_code=F("location__osm_address_country_code"),
+                count=Count("id"),
+            )
+            .values("osm_address_country", "osm_address_country_code", "count")
+            .order_by("-count")[:10]
+        )
+        product_price_count_ranking = list(
+            Price.objects.has_tag(self.tag)
+            .has_type_product()
+            .select_related("product")
+            .values("product_id")
+            .annotate(
+                id=F("product_id"),
+                code=F("product__code"),
+                source=F("product__source"),
+                product_name=F("product__product_name"),
+                image_url=F("product__image_url"),
+                product_quantity=F("product__product_quantity"),
+                product_quantity_unit=F("product__product_quantity_unit"),
+                brands=F("product__brands"),
+                count=Count("id"),
+            )
+            .values(
+                "id",
+                "code",
+                "source",
+                "product_name",
+                "image_url",
+                "product_quantity",
+                "product_quantity_unit",
+                "brands",
+                "count",
+            )
+            .order_by("-count")[:10]
+        )
 
         self.stats = {
+            # counts
             "price_count": price_count,
             "proof_count": proof_count,
-            "user_price_count": user_price_count,
-            "user_proof_count": user_proof_count,
+            "user_count": user_count,
+            "price_user_count": price_user_count,
+            "proof_user_count": proof_user_count,
+            "price_product_count": price_product_count,
+            "proof_location_count": proof_location_count,
+            # rankings
+            "user_price_count_ranking": user_price_count_ranking,
+            "user_proof_count_ranking": user_proof_count_ranking,
+            "user_price_from_proof_count_ranking": user_price_from_proof_count_ranking,
+            "location_price_count_ranking": location_price_count_ranking,
+            "location_city_price_count_ranking": location_city_price_count_ranking,
+            "location_country_price_count_ranking": location_country_price_count_ranking,
+            "product_price_count_ranking": product_price_count_ranking,
+            # timestamp
             "updated": timezone.now().isoformat().replace("+00:00", "Z"),
         }
         self.save(update_fields=["stats"])
+
+
+@receiver(signals.post_save, sender=Challenge)
+def challenge_post_create_init_categories_full_and_stats(
+    sender, instance, created, **kwargs
+):
+    if created:
+        instance.calculate_categories_full()
+        instance.calculate_stats()  # init

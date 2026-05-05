@@ -225,7 +225,10 @@ class LocationPropertyTest(TestCase):
 
     def test_update_proof_count(self):
         self.location.refresh_from_db()
-        self.assertEqual(self.location.proof_count, 0)
+        self.assertEqual(self.location.proof_count, 2)  # proof post_save
+        # bulk delete proofs to skip signals
+        self.location.proofs.all().delete()
+        self.assertEqual(self.location.proof_count, 2)  # should be 0
         # update_proof_count() should fix location_count
         self.location.update_proof_count()
-        self.assertEqual(self.location.proof_count, 2)
+        self.assertEqual(self.location.proof_count, 0)  # all deleted
