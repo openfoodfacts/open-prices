@@ -10,4 +10,4 @@ It consists of:
 If you're a contributor:
 
 - have a look at our tutorials to add prices through [shelf](tutorials/add-multiple-prices-shelf.md) or a [receipt](tutorials/add-multiple-prices-receipt.md)
-- and how to set up a local development environment in [Contributing](dev/contributing.md)
+- and how to set up a local development environment in [Contributing](dev/CONTRIBUTING.md)

@@ -34,13 +34,9 @@ A Python Django REST API designed to interact with the Open Food Facts _Open Pri
 * [Django](https://www.djangoproject.com/) framework
 * PostgreSQL database
 
-## How to install on your local machine and help develop Open Prices
-
-see [CONTRIBUTING.md](CONTRIBUTING.md)
-
 ## Contribute
 
-See [CONTRIBUTING.md](https://github.com/openfoodfacts/open-prices/blob/main/CONTRIBUTING.md)
+see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 <details>
 <summary><h2>Weekly meetings</h2></summary>
@@ -54,3 +50,9 @@ See [CONTRIBUTING.md](https://github.com/openfoodfacts/open-prices/blob/main/CON
 * We strive to timebox the core of the meeting (decision making) to 30 minutes, with an optional free discussion/live debugging afterwards.
 * We take comprehensive notes in the Weekly Agenda of agenda item discussions and of decisions taken.
 </details>
+
+## Contributors
+
+<a href="https://github.com/openfoodfacts/open-prices/graphs/contributors">
+  <img alt="List of contributors to this repository" src="https://contrib.rocks/image?repo=openfoodfacts/open-prices" />
+</a>
