@@ -2,7 +2,7 @@
 
 ## How to install on your local machine
 
-see [INSTALL.md](https://github.com/openfoodfacts/open-prices/blob/main/INSTALL.md)
+see [INSTALL.md](INSTALL.md)
 
 ## Install pre-commit hooks
 
@@ -27,8 +27,6 @@ uv run --env-file .env python manage.py test
 ## Preview the docs locally
 
 ```bash
-ln -sfn CONTRIBUTING.md docs/dev/contributing.md
-ln -sfn INSTALL.md docs/dev/install.md
 uv run mkdocs serve -a 127.0.0.1:8765
 ```
 

@@ -37,8 +37,9 @@ nav:
       - "Add multiple prices (from shelf images)": tutorials/add-multiple-prices-shelf.md
       - "Add multiple prices (from a receipt)": tutorials/add-multiple-prices-receipt.md
   - Dev:
-      - Contributing: dev/contributing.md
-      - Install: dev/install.md
+      - Contributing: dev/CONTRIBUTING.md
+      - Install: dev/INSTALL.md
+      - Changelog: dev/CHANGELOG.md
 
 plugins:
   - search
