@@ -39,6 +39,7 @@ nav:
       - "Web: add multiple prices (from a receipt)": guides/web-add-multiple-prices-receipt.md
       - API: guides/API.md
   - Community:
+      - Home: community/README.md
       - Contributing: community/CONTRIBUTING.md
       - Install: community/INSTALL.md
       - Changelog: community/CHANGELOG.md
