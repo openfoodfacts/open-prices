@@ -39,6 +39,7 @@ nav:
   - Dev:
       - Contributing: dev/CONTRIBUTING.md
       - Install: dev/INSTALL.md
+      - Changelog: dev/CHANGELOG.md
 
 plugins:
   - search
