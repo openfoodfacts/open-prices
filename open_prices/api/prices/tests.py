@@ -107,7 +107,7 @@ class PriceListPaginationApiTest(TestCase):
         response = self.client.get(self.url)
         for pagination_key in ["items", "page", "pages", "size", "total"]:
             with self.subTest(pagination_key=pagination_key):
-                self.assertTrue(pagination_key in response.data)
+                self.assertIn(pagination_key, response.data)
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(len(response.data["items"]), 3)
         self.assertEqual(response.data["page"], 1)
