@@ -38,10 +38,10 @@ nav:
       - "Web: add multiple prices (from shelf images)": guides/web-add-multiple-prices-shelf.md
       - "Web: add multiple prices (from a receipt)": guides/web-add-multiple-prices-receipt.md
       - API: guides/API.md
-  - Dev:
-      - Contributing: dev/CONTRIBUTING.md
-      - Install: dev/INSTALL.md
-      - Changelog: dev/CHANGELOG.md
+  - Community:
+      - Contributing: community/CONTRIBUTING.md
+      - Install: community/INSTALL.md
+      - Changelog: community/CHANGELOG.md
 
 plugins:
   - search

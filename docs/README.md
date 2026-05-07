@@ -11,4 +11,4 @@ It consists of:
 If you're a contributor:
 
 - have a look at our [guides](guides/README.md) to learn how to add prices (via the web interface, the mobile app, or the API)
-- to set up a local development environment, see [Contributing](dev/CONTRIBUTING.md)
+- to set up a local development environment, see [Contributing](community/CONTRIBUTING.md)
