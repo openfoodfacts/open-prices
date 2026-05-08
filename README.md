@@ -1,52 +1,33 @@
-# Open Prices backend
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://static.openfoodfacts.org/images/logos/off-logo-horizontal-dark.png?refresh_github_cache=1">
+  <source media="(prefers-color-scheme: light)" srcset="https://static.openfoodfacts.org/images/logos/off-logo-horizontal-light.png?refresh_github_cache=1">
+  <img height="48" src="https://static.openfoodfacts.org/images/logos/off-logo-horizontal-light.svg"/>
+</picture>
 
-A Python Django REST API designed to interact with the Open Food Facts _Open Prices_ database.
+# Open Prices
 
-## Project documentation
+Open Prices is a project to collect and share prices of products around the world. It's a publicly available dataset that can be used for research, analysis, and more!
 
-### Links
+## 🕹️ Try it
 
-- Open Prices Frontend app: https://prices.openfoodfacts.org
-- Open Prices Frontend repository: https://github.com/openfoodfacts/open-prices-frontend
-- Open Prices API: https://prices.openfoodfacts.org/api/docs
-- Documentation: https://openfoodfacts.github.io/open-prices
-- Wiki: https://wiki.openfoodfacts.org/Project:Open-Prices
+The production website is available at [https://prices.openfoodfacts.org](https://prices.openfoodfacts.org).
 
-### API
+You'll need an [Open Food Facts account](https://world.openfoodfacts.org/cgi/user.pl) to log in and add prices, but you can explore the data without an account.
 
-see [API](API.md)
+We also have an [API](API.md).
 
-### 🎨 Design & User interface
+## 💬 Who do I talk to?
 
-- The Open Prices server is exposed through the Mobile App and the Open Prices frontend (and probably elsewhere in the future, thanks to web components)
-- We strive to thoughtfully design every feature before we move on to implementation, so that we respect Open Food Facts' graphic charter and nascent design system, while having efficient user flows.
-- [![Figma](https://img.shields.io/badge/figma-%23F24E1E.svg?logo=figma&logoColor=white) Mockups for Open Prices](https://www.figma.com/design/cIB7CInl2BfueMzWnz09t6/Open-Prices?node-id=0-1&p=f&t=LC7UvPjngw57NGSs-0)
-- [![Figma](https://img.shields.io/badge/figma-%23F24E1E.svg?logo=figma&logoColor=white) Mobile Mockups for Open Prices](https://www.figma.com/design/nFMjewFAOa8c4ahtob7CAB/Mobile-App-Design--Quentin-?node-id=5816-22697&p=f&t=AkgTM9QzMK7tQeGC-0)
-- [![Figma](https://img.shields.io/badge/figma-%23F24E1E.svg?logo=figma&logoColor=white) Benchmark of the defunct Prixing app](https://www.figma.com/design/XQYkLGKlcotBPpwKMhDe1z/Prixing---Benchmark?m=auto&t=AkgTM9QzMK7tQeGC-6)
-- Are you a designer ? [Join the design team](https://github.com/openfoodfacts/openfoodfacts-design)
+Join us at [https://openfoodfacts.slack.com](https://openfoodfacts.slack.com) in the channel `#prices`. (Signup at [https://slack.openfoodfacts.org](https://slack.openfoodfacts.org))
 
-## Dependencies
+## How you can help
 
-* Python 3.11
-* [Django](https://www.djangoproject.com/) framework
-* PostgreSQL database
-
-## Contribute
-
-see [CONTRIBUTING.md](CONTRIBUTING.md)
-
-<details>
-<summary><h2>Weekly meetings</h2></summary>
-* We e-meet Thrusdays at 14:00 Paris Time
-* ![Google Meet](https://img.shields.io/badge/Google%20Meet-00897B?logo=google-meet&logoColor=white) Video call link: https://meet.google.com/oin-hiqp-tmd
-* Join by phone: https://tel.meet/oin-hiqp-tmd?pin=5784334159966
-* Add the Event to your Calendar by [adding the Open Food Facts community calendar to your calendar](https://wiki.openfoodfacts.org/Events)
-* [Weekly Agenda](https://docs.google.com/document/u/0/d/1-OfMAi-cB7mi9_q172EbBCWHkfKDM0zVg4wzULW3pFY/edit): please add the Agenda items as early as you can.
-* Make sure to check the Agenda items in advance of the meeting, so that we have the most informed discussions possible.
-* The meeting will handle Agenda items first, and if time permits, collaborative bug triage.
-* We strive to timebox the core of the meeting (decision making) to 30 minutes, with an optional free discussion/live debugging afterwards.
-* We take comprehensive notes in the Weekly Agenda of agenda item discussions and of decisions taken.
-</details>
+* read our [project documentation](https://openfoodfacts.github.io/open-prices) to learn more about the project
+* create an [Open Food Facts account](https://world.openfoodfacts.org/cgi/user.pl) and start adding prices :)
+* reuse the [API](API.md) to build your own project on top of the Open Prices dataset
+* for developers, head to [CONTRIBUTING.md](CONTRIBUTING.md)
+* improve [translation in your language](https://crowdin.com/project/openfoodfacts)
+* and extra ideas in [Community](https://openfoodfacts.github.io/open-prices/community) (Slack, Weekly meetings, UX & UI...)
 
 ## Contributors
 

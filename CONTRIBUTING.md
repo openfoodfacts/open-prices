@@ -1,12 +1,26 @@
 # Contributing to Open Prices
 
+## Introduction to developers
+
+In this page you can find all the information you need to set up a local development environment and start contributing to the Open Prices backend.
+
+* how to install the backend/API? see below
+* more comfortable with the frontend? Check out [open-prices-frontend](https://github.com/openfoodfacts/open-prices-frontend)
+* when you're ready, you can have a look at [good first issues](https://github.com/openfoodfacts/open-prices/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22good+first+issue%22)
+
+## Tech stack
+
+* Python 3.11
+* [Django](https://www.djangoproject.com/) framework
+* PostgreSQL database
+
 ## How to install on your local machine
 
 see [INSTALL.md](INSTALL.md)
 
 ## Install pre-commit hooks
 
-This repo uses [pre-commit](https://pre-commit.com/) to enforce code styling, etc. To install it, run the following:
+This repo uses [pre-commit](https://pre-commit.com) to enforce code styling, etc. To install it, run the following:
 
 ```
 uv run pre-commit install

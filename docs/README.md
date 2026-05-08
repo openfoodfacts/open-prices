@@ -11,4 +11,8 @@ It consists of:
 If you're a contributor:
 
 - have a look at our [guides](guides/README.md) to learn how to add prices (via the web interface, the mobile app, or the API)
-- to set up a local development environment, see [Contributing](dev/CONTRIBUTING.md)
+- to set up a local development environment, see [Contributing](community/CONTRIBUTING.md)
+
+Detailed documentation is available [here](https://openfoodfacts.github.io/open-prices) as well as in the [Wiki](https://wiki.openfoodfacts.org/Project:Open-Prices).
+
+> Something missing? Please feel free to contribute to the documentation! Or ask for help on [Slack](https://openfoodfacts.slack.com) in the `#prices` channel.
