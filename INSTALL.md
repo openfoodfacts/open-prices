@@ -1,4 +1,4 @@
-# HOW TO install Open Prices API
+# HOW TO install Open Prices
 
 ## Prerequisites
 
