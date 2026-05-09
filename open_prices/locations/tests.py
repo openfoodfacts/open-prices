@@ -18,6 +18,7 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
     "osm_address_country": "France",
+    "osm_brand": "Monoprix",
 }
 LOCATION_ONLINE_DECATHLON = {
     "type": location_constants.TYPE_ONLINE,
@@ -129,11 +130,11 @@ class LocationModelSaveTest(TestCase):
 class LocationQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location_with_price = LocationFactory(**LOCATION_OSM_NODE_652825274)
-        cls.location_without_price = LocationFactory(**LOCATION_ONLINE_DECATHLON)
+        cls.location_osm_with_price = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_online_without_price = LocationFactory(**LOCATION_ONLINE_DECATHLON)
         PriceFactory(
-            location_osm_id=cls.location_with_price.osm_id,
-            location_osm_type=cls.location_with_price.osm_type,
+            location_osm_id=cls.location_osm_with_price.osm_id,
+            location_osm_type=cls.location_osm_with_price.osm_type,
             price=1.0,
         )
 
@@ -146,10 +147,12 @@ class LocationQuerySetTest(TestCase):
         self.assertEqual(Location.objects.has_prices().count(), 1)
 
     def test_with_stats(self):
-        location = Location.objects.with_stats().get(id=self.location_without_price.id)
+        location = Location.objects.with_stats().get(
+            id=self.location_online_without_price.id
+        )
         self.assertEqual(location.price_count_annotated, 0)
         self.assertEqual(location.price_count, 0)
-        location = Location.objects.with_stats().get(id=self.location_with_price.id)
+        location = Location.objects.with_stats().get(id=self.location_osm_with_price.id)
         self.assertEqual(location.price_count_annotated, 1)
         self.assertEqual(location.price_count, 1)
 
@@ -159,31 +162,32 @@ class LocationPropertyTest(TestCase):
     def setUpTestData(cls):
         cls.user = UserFactory()
         cls.user_2 = UserFactory()
-        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_osm = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.location_online = LocationFactory(**LOCATION_ONLINE_DECATHLON)
         cls.proof_1 = ProofFactory(
             type=proof_constants.TYPE_RECEIPT,
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
             owner=cls.user.user_id,
         )
         cls.proof_2 = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
             owner=cls.user.user_id,
         )
         PriceFactory(
             product_code="0123456789100",
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
             proof_id=cls.proof_1.id,
             price=1.0,
             owner=cls.user.user_id,
         )
         PriceFactory(
             product_code="0123456789101",
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
             proof_id=cls.proof_2.id,
             price=2.0,
             owner=cls.user_2.user_id,
@@ -191,44 +195,56 @@ class LocationPropertyTest(TestCase):
         PriceFactory(
             type=price_constants.TYPE_CATEGORY,
             category_tag="en:tomatoes",
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
             proof_id=cls.proof_2.id,
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
             owner=cls.user_2.user_id,
         )
 
+    def test_is_type_osm(self):
+        self.assertTrue(self.location_osm.is_type_osm)
+        self.assertFalse(self.location_online.is_type_osm)
+
+    def test_is_type_online(self):
+        self.assertFalse(self.location_osm.is_type_online)
+        self.assertTrue(self.location_online.is_type_online)
+
+    def test_osm_brand_logo_url(self):
+        self.assertIsNotNone(self.location_osm.osm_brand_logo_url)
+        self.assertIsNone(self.location_online.osm_brand_logo_url)
+
     def test_update_price_count(self):
-        self.location.refresh_from_db()
-        self.assertEqual(self.location.price_count, 3)  # price post_save
+        self.location_osm.refresh_from_db()
+        self.assertEqual(self.location_osm.price_count, 3)  # price post_save
         # bulk delete prices to skip signals
-        self.location.prices.all().delete()
-        self.assertEqual(self.location.price_count, 3)  # should be 0
+        self.location_osm.prices.all().delete()
+        self.assertEqual(self.location_osm.price_count, 3)  # should be 0
         # update_price_count() should fix price_count
-        self.location.update_price_count()
-        self.assertEqual(self.location.price_count, 0)  # all deleted
+        self.location_osm.update_price_count()
+        self.assertEqual(self.location_osm.price_count, 0)  # all deleted
 
     def test_update_user_count(self):
-        self.location.refresh_from_db()
-        self.assertEqual(self.location.user_count, 0)
+        self.location_osm.refresh_from_db()
+        self.assertEqual(self.location_osm.user_count, 0)
         # update_user_count() should fix user_count
-        self.location.update_user_count()
-        self.assertEqual(self.location.user_count, 1)  # proof owners
+        self.location_osm.update_user_count()
+        self.assertEqual(self.location_osm.user_count, 1)  # proof owners
 
     def test_update_product_count(self):
-        self.location.refresh_from_db()
-        self.assertEqual(self.location.product_count, 0)
+        self.location_osm.refresh_from_db()
+        self.assertEqual(self.location_osm.product_count, 0)
         # update_product_count() should fix product_count
-        self.location.update_product_count()
-        self.assertEqual(self.location.product_count, 2)
+        self.location_osm.update_product_count()
+        self.assertEqual(self.location_osm.product_count, 2)
 
     def test_update_proof_count(self):
-        self.location.refresh_from_db()
-        self.assertEqual(self.location.proof_count, 2)  # proof post_save
+        self.location_osm.refresh_from_db()
+        self.assertEqual(self.location_osm.proof_count, 2)  # proof post_save
         # bulk delete proofs to skip signals
-        self.location.proofs.all().delete()
-        self.assertEqual(self.location.proof_count, 2)  # should be 0
+        self.location_osm.proofs.all().delete()
+        self.assertEqual(self.location_osm.proof_count, 2)  # should be 0
         # update_proof_count() should fix location_count
-        self.location.update_proof_count()
-        self.assertEqual(self.location.proof_count, 0)  # all deleted
+        self.location_osm.update_proof_count()
+        self.assertEqual(self.location_osm.proof_count, 0)  # all deleted

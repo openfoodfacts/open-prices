@@ -9,6 +9,7 @@ from django_q.tasks import async_task
 from open_prices.common import utils
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
+from open_prices.locations import utils as location_utils
 from open_prices.locations import validators as location_validators
 
 
@@ -168,6 +169,12 @@ class Location(models.Model):
     @property
     def is_type_online(self):
         return self.type == location_constants.TYPE_ONLINE
+
+    @property
+    def osm_brand_logo_url(self):
+        if self.is_type_osm and self.osm_brand:
+            return location_utils.get_brand_logo_url(self.osm_brand)
+        return None
 
     def update_price_count(self):
         self.price_count = self.prices.count()
