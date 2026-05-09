@@ -19,6 +19,7 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_address_country": "France",
     "osm_lat": "45.1805534",
     "osm_lon": "5.7153387",
+    "osm_brand": "Monoprix",
     "price_count": 15,
 }
 LOCATION_OSM_NODE_6509705997 = {
@@ -173,6 +174,7 @@ class LocationDetailApiTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.location.id)
         # self.assertEqual(response.data["osm_lat"], 45.1805534)
+        self.assertIn("osm_brand_logo_url", response.data)
 
     def test_location_detail_by_osm(self):
         # 404
