@@ -89,9 +89,9 @@ class PriceListApiTest(TestCase):
             response = self.client.get(self.url)
             self.assertEqual(response.data["total"], 3)
             self.assertEqual(len(response.data["items"]), 3)
-            self.assertTrue("id" in response.data["items"][0])
-            self.assertTrue("proof" in response.data["items"][0])
-            self.assertTrue("location" in response.data["items"][0])
+            self.assertIn("id", response.data["items"][0])
+            self.assertIn("proof", response.data["items"][0])
+            self.assertIn("location", response.data["items"][0])
 
 
 class PriceListPaginationApiTest(TestCase):
@@ -326,7 +326,7 @@ class PriceListFilterApiTest(TestCase):
         with self.assertNumQueries(1 + 1):
             response = self.client.get(url)
             self.assertEqual(response.data["total"], 1)
-            self.assertTrue("product" in response.data["items"][0])
+            self.assertIn("product", response.data["items"][0])
         # product__categories_tags__overlap
         url = self.url + "?product__categories_tags__overlap=en:breakfasts,en:rices"
         response = self.client.get(url)
@@ -455,7 +455,7 @@ class PriceListFilterApiTest(TestCase):
         with self.assertNumQueries(1 + 1):
             response = self.client.get(url)
             self.assertEqual(response.data["total"], 1)
-            self.assertTrue("proof" in response.data["items"][0])
+            self.assertIn("proof", response.data["items"][0])
         url = self.url + f"?proof__type={proof_constants.TYPE_PRICE_TAG}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
@@ -706,19 +706,19 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.data["receipt_quantity"], 1)  # default
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         # with proof, product & location
-        self.assertTrue("proof_id" in response.data)
+        self.assertIn("proof_id", response.data)
         self.assertEqual(response.data["proof"]["id"], self.user_proof_gdpr.id)
         self.assertEqual(
             response.data["proof"]["price_count"], 0
         )  # not yet incremented
         self.assertEqual(Proof.objects.get(id=self.user_proof_gdpr.id).price_count, 1)
-        self.assertTrue("product_id" in response.data)
+        self.assertIn("product_id", response.data)
         self.assertEqual(response.data["product"]["code"], "8001505005707")
         self.assertEqual(
             response.data["product"]["price_count"], 0
         )  # not yet incremented
         self.assertEqual(Product.objects.get(code="8001505005707").price_count, 1)
-        self.assertTrue("location_id" in response.data)
+        self.assertIn("location_id", response.data)
         self.assertEqual(response.data["location"]["osm_id"], 652825274)
         self.assertEqual(
             response.data["location"]["price_count"], 0

@@ -28,7 +28,7 @@ class ProductListApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(len(response.data["items"]), 3)
-        self.assertTrue("id" in response.data["items"][0])
+        self.assertIn("id", response.data["items"][0])
 
 
 class ProductListPaginationApiTest(TestCase):
@@ -44,7 +44,7 @@ class ProductListPaginationApiTest(TestCase):
         response = self.client.get(self.url)
         for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
             with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
-                self.assertTrue(PAGINATION_KEY in response.data)
+                self.assertIn(PAGINATION_KEY, response.data)
         self.assertEqual(response.data["size"], 10)  # default
 
 

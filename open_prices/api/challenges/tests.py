@@ -20,8 +20,8 @@ class ChallengeListApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(len(response.data["items"]), 2)
         # extra fields: status, tag
-        self.assertTrue("status" in response.data["items"][0])
-        self.assertTrue("tag" in response.data["items"][0])
+        self.assertIn("status", response.data["items"][0])
+        self.assertIn("tag", response.data["items"][0])
 
 
 class ChallengeListPaginationApiTest(TestCase):
@@ -36,7 +36,7 @@ class ChallengeListPaginationApiTest(TestCase):
         response = self.client.get(self.url)
         for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
             with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
-                self.assertTrue(PAGINATION_KEY in response.data)
+                self.assertIn(PAGINATION_KEY, response.data)
         self.assertEqual(response.data["size"], 10)  # default
 
 
