@@ -21,12 +21,12 @@
             "hidden": false
         },
         {
-            "type": "style",
-            "section": "Technical",
+            "type": "docs",
+            "section": "Documentation",
             "hidden": false
         },
         {
-            "type": "docs",
+            "type": "style",
             "section": "Technical",
             "hidden": false
         },
