@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.103.0](https://github.com/openfoodfacts/open-prices/compare/v1.102.0...v1.103.0) (2026-05-10)
+
+
+### Features
+
+* integrate price tag classification model ([#1284](https://github.com/openfoodfacts/open-prices/issues/1284)) ([3d18444](https://github.com/openfoodfacts/open-prices/commit/3d184446a45ddb49bc1ad7b4f44e4ce00efca0b1))
+* **Locations:** new `osm_brand_logo_url` property. Return in the API. Link to openfoodfacts/brand-images ([#1296](https://github.com/openfoodfacts/open-prices/issues/1296)) ([8d05a8d](https://github.com/openfoodfacts/open-prices/commit/8d05a8d4f893063c130341ab75d5c4543b82e3e9))
+* **Products:** new 'creator' field (synced with OFF) ([#1288](https://github.com/openfoodfacts/open-prices/issues/1288)) ([49a916e](https://github.com/openfoodfacts/open-prices/commit/49a916e68c3532f487712ca6da4df974c7b39b95))
+* **Products:** new 'quantity' field (synced with OFF) ([#1114](https://github.com/openfoodfacts/open-prices/issues/1114)) ([50fb5c3](https://github.com/openfoodfacts/open-prices/commit/50fb5c3f22434168bccaf4b2d3d5351bc501556b))
+
+
+### Bug Fixes
+
+* **Tests:** lower case for consistency + fix output/ouput typo + assertIn when possible ([#1268](https://github.com/openfoodfacts/open-prices/issues/1268)) ([feef886](https://github.com/openfoodfacts/open-prices/commit/feef886472803826750d2e3ec20badc5310b4f32))
+
+
+### Documentation
+
+* move tutorials to subfolder. new dev subfolder with CONTRIBUTING & INSTALL. remove awesome-pages plugin to simplify configuration ([#1290](https://github.com/openfoodfacts/open-prices/issues/1290)) ([74f4de6](https://github.com/openfoodfacts/open-prices/commit/74f4de655e83b49665b371c400991774351ceb00))
+* new API.md. rename 'Tutorials' to 'Guides' (diataxis) ([#1294](https://github.com/openfoodfacts/open-prices/issues/1294)) ([1abbe90](https://github.com/openfoodfacts/open-prices/commit/1abbe907c1e722e20fff619e8e7ae6421109de59))
+* rename Dev to Community. Add pages on Weekly meetings, UX-UI, Github & Slack. simplify README ([#1295](https://github.com/openfoodfacts/open-prices/issues/1295)) ([b9ce51d](https://github.com/openfoodfacts/open-prices/commit/b9ce51d225389fde29f9812d39d0921c366542c1))
+* symlink instead of duplicate CONTRIBUTING & INSTALL. Simplify setup. Add Contributors section ([#1293](https://github.com/openfoodfacts/open-prices/issues/1293)) ([3a05c4f](https://github.com/openfoodfacts/open-prices/commit/3a05c4faf88369b4c925db841058ebc39fc8e56f))
+* update tutorials to add multiple prices (receipt & shelf) ([#1291](https://github.com/openfoodfacts/open-prices/issues/1291)) ([6117629](https://github.com/openfoodfacts/open-prices/commit/61176298443720dfc0bed41456b0718d1389898d))
+
+
+### Technical
+
+* **deps:** update Django to 5.2.14 ([#1298](https://github.com/openfoodfacts/open-prices/issues/1298)) ([47f189d](https://github.com/openfoodfacts/open-prices/commit/47f189d014361975f83cc134f5940143285ec498))
+* **Release Please:** move `docs` to a dedicated Documentation section ([#1297](https://github.com/openfoodfacts/open-prices/issues/1297)) ([2d54e28](https://github.com/openfoodfacts/open-prices/commit/2d54e2862763540d8e6bb6c60dad6f9b9b2b7298))
+
 ## [1.102.0](https://github.com/openfoodfacts/open-prices/compare/v1.101.2...v1.102.0) (2026-04-16)
 
 
