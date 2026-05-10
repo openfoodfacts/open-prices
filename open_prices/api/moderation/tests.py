@@ -78,7 +78,7 @@ class FlagListPaginationApiTest(TestCase):
         )
         for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
             with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
-                self.assertTrue(PAGINATION_KEY in response.data)
+                self.assertIn(PAGINATION_KEY, response.data)
         self.assertEqual(response.data["size"], 10)  # default
 
 

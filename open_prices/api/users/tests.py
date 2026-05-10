@@ -18,9 +18,9 @@ class UserListApiTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.data["total"], 2)  # only users with prices
         self.assertEqual(len(response.data["items"]), 2)
-        self.assertFalse("id" in response.data["items"][0])
+        self.assertNotIn("id", response.data["items"][0])
         for field_name in User.SERIALIZED_FIELDS:
-            self.assertTrue(field_name in response.data["items"][0])
+            self.assertIn(field_name, response.data["items"][0])
 
 
 class UserListOrderApiTest(TestCase):
