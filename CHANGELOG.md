@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.103.1](https://github.com/openfoodfacts/open-prices/compare/v1.103.0...v1.103.1) (2026-05-10)
+
+
+### Bug Fixes
+
+* **Locations:** fix migration issue on unique constraint ([#1299](https://github.com/openfoodfacts/open-prices/issues/1299)) ([32775ec](https://github.com/openfoodfacts/open-prices/commit/32775eceea10326afaea1b1614306e839a43f997))
+
 ## [1.103.0](https://github.com/openfoodfacts/open-prices/compare/v1.102.0...v1.103.0) (2026-05-10)
 
 
