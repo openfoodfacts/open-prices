@@ -59,6 +59,12 @@ class Command(BaseCommand):
             default=120,
             help="Only process proofs that were created before this delay (in seconds) from now.",
         )
+        parser.add_argument(
+            "--apply",
+            action="store_true",
+            default=False,
+            help="Actually run the ML models. Without this flag, the command runs in dry-run mode and only prints what would be done.",
+        )
 
     def handle(self, *args, **options) -> None:  # type: ignore
         self.stdout.write(
@@ -67,7 +73,12 @@ class Command(BaseCommand):
         limit = options["limit"]
         types_str = options["types"]
         delay = options["delay"]
-        self.stdout.write(f"limit: {limit}, types: {types_str}, delay: {delay} seconds")
+        apply = options["apply"]
+        self.stdout.write(
+            f"limit: {limit}, types: {types_str}, delay: {delay} seconds, apply: {apply}"
+        )
+        if not apply:
+            self.stdout.write("Dry-run mode: use --apply to actually run the models.")
 
         if types_str:
             types = types_str.split(",")
@@ -80,12 +91,14 @@ class Command(BaseCommand):
             )
 
         if any(t in types for t in PROOF_MODELS):
-            self.handle_proof_jobs(types, limit, delay)
+            self.handle_proof_jobs(types, limit, delay, apply)
 
         if any(t in types for t in PRICE_TAG_MODELS):
-            self.handle_price_tag_jobs(types, limit, delay)
+            self.handle_price_tag_jobs(types, limit, delay, apply)
 
-    def handle_proof_jobs(self, types: list[str], limit: int, delay: int) -> None:
+    def handle_proof_jobs(
+        self, types: list[str], limit: int, delay: int, apply: bool
+    ) -> None:
         exclusion_filters_list = []
         if "proof_classification" in types:
             exclusion_filters_list.append(
@@ -124,18 +137,23 @@ class Command(BaseCommand):
         if limit:
             proofs = proofs[:limit]
 
-        for proof in tqdm.tqdm(proofs):
-            self.stdout.write(f"Processing proof {proof.id}...")
-            run_and_save_proof_prediction(
-                proof,
-                run_price_tag_classification=False,
-                run_price_tag_extraction=False,
-                run_receipt_extraction="proof_receipt_extraction" in types,
-            )
-            self.stdout.write("Done.")
+        self.stdout.write(f"Found {proofs.count()} proofs to process for proof models.")
 
-    def handle_price_tag_jobs(self, types: list[str], limit: int, delay: int) -> None:
-        base_qs = (
+        for proof in tqdm.tqdm(proofs):
+            if apply:
+                self.stdout.write(f"Processing proof {proof.id}...")
+                run_and_save_proof_prediction(
+                    proof,
+                    run_price_tag_classification=False,
+                    run_price_tag_extraction=False,
+                    run_receipt_extraction="proof_receipt_extraction" in types,
+                )
+                self.stdout.write("Done.")
+
+    def handle_price_tag_jobs(
+        self, types: list[str], limit: int, delay: int, apply: bool
+    ) -> None:
+        price_tags = (
             PriceTag.objects.filter(
                 proof__created__lt=timezone.now() - datetime.timedelta(seconds=delay),
                 proof__type=proof_constants.TYPE_PRICE_TAG,
@@ -145,25 +163,30 @@ class Command(BaseCommand):
         )
 
         if "price_tag_classification" in types:
-            price_tags = base_qs.exclude(
+            price_tags = price_tags.exclude(
                 predictions__type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE
             )
-            if limit:
-                price_tags = price_tags[:limit]
-            for price_tag in tqdm.tqdm(price_tags):
-                self.stdout.write(
-                    f"Classifying price tag {price_tag.id} (proof {price_tag.proof_id})..."
-                )
-                run_and_save_price_tag_classification_from_id(price_tag.id)
-
         if "price_tag_extraction" in types:
-            price_tags = base_qs.exclude(
+            price_tags = price_tags.exclude(
                 predictions__type=proof_constants.PRICE_TAG_EXTRACTION_TYPE
             )
-            if limit:
-                price_tags = price_tags[:limit]
-            for price_tag in tqdm.tqdm(price_tags):
-                self.stdout.write(
-                    f"Extracting price tag {price_tag.id} (proof {price_tag.proof_id})..."
-                )
-                run_and_save_price_tag_extraction([price_tag], price_tag.proof)
+
+        if limit:
+            price_tags = price_tags[:limit]
+
+        self.stdout.write(
+            f"Found {price_tags.count()} price tags to process for price tag models."
+        )
+
+        for price_tag in tqdm.tqdm(price_tags):
+            if apply:
+                if "price_tag_classification" in types:
+                    self.stdout.write(
+                        f"Classifying price tag {price_tag.id} (proof {price_tag.proof_id})..."
+                    )
+                    run_and_save_price_tag_classification_from_id(price_tag.id)
+                if "price_tag_extraction" in types:
+                    self.stdout.write(
+                        f"Extracting price tag {price_tag.id} (proof {price_tag.proof_id})..."
+                    )
+                    run_and_save_price_tag_extraction([price_tag], price_tag.proof)
