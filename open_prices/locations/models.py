@@ -1,7 +1,19 @@
+import math
+
 from django.conf import settings
 from django.core.validators import ValidationError
 from django.db import models
-from django.db.models import Count, Q, UniqueConstraint, signals
+from django.db.models import (
+    Count,
+    ExpressionWrapper,
+    F,
+    FloatField,
+    Q,
+    UniqueConstraint,
+    Value,
+    signals,
+)
+from django.db.models.functions import ACos, Cos, Radians, Sin
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -34,6 +46,61 @@ class LocationQuerySet(models.QuerySet):
             .values(field_name)
             .distinct()
             .count()
+        )
+
+    def nearby(self, center_lat: float, center_lon: float, radius_km: float):
+        # Earth's mean radius in kilometers, used for haversine distance calculations
+        earth_radius_km = 6371.0
+        # Approximate kilometers per degree of latitude (and longitude at the equator)
+        km_per_degree = 111.32
+        # Tolerance used to detect pole latitudes where cos(lat) is effectively zero
+        pole_cos_tolerance = 1e-12
+        # Full longitude span from center to edge when bounding at poles
+        max_longitude_delta_degrees = 180.0
+
+        # Bounding box pre-filter to reduce the number of rows for the
+        # more expensive haversine calculation.
+        delta_lat = radius_km / km_per_degree
+        if radius_km == 0:
+            delta_lon = 0.0
+        else:
+            cos_center_lat = math.cos(math.radians(center_lat))
+            # At the poles, longitude is undefined and cos(lat) is 0.
+            # Use full longitude span to avoid division by zero.
+            if math.isclose(cos_center_lat, 0.0, abs_tol=pole_cos_tolerance):
+                delta_lon = max_longitude_delta_degrees
+            else:
+                delta_lon = radius_km / (km_per_degree * cos_center_lat)
+
+        center_lat_rad = math.radians(center_lat)
+        center_lon_rad = math.radians(center_lon)
+
+        # Haversine distance annotation (spherical law of cosines form).
+        # d = R * acos(sin(φ1)*sin(φ2) + cos(φ1)*cos(φ2)*cos(Δλ))
+        distance_expr = ExpressionWrapper(
+            Value(earth_radius_km)
+            * ACos(
+                Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
+                + Cos(Value(center_lat_rad))
+                * Cos(Radians(F("osm_lat")))
+                * Cos(Radians(F("osm_lon")) - Value(center_lon_rad))
+            ),
+            output_field=FloatField(),
+        )
+
+        return (
+            self.filter(
+                type=location_constants.TYPE_OSM,
+                osm_lat__isnull=False,
+                osm_lon__isnull=False,
+                osm_lat__gte=center_lat - delta_lat,
+                osm_lat__lte=center_lat + delta_lat,
+                osm_lon__gte=center_lon - delta_lon,
+                osm_lon__lte=center_lon + delta_lon,
+            )
+            .annotate(distance_km=distance_expr)
+            .filter(distance_km__lte=radius_km)
+            .order_by("distance_km", "id")
         )
 
 

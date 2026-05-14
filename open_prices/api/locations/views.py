@@ -1,10 +1,8 @@
-import math
 from decimal import Decimal
 
 from django.core.cache import cache
 from django.core.validators import ValidationError
-from django.db.models import Count, ExpressionWrapper, F, FloatField, Q, Sum, Value
-from django.db.models.functions import ACos, Cos, Radians, Sin
+from django.db.models import Count, F, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -27,15 +25,6 @@ from open_prices.common import openstreetmap, utils
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
-
-# Earth's mean radius in kilometers, used for haversine distance calculations
-EARTH_RADIUS_KM = 6371.0
-# Approximate kilometers per degree of latitude (and longitude at the equator)
-KM_PER_DEGREE = 111.32
-# Tolerance used to detect pole latitudes where cos(lat) is effectively zero.
-POLE_COS_TOLERANCE = 1e-12
-# Full longitude span from center to edge when bounding at poles.
-MAX_LONGITUDE_DELTA_DEGREES = 180.0
 
 
 class LocationViewSet(
@@ -187,11 +176,11 @@ class LocationViewSet(
                 description="Longitude of the center point (decimal degrees, -180 to 180)",
             ),
             OpenApiParameter(
-                name="radius",
+                name="radius_km",
                 type=OpenApiTypes.FLOAT,
                 location=OpenApiParameter.QUERY,
                 required=True,
-                description="Search radius in kilometers (must be non-negative)",
+                description="Search radius in kilometers (must be positive)",
             ),
         ],
         responses=LocationNearbySerializer(many=True),
@@ -208,51 +197,8 @@ class LocationViewSet(
         params_serializer.is_valid(raise_exception=True)
         center_lat = params_serializer.validated_data["lat"]
         center_lon = params_serializer.validated_data["lon"]
-        radius_km = params_serializer.validated_data["radius"]
-
-        # Bounding box pre-filter to reduce the number of rows for the
-        # more expensive haversine calculation
-        delta_lat = radius_km / KM_PER_DEGREE
-        if radius_km == 0:
-            delta_lon = 0.0
-        else:
-            cos_center_lat = math.cos(math.radians(center_lat))
-            # At the poles, longitude is undefined and cos(lat) is 0.
-            # Use full longitude span to avoid division by zero.
-            if math.isclose(cos_center_lat, 0.0, abs_tol=POLE_COS_TOLERANCE):
-                delta_lon = MAX_LONGITUDE_DELTA_DEGREES
-            else:
-                delta_lon = radius_km / (KM_PER_DEGREE * cos_center_lat)
-
-        center_lat_rad = math.radians(center_lat)
-        center_lon_rad = math.radians(center_lon)
-
-        # Haversine distance annotation (spherical law of cosines form)
-        # d = R * acos(sin(φ1)*sin(φ2) + cos(φ1)*cos(φ2)*cos(Δλ))
-        distance_expr = ExpressionWrapper(
-            Value(EARTH_RADIUS_KM)
-            * ACos(
-                Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
-                + Cos(Value(center_lat_rad))
-                * Cos(Radians(F("osm_lat")))
-                * Cos(Radians(F("osm_lon")) - Value(center_lon_rad))
-            ),
-            output_field=FloatField(),
-        )
-
-        queryset = (
-            Location.objects.filter(
-                osm_lat__isnull=False,
-                osm_lon__isnull=False,
-                osm_lat__gte=center_lat - delta_lat,
-                osm_lat__lte=center_lat + delta_lat,
-                osm_lon__gte=center_lon - delta_lon,
-                osm_lon__lte=center_lon + delta_lon,
-            )
-            .annotate(distance_km=distance_expr)
-            .filter(distance_km__lte=radius_km)
-            .order_by("distance_km", "id")
-        )
+        radius_km = params_serializer.validated_data["radius_km"]
+        queryset = Location.objects.nearby(center_lat, center_lon, radius_km)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
