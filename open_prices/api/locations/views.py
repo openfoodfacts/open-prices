@@ -27,6 +27,11 @@ from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
 from open_prices.prices.models import Price
 
+# Earth's mean radius in kilometers, used for haversine distance calculations
+EARTH_RADIUS_KM = 6371.0
+# Approximate kilometers per degree of latitude (and longitude at the equator)
+KM_PER_DEGREE = 111.32
+
 
 class LocationViewSet(
     mixins.ListModelMixin,
@@ -233,17 +238,16 @@ class LocationViewSet(
 
         # Bounding box pre-filter to reduce the number of rows for the
         # more expensive haversine calculation
-        delta_lat = radius_km / 111.32
-        delta_lon = radius_km / (111.32 * math.cos(math.radians(center_lat)))
+        delta_lat = radius_km / KM_PER_DEGREE
+        delta_lon = radius_km / (KM_PER_DEGREE * math.cos(math.radians(center_lat)))
 
         center_lat_rad = math.radians(center_lat)
         center_lon_rad = math.radians(center_lon)
 
         # Haversine distance annotation (spherical law of cosines form)
         # d = R * acos(sin(φ1)*sin(φ2) + cos(φ1)*cos(φ2)*cos(Δλ))
-        earth_radius_km = 6371.0
         distance_expr = ExpressionWrapper(
-            Value(earth_radius_km)
+            Value(EARTH_RADIUS_KM)
             * ACos(
                 Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
                 + Cos(Value(center_lat_rad))
