@@ -19,21 +19,24 @@ logger = logging.getLogger(__name__)
 
 def run_and_save_proof_prediction(
     proof: Proof,
+    run_price_tag_classification: bool = True,
     run_price_tag_extraction: bool = True,
     run_receipt_extraction: bool = True,
 ) -> None:
     """Run all ML models on a specific proof, and save the predictions in DB.
 
     Currently, the following models are run:
-
     - proof type classification model
-    - price tag detection model (object detector)
+    - price tag classification model
     - price tag extraction model
     - receipt extraction model
 
     :param proof: the Proof object to be classified
+    :param run_price_tag_classification: whether to run the price tag classification model on the
+        detected price tags, defaults to True
     :param run_price_tag_extraction: whether to run the price tag extraction
         model on the detected price tags, defaults to True
+    :param run_receipt_extraction: whether to run the receipt extraction model, defaults to True
     """
     file_path_full = proof.file_path_full
 
@@ -52,7 +55,10 @@ def run_and_save_proof_prediction(
     image = open_image_cv2(file_path_full)
     run_and_save_proof_type_prediction(image, proof)
     run_and_save_price_tag_detection(
-        image, proof, run_extraction=run_price_tag_extraction
+        image,
+        proof,
+        run_classification=run_price_tag_classification,
+        run_extraction=run_price_tag_extraction,
     )
     if run_receipt_extraction:
         run_and_save_receipt_extraction_prediction(image, proof)
