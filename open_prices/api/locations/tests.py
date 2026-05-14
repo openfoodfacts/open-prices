@@ -387,6 +387,127 @@ class LocationOsmCountryCitiesListApiTest(TestCase):
         self.assertEqual(response.data[0]["price_count"], 10)
 
 
+
+class LocationNearbyApiTest(TestCase):
+    """
+    Center point for searches: lat=48.0, lon=2.0
+
+    Distances from center:
+    - location_at_center:  lat=48.0,  lon=2.0  → ~0 km
+    - location_near:       lat=48.01, lon=2.0  → ~1.1 km
+    - location_far:        lat=48.1,  lon=2.0  → ~11.1 km  (outside 5 km radius)
+    - location_no_coords:  ONLINE type, no lat/lon → always excluded
+    """
+
+    CENTER_LAT = 48.0
+    CENTER_LON = 2.0
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:locations-nearby")
+        cls.location_at_center = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat="48.0",
+            osm_lon="2.0",
+        )
+        cls.location_near = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat="48.01",
+            osm_lon="2.0",
+        )
+        cls.location_far = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat="48.1",
+            osm_lon="2.0",
+        )
+        cls.location_no_coords = LocationFactory(
+            type=location_constants.TYPE_ONLINE,
+            website_url="https://www.example.com",
+        )
+
+    def test_nearby_missing_params(self):
+        # all missing
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 400)
+        # lat missing
+        url = f"{self.url}?lon={self.CENTER_LON}&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        # lon missing
+        url = f"{self.url}?lat={self.CENTER_LAT}&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        # radius missing
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+
+    def test_nearby_invalid_params(self):
+        # non-numeric lat
+        url = f"{self.url}?lat=abc&lon={self.CENTER_LON}&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        # out-of-range lat
+        url = f"{self.url}?lat=91&lon={self.CENTER_LON}&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        # out-of-range lon
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon=181&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        # non-positive radius
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=0"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=-1"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+
+    def test_nearby_returns_nearby_locations(self):
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("items", response.data)
+        self.assertEqual(response.data["total"], 2)  # center + near; far excluded
+
+    def test_nearby_excludes_outside_radius(self):
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        ids = [item["id"] for item in response.data["items"]]
+        self.assertIn(self.location_at_center.id, ids)
+        self.assertIn(self.location_near.id, ids)
+        self.assertNotIn(self.location_far.id, ids)
+        self.assertNotIn(self.location_no_coords.id, ids)
+
+    def test_nearby_ordered_by_distance(self):
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        items = response.data["items"]
+        self.assertEqual(len(items), 2)
+        # closest location should come first
+        self.assertEqual(items[0]["id"], self.location_at_center.id)
+        self.assertEqual(items[1]["id"], self.location_near.id)
+
+    def test_nearby_distance_in_response(self):
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        for item in response.data["items"]:
+            self.assertIn("distance_km", item)
+        # center location should be ~0 km
+        center_item = next(
+            i for i in response.data["items"] if i["id"] == self.location_at_center.id
+        )
+        self.assertAlmostEqual(center_item["distance_km"], 0.0, places=2)
+        # near location should be ~1.1 km
+        near_item = next(
+            i for i in response.data["items"] if i["id"] == self.location_near.id
+        )
+        self.assertAlmostEqual(near_item["distance_km"], 1.1, delta=0.1)
+
+
 class LocationCompareApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
