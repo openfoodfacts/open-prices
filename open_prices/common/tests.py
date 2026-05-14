@@ -207,11 +207,16 @@ class UtilsTest(TestCase):
             self.assertFalse(is_float(PRICE_NOT_OK))
 
     def test_truncate_decimal(self):
+        # input: string
         self.assertEqual(truncate_decimal("0.1234567"), "0.1234567")
         self.assertEqual(truncate_decimal("0.123456789"), "0.1234567")
         self.assertEqual(
             truncate_decimal("0.123456789", max_decimal_places=9), "0.123456789"
         )
+        # input: float
+        self.assertEqual(truncate_decimal(0.123456789), Decimal("0.1234567"))
+        # input: Decimal
+        self.assertEqual(truncate_decimal(Decimal("0.123456789")), Decimal("0.1234567"))
 
     def test_match_decimal_with_float(self):
         self.assertTrue(match_decimal_with_float(Decimal("1"), 1))

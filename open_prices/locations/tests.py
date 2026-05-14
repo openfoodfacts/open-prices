@@ -84,6 +84,7 @@ class LocationModelSaveTest(TestCase):
         )
 
     def test_location_decimal_truncate_on_create(self):
+        # input: string
         location = LocationFactory(
             **LOCATION_OSM_NODE_652825274,
             osm_lat="45.1805534",
@@ -92,6 +93,7 @@ class LocationModelSaveTest(TestCase):
         )
         self.assertEqual(location.osm_lat, Decimal("45.1805534"))
         self.assertEqual(location.osm_lon, Decimal("5.7153387"))
+        # see common.utils.tests for more truncate_decimal tests (with float and Decimal inputs)
 
     def test_location_online_validation(self):
         # website_url should be set
