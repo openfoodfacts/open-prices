@@ -1,8 +1,10 @@
+import math
 from decimal import Decimal
 
 from django.core.cache import cache
 from django.core.validators import ValidationError
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, ExpressionWrapper, F, FloatField, Q, Sum, Value
+from django.db.models.functions import ACos, Cos, Radians, Sin
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -16,6 +18,7 @@ from open_prices.api.locations.serializers import (
     CountrySerializer,
     LocationCompareSerializer,
     LocationCreateSerializer,
+    LocationNearbySerializer,
     LocationSerializer,
 )
 from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
@@ -156,6 +159,121 @@ class LocationViewSet(
             .order_by("osm_name")
         )
         return Response(CountryCitySerializer(location_qs, many=True).data)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="lat",
+                type=OpenApiTypes.FLOAT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Latitude of the center point (decimal degrees, -90 to 90)",
+            ),
+            OpenApiParameter(
+                name="lon",
+                type=OpenApiTypes.FLOAT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Longitude of the center point (decimal degrees, -180 to 180)",
+            ),
+            OpenApiParameter(
+                name="radius",
+                type=OpenApiTypes.FLOAT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Search radius in kilometers (must be positive)",
+            ),
+        ],
+        responses=LocationNearbySerializer(many=True),
+        filters=False,
+    )
+    @action(detail=False, methods=["GET"])
+    def nearby(self, request: Request) -> Response:
+        """
+        Return locations within a given radius of a center point.
+        Results are ordered by distance (closest first), then by id.
+        Each result includes a computed `distance_km` field.
+        """
+        lat = request.query_params.get("lat")
+        lon = request.query_params.get("lon")
+        radius = request.query_params.get("radius")
+
+        # All three parameters are required
+        if not all([lat, lon, radius]):
+            return Response(
+                {"detail": "lat, lon, and radius query parameters are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            center_lat = float(lat)
+            center_lon = float(lon)
+            radius_km = float(radius)
+        except ValueError:
+            return Response(
+                {"detail": "lat, lon, and radius must be numbers"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not (-90 <= center_lat <= 90):
+            return Response(
+                {"detail": "lat must be between -90 and 90"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not (-180 <= center_lon <= 180):
+            return Response(
+                {"detail": "lon must be between -180 and 180"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if radius_km <= 0:
+            return Response(
+                {"detail": "radius must be a positive number"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Bounding box pre-filter to reduce the number of rows for the
+        # more expensive haversine calculation
+        delta_lat = radius_km / 111.32
+        delta_lon = radius_km / (111.32 * math.cos(math.radians(center_lat)))
+
+        center_lat_rad = math.radians(center_lat)
+        center_lon_rad = math.radians(center_lon)
+
+        # Haversine distance annotation (spherical law of cosines form)
+        # d = R * acos(sin(φ1)*sin(φ2) + cos(φ1)*cos(φ2)*cos(Δλ))
+        earth_radius_km = 6371.0
+        distance_expr = ExpressionWrapper(
+            Value(earth_radius_km)
+            * ACos(
+                Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
+                + Cos(Value(center_lat_rad))
+                * Cos(Radians(F("osm_lat")))
+                * Cos(Radians(F("osm_lon")) - Value(center_lon_rad))
+            ),
+            output_field=FloatField(),
+        )
+
+        queryset = (
+            Location.objects.filter(
+                osm_lat__isnull=False,
+                osm_lon__isnull=False,
+                osm_lat__gte=center_lat - delta_lat,
+                osm_lat__lte=center_lat + delta_lat,
+                osm_lon__gte=center_lon - delta_lon,
+                osm_lon__lte=center_lon + delta_lon,
+            )
+            .annotate(distance_km=distance_expr)
+            .filter(distance_km__lte=radius_km)
+            .order_by("distance_km", "id")
+        )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = LocationNearbySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = LocationNearbySerializer(queryset, many=True)
+        return Response(serializer.data)
 
     @extend_schema(
         parameters=[
