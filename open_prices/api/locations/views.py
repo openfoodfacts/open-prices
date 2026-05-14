@@ -34,6 +34,8 @@ EARTH_RADIUS_KM = 6371.0
 KM_PER_DEGREE = 111.32
 # Tolerance used to detect pole latitudes where cos(lat) is effectively zero.
 POLE_COS_TOLERANCE = 1e-12
+# Full longitude span from center to edge when bounding at poles.
+MAX_LONGITUDE_DELTA_DEGREES = 180.0
 
 
 class LocationViewSet(
@@ -215,7 +217,7 @@ class LocationViewSet(
         # At the poles, longitude is undefined and cos(lat) is 0.
         # Use full longitude span to avoid division by zero.
         if math.isclose(cos_center_lat, 0.0, abs_tol=POLE_COS_TOLERANCE):
-            delta_lon = 180.0
+            delta_lon = MAX_LONGITUDE_DELTA_DEGREES
         else:
             delta_lon = radius_km / (KM_PER_DEGREE * cos_center_lat)
 
