@@ -56,7 +56,6 @@ class LocationNearbyParamsSerializer(serializers.Serializer):
     radius = serializers.FloatField(min_value=0, required=True)
 
 
-
 class LocationCompareSerializer(serializers.Serializer):
     location_a = LocationSerializer()
     location_b = LocationSerializer()
