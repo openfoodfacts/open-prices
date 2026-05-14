@@ -34,19 +34,21 @@ markdown_extensions:
 nav:
   - Home: README.md
   - Guides:
-      - Home: guides/README.md
-      - "Web: add multiple prices (from shelf images)": guides/web-add-multiple-prices-shelf.md
-      - "Web: add multiple prices (from a receipt)": guides/web-add-multiple-prices-receipt.md
-      - API: guides/API.md
+    - Home: guides/README.md
+    - "Web: add multiple prices (from shelf images)": guides/web-add-multiple-prices-shelf.md
+    - "Web: add multiple prices (from a receipt)": guides/web-add-multiple-prices-receipt.md
+    - API: guides/API.md
+  - Topics:
+    - Home: topics/README.md
   - Community:
-      - Home: community/README.md
-      - Github: community/github.md
-      - Slack: community/slack.md
-      - Weekly meetings: community/weekly-meetings.md
-      - Contributing: community/CONTRIBUTING.md
-      - Install: community/INSTALL.md
-      - UX & UI: community/ux-ui.md
-      - Changelog: community/CHANGELOG.md
+    - Home: community/README.md
+    - Github: community/github.md
+    - Slack: community/slack.md
+    - Weekly meetings: community/weekly-meetings.md
+    - Contributing: community/CONTRIBUTING.md
+    - Install: community/INSTALL.md
+    - UX & UI: community/ux-ui.md
+    - Changelog: community/CHANGELOG.md
 
 plugins:
   - search

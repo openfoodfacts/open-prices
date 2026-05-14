@@ -1,5 +1,7 @@
 # Community
 
+Navigate the Open Prices community, get involved, and contribute!
+
 ## Github
 
 see [Github](github.md)
@@ -14,7 +16,9 @@ We e-meet Thrusdays at 14:00 Paris Time. More details in [weekly meetings](weekl
 
 ## Contribute
 
-see [Contributing](CONTRIBUTING.md) & [Install](INSTALL.md) & [UX & UI](ux-ui.md).
+- [Contributing](CONTRIBUTING.md)
+- [Install](INSTALL.md)
+- [UX & UI](ux-ui.md)
 
 ## Release Notes
 
