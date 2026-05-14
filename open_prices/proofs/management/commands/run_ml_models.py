@@ -122,6 +122,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Processing proof {proof.id}...")
             run_and_save_proof_prediction(
                 proof,
+                run_price_tag_classification=False,
                 run_price_tag_extraction=False,
                 run_receipt_extraction="receipt_extraction" in types,
             )

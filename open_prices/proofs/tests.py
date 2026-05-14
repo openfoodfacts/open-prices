@@ -877,6 +877,7 @@ class MLModelTest(TestCase):
                 ):
                     run_and_save_proof_prediction(
                         proof,
+                        run_price_tag_classification=False,
                         run_price_tag_extraction=False,
                         run_receipt_extraction=False,
                     )
@@ -972,6 +973,7 @@ class MLModelTest(TestCase):
                 ):
                     run_and_save_proof_prediction(
                         proof,
+                        run_price_tag_classification=True,
                         run_price_tag_extraction=False,
                         run_receipt_extraction=False,
                     )
