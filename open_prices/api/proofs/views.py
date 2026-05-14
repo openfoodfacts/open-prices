@@ -280,12 +280,6 @@ class PriceTagViewSet(
         user_id = self.request.user.user_id
         price_tag = serializer.save(updated_by=user_id, created_by=user_id)
 
-        if not settings.TESTING:
-            async_task(
-                "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
-                price_tag.id,
-            )
-
         # return full price tag
         return Response(
             self.serializer_class(price_tag).data, status=status.HTTP_201_CREATED
