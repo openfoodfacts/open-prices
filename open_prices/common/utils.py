@@ -17,13 +17,26 @@ def is_float(string):
 
 
 def truncate_decimal(value, max_decimal_places=7):
+    """
+    Truncate a decimal value to a maximum number of decimal places.
+    - Input can be a string, a float or a Decimal.
+    - Output is of the same type as input.
+    """
     if value:
-        if type(value) is str:
-            if "." in value:
-                integer_part, decimal_part = value.split(".")
+        input_type = type(value)
+        if input_type in (str, float, Decimal):
+            value_str = (
+                str(value) if input_type is str else format(Decimal(str(value)), "f")
+            )
+            if "." in value_str:
+                integer_part, decimal_part = value_str.split(".")
                 if len(decimal_part) > max_decimal_places:
                     decimal_part = decimal_part[:max_decimal_places]
-                value = f"{integer_part}.{decimal_part}"
+                value_str = f"{integer_part}.{decimal_part}"
+            if input_type is str:
+                value = value_str
+            else:
+                value = Decimal(value_str)
     return value
 
 
