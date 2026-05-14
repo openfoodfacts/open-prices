@@ -707,10 +707,14 @@ def price_tag_post_save_run_ml_models(sender, instance, created, **kwargs):
     """
     Run price tag ML models
     - only if created manually by a user
-    - if created automatically from a proof prediction, the classification & extraction is run in batch in run_and_save_proof_prediction
+    - if created automatically from a proof prediction, the models will be run (in batch) in run_and_save_proof_prediction
     """
     if not settings.TESTING:
         if created and instance.created_by:
+            async_task(
+                "open_prices.proofs.ml.price_tags.run_and_save_price_tag_classification_from_id",
+                instance.id,
+            )
             async_task(
                 "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
                 instance.id,
