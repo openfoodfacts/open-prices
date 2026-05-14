@@ -29,7 +29,11 @@ markdown_extensions:
   - footnotes
   - mdx_truly_sane_lists
   - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
   - Home: README.md
@@ -45,6 +49,9 @@ nav:
     - OpenStreetMap (Location data): topics/openstreetmap-location-data.md
     - Gamification: topics/gamification.md
     - Moderation & Historisation: topics/moderation-historisation.md
+    - AI:
+      - Home: topics/ai/README.md
+      - "Proof Prediction Flow": topics/ai/proof-prediction-flow.md
   - Community:
     - Home: community/README.md
     - Github: community/github.md

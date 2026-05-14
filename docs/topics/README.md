@@ -7,3 +7,4 @@ Deep dives into specific technical areas of Open Prices.
 - [OpenStreetMap (Location data)](openstreetmap-location-data.md)
 - [Gamification](gamification.md)
 - [Moderation & Historisation](moderation-historisation.md)
+- [AI](ai/README.md) - Machine learning models, predictions, and related architectures
