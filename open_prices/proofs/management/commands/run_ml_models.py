@@ -9,7 +9,10 @@ from openfoodfacts.utils import get_logger
 
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml import run_and_save_proof_prediction
-from open_prices.proofs.ml.classification import proof_classification_model_config
+from open_prices.proofs.ml.classification import (
+    price_tag_classification_model_config,
+    proof_classification_model_config,
+)
 from open_prices.proofs.ml.price_tags import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
     run_and_save_price_tag_classification_from_id,
@@ -74,9 +77,7 @@ class Command(BaseCommand):
         types_str = options["types"]
         delay = options["delay"]
         apply = options["apply"]
-        self.stdout.write(
-            f"limit: {limit}, types: {types_str}, delay: {delay} seconds, apply: {apply}"
-        )
+
         if not apply:
             self.stdout.write("Dry-run mode: use --apply to actually run the models.")
 
@@ -89,6 +90,10 @@ class Command(BaseCommand):
             raise ValueError(
                 f"Invalid type(s) provided: '{types}', allowed: {ALL_MODELS}"
             )
+
+        self.stdout.write(
+            f"limit: {limit}, types: {','.join(types)}, delay: {delay} seconds, apply: {apply}"
+        )
 
         if any(t in types for t in PROOF_MODELS):
             self.handle_proof_jobs(types, limit, delay, apply)
@@ -154,17 +159,17 @@ class Command(BaseCommand):
         self, types: list[str], limit: int, delay: int, apply: bool
     ) -> None:
         price_tags = (
-            PriceTag.objects.filter(
+            PriceTag.objects.select_related("proof")
+            .filter(
                 proof__created__lt=timezone.now() - datetime.timedelta(seconds=delay),
                 proof__type=proof_constants.TYPE_PRICE_TAG,
             )
-            .select_related("proof")
             .order_by("-id")
         )
 
         if "price_tag_classification" in types:
             price_tags = price_tags.exclude(
-                predictions__type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE
+                predictions__type=price_tag_classification_model_config.model_name
             )
         if "price_tag_extraction" in types:
             price_tags = price_tags.exclude(
