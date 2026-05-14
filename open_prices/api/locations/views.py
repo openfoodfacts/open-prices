@@ -32,6 +32,8 @@ from open_prices.prices.models import Price
 EARTH_RADIUS_KM = 6371.0
 # Approximate kilometers per degree of latitude (and longitude at the equator)
 KM_PER_DEGREE = 111.32
+# Tolerance used to detect pole latitudes where cos(lat) is effectively zero.
+POLE_COS_TOLERANCE = 1e-12
 
 
 class LocationViewSet(
@@ -212,7 +214,7 @@ class LocationViewSet(
         cos_center_lat = math.cos(math.radians(center_lat))
         # At the poles, longitude is undefined and cos(lat) is 0.
         # Use full longitude span to avoid division by zero.
-        if math.isclose(cos_center_lat, 0.0, abs_tol=1e-12):
+        if math.isclose(cos_center_lat, 0.0, abs_tol=POLE_COS_TOLERANCE):
             delta_lon = 180.0
         else:
             delta_lon = radius_km / (KM_PER_DEGREE * cos_center_lat)
