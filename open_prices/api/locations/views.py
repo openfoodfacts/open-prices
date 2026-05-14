@@ -187,7 +187,7 @@ class LocationViewSet(
                 type=OpenApiTypes.FLOAT,
                 location=OpenApiParameter.QUERY,
                 required=True,
-                description="Search radius in kilometers (must be positive)",
+                description="Search radius in kilometers (must be non-negative)",
             ),
         ],
         responses=LocationNearbySerializer(many=True),
