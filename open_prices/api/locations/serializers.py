@@ -55,10 +55,6 @@ class LocationNearbyParamsSerializer(serializers.Serializer):
     lon = serializers.FloatField(min_value=-180, max_value=180, required=True)
     radius = serializers.FloatField(required=True)
 
-    def validate_radius(self, value: float) -> float:
-        if value <= 0:
-            raise serializers.ValidationError("Ensure this value is greater than 0.")
-        return value
 
 
 class LocationCompareSerializer(serializers.Serializer):
