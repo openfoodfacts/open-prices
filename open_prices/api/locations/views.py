@@ -209,7 +209,13 @@ class LocationViewSet(
         # Bounding box pre-filter to reduce the number of rows for the
         # more expensive haversine calculation
         delta_lat = radius_km / KM_PER_DEGREE
-        delta_lon = radius_km / (KM_PER_DEGREE * math.cos(math.radians(center_lat)))
+        cos_center_lat = math.cos(math.radians(center_lat))
+        # At the poles, longitude is undefined and cos(lat) is 0.
+        # Use full longitude span to avoid division by zero.
+        if math.isclose(cos_center_lat, 0.0, abs_tol=1e-12):
+            delta_lon = 180.0
+        else:
+            delta_lon = radius_km / (KM_PER_DEGREE * cos_center_lat)
 
         center_lat_rad = math.radians(center_lat)
         center_lon_rad = math.radians(center_lon)
