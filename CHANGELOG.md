@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.103.2](https://github.com/openfoodfacts/open-prices/compare/v1.103.1...v1.103.2) (2026-05-14)
+
+
+### Technical
+
+* **ML Models:** improve script following new price tag classification model ([#1306](https://github.com/openfoodfacts/open-prices/issues/1306)) ([53ca798](https://github.com/openfoodfacts/open-prices/commit/53ca798ab9d6d40ec8de017bcfe20950e7477eea))
+* **Price Tags:** ML: move classification action in a dedicated method. allow to call it for a specific id ([#1308](https://github.com/openfoodfacts/open-prices/issues/1308)) ([744255a](https://github.com/openfoodfacts/open-prices/commit/744255aca0abe17117452bd0a0b76eb9f63b10b8))
+* **Price Tags:** ML: on manual price tag creation, also run classification. move the logic to a post_save signal ([#1310](https://github.com/openfoodfacts/open-prices/issues/1310)) ([9b9f0fd](https://github.com/openfoodfacts/open-prices/commit/9b9f0fdde5ad94aa0299ff8d6f5e1f8ef991b4d3))
+
 ## [1.103.1](https://github.com/openfoodfacts/open-prices/compare/v1.103.0...v1.103.1) (2026-05-10)
 
 
