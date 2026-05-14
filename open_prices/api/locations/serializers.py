@@ -46,6 +46,16 @@ class CountryCitySerializer(serializers.Serializer):
     price_count = serializers.IntegerField()
 
 
+class LocationNearbySerializer(LocationSerializer):
+    distance_km = serializers.FloatField(read_only=True)
+
+
+class LocationNearbyParamsSerializer(serializers.Serializer):
+    lat = serializers.FloatField(min_value=-90, max_value=90, required=True)
+    lon = serializers.FloatField(min_value=-180, max_value=180, required=True)
+    radius_km = serializers.FloatField(min_value=0, required=True)
+
+
 class LocationCompareSerializer(serializers.Serializer):
     location_a = LocationSerializer()
     location_b = LocationSerializer()

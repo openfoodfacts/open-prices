@@ -16,6 +16,8 @@ from open_prices.api.locations.serializers import (
     CountrySerializer,
     LocationCompareSerializer,
     LocationCreateSerializer,
+    LocationNearbyParamsSerializer,
+    LocationNearbySerializer,
     LocationSerializer,
 )
 from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
@@ -156,6 +158,55 @@ class LocationViewSet(
             .order_by("osm_name")
         )
         return Response(CountryCitySerializer(location_qs, many=True).data)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="lat",
+                type=OpenApiTypes.FLOAT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Latitude of the center point (decimal degrees, -90 to 90)",
+            ),
+            OpenApiParameter(
+                name="lon",
+                type=OpenApiTypes.FLOAT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Longitude of the center point (decimal degrees, -180 to 180)",
+            ),
+            OpenApiParameter(
+                name="radius_km",
+                type=OpenApiTypes.FLOAT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Search radius in kilometers (must be positive)",
+            ),
+        ],
+        responses=LocationNearbySerializer(many=True),
+        filters=False,
+    )
+    @action(detail=False, methods=["GET"])
+    def nearby(self, request: Request) -> Response:
+        """
+        Return locations within a given radius of a center point.
+        Results are ordered by distance (closest first), then by id.
+        Each result includes a computed `distance_km` field.
+        """
+        params_serializer = LocationNearbyParamsSerializer(data=request.query_params)
+        params_serializer.is_valid(raise_exception=True)
+        center_lat = params_serializer.validated_data["lat"]
+        center_lon = params_serializer.validated_data["lon"]
+        radius_km = params_serializer.validated_data["radius_km"]
+        queryset = Location.objects.nearby(center_lat, center_lon, radius_km)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = LocationNearbySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = LocationNearbySerializer(queryset, many=True)
+        return Response(serializer.data)
 
     @extend_schema(
         parameters=[

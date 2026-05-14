@@ -159,6 +159,54 @@ class LocationQuerySetTest(TestCase):
         self.assertEqual(location.price_count, 1)
 
 
+class LocationQuerySetNearbyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.CENTER_LAT = 48
+        cls.CENTER_LON = 2
+        cls.location_osm_far = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=cls.CENTER_LAT + 0.1,  # ~13km north
+            osm_lon=cls.CENTER_LON + 0.1,  # ~13km east
+        )
+        cls.location_osm_near = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=cls.CENTER_LAT + 0.01,  # ~1.3km north
+            osm_lon=cls.CENTER_LON + 0.01,  # ~1.3km east
+        )
+        cls.location_osm_center = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=cls.CENTER_LAT,
+            osm_lon=cls.CENTER_LON,
+        )
+        cls.location_osm_no_coords = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=None,
+            osm_lon=None,
+        )
+        cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+
+    def test_nearby_radius_km_zero(self):
+        self.assertEqual(Location.objects.count(), 5)
+        location_nearby_qs = Location.objects.nearby(
+            self.CENTER_LAT, self.CENTER_LON, radius_km=0
+        )
+        self.assertEqual(location_nearby_qs.count(), 1)
+        self.assertEqual(location_nearby_qs.first().id, self.location_osm_center.id)
+        self.assertEqual(location_nearby_qs.first().distance_km, 0)
+
+    def test_nearby_radius_km_5(self):
+        self.assertEqual(Location.objects.count(), 5)
+        location_nearby_qs = Location.objects.nearby(
+            self.CENTER_LAT, self.CENTER_LON, radius_km=5
+        )
+        self.assertEqual(location_nearby_qs.count(), 2)
+        # distance_km annotated
+        self.assertIsNotNone(location_nearby_qs.first().distance_km)
+        # ordered by distance
+        self.assertEqual(location_nearby_qs.first().id, self.location_osm_center.id)
+
+
 class LocationPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
