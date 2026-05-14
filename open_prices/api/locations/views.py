@@ -18,6 +18,7 @@ from open_prices.api.locations.serializers import (
     CountrySerializer,
     LocationCompareSerializer,
     LocationCreateSerializer,
+    LocationNearbyParamsSerializer,
     LocationNearbySerializer,
     LocationSerializer,
 )
@@ -199,42 +200,11 @@ class LocationViewSet(
         Results are ordered by distance (closest first), then by id.
         Each result includes a computed `distance_km` field.
         """
-        lat = request.query_params.get("lat")
-        lon = request.query_params.get("lon")
-        radius = request.query_params.get("radius")
-
-        # All three parameters are required
-        if not all([lat, lon, radius]):
-            return Response(
-                {"detail": "lat, lon, and radius query parameters are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            center_lat = float(lat)
-            center_lon = float(lon)
-            radius_km = float(radius)
-        except ValueError:
-            return Response(
-                {"detail": "lat, lon, and radius must be numbers"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not (-90 <= center_lat <= 90):
-            return Response(
-                {"detail": "lat must be between -90 and 90"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if not (-180 <= center_lon <= 180):
-            return Response(
-                {"detail": "lon must be between -180 and 180"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if radius_km <= 0:
-            return Response(
-                {"detail": "radius must be a positive number"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        params_serializer = LocationNearbyParamsSerializer(data=request.query_params)
+        params_serializer.is_valid(raise_exception=True)
+        center_lat = params_serializer.validated_data["lat"]
+        center_lon = params_serializer.validated_data["lon"]
+        radius_km = params_serializer.validated_data["radius"]
 
         # Bounding box pre-filter to reduce the number of rows for the
         # more expensive haversine calculation

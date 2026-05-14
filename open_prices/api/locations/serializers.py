@@ -50,6 +50,17 @@ class LocationNearbySerializer(LocationSerializer):
     distance_km = serializers.FloatField(read_only=True)
 
 
+class LocationNearbyParamsSerializer(serializers.Serializer):
+    lat = serializers.FloatField(min_value=-90, max_value=90, required=True)
+    lon = serializers.FloatField(min_value=-180, max_value=180, required=True)
+    radius = serializers.FloatField(required=True)
+
+    def validate_radius(self, value: float) -> float:
+        if value <= 0:
+            raise serializers.ValidationError("Ensure this value is greater than 0.")
+        return value
+
+
 class LocationCompareSerializer(serializers.Serializer):
     location_a = LocationSerializer()
     location_b = LocationSerializer()
