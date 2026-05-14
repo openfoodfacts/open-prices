@@ -455,13 +455,15 @@ class LocationNearbyApiTest(TestCase):
         url = f"{self.url}?lat={self.CENTER_LAT}&lon=181&radius=5"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 400)
-        # non-positive radius
-        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=0"
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        # negative radius
         url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=-1"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 400)
+
+    def test_nearby_zero_radius(self):
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=0"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
     def test_nearby_returns_nearby_locations(self):
         url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius=5"
