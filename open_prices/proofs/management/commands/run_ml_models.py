@@ -12,9 +12,10 @@ from open_prices.proofs.ml import run_and_save_proof_prediction
 from open_prices.proofs.ml.classification import proof_classification_model_config
 from open_prices.proofs.ml.price_tags import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
+    run_and_save_price_tag_classification_from_id,
     run_and_save_price_tag_extraction,
 )
-from open_prices.proofs.models import PriceTagPrediction, Proof
+from open_prices.proofs.models import PriceTag, Proof
 
 # Initializing root logger
 get_logger()
@@ -27,6 +28,7 @@ PROOF_MODELS = [
 ]
 
 PRICE_TAG_MODELS = [
+    "price_tag_classification",
     "price_tag_extraction",
 ]
 ALL_MODELS = PROOF_MODELS + PRICE_TAG_MODELS
@@ -81,7 +83,7 @@ class Command(BaseCommand):
             self.handle_proof_jobs(types, limit, delay)
 
         if any(t in types for t in PRICE_TAG_MODELS):
-            self.handle_price_tag_jobs(limit, delay)
+            self.handle_price_tag_jobs(types, limit, delay)
 
     def handle_proof_jobs(self, types: list[str], limit: int, delay: int) -> None:
         exclusion_filters_list = []
@@ -132,24 +134,36 @@ class Command(BaseCommand):
             )
             self.stdout.write("Done.")
 
-    def handle_price_tag_jobs(self, limit: int, delay: int) -> None:
-        # Get all proofs of type PRICE_TAG
-        proofs = Proof.objects.filter(
-            created__lt=timezone.now() - datetime.timedelta(seconds=delay),
-            type=proof_constants.TYPE_PRICE_TAG,
-        ).order_by("-id")
+    def handle_price_tag_jobs(self, types: list[str], limit: int, delay: int) -> None:
+        base_qs = (
+            PriceTag.objects.filter(
+                proof__created__lt=timezone.now() - datetime.timedelta(seconds=delay),
+                proof__type=proof_constants.TYPE_PRICE_TAG,
+            )
+            .select_related("proof")
+            .order_by("-id")
+        )
 
-        added = 0
-        for proof in tqdm.tqdm(proofs):
-            for price_tag in proof.price_tags.all():
-                # Check if the price tag already has a prediction
-                if not PriceTagPrediction.objects.filter(
-                    type=proof_constants.PRICE_TAG_EXTRACTION_TYPE, price_tag=price_tag
-                ).exists():
-                    self.stdout.write(
-                        f"Processing price tag {price_tag.id} (proof {proof.id})..."
-                    )
-                    run_and_save_price_tag_extraction([price_tag], proof)
-                    added += 1
-                    if limit and added >= limit:
-                        return
+        if "price_tag_classification" in types:
+            price_tags = base_qs.exclude(
+                predictions__type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE
+            )
+            if limit:
+                price_tags = price_tags[:limit]
+            for price_tag in tqdm.tqdm(price_tags):
+                self.stdout.write(
+                    f"Classifying price tag {price_tag.id} (proof {price_tag.proof_id})..."
+                )
+                run_and_save_price_tag_classification_from_id(price_tag.id)
+
+        if "price_tag_extraction" in types:
+            price_tags = base_qs.exclude(
+                predictions__type=proof_constants.PRICE_TAG_EXTRACTION_TYPE
+            )
+            if limit:
+                price_tags = price_tags[:limit]
+            for price_tag in tqdm.tqdm(price_tags):
+                self.stdout.write(
+                    f"Extracting price tag {price_tag.id} (proof {price_tag.proof_id})..."
+                )
+                run_and_save_price_tag_extraction([price_tag], price_tag.proof)
