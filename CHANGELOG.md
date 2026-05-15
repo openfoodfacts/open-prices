@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.104.1](https://github.com/openfoodfacts/open-prices/compare/v1.104.0...v1.104.1) (2026-05-15)
+
+
+### Technical
+
+* **Release Please:** revert to using RELEASE_PLEASE_TOKEN instead of GITHUB_TOKEN (wasn't triggering deployements) ([#1315](https://github.com/openfoodfacts/open-prices/issues/1315)) ([8ab4c3d](https://github.com/openfoodfacts/open-prices/commit/8ab4c3dc02a427a9524e58b26d88f3b012d8d674))
+
 ## [1.104.0](https://github.com/openfoodfacts/open-prices/compare/v1.103.2...v1.104.0) (2026-05-15)
 
 
