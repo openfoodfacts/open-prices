@@ -117,12 +117,19 @@ class ProductModelSaveTest(TransactionTestCase):
 class ProductQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.product_without_price = ProductFactory(code="0123456789100")
-        cls.product_with_price = ProductFactory(code="0123456789101")
+        cls.product_without_price = ProductFactory(
+            code="0123456789100", creator="open-prices"
+        )
+        cls.product_with_price = ProductFactory(
+            code="0123456789101", creator="openfoodfacts-contributors"
+        )
         PriceFactory(product_code=cls.product_with_price.code, price=1.0)
 
     def test_has_prices(self):
         self.assertEqual(Product.objects.has_prices().count(), 1)
+
+    def test_created_by_open_prices(self):
+        self.assertEqual(Product.objects.created_by_open_prices().count(), 1)
 
     def test_with_stats(self):
         product = Product.objects.with_stats().get(id=self.product_without_price.id)

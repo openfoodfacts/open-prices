@@ -231,39 +231,17 @@ class TotalStatsTest(TestCase):
 
         self.assertEqual(self.total_stats.challenge_count, 1)
 
-    def test_update_other_stats(self):
-        # self.assertEqual(self.total_stats.off_contributions_stats["product_created_count"], 0)
-        # self.assertEqual(self.total_stats.off_contributions_stats["product_source_off_created_count"], 0)
-        # self.assertEqual(self.total_stats.off_contributions_stats["product_source_obf_created_count"], 0)
-        # self.assertEqual(self.total_stats.off_contributions_stats["product_source_opff_created_count"], 0)
-        # self.assertEqual(self.total_stats.off_contributions_stats["product_source_opf_created_count"], 0)
+    def test_update_product_created_stats(self):
+        self.assertEqual(self.total_stats.product_created_count, 0)
+        self.assertEqual(self.total_stats.product_created_source_off_count, 0)
+        self.assertEqual(self.total_stats.product_created_source_obf_count, 0)
+        self.assertEqual(self.total_stats.product_created_source_opff_count, 0)
+        self.assertEqual(self.total_stats.product_created_source_opf_count, 0)
 
-        self.total_stats.update_other_stats()
+        self.total_stats.update_product_created_stats()
 
-        self.assertEqual(
-            self.total_stats.off_contributions_stats["product_created_count"], 1
-        )
-        self.assertEqual(
-            self.total_stats.off_contributions_stats[
-                "product_source_off_created_count"
-            ],
-            1,
-        )
-        self.assertEqual(
-            self.total_stats.off_contributions_stats[
-                "product_source_obf_created_count"
-            ],
-            0,
-        )
-        self.assertEqual(
-            self.total_stats.off_contributions_stats[
-                "product_source_opff_created_count"
-            ],
-            0,
-        )
-        self.assertEqual(
-            self.total_stats.off_contributions_stats[
-                "product_source_opf_created_count"
-            ],
-            0,
-        )
+        self.assertEqual(self.total_stats.product_created_count, 1)
+        self.assertEqual(self.total_stats.product_created_source_off_count, 1)
+        self.assertEqual(self.total_stats.product_created_source_obf_count, 0)
+        self.assertEqual(self.total_stats.product_created_source_opff_count, 0)
+        self.assertEqual(self.total_stats.product_created_source_opf_count, 0)
