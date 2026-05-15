@@ -18,6 +18,9 @@ class ProductQuerySet(ApproximateCountQuerySet):
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
+    def created_by_open_prices(self):
+        return self.filter(creator=settings.OFF_DEFAULT_USER)
+
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
 

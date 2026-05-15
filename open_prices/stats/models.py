@@ -64,6 +64,13 @@ class TotalStats(SingletonModel):
     ]
     USER_COUNT_FIELDS = ["user_count", "user_with_price_count"]
     CHALLENGE_COUNT_FIELDS = ["challenge_count"]
+    PRODUCT_CREATED_COUNT_FIELDS = [
+        "product_created_count",
+        "product_created_source_off_count",
+        "product_created_source_obf_count",
+        "product_created_source_opff_count",
+        "product_created_source_opf_count",
+    ]
     COUNT_FIELDS = (
         PRICE_COUNT_FIELDS
         + PRODUCT_COUNT_FIELDS
@@ -72,6 +79,7 @@ class TotalStats(SingletonModel):
         + PRICE_TAG_COUNT_FIELDS
         + USER_COUNT_FIELDS
         + CHALLENGE_COUNT_FIELDS
+        + PRODUCT_CREATED_COUNT_FIELDS
     )
 
     price_count = models.PositiveIntegerField(default=0)
@@ -123,6 +131,11 @@ class TotalStats(SingletonModel):
     user_count = models.PositiveIntegerField(default=0)
     user_with_price_count = models.PositiveIntegerField(default=0)
     challenge_count = models.PositiveIntegerField(default=0)
+    product_created_count = models.PositiveIntegerField(default=0)
+    product_created_source_off_count = models.PositiveIntegerField(default=0)
+    product_created_source_obf_count = models.PositiveIntegerField(default=0)
+    product_created_source_opff_count = models.PositiveIntegerField(default=0)
+    product_created_source_opf_count = models.PositiveIntegerField(default=0)
 
     # Ideas
     # - price count per discount type
@@ -260,3 +273,18 @@ class TotalStats(SingletonModel):
 
         self.challenge_count = Challenge.objects.published().count()
         self.save(update_fields=self.CHALLENGE_COUNT_FIELDS + ["updated"])
+
+    def update_product_created_stats(self):
+        from open_prices.products import constants as product_constants
+        from open_prices.products.models import Product
+
+        self.product_created_count = Product.objects.created_by_open_prices().count()
+        for source in product_constants.SOURCE_LIST:
+            setattr(
+                self,
+                f"product_created_source_{source.value}_count",
+                Product.objects.created_by_open_prices()
+                .filter(source=source.value)
+                .count(),
+            )
+        self.save(update_fields=self.PRODUCT_CREATED_COUNT_FIELDS + ["updated"])
