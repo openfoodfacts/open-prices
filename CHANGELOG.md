@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.104.0](https://github.com/openfoodfacts/open-prices/compare/v1.103.2...v1.104.0) (2026-05-15)
+
+
+### Features
+
+* **Locations:** new `/nearby` endpoint (based on lat, lon & radius) ([#1303](https://github.com/openfoodfacts/open-prices/issues/1303)) ([fb98246](https://github.com/openfoodfacts/open-prices/commit/fb98246afe31bc821f93a087ef6e84fe4d774b91))
+* **Stats:** new product_created fields (total & per flavor) (filter on 'open-prices' creator) ([#1289](https://github.com/openfoodfacts/open-prices/issues/1289)) ([e029b32](https://github.com/openfoodfacts/open-prices/commit/e029b32353afce28d6f7dfc60e244b3ef052ee7d))
+
+
+### Bug Fixes
+
+* **Locations:** allow passing lat & lng as float or Decimal (and still be truncated) ([#1313](https://github.com/openfoodfacts/open-prices/issues/1313)) ([55e703e](https://github.com/openfoodfacts/open-prices/commit/55e703ed2bcbe3369d8e73ca000495ec4050eafd))
+
+
+### Documentation
+
+* new Topics section (empty) ([#1311](https://github.com/openfoodfacts/open-prices/issues/1311)) ([0b9b006](https://github.com/openfoodfacts/open-prices/commit/0b9b00654c6c9bcc8379ee4b3b688bc9d95f4c94))
+
+
+### Technical
+
+* **Release Please:** use GITHUB_TOKEN with permissions (instead of PAT token) ([#1314](https://github.com/openfoodfacts/open-prices/issues/1314)) ([1598b73](https://github.com/openfoodfacts/open-prices/commit/1598b73bfa027446ac6426506a6f2a558660d598))
+
 ## [1.103.2](https://github.com/openfoodfacts/open-prices/compare/v1.103.1...v1.103.2) (2026-05-14)
 
 
