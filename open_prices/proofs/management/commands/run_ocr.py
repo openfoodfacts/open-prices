@@ -31,4 +31,4 @@ class Command(BaseCommand):
             result = fetch_and_save_ocr_data(image_path, override=override)
             processed += int(result)
 
-        self.stdout.write("%d OCR saved" % processed)
+        self.stdout.write(f"{processed} OCR saved")

@@ -8,7 +8,7 @@ from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.common import utils
 from scripts.utils import create_price, is_valid_date, read_csv
 
-OPEN_PRICES_CREATE_PRICE_ENDPOINT = f'{os.environ.get("API_ENDPOINT")}/prices'
+OPEN_PRICES_CREATE_PRICE_ENDPOINT = f"{os.environ.get('API_ENDPOINT')}/prices"
 OPEN_PRICES_TOKEN = os.environ.get("API_TOKEN")
 
 REQUIRED_ENV_PARAMS = [
