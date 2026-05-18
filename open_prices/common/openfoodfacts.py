@@ -1,6 +1,7 @@
 import datetime
 import functools
 import re
+from logging import getLogger
 
 import openfoodfacts
 import requests
@@ -24,6 +25,8 @@ from openfoodfacts.taxonomy import (
     map_to_canonical_id,
 )
 from openfoodfacts.types import COUNTRY_CODE_TO_NAME, JSONType
+
+logger = getLogger(__name__)
 
 OFF_CREATE_FIELDS = [
     "product_name",
@@ -206,16 +209,26 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
     return client.product.get(code)
 
 
-def get_product_dict(code: str, flavor=Flavor.off) -> JSONType | None:
-    product_dict = dict()
+def get_product_dict(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
+    """Get product information from Open Food Facts API.
+
+    If the product is not found, returns an empty dictionary.
+    If an error occurs, returns None.
+
+    :param code: the product code to look up
+    :param flavor: the flavor of the API to use (default: Flavor.off)
+    :return: a dictionary containing the product information, or None if an error
+        occurs
+    """
     try:
         response = get_product(code=code, flavor=flavor)
-        if response:
-            product_dict = build_product_dict(response, flavor)
-        return product_dict
     except Exception:
-        # logger.exception("Error returned from Open Food Facts")
+        logger.exception("Error returned from Open Food Facts")
         return None
+
+    if response:
+        return build_product_dict(response, flavor)
+    return {}
 
 
 def import_product_db(

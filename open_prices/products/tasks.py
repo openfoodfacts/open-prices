@@ -10,7 +10,14 @@ logger = logging.getLogger(__name__)
 
 def fetch_and_save_data_from_openfoodfacts(product: Product):
     product_openfoodfacts_details = common_openfoodfacts.get_product_dict(product.code)
-    if product_openfoodfacts_details:
+    if product_openfoodfacts_details is None:
+        # Call to Open Food Facts API failed
+        return
+    elif not product_openfoodfacts_details:
+        # Empty dict returned, product not found
+        logger.info("Product %s not found in Open Food Facts", product.code)
+        return
+    else:
         for key, value in product_openfoodfacts_details.items():
             setattr(product, key, value)
         product.save()
@@ -27,7 +34,16 @@ def process_update(code: str, flavor: Flavor) -> None:
     """
     product_openfoodfacts_details = common_openfoodfacts.get_product_dict(code, flavor)
 
-    if product_openfoodfacts_details:
+    if product_openfoodfacts_details is None:
+        # Call to Open Food Facts API failed
+        return
+    elif not product_openfoodfacts_details:
+        # Empty dict returned, product not found
+        logger.info(
+            "Product %s (flavor: %s) not found in Open Food Facts", code, flavor
+        )
+        return
+    else:
         does_not_exist = False
         try:
             product = Product.objects.get(code=code)
