@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.104.2](https://github.com/openfoodfacts/open-prices/compare/v1.104.1...v1.104.2) (2026-05-18)
+
+
+### Bug Fixes
+
+* improve error handling when fetching OFF product details ([#1318](https://github.com/openfoodfacts/open-prices/issues/1318)) ([920282a](https://github.com/openfoodfacts/open-prices/commit/920282a51a1b31589e45fa18aa86918e7dbe1599))
+
 ## [1.104.1](https://github.com/openfoodfacts/open-prices/compare/v1.104.0...v1.104.1) (2026-05-15)
 
 
