@@ -68,8 +68,7 @@ class Command(BaseCommand):
 
         self.stdout.write(f"Removing duplicates for price type: {price_type}")
         self.stdout.write(
-            "Number of prices (with proof of type PRICE_TAG) before cleanup: %d"
-            % Price.objects.filter(proof__type=proof_constants.TYPE_PRICE_TAG).count()
+            f"Number of prices (with proof of type PRICE_TAG) before cleanup: {Price.objects.filter(proof__type=proof_constants.TYPE_PRICE_TAG).count()}"
         )
 
         # Create a CTE to find duplicate prices. We use a raw SQL query
@@ -200,6 +199,5 @@ class Command(BaseCommand):
             f"Updated {price_tag_updated} price tags to point to the first price."
         )
         self.stdout.write(
-            "Number of prices (with proof of type PRICE_TAG) after cleanup: %d"
-            % Price.objects.filter(proof__type=proof_constants.TYPE_PRICE_TAG).count()
+            f"Number of prices (with proof of type PRICE_TAG) after cleanup: {Price.objects.filter(proof__type=proof_constants.TYPE_PRICE_TAG).count()}"
         )
