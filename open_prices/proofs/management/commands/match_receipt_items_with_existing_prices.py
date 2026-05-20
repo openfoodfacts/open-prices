@@ -1,14 +1,17 @@
 from collections import Counter
 
 from django.core.management.base import BaseCommand
+from django.db.models import F
 
 from open_prices.proofs.models import Proof, ReceiptItem
 from open_prices.proofs.utils import match_receipt_item_with_price
 
 proof_qs = (
     Proof.objects.has_type_receipt()
+    .prefetch_related("prices", "receipt_items")
     .with_stats()
     .filter(price_count_annotated__gt=0, receipt_item_count_annotated__gt=0)
+    .exclude(price_count_annotated=F("receipt_item_count_annotated"))
 )
 
 
@@ -44,23 +47,20 @@ class Command(BaseCommand):
         self.stdout.write(
             "=== Running matching script on all RECEIPT proofs with prices & receipt_items..."
         )
-        for index, proof in enumerate(proof_qs.all()):
-            for receipt_item in proof.receipt_items.all():
-                if receipt_item.price_id is not None:
-                    continue
-                elif receipt_item.predicted_data is None:
-                    continue
-                else:
-                    for price in proof.prices.all():
-                        # skip if price already has a receipt_item match
-                        if price.receipt_items.count() > 0:
-                            continue
-                        # match only on price
-                        elif match_receipt_item_with_price(receipt_item, price):
-                            receipt_item.price_id = price.id
-                            receipt_item.status = 1
-                            receipt_item.save()
-                            break
+        for index, proof in enumerate(proof_qs):
+            for receipt_item in proof.receipt_items.filter(
+                price_id__isnull=True
+            ).exclude(predicted_data__isnull=True):
+                for price in proof.prices.all():
+                    # skip if price already has a receipt_item match
+                    if price.receipt_items.count() > 0:
+                        continue
+                    # match only on price
+                    elif match_receipt_item_with_price(receipt_item, price):
+                        receipt_item.price_id = price.id
+                        receipt_item.status = 1
+                        receipt_item.save()
+                        break
             if index % 500 == 0:
                 self.stdout.write(f"Processed {index} proofs")
 
