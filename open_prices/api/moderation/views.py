@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from open_prices.api.moderation.filters import FlagFilter
 from open_prices.api.moderation.serializers import FlagSerializer, FlagUpdateSerializer
 from open_prices.common.authentication import CustomAuthentication
-from open_prices.common.permission import OnlyModeratorIsAllowed
+from open_prices.common.permission import OnlyModeratorIsAllowedReadWrite
 from open_prices.moderation.models import Flag
 
 
@@ -18,7 +18,7 @@ class FlagViewSet(
     mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
 ):
     authentication_classes = [CustomAuthentication]
-    permission_classes = [IsAuthenticated, OnlyModeratorIsAllowed]
+    permission_classes = [IsAuthenticated, OnlyModeratorIsAllowedReadWrite]
     http_method_names = ["get", "patch"]  # disable "put"
     queryset = Flag.objects.all()
     serializer_class = FlagSerializer
