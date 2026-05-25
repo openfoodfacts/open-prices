@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -20,6 +21,8 @@ from open_prices.products.models import Product
 from open_prices.proofs.models import Proof
 from open_prices.stats.models import TotalStats
 from open_prices.users.models import User
+
+logger = logging.getLogger(__name__)
 
 
 def import_off_db_task():
@@ -139,6 +142,21 @@ def dump_db_task():
         export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir)
 
 
+def proof_draft_cleanup_task():
+    """
+    Delete draft proofs older than 1 hour.
+    """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    cutoff_time = timezone.now() - timedelta(hours=1)
+    deleted_count, _ = Proof.objects.filter(
+        draft=True, created__lt=cutoff_time
+    ).delete()
+    logger.info(f"Deleted {deleted_count} draft proofs")
+
+
 def history_cleanup_task():
     history_clean_duplicate_command()
 
@@ -154,6 +172,7 @@ CRON_SCHEDULES = {
     "moderation_tasks": ("20 1 * * *", {}),  # daily at 01:20
     "challenge_tasks": ("30 1 * * *", {}),  # daily at 01:30
     "history_cleanup_task": ("0 3 * * 1", {}),  # daily at 03:00
+    "proof_draft_cleanup_task": ("*/5 * * * *", {}),  # every 5 minutes
     "update_user_counts_task": ("0 2 * * 1", {}),  # every start of the week (at 02:00)
     "update_location_counts_task": (
         "10 2 * * 1",  # every start of the week (at 02:10)
