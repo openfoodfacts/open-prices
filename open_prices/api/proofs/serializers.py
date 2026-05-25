@@ -66,6 +66,16 @@ class ProofUploadSerializer(serializers.ModelSerializer):
         fields = ["file"] + Proof.CREATE_FIELDS
 
 
+class ProofDraftUploadSerializer(serializers.ModelSerializer):
+    """Serializer for draft proof upload - accepts only the file and type fields."""
+
+    file = serializers.FileField(required=True, use_url=False)
+
+    class Meta:
+        model = Proof
+        fields = ["file", "type"]
+
+
 class ProofCreateSerializer(serializers.ModelSerializer):
     location_id = serializers.PrimaryKeyRelatedField(
         queryset=Location.objects.all(), source="location", required=False
