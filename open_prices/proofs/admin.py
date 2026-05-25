@@ -40,12 +40,11 @@ class ProofDraftFilter(admin.SimpleListFilter):
             }
 
     def queryset(self, request, queryset):
-        if self.value() is None:
-            return queryset.filter(draft=False)
-        elif self.value() in ("all"):
-            return queryset
-        elif self.value() in ("draft"):
+        if self.value() == "draft":
             return queryset.filter(draft=True)
+        elif self.value() is None:
+            return queryset.filter(draft=False)
+        return queryset  # "all"
 
 
 @admin.register(PriceTagPrediction)
