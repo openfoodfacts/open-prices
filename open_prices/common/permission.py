@@ -13,9 +13,10 @@ def request_user_is_moderator(request) -> bool:
     return request.user and request.user.is_authenticated and request.user.is_moderator
 
 
-class OnlyObjectOwnerIsAllowed(BasePermission):
+class OnlyObjectOwnerIsAllowedWrite(BasePermission):
     """
-    Only give access to object owners.
+    - Gives read access to everyone
+    - Gives write access ONLY to object owners
     """
 
     def has_object_permission(self, request, view, obj):
@@ -24,9 +25,20 @@ class OnlyObjectOwnerIsAllowed(BasePermission):
         return request_user_is_object_owner(request, obj)
 
 
-class OnlyObjectOwnerOrModeratorIsAllowed(BasePermission):
+class OnlyObjectOwnerIsAllowedReadWrite(BasePermission):
     """
-    Only give access to object owners or moderators.
+    - Gives read access ONLY to object owners
+    - Gives write access ONLY to object owners
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return request_user_is_object_owner(request, obj)
+
+
+class OnlyObjectOwnerOrModeratorIsAllowedWrite(BasePermission):
+    """
+    - Gives read access to everyone
+    - Gives write access ONLY to object owners or moderators
     """
 
     def has_object_permission(self, request, view, obj):
@@ -37,9 +49,22 @@ class OnlyObjectOwnerOrModeratorIsAllowed(BasePermission):
         )
 
 
-class OnlyModeratorIsAllowed(BasePermission):
+class OnlyObjectOwnerOrModeratorIsAllowedReadWrite(BasePermission):
     """
-    Only give access to moderators.
+    - Gives read access ONLY to object owners or moderators
+    - Gives write access ONLY to object owners or moderators
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return request_user_is_object_owner(request, obj) or request_user_is_moderator(
+            request
+        )
+
+
+class OnlyModeratorIsAllowedReadWrite(BasePermission):
+    """
+    - Gives read access ONLY to moderators
+    - Gives write access ONLY to moderators
     """
 
     def has_permission(self, request, view):

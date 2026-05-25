@@ -35,7 +35,7 @@ from open_prices.common.authentication import (
     CustomAuthentication,
     has_token_from_cookie_or_header,
 )
-from open_prices.common.permission import OnlyObjectOwnerOrModeratorIsAllowed
+from open_prices.common.permission import OnlyObjectOwnerOrModeratorIsAllowedWrite
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.price_tags import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
@@ -52,7 +52,7 @@ class ProofViewSet(
     authentication_classes = []  # see get_authenticators
     permission_classes = [
         IsAuthenticatedOrReadOnly,
-        OnlyObjectOwnerOrModeratorIsAllowed,  # for edit & delete
+        OnlyObjectOwnerOrModeratorIsAllowedWrite,  # for edit & delete
     ]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
     queryset = Proof.objects.all()
