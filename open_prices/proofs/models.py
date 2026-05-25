@@ -129,7 +129,7 @@ class ProofQuerySet(models.QuerySet):
 
 
 class Proof(models.Model):
-    FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
+    FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path", "draft"]
     UPDATE_FIELDS = [
         "location_osm_id",
         "location_osm_type",
@@ -205,6 +205,8 @@ class Proof(models.Model):
 
     owner_consumption = models.BooleanField(blank=True, null=True)
     owner_comment = models.TextField(blank=True, null=True)
+
+    draft = models.BooleanField(default=False)
 
     # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)

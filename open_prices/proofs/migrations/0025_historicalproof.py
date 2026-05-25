@@ -466,5 +466,5 @@ class Migration(migrations.Migration):
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
-        migrations.RunPython(populate_history),
+        # migrations.RunPython(populate_history),
     ]
