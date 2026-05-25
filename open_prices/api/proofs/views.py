@@ -1,6 +1,5 @@
 import PIL.Image
 from django.conf import settings
-from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from django_q.tasks import async_task
 from drf_spectacular.utils import extend_schema
@@ -40,7 +39,10 @@ from open_prices.common.authentication import (
     CustomAuthentication,
     has_token_from_cookie_or_header,
 )
-from open_prices.common.permission import OnlyObjectOwnerIsAllowedReadWrite, OnlyObjectOwnerOrModeratorIsAllowedWrite
+from open_prices.common.permission import (
+    OnlyObjectOwnerIsAllowedReadWrite,
+    OnlyObjectOwnerOrModeratorIsAllowedWrite,
+)
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.price_tags import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
@@ -150,7 +152,7 @@ class ProofViewSet(
         OnlyObjectOwnerOrModeratorIsAllowedWrite,  # for edit & delete
     ]
     http_method_names = ["get", "post", "patch", "delete"]  # disable "put"
-    queryset = Proof.objects.all()
+    queryset = Proof.objects.all()  # proofs are already filtered out
     serializer_class = ProofFullSerializer  # see get_serializer_class
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
@@ -164,8 +166,7 @@ class ProofViewSet(
         return [CustomAuthentication()]
 
     def get_queryset(self):
-        # Filter out draft proofs, as we use a dedicated draft endpoint to handle them
-        queryset = self.queryset.filter(draft=False)
+        queryset = self.queryset
         if self.request.method in ["GET"]:
             queryset = queryset.select_related("location")
             if self.action == "retrieve":
@@ -238,7 +239,7 @@ class ProofViewSet(
         return Response(FlagSerializer(flag).data, status=status.HTTP_201_CREATED)
 
 
-class DraftViewSet(
+class ProofDraftViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -256,6 +257,7 @@ class DraftViewSet(
         "patch",
         "delete",
     ]  # disable "put" (full update)
+    queryset = Proof.all_objects.is_draft().all()  # only draft proofs
     serializer_class = ProofFullSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ProofFilter
@@ -263,12 +265,16 @@ class DraftViewSet(
     ordering = ["id"]
 
     def get_queryset(self):
+        queryset = self.queryset
         # Only keep draft proofs owned by the user
         user_id = self.request.user.user_id
-        queryset = Proof.objects.filter(Q(draft=True) & Q(owner=user_id))
+        queryset = queryset.filter(owner=user_id)
         if self.request.method in ["GET"] and self.action == "retrieve":
             queryset = queryset.prefetch_related("predictions")
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     @extend_schema(request=ProofDraftUploadSerializer, responses=ProofFullSerializer)
     @action(
@@ -343,21 +349,12 @@ class PriceTagViewSet(
         return [CustomAuthentication()]
 
     def get_queryset(self):
-        # Filter out draft proofs for non-owners
-        if self.request.user.is_authenticated:
-            user_id = self.request.user.user_id
-            base_queryset = self.queryset.filter(
-                Q(proof__draft=False) | Q(proof__owner=user_id)
-            )
-        else:
-            base_queryset = self.queryset.filter(proof__draft=False)
-
         if self.action in ["create", "update"]:
             # We need to prefetch the price object if it exists to validate the
             # price_id field, and the proof object to validate the proof_id
             # field
-            return base_queryset.select_related("price")
-        return base_queryset
+            return PriceTag.objects.select_related("proof", "price").all()
+        return super().get_queryset()
 
     def get_serializer_class(self):
         if self.request.method == "POST":

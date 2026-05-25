@@ -19,7 +19,7 @@ class OnlyObjectOwnerIsAllowedWrite(BasePermission):
     - Gives write access ONLY to object owners
     """
 
-    def has_object_permission(self, request, view, obj) -> bool:
+    def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
         return request_user_is_object_owner(request, obj)

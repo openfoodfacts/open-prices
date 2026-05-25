@@ -60,15 +60,16 @@ def create_fake_image(color: float | tuple[float] | str | None = "black") -> byt
 
 
 def clean_uploaded_proofs():
-    """Remove all images created during the test and all proofs/locations
-    in DB."""
+    """
+    Remove all images created during the test and all proofs/locations in DB.
+    """
     for file_name in os.listdir(settings.IMAGES_DIR):
         file_path = os.path.join(settings.IMAGES_DIR, file_name)
         if os.path.isfile(file_path):
             os.remove(file_path)
         else:
             shutil.rmtree(file_path)
-    Proof.objects.all().delete()
+    Proof.all_objects.all().delete()
     Location.objects.all().delete()
 
 
@@ -341,7 +342,7 @@ class ProofDetailApiTest(TestCase):
         )
 
 
-class ProofCreateApiTest(TestCase):
+class ProofUploadApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:proofs-upload")
@@ -841,10 +842,10 @@ class ProofFlagApiTest(TestCase):
         self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
 
 
-class DraftListApiTest(TestCase):
+class ProofDraftListApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.url = reverse("api:drafts-list")
+        cls.url = reverse("api:proofs-drafts-list")
         cls.user_1_session = SessionFactory()
         cls.user_2_session = SessionFactory()
         cls.user_1_draft_proof = ProofFactory(
@@ -856,6 +857,10 @@ class DraftListApiTest(TestCase):
         cls.user_1_non_draft_proof = ProofFactory(
             **PROOF_RECEIPT, owner=cls.user_1_session.user.user_id
         )
+
+    def test_proof_draft_list_unauthenticated_not_allowed(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
 
     def test_only_draft_proofs_returned(self):
         response = self.client.get(
@@ -879,12 +884,8 @@ class DraftListApiTest(TestCase):
         self.assertEqual(response.data["items"][0]["id"], self.user_2_draft_proof.id)
         self.assertNotEqual(response.data["items"][0]["id"], self.user_1_draft_proof.id)
 
-    def test_unauthenticated_not_allowed(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
 
-
-class DraftRetrieveApiTest(TestCase):
+class ProofDraftRetrieveApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user_1_session = SessionFactory()
@@ -899,30 +900,40 @@ class DraftRetrieveApiTest(TestCase):
             **PROOF_RECEIPT, owner=cls.user_1_session.user.user_id
         )
 
-    def test_not_returned_if_not_draft_proof(self):
-        url = reverse("api:drafts-detail", args=[self.user_1_non_draft_proof.id])
-        response = self.client.get(
-            url, headers={"Authorization": f"Bearer {self.user_1_session.token}"}
-        )
-        self.assertEqual(response.status_code, 404)
-
-    def test_not_returned_if_created_by_someone_else(self):
-        url = reverse("api:drafts-detail", args=[self.user_2_draft_proof.id])
-        response = self.client.get(
-            url, headers={"Authorization": f"Bearer {self.user_1_session.token}"}
-        )
-        self.assertEqual(response.status_code, 404)
-
-    def test_unauthenticated_not_allowed(self):
-        url = reverse("api:drafts-detail", args=[self.user_1_draft_proof.id])
+    def test_proof_draft_retrieve_unauthenticated_not_allowed(self):
+        url = reverse("api:proofs-drafts-detail", args=[self.user_1_draft_proof.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
 
+    def test_proof_draft_retrieve_not_returned_if_not_owner(self):
+        url = reverse("api:proofs-drafts-detail", args=[self.user_2_draft_proof.id])
+        response = self.client.get(
+            url, headers={"Authorization": f"Bearer {self.user_1_session.token}"}
+        )
+        self.assertEqual(response.status_code, 404)
 
-class DraftUploadApiTest(TestCase):
+    def test_proof_draft_retrieve_not_returned_if_not_draft_proof(self):
+        url = reverse("api:proofs-drafts-detail", args=[self.user_1_non_draft_proof.id])
+        response = self.client.get(
+            url, headers={"Authorization": f"Bearer {self.user_1_session.token}"}
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_proof_draft_retrieve_ok_if_draft_and_owner(self):
+        url = reverse("api:proofs-drafts-detail", args=[self.user_1_draft_proof.id])
+        response = self.client.get(
+            url, headers={"Authorization": f"Bearer {self.user_1_session.token}"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], self.user_1_draft_proof.id)
+        self.assertEqual(response.data["draft"], True)
+        self.assertEqual(response.data["owner"], self.user_1_session.user.user_id)
+
+
+class ProofDraftUploadApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.url = reverse("api:drafts-upload")
+        cls.url = reverse("api:proofs-drafts-upload")
         cls.user_session = SessionFactory()
         cls.data = {
             "file": create_fake_image(color="black"),
@@ -934,7 +945,15 @@ class DraftUploadApiTest(TestCase):
         clean_uploaded_proofs()
         super().tearDownClass()
 
-    def test_draft_upload_simple(self):
+    def test_proof_draft_upload_unauthenticated_not_allowed(self):
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data,
+            {"detail": "Authentication credentials were not provided."},
+        )
+
+    def test_proof_draft_upload_ok(self):
         response = self.client.post(
             self.url,
             self.data,
@@ -946,16 +965,8 @@ class DraftUploadApiTest(TestCase):
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
         self.assertEqual(response.data["type"], proof_constants.TYPE_RECEIPT)
 
-    def test_draft_upload_unauthenticated(self):
-        response = self.client.post(self.url, self.data)
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(
-            response.data,
-            {"detail": "Authentication credentials were not provided."},
-        )
 
-
-class DraftPartialUpdateApiTest(TestCase):
+class ProofDraftPartialUpdateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user_1_session = SessionFactory()
@@ -966,14 +977,28 @@ class DraftPartialUpdateApiTest(TestCase):
         cls.user_2_draft_proof = ProofFactory(
             draft=True, owner=cls.user_2_session.user.user_id
         )
-        cls.url = reverse("api:drafts-detail", args=[cls.user_1_draft_proof.id])
+        cls.url = reverse("api:proofs-drafts-detail", args=[cls.user_1_draft_proof.id])
 
     @classmethod
     def tearDownClass(cls):
         clean_uploaded_proofs()
         super().tearDownClass()
 
-    def test_draft_partial_update_required_fields_only(self):
+    def test_proof_draft_partial_update_forbidden_if_not_owner(self):
+        url = reverse("api:proofs-drafts-detail", args=[self.user_2_draft_proof.id])
+        data = {
+            "date": "2024-06-30",
+            "currency": "EUR",
+        }
+        response = self.client.patch(
+            url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_proof_draft_partial_update_required_fields_only(self):
         data = {
             "date": "2024-06-30",
             "currency": "EUR",
@@ -991,7 +1016,7 @@ class DraftPartialUpdateApiTest(TestCase):
         self.user_1_draft_proof.refresh_from_db()
         self.assertEqual(self.user_1_draft_proof.draft, False)
 
-    def test_draft_partial_update_all_fields(self):
+    def test_proof_draft_partial_update_all_fields(self):
         data = {
             "location_osm_id": LOCATION_OSM_NODE_652825274["osm_id"],
             "location_osm_type": LOCATION_OSM_NODE_652825274["osm_type"],
@@ -1018,19 +1043,39 @@ class DraftPartialUpdateApiTest(TestCase):
         self.user_1_draft_proof.refresh_from_db()
         self.assertEqual(self.user_1_draft_proof.draft, False)
 
-    def test_draft_partial_update_not_owner_forbidden(self):
-        url = reverse("api:drafts-detail", args=[self.user_2_draft_proof.id])
-        data = {
-            "date": "2024-06-30",
-            "currency": "EUR",
-        }
-        response = self.client.patch(
-            url,
-            data,
-            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
-            content_type="application/json",
+
+class ProofDraftDeleteApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_1_session = SessionFactory()
+        cls.user_2_session = SessionFactory()
+        cls.user_1_draft_proof = ProofFactory(
+            draft=True, owner=cls.user_1_session.user.user_id
+        )
+        cls.user_2_draft_proof = ProofFactory(
+            draft=True, owner=cls.user_2_session.user.user_id
+        )
+        cls.url = reverse("api:proofs-drafts-detail", args=[cls.user_1_draft_proof.id])
+
+    @classmethod
+    def tearDownClass(cls):
+        clean_uploaded_proofs()
+        super().tearDownClass()
+
+    def test_proof_draft_delete_forbidden_if_not_owner(self):
+        url = reverse("api:proofs-drafts-detail", args=[self.user_2_draft_proof.id])
+        response = self.client.delete(
+            url, headers={"Authorization": f"Bearer {self.user_1_session.token}"}
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_proof_draft_delete_ok_if_owner(self):
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_1_session.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(Proof.objects.filter(id=self.user_1_draft_proof.id).count(), 0)
 
 
 class PriceTagListApiTest(TestCase):
@@ -1172,7 +1217,7 @@ class PriceTagCreateApiTest(TestCase):
         cls.price = PriceFactory(proof=cls.proof)
         cls.default_bounding_box = [0.1, 0.2, 0.3, 0.4]
 
-    def test_price_tag_create_unauthenticated(self):
+    def test_price_tag_create_unauthenticated_not_allowed(self):
         response = self.client.post(
             self.url,
             data={"bounding_box": self.default_bounding_box, "proof_id": self.proof.id},
@@ -1262,7 +1307,7 @@ class PriceTagUpdateApiTest(TestCase):
         cls.url = reverse("api:price-tags-detail", args=[cls.price_tag.id])
         cls.new_bounding_box = [0.2, 0.3, 0.4, 0.5]
 
-    def test_price_tag_create_unauthenticated(self):
+    def test_price_tag_update_unauthenticated_not_allowed(self):
         response = self.client.patch(
             self.url,
             data={"bounding_box": self.new_bounding_box},
@@ -1383,7 +1428,7 @@ class PriceTagDeleteApiTest(TestCase):
             "api:price-tags-detail", args=[cls.price_tag_with_associated_price.id]
         )
 
-    def test_price_tag_delete_unauthenticated(self):
+    def test_price_tag_delete_unauthenticated_not_allowed(self):
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
