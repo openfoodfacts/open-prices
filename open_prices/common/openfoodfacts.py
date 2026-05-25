@@ -231,11 +231,16 @@ def get_product_dict(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
 
 
 def import_product_db(
-    flavor: Flavor = Flavor.off, obsolete: bool = False, batch_size: int = 1000
+    flavor: Flavor = Flavor.off,
+    obsolete: bool = False,
+    force_update: bool = False,
+    batch_size: int = 1000,
 ) -> None:
     """Import from DB JSONL dump to create/update product table.
 
-    :param db: the session to use
+    :param flavor: the flavor of the dataset to import (OFF, OBF, OPFF, OPF)
+    :param obsolete: whether to import the obsolete dataset (only for OFF flavor)
+    :param force_update: whether to force update products even if they have not been modified since (but have at least one of OFF_CREATE_FIELDS to be updated)  # noqa
     :param batch_size: the number of products to create/update in a single
       transaction, defaults to 1000
     """
@@ -321,16 +326,32 @@ def import_product_db(
         # Case 2: existing product (already in OP database)
         else:
             # See product/models.py:ProductQuerySet.to_update_in_sync_task
-            existing_product_qs = Product.objects.to_update_in_sync_task(
+            existing_product_filter_qs = Product.objects.to_update_in_sync_task(
                 code=product_code,
                 flavor=flavor,
-                product_source_last_modified=product_source_last_modified,
-            ).only("id")
+                product_source_last_modified=product_source_last_modified
+                if not force_update
+                else None,
+            ).only("id", *OFF_CREATE_FIELDS)
             # should be at most one (Product.code field is unique)
-            existing_product_qs_first = existing_product_qs.first()
-            if existing_product_qs_first:
+            existing_product_filter_qs_first = existing_product_filter_qs.first()
+            if force_update:
+                # at least 1 OFF_CREATE_FIELDS field should be different to update the product
+                if not next(
+                    (
+                        field
+                        for field in OFF_CREATE_FIELDS
+                        if getattr(existing_product_filter_qs_first, field)
+                        != product_dict.get(field)
+                    ),
+                    None,
+                ):
+                    existing_product_filter_qs_first = None
+            if existing_product_filter_qs_first:
                 products_to_update.append(
-                    Product(**{"id": existing_product_qs_first.id}, **product_dict)
+                    Product(
+                        **{"id": existing_product_filter_qs_first.id}, **product_dict
+                    )
                 )
                 updated_count += 1
 
