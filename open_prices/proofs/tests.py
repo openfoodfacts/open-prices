@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -95,6 +96,29 @@ LOCATION_OSM_NODE_6509705997 = {
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Carrefour",
 }
+
+
+class ProofDraftQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof_not_draft = ProofFactory()
+        cls.proof_draft = ProofFactory(draft=True)
+        with freeze_time(timezone.now() - timedelta(minutes=30)):
+            cls.proof_draft_recent = ProofFactory(draft=True)
+        with freeze_time(timezone.now() - timedelta(hours=2)):
+            cls.proof_draft_old = ProofFactory(draft=True)
+
+    def test_all_objects(self):
+        self.assertEqual(Proof.objects.count(), 1)
+        self.assertEqual(Proof.all_objects.count(), 4)
+
+    def test_draft(self):
+        self.assertEqual(Proof.objects.is_draft().count(), 0)
+        self.assertEqual(Proof.all_objects.is_draft().count(), 3)
+
+    def test_draft_to_delete(self):
+        self.assertEqual(Proof.objects.draft_to_delete().count(), 0)
+        self.assertEqual(Proof.all_objects.draft_to_delete().count(), 1)
 
 
 class ProofQuerySetTest(TestCase):

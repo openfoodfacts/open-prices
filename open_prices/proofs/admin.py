@@ -12,6 +12,41 @@ from open_prices.proofs.models import (
 )
 
 
+class ProofDraftFilter(admin.SimpleListFilter):
+    title = "Include drafts"
+
+    parameter_name = "draft"
+
+    def lookups(self, request, model_admin):
+        return (
+            (None, "Active only"),
+            ("draft", "Drafts only"),
+            ("all", "All"),
+        )
+
+    # need to override choices otherwise django adds 'all' as the
+    # None value choice, whereas in this case None is 'Active'
+    def choices(self, cl):
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == lookup,
+                "query_string": cl.get_query_string(
+                    {
+                        self.parameter_name: lookup,
+                    },
+                    [],
+                ),
+                "display": title,
+            }
+
+    def queryset(self, request, queryset):
+        if self.value() == "draft":
+            return queryset.filter(draft=True)
+        elif self.value() is None:
+            return queryset.filter(draft=False)
+        return queryset  # "all"
+
+
 @admin.register(PriceTagPrediction)
 class PriceTagPredictionAdmin(SimpleHistoryAdmin):
     list_display = (
@@ -174,11 +209,15 @@ class ProofAdmin(admin.ModelAdmin):
         "currency",
         "price_count",
         "owner",
+        "draft",
         "created",
     )
-    list_filter = ("type",)
+    list_filter = ("type", ProofDraftFilter)
     readonly_fields = ("created", "updated")
     inlines = (ProofPredictionInline,)
+
+    def get_queryset(self, request):
+        return self.model.all_objects.select_related("location")
 
     def location_with_link(self, proof):
         if proof.location:

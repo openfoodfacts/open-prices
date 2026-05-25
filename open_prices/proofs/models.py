@@ -1,5 +1,6 @@
 import decimal
 import os
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -55,6 +56,22 @@ class ProofQuerySet(models.QuerySet):
 
     def has_prices(self):
         return self.filter(price_count__gt=0)
+
+    def is_draft(self):
+        """
+        Note: only works with 'all_objects' manager
+        """
+        return self.filter(draft=True)
+
+    def draft_to_delete(self):
+        """
+        Return draft proofs older than 1 hour.
+        Will be deleted in common.tasks.delete_old_draft_proofs_task
+
+        Note: only works with 'all_objects' manager
+        """
+        cutoff_time = timezone.now() - timedelta(hours=1)
+        return self.is_draft().filter(created__lt=cutoff_time)
 
     def with_extra_fields(self):
         return self.annotate(
@@ -128,8 +145,21 @@ class ProofQuerySet(models.QuerySet):
         # TODO: add md5 check
 
 
+class ProofManager(models.Manager):
+    queryset_model = ProofQuerySet
+
+    def __init__(self, *args, **kwargs):
+        self.exclude_draft = kwargs.pop("exclude_draft", True)
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        if self.exclude_draft:  # default
+            return self.queryset_model(self.model).filter(draft=False)
+        return self.queryset_model(self.model)
+
+
 class Proof(models.Model):
-    FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path"]
+    FILE_FIELDS = ["file_path", "mimetype", "image_thumb_path", "draft"]
     UPDATE_FIELDS = [
         "location_osm_id",
         "location_osm_type",
@@ -206,6 +236,8 @@ class Proof(models.Model):
     owner_consumption = models.BooleanField(blank=True, null=True)
     owner_comment = models.TextField(blank=True, null=True)
 
+    draft = models.BooleanField(default=False)
+
     # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)
     prediction_count = models.PositiveIntegerField(default=0)
@@ -228,7 +260,8 @@ class Proof(models.Model):
         # cascade_delete_history=False,  # default
     )
 
-    objects = models.Manager.from_queryset(ProofQuerySet)()
+    objects = ProofManager().from_queryset(ProofQuerySet)()
+    all_objects = ProofManager().from_queryset(ProofQuerySet)(exclude_draft=False)
 
     class Meta:
         db_table = "proofs"
