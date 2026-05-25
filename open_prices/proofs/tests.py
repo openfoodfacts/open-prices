@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -222,6 +223,25 @@ class ProofChallengeQuerySetAndPropertyTest(TestCase):
         self.assertNotIn(
             f"challenge-{self.challenge_ongoing.id}", self.proof_not_in_challenge.tags
         )
+
+
+class ProofDraftQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.proof_not_draft = ProofFactory()
+        cls.proof_draft = ProofFactory(draft=True)
+        with freeze_time(timezone.now() - timedelta(minutes=30)):
+            cls.proof_draft_recent = ProofFactory(draft=True)
+        with freeze_time(timezone.now() - timedelta(hours=2)):
+            cls.proof_draft_old = ProofFactory(draft=True)
+
+    def test_draft(self):
+        self.assertEqual(Proof.objects.count(), 4)
+        self.assertEqual(Proof.objects.is_draft().count(), 3)
+
+    def test_draft_to_delete(self):
+        self.assertEqual(Proof.objects.count(), 4)
+        self.assertEqual(Proof.objects.draft_to_delete().count(), 1)
 
 
 class ProofDuplicatesQuerySetTest(TestCase):

@@ -1,5 +1,6 @@
 import decimal
 import os
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -55,6 +56,17 @@ class ProofQuerySet(models.QuerySet):
 
     def has_prices(self):
         return self.filter(price_count__gt=0)
+
+    def is_draft(self):
+        return self.filter(draft=True)
+
+    def draft_to_delete(self):
+        """
+        Return draft proofs older than 1 hour.
+        Will be deleted in common.tasks.delete_old_draft_proofs_task
+        """
+        cutoff_time = timezone.now() - timedelta(hours=1)
+        return self.is_draft().filter(created__lt=cutoff_time)
 
     def with_extra_fields(self):
         return self.annotate(

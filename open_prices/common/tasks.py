@@ -146,14 +146,7 @@ def proof_draft_cleanup_task():
     """
     Delete draft proofs older than 1 hour.
     """
-    from datetime import timedelta
-
-    from django.utils import timezone
-
-    cutoff_time = timezone.now() - timedelta(hours=1)
-    deleted_count, _ = Proof.objects.filter(
-        draft=True, created__lt=cutoff_time
-    ).delete()
+    deleted_count, _ = Proof.objects.draft_to_delete().delete()
     logger.info(f"Deleted {deleted_count} draft proofs")
 
 
