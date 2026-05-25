@@ -146,7 +146,7 @@ def proof_draft_cleanup_task():
     """
     Delete draft proofs older than 1 hour.
     """
-    deleted_count, _ = Proof.objects.draft_to_delete().delete()
+    deleted_count, _ = Proof.all_objects.draft_to_delete().delete()
     logger.info(f"Deleted {deleted_count} draft proofs")
 
 
