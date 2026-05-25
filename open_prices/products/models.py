@@ -1,7 +1,9 @@
+import datetime
+
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Count, signals
+from django.db.models import Count, Q, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -24,9 +26,28 @@ class ProductQuerySet(ApproximateCountQuerySet):
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
-    def to_update_in_weekly_task(self):
+    def to_update_in_sync_task(
+        self, code: str, flavor: str, product_source_last_modified: datetime.datetime
+    ):
         """
-        Goal: only update products that have prices, to save (some) time.
+        Goal: OFF sync task, a product should be updated if:
+        - is part of the current flavor sync (or if it has no source (created in Open Prices before OFF))
+        - has been updated since the last sync (or has never been synced)
+
+        Usage: open_prices/common/openfoodfacts.py:import_product_db
+        """
+        return (
+            self.filter(code=code)
+            .filter(Q(source=flavor) | Q(source=None))
+            .filter(
+                Q(source_last_synced__lt=product_source_last_modified)
+                | Q(source_last_synced=None)
+            )
+        )
+
+    def to_update_in_counts_task(self):
+        """
+        Goal: only update counts of products that have prices, to save (some) time.
         We use the annotated price_count instead of the denormalized price_count field to be sure to have up-to-date information.
 
         Usage: open_prices/common/tasks.py:update_product_counts_task

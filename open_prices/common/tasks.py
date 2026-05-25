@@ -72,7 +72,7 @@ def update_product_counts_task():
     """
     Update product field counts
     """
-    for product in Product.objects.to_update_in_weekly_task():
+    for product in Product.objects.to_update_in_counts_task():
         product.update_price_count()
         product.update_location_count()
         product.update_user_count()

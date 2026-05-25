@@ -7,7 +7,6 @@ import openfoodfacts
 import requests
 import tqdm
 from django.conf import settings
-from django.db.models import Q
 from django.utils import timezone
 from openfoodfacts import (
     API,
@@ -321,24 +320,18 @@ def import_product_db(
 
         # Case 2: existing product (already in OP database)
         else:
-            # Update the product if it:
-            # - is part of the current flavor sync (or if it has no source (created in Open Prices before OFF))  # noqa
-            # - has been updated since the last sync
-            existing_product_qs = (
-                Product.objects.filter(code=product_code)
-                .filter(Q(source=flavor) | Q(source=None))
-                .filter(
-                    Q(source_last_synced__lt=product_source_last_modified)
-                    | Q(source_last_synced=None)
+            # See product/models.py:ProductQuerySet.to_update_in_sync_task
+            existing_product_qs = Product.objects.to_update_in_sync_task(
+                code=product_code,
+                flavor=flavor,
+                product_source_last_modified=product_source_last_modified,
+            ).only("id")
+            # should be at most one (Product.code field is unique)
+            existing_product_qs_first = existing_product_qs.first()
+            if existing_product_qs_first:
+                products_to_update.append(
+                    Product(**{"id": existing_product_qs_first.id}, **product_dict)
                 )
-            )
-            if existing_product_qs.exists():
-                if existing_product_qs.count() == 1:
-                    products_to_update.append(
-                        Product(
-                            **{"id": existing_product_qs.first().id}, **product_dict
-                        )
-                    )
                 updated_count += 1
 
         # update the database regularly
