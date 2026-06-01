@@ -42,7 +42,6 @@ from open_prices.proofs.factories import (
 from open_prices.proofs.ml import run_and_save_proof_prediction
 from open_prices.proofs.ml.classification import (
     proof_classification_model_config,
-    price_tag_classification_model_config,
     run_and_save_proof_type_prediction,
 )
 from open_prices.proofs.ml.ocr import fetch_and_save_ocr_data
@@ -1541,7 +1540,7 @@ class PriceTagPropertyTest(TestCase):
         self.assertEqual(self.price_tag_empty.get_predicted_barcode(), None)
         self.assertEqual(
             self.price_tag_with_multiple_predictions.get_predicted_barcode(),
-            "8001505005707"
+            "8001505005707",
         )
 
     def test_get_predicted_category(self):
@@ -1551,8 +1550,7 @@ class PriceTagPropertyTest(TestCase):
         )
         self.assertEqual(self.price_tag_empty.get_predicted_category(), None)
         self.assertEqual(
-            self.price_tag_with_multiple_predictions.get_predicted_category(),
-            "other"
+            self.price_tag_with_multiple_predictions.get_predicted_category(), "other"
         )
 
     def test_get_predicted_product_name(self):

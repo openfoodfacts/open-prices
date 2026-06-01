@@ -677,7 +677,9 @@ class PriceTag(models.Model):
             price_tag_prediction_has_predicted_product_exists,
         )
 
-        prediction = self.get_prediction_from_type(proof_constants.PRICE_TAG_EXTRACTION_TYPE)
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
         if prediction:
             if price_tag_prediction_has_predicted_barcode_valid(prediction):
                 changes = self.set_tag(
@@ -697,7 +699,9 @@ class PriceTag(models.Model):
             self.save(update_fields=["tags"])
 
     def get_predicted_price(self) -> float | None:
-        prediction = self.get_prediction_from_type(proof_constants.PRICE_TAG_EXTRACTION_TYPE)
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
         if prediction:
             if prediction.schema_version == "1.0":
                 return prediction.data.get("price")
@@ -706,13 +710,17 @@ class PriceTag(models.Model):
         return None
 
     def get_predicted_barcode(self):
-        prediction = self.get_prediction_from_type(proof_constants.PRICE_TAG_EXTRACTION_TYPE)
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
         if prediction:
             return prediction.data.get("barcode")
         return None
 
     def get_predicted_category(self):  # category_tag
-        prediction = self.get_prediction_from_type(proof_constants.PRICE_TAG_EXTRACTION_TYPE)
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
         if prediction:
             if prediction.schema_version == "1.0":
                 return prediction.data.get("product")
@@ -721,7 +729,9 @@ class PriceTag(models.Model):
         return None
 
     def get_predicted_product_name(self):
-        prediction = self.get_prediction_from_type(proof_constants.PRICE_TAG_EXTRACTION_TYPE)
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
         if prediction:
             return prediction.data.get("product_name")
         return None
