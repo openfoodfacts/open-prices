@@ -40,6 +40,11 @@ nav:
     - API: guides/API.md
   - Topics:
     - Home: topics/README.md
+    - Core: topics/core.md
+    - Open Food Facts (Product data): topics/open-food-facts-product-data.md
+    - OpenStreetMap (Location data): topics/openstreetmap-location-data.md
+    - Gamification: topics/gamification.md
+    - Moderation & Historisation: topics/moderation-historisation.md
   - Community:
     - Home: community/README.md
     - Github: community/github.md
