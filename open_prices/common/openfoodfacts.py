@@ -101,7 +101,6 @@ def get_taxonomy_children_tags_from_parent_list(
     """
     taxonomy = _cached_get_taxonomy(taxonomy_type)
     children_tags = [] if not include_parent_list else parent_list.copy()
-    seen = set(children_tags)
 
     for parent in parent_list:
         parent_node = taxonomy[parent]
@@ -111,17 +110,12 @@ def get_taxonomy_children_tags_from_parent_list(
         if not (parent_node and parent_node.children):
             continue
 
-        for child_node in parent_node.children:
-            if child_node.id not in seen:
-                children_tags.append(child_node.id)
-                seen.add(child_node.id)
+        parent_children_node_list = parent_node.get_children_hierarchy()
+        parent_children_node_id_list = [node.id for node in parent_children_node_list]
+        children_tags.extend(parent_children_node_id_list)
 
-            for child_child_id in get_taxonomy_children_tags_from_parent_list(
-                taxonomy_type, [child_node.id]
-            ):
-                if child_child_id not in seen:
-                    children_tags.append(child_child_id)
-                    seen.add(child_child_id)
+    # remove duplicates
+    children_tags = list(set(children_tags))
 
     return children_tags
 
