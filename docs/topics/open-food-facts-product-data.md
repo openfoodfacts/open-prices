@@ -1,25 +1,36 @@
 # Open Food Facts (Product data)
 
-Open Prices relies on Open Food Facts product data to enrich and validate prices.
+Open Prices relies on Open Food Facts product data.
 
-## What is reused
+## Why
 
-Open Prices reuses product information such as:
+Having product data directly in Open Prices allows for a better contributor experience and easy filtering/aggregation/stats.
 
-- product codes and product names
-- brands and categories
-- taxonomy data (for categories and related matching)
+## What is used
 
-## Why it matters
+### Backend
 
-This integration makes contribution and analysis easier:
+- Product table
+    - all 4 product flavors (food, beauty, pet food, products, as well as obsolete food products) are stored
+    - we keep only a subset of fields (code, name, brands, categories...)
+- Taxonomies
+    - we manipulate taxonomies for specific use cases (e.g. challenges)
+- Contributing back
+    - we allow creating products back to OFF (with the `open-prices` username)
+- all thanks to [openfoodfacts-python](https://github.com/openfoodfacts/openfoodfacts-python)
 
-- contributors can link prices to existing products
-- category-based flows are more robust
-- challenge and stats logic can reuse shared taxonomy concepts
+see `open_prices/common/openfoodfacts.py`
 
-## Data sync and freshness
+### Frontend
 
-Open Prices regularly imports product data from Open Food Facts flavors. This allows product lookup and enrichment to stay reasonably up to date.
+- Taxonomies (categories, labels, origins, languages) are used in some forms
+    - thanks to [openfoodfacts-python](https://github.com/openfoodfacts/openfoodfacts-python)
+    - see [https://github.com/openfoodfacts/open-prices-frontend/tree/main/data](https://github.com/openfoodfacts/open-prices-frontend/tree/main/data)
+- Barcode scanner
+    - thanks to [openfoodfacts-webcomponents](https://github.com/openfoodfacts/openfoodfacts-webcomponents)
 
-Operational details (tasks, deployment, scripts) are summarized in the project wiki and backend task configuration.
+## Data sync
+
+With Redis, Open Prices gets instant product changes.
+
+There is also a daily batch sync to be sure we don't miss anything.

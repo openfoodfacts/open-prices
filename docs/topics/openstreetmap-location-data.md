@@ -2,25 +2,32 @@
 
 Open Prices uses OpenStreetMap as the main source for physical location data.
 
-## Location types
+## Why
 
-Open Prices supports:
+Having location data directly in Open Prices allows for a better contributor experience and easy filtering/aggregation/stats.
 
-- OSM locations (shops and amenities)
-- online locations (website-based stores)
+## What is used
 
-## Search and selection
+### Backend
 
-In the frontend, location search combines geocoding providers and OSM identifiers to help contributors select the right place quickly.
+- Location table
+    - when a new OSM ID is added by a contributor, we store it
+    - we keep only a subset of fields (name, type, brand, lat, lng, version...)
 
-The selected location is then normalized and stored in Open Prices with useful metadata (name, address fields, coordinates when available).
+see `open_prices/common/openstreetmap.py`
 
-## Why it matters
+### Frontend
 
-Using OpenStreetMap enables:
+- Location search
+    - we use a combination of Komoot Photon & Nominatim
+- Brand data
+    - we regularly contribute to [nsi.guide](https://nsi.guide) to add missing brands
+    - we display brand logos thanks to [openfoodfacts/brand-images](https://github.com/openfoodfacts/brand-images)
+- Contributing back
+    - not yet... but discussed regularly :)
 
-- a shared, open reference for places
-- cross-country coverage
-- location-based analysis and comparison features
+## Data sync
 
-It also allows Open Prices to provide location-specific views (countries, cities, nearby locations, comparisons).
+Currently, we fetch & store location data on creation only.
+
+There is an ongoing discussion on managing location updates (e.g. a shop changes brand), see [this issue](https://github.com/openfoodfacts/open-prices/issues/1018).

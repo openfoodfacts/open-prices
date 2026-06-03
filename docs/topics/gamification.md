@@ -1,8 +1,8 @@
 # Gamification
 
-Open Prices includes gamification mechanisms to encourage regular, useful contributions.
+Open Prices includes gamification mechanisms to encourage and reward contributions.
 
-## Challenges
+## Challenges 🏆
 
 Challenges are used to focus community effort during a time window.
 
@@ -12,20 +12,14 @@ A challenge can target:
 - specific categories
 - optionally specific locations
 
-## How it works
+see [https://prices.openfoodfacts.org/challenges](https://prices.openfoodfacts.org/challenges)
 
-At a high level:
+## Rankings 🏅
 
-- matching rules identify prices/proofs that belong to a challenge
-- related records are tagged
-- rankings and summary stats are computed for participants
+We have a simple overall contributor ranking, as well as challenge-specific rankings
 
-This powers challenge pages, leaderboards, and community progress views.
+see [https://prices.openfoodfacts.org/stats](https://prices.openfoodfacts.org/stats)
 
-## Why it matters
+## Future ideas 💡
 
-Gamification helps:
-
-- motivate contributors
-- improve data coverage on targeted areas
-- make community participation visible and rewarding
+badges, mayorship...
