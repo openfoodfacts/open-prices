@@ -11,6 +11,6 @@ A collection of step-by-step guides to help you get started with Open Prices, wh
 
 TODO
 
-## API
+## Data
 
-see [API](API.md)
+see [Data](data.md) (API, exports...)
