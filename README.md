@@ -24,7 +24,7 @@ Join us at [https://openfoodfacts.slack.com](https://openfoodfacts.slack.com) in
 
 * read our [project documentation](https://openfoodfacts.github.io/open-prices) to learn more about the project
 * create an [Open Food Facts account](https://world.openfoodfacts.org/cgi/user.pl) and start adding prices :)
-* reuse the [API](API.md) to build your own project on top of the Open Prices dataset
+* reuse the [Data](docs/guides/data.md) to build your own project on top of the Open Prices dataset
 * for developers, head to [CONTRIBUTING.md](CONTRIBUTING.md)
 * improve [translation in your language](https://crowdin.com/project/openfoodfacts)
 * and extra ideas in [Community](https://openfoodfacts.github.io/open-prices/community) (Slack, Weekly meetings, UX & UI...)
