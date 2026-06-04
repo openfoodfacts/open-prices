@@ -664,9 +664,7 @@ class PriceTag(models.Model):
         return False
 
     def get_prediction_from_type(self, type: str):
-        if self.predictions.exists():
-            return self.predictions.filter(type=type).first()
-        return None
+        return self.predictions.filter(type=type).first()
 
     def update_tags(self):
         changes = False
