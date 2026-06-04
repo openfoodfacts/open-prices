@@ -1491,10 +1491,46 @@ class PriceTagPropertyTest(TestCase):
             data={},
         )
 
+        cls.price_tag_with_multiple_predictions = PriceTagFactory(
+            bounding_box=[0.1, 0.1, 0.2, 0.2],
+            proof=cls.proof,
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_with_multiple_predictions,
+            type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE,
+            data={
+                "prediction": [
+                    {"label": "high-quality", "score": 0.96},
+                    {"label": "medium-quality", "score": 0.03},
+                    {"label": "invalid", "score": 0.01},
+                ]
+            },
+        )
+        PriceTagPrediction.objects.create(
+            price_tag=cls.price_tag_with_multiple_predictions,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            schema_version="2.0",
+            data={
+                "selected_price": {
+                    "price": 10,
+                    "wit_vat": True,
+                    "currency": "EUR",
+                    "price_per": "UNIT",
+                    "price_is_discounted": False,
+                },
+                "barcode": "8001505005707",
+                "category": "other",
+                "product_name": "NOCCIOLATA 700G",
+            },
+        )
+
     def test_get_predicted_price(self):
         self.assertEqual(self.price_tag_product.get_predicted_price(), 10)
         self.assertEqual(self.price_tag_category.get_predicted_price(), 2.5)
         self.assertEqual(self.price_tag_empty.get_predicted_price(), None)
+        self.assertEqual(
+            self.price_tag_with_multiple_predictions.get_predicted_price(), 10
+        )
 
     def test_get_predicted_barcode(self):
         self.assertEqual(
@@ -1502,6 +1538,10 @@ class PriceTagPropertyTest(TestCase):
         )
         self.assertEqual(self.price_tag_category.get_predicted_barcode(), "")
         self.assertEqual(self.price_tag_empty.get_predicted_barcode(), None)
+        self.assertEqual(
+            self.price_tag_with_multiple_predictions.get_predicted_barcode(),
+            "8001505005707",
+        )
 
     def test_get_predicted_category(self):
         self.assertEqual(self.price_tag_product.get_predicted_category(), "other")
@@ -1509,6 +1549,9 @@ class PriceTagPropertyTest(TestCase):
             self.price_tag_category.get_predicted_category(), "en:tomatoes"
         )
         self.assertEqual(self.price_tag_empty.get_predicted_category(), None)
+        self.assertEqual(
+            self.price_tag_with_multiple_predictions.get_predicted_category(), "other"
+        )
 
     def test_get_predicted_product_name(self):
         self.assertEqual(
@@ -1519,6 +1562,10 @@ class PriceTagPropertyTest(TestCase):
             self.price_tag_category.get_predicted_product_name(), "TOMATES"
         )
         self.assertEqual(self.price_tag_empty.get_predicted_product_name(), None)
+        self.assertEqual(
+            self.price_tag_with_multiple_predictions.get_predicted_product_name(),
+            "NOCCIOLATA 700G",
+        )
 
 
 class PriceTagPredictionTest(TestCase):

@@ -663,6 +663,9 @@ class PriceTag(models.Model):
             return True
         return False
 
+    def get_prediction_from_type(self, type: str):
+        return self.predictions.filter(type=type).first()
+
     def update_tags(self):
         changes = False
         # prediction tags
@@ -672,8 +675,10 @@ class PriceTag(models.Model):
             price_tag_prediction_has_predicted_product_exists,
         )
 
-        if self.predictions.exists():
-            prediction = self.predictions.first()
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
+        if prediction:
             if price_tag_prediction_has_predicted_barcode_valid(prediction):
                 changes = self.set_tag(
                     proof_constants.PRICE_TAG_PREDICTION_TAG_BARCODE_VALID, save=False
@@ -692,8 +697,10 @@ class PriceTag(models.Model):
             self.save(update_fields=["tags"])
 
     def get_predicted_price(self) -> float | None:
-        if self.predictions.exists():
-            prediction = self.predictions.first()
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
+        if prediction:
             if prediction.schema_version == "1.0":
                 return prediction.data.get("price")
             elif prediction.schema_version == "2.0":
@@ -701,14 +708,18 @@ class PriceTag(models.Model):
         return None
 
     def get_predicted_barcode(self):
-        if self.predictions.exists():
-            prediction = self.predictions.first()
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
+        if prediction:
             return prediction.data.get("barcode")
         return None
 
     def get_predicted_category(self):  # category_tag
-        if self.predictions.exists():
-            prediction = self.predictions.first()
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
+        if prediction:
             if prediction.schema_version == "1.0":
                 return prediction.data.get("product")
             elif prediction.schema_version == "2.0":
@@ -716,8 +727,11 @@ class PriceTag(models.Model):
         return None
 
     def get_predicted_product_name(self):
-        if self.predictions.exists():
-            return self.predictions.first().data.get("product_name")
+        prediction = self.get_prediction_from_type(
+            proof_constants.PRICE_TAG_EXTRACTION_TYPE
+        )
+        if prediction:
+            return prediction.data.get("product_name")
         return None
 
 
