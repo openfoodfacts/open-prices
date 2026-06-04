@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.105.0](https://github.com/openfoodfacts/open-prices/compare/v1.104.2...v1.105.0) (2026-06-04)
+
+
+### Features
+
+* **Proofs:** API: new endpoint to upload (and edit) "draft" proofs ([#1292](https://github.com/openfoodfacts/open-prices/issues/1292)) ([ed9fd59](https://github.com/openfoodfacts/open-prices/commit/ed9fd59da05c98228c4039699331a1c37716e966))
+* **Proofs:** new `draft` field (objects hidden by default) (objects deleted after 1h) ([#1326](https://github.com/openfoodfacts/open-prices/issues/1326)) ([f348b5a](https://github.com/openfoodfacts/open-prices/commit/f348b5a4772c29f9dfc02a4f6af5b08684eb3b6d))
+
+
+### Bug Fixes
+
+* **Price Tags:** fix properties and tags computation when multiple prediction ([#1328](https://github.com/openfoodfacts/open-prices/issues/1328)) ([dd8b0e2](https://github.com/openfoodfacts/open-prices/commit/dd8b0e2532b9b1a8b0890cc58eb3a5d489a0a8ab))
+
+
+### Documentation
+
+* **Topics:** AI subfolder + proof prediction flow diagram ([#1307](https://github.com/openfoodfacts/open-prices/issues/1307)) ([8f7fa40](https://github.com/openfoodfacts/open-prices/commit/8f7fa400fbc8116fb0803158838b7efdc7656f83))
+* **Topics:** quick v1 with 5 pages (Core, OFF, OSM, Gamification, Moderation & Historisation) ([#1323](https://github.com/openfoodfacts/open-prices/issues/1323)) ([0ad8c29](https://github.com/openfoodfacts/open-prices/commit/0ad8c2948e6c9af90d5052bf214a3b2da83ae72b))
+
+
+### Technical
+
+* **deps:** update openfoodfacts-python to 5.1.0 ([#1329](https://github.com/openfoodfacts/open-prices/issues/1329)) ([d1f4388](https://github.com/openfoodfacts/open-prices/commit/d1f43881f7bc69618dad848a6dd69b18dbd8aecd))
+* **deps:** upgrade ruff ([#1317](https://github.com/openfoodfacts/open-prices/issues/1317)) ([c028355](https://github.com/openfoodfacts/open-prices/commit/c0283552557ffe45709a093eea5a143d2acf8c2a))
+* fix rust linter errors ([#1321](https://github.com/openfoodfacts/open-prices/issues/1321)) ([4d3d1ae](https://github.com/openfoodfacts/open-prices/commit/4d3d1aedeb97fe85fff1d75ac91eeec4603e6faf))
+* **Permissions:** clarify read, write, object owner & moderator method names ([#1327](https://github.com/openfoodfacts/open-prices/issues/1327)) ([c17cc4b](https://github.com/openfoodfacts/open-prices/commit/c17cc4badaa6b180d3698ad37250fdc2d9cacf80))
+* **Products:** move sync task queryset to the model. Reduce the number of SQL calls ([#1324](https://github.com/openfoodfacts/open-prices/issues/1324)) ([4518dbc](https://github.com/openfoodfacts/open-prices/commit/4518dbc82047578addf20b9dab464773ef91a2fe))
+
 ## [1.104.2](https://github.com/openfoodfacts/open-prices/compare/v1.104.1...v1.104.2) (2026-05-18)
 
 
