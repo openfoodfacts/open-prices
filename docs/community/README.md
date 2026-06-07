@@ -14,7 +14,7 @@ see [Slack](slack.md)
 
 ## Weekly meetings
 
-We e-meet Thrusdays at 14:00 Paris Time.
+We e-meet Thrusdays at 5PM Paris Time.
 
 see [Weekly meetings](weekly-meetings.md)
 
