@@ -27,7 +27,10 @@ class ProductQuerySet(ApproximateCountQuerySet):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
 
     def to_update_in_sync_task(
-        self, code: str, flavor: str, product_source_last_modified: datetime.datetime
+        self,
+        code: str,
+        flavor: str,
+        product_source_last_modified: datetime.datetime = None,
     ):
         """
         Goal: OFF sync task, a product should be updated if:
@@ -36,14 +39,15 @@ class ProductQuerySet(ApproximateCountQuerySet):
 
         Usage: open_prices/common/openfoodfacts.py:import_product_db
         """
-        return (
-            self.filter(code=code)
-            .filter(Q(source=flavor) | Q(source=None))
-            .filter(
+        queryset = self.filter(
+            self.filter(code=code).filter(Q(source=flavor) | Q(source=None))
+        )
+        if product_source_last_modified:
+            queryset = queryset.filter(
                 Q(source_last_synced__lt=product_source_last_modified)
                 | Q(source_last_synced=None)
             )
-        )
+        return queryset
 
     def to_update_in_counts_task(self):
         """
