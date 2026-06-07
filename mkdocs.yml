@@ -56,13 +56,16 @@ nav:
   - Community:
     - Home: community/README.md
     - Github: community/github.md
+    - Changelog: community/CHANGELOG.md
     - Slack: community/slack.md
     - Weekly meetings: community/weekly-meetings.md
     - Contributing: community/CONTRIBUTING.md
     - Install: community/INSTALL.md
     - UX & UI: community/ux-ui.md
-    - Changelog: community/CHANGELOG.md
     - Reuses: community/reuses.md
+    - Project management: community/project-management.md
+    - Presentations: community/presentations.md
+    - Funding: community/funding.md
 
 plugins:
   - search

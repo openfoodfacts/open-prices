@@ -2,24 +2,38 @@
 
 Navigate the Open Prices community, get involved, and contribute!
 
-## Github
+## Code
 
-see [Github](github.md)
+see [Github](github.md) & [Changelog](CHANGELOG.md)
 
 ## Slack
 
-[https://openfoodfacts.slack.com](https://openfoodfacts.slack.com), channel `#prices`. Join us! See also [Slack](slack.md).
+[openfoodfacts.slack.com](https://openfoodfacts.slack.com), channel `#prices`. Join us!
+
+see [Slack](slack.md)
 
 ## Weekly meetings
 
-We e-meet Thrusdays at 14:00 Paris Time. More details in [weekly meetings](weekly-meetings.md).
+We e-meet Thrusdays at 5PM Paris Time.
+
+see [Weekly meetings](weekly-meetings.md)
 
 ## Contribute
 
 - [Contributing](CONTRIBUTING.md)
 - [Install](INSTALL.md)
 - [UX & UI](ux-ui.md)
+- [Moderation](../topics/moderation-historisation.md)
+- [Project management](project-management.md)
 
-## Release Notes
+## Reuses
 
-see [Changelog](CHANGELOG.md)
+see [Reuses](reuses.md) & [Data](../guides/data.md)
+
+## Presentations
+
+see [Presentations](presentations.md)
+
+## Funding
+
+see [Funding](funding.md)
