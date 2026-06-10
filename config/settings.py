@@ -202,6 +202,14 @@ REST_FRAMEWORK = {
     "COERCE_DECIMAL_TO_STRING": False,  # return floats instead
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/minute",
+        "user": "600/minute",
+    },
 }
 
 SPECTACULAR_SETTINGS = {
