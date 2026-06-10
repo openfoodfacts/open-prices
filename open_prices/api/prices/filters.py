@@ -24,20 +24,17 @@ class PriceFilter(django_filters.FilterSet):
         field_name="product__source", lookup_expr="isnull"
     )
     product__categories_tags__contains = django_filters.CharFilter(
-        field_name="product__categories_tags",
-        lookup_expr="any",
+        field_name="product__categories_tags", lookup_expr="contains"
     )
     product__categories_tags__overlap = django_filters.BaseInFilter(
         field_name="product__categories_tags",
         lookup_expr="overlap",
     )
     labels_tags__contains = django_filters.CharFilter(
-        field_name="labels_tags",
-        lookup_expr="icontains",
+        field_name="labels_tags", lookup_expr="contains"
     )
     origins_tags__contains = django_filters.CharFilter(
-        field_name="origins_tags",
-        lookup_expr="icontains",
+        field_name="origins_tags", lookup_expr="contains"
     )
     location__type = django_filters.ChoiceFilter(
         field_name="location__type",
@@ -48,8 +45,7 @@ class PriceFilter(django_filters.FilterSet):
         choices=proof_constants.TYPE_CHOICES,
     )
     tags__contains = django_filters.CharFilter(
-        field_name="tags",
-        lookup_expr="icontains",
+        field_name="tags", lookup_expr="contains"
     )
     location__osm_name__contains = django_filters.CharFilter(
         field_name="location__osm_name",

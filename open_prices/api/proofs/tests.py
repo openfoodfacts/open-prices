@@ -1177,7 +1177,7 @@ class PriceTagListApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
-    def test_price_list_filter_by_tags(self):
+    def test_proof_list_filter_by_tags(self):
         url = self.url + "?tags__contains=prediction-found-product"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)

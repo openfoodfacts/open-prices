@@ -15,12 +15,9 @@ from django_q.tasks import async_task
 from simple_history.models import HistoricalRecords
 
 from open_prices.challenges.models import Challenge
-
-# Import custom lookups so that they are registered
 from open_prices.common import (
     constants,
     history,
-    lookups,  # noqa: F401
     utils,
 )
 from open_prices.locations import constants as location_constants
