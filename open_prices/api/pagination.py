@@ -34,18 +34,22 @@ class CustomPagination(PageNumberPagination):
                 "items": schema,
                 "page": {
                     "type": "integer",
+                    "description": "Current page number",
                     "example": 1,
                 },
                 "pages": {
                     "type": "integer",
+                    "description": "Total number of pages",
                     "example": 16,
                 },
                 "size": {
                     "type": "integer",
+                    "description": "Number of items per page",
                     "example": 100,
                 },
                 "total": {
                     "type": "integer",
+                    "description": "Total number of items",
                     "example": 1531,
                 },
             },
