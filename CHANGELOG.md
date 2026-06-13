@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.105.1](https://github.com/openfoodfacts/open-prices/compare/v1.105.0...v1.105.1) (2026-06-13)
+
+
+### Bug Fixes
+
+* correct OpenAPI spec for paginated endpoints ([#1336](https://github.com/openfoodfacts/open-prices/issues/1336)) ([729c900](https://github.com/openfoodfacts/open-prices/commit/729c9002d10ad85c9dd0b9a93bcc810d91cd584f))
+
+
+### Documentation
+
+* **Community:** add pages on Funding, Presentations & Project management ([#1330](https://github.com/openfoodfacts/open-prices/issues/1330)) ([328364b](https://github.com/openfoodfacts/open-prices/commit/328364b7fa88c7c0f8acc799858996b99876a99b))
+* **Community:** update Weekly meetings (now 5PM on Jitsi) ([#1333](https://github.com/openfoodfacts/open-prices/issues/1333)) ([fa8b66a](https://github.com/openfoodfacts/open-prices/commit/fa8b66ad2ffd4bfc098d1c0c5d077b4972c2b6f4))
+* **Guides:** add pages on Data & Reuses ([#1331](https://github.com/openfoodfacts/open-prices/issues/1331)) ([bd28b61](https://github.com/openfoodfacts/open-prices/commit/bd28b61bf2c6e3c7685a4d1c977c50989b28c0a6))
+
+
+### Technical
+
+* **Products:** new `force_update` param in sync task ([#1325](https://github.com/openfoodfacts/open-prices/issues/1325)) ([903c469](https://github.com/openfoodfacts/open-prices/commit/903c469effc7c63097e90d468d18a7cdb5cf1e1b))
+
 ## [1.105.0](https://github.com/openfoodfacts/open-prices/compare/v1.104.2...v1.105.0) (2026-06-04)
 
 
