@@ -31,10 +31,7 @@ class CustomPagination(PageNumberPagination):
             "type": "object",
             "required": ["items", "page", "pages", "size", "total"],
             "properties": {
-                "items": {
-                    "type": "array",
-                    "items": schema,
-                },
+                "items": schema,
                 "page": {
                     "type": "integer",
                     "description": "Current page number",
