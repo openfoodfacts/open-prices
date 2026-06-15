@@ -1,6 +1,6 @@
 # Weekly meetings
 
-- We e-meet Thrusdays at 5PM Paris Time
+- We e-meet Thursdays at 5PM Paris Time
 - [Jitsi](https://meet.jit.si/open-prices)
 - [Weekly Agenda](https://docs.google.com/document/u/0/d/1-OfMAi-cB7mi9_q172EbBCWHkfKDM0zVg4wzULW3pFY/edit): please add the Agenda items as early as you can.
 - Add the Event to your Calendar by [adding the Open Food Facts community calendar to your calendar](https://wiki.openfoodfacts.org/Events)
