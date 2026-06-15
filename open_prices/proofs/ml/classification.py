@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof, ProofPrediction
+from open_prices.proofs.utils import open_image_cv2
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,7 @@ def predict_price_tag_type(
 
 
 def run_and_save_proof_type_prediction(
-    image: np.ndarray, proof: Proof, overwrite: bool = False
+    image: np.ndarray | None, proof: Proof, overwrite: bool = False
 ) -> ProofPrediction | None:
     """Run the proof type classifier model and save the prediction in
     ProofPrediction table.
@@ -156,6 +157,9 @@ def run_and_save_proof_type_prediction(
                 proof_classification_model_config.model_name,
             )
             return None
+
+    if image is None:
+        image = open_image_cv2(proof.file_path_full)
 
     prediction = predict_proof_type(image)
 
