@@ -31,7 +31,7 @@ More info:
 
 * [NLnet project page](https://nlnet.nl/project/OpenPrices/)
 * [Github board](https://github.com/orgs/openfoodfacts/projects/161/views/2) to track progress
-* [Blog post](https://blog.openfoodfacts.org/en/news/open-prices-200000-prices-and-beyond) mentionning the funding
+* [Blog post](https://blog.openfoodfacts.org/en/news/open-prices-200000-prices-and-beyond) mentioning the funding
 
 ## Volunteer contributions
 
