@@ -7,17 +7,17 @@ This document maps prediction-related operations for both proof and price tag cr
 ```mermaid
 graph TD
     A["Proof.save()"] -->|"post_save signal"| B["proof_post_save_run_ocr<br/><b>ASYNC TASK via django-q</b>"]
-    A -->|"post_save signal"| C["proof_post_save_run_ml_models<br/><b>ASYNC TASK via django-q</b>"]
+    A -->|"post_save signal"| C["proof_post_save_run_ml_models"]
 
     B --> B1["fetch_and_save_ocr_data"]
 
-    C --> D["run_and_save_proof_prediction"]
-    D --> E["run_and_save_proof_type_prediction"]
+    C --> D["run_and_save_proof_prediction<br/>with run_async=True"]
+    D --> E["run_and_save_proof_type_prediction<br/><b>ASYNC TASK via django-q</b>"]
     E --> E1["predict_proof_type<br/>Triton model"]
     E1 --> E2["ProofPrediction.create<br/>type=CLASSIFICATION"]
 
     D --> F{"proof.type == TYPE_PRICE_TAG?"}
-    F -->|"Yes"| G["run_and_save_price_tag_detection"]
+    F -->|"Yes"| G["run_and_save_price_tag_detection<br/><b>ASYNC TASK via django-q</b>"]
     G --> G1["detect_price_tags<br/>Triton model"]
     G1 --> G2["ProofPrediction.create<br/>type=OBJECT_DETECTION"]
     G2 --> G3["create_price_tags_from_proof_prediction"]
@@ -33,7 +33,7 @@ graph TD
     H3 --> H4
 
     D --> I{"proof.type == TYPE_RECEIPT and run_receipt_extraction?"}
-    I -->|"Yes"| J["run_and_save_receipt_extraction_prediction"]
+    I -->|"Yes"| J["run_and_save_receipt_extraction_prediction<br/><b>ASYNC TASK via django-q</b>"]
     J --> J1["extract_from_receipt<br/>Gemini API"]
     J1 --> J2["ProofPrediction.create<br/>type=PROOF_PREDICTION_RECEIPT_EXTRACTION"]
 
@@ -48,10 +48,10 @@ graph TD
     style B1 stroke:#2ecc71,stroke-width:3px
     style C stroke:#e74c3c,stroke-width:3px
     style D stroke:#2ecc71,stroke-width:3px
-    style E stroke:#2ecc71,stroke-width:3px
+    style E stroke:#e74c3c,stroke-width:3px
     style E1 stroke:#2ecc71,stroke-width:3px
     style E2 stroke:#2ecc71,stroke-width:3px
-    style G stroke:#2ecc71,stroke-width:3px
+    style G stroke:#e74c3c,stroke-width:3px
     style G1 stroke:#2ecc71,stroke-width:3px
     style G2 stroke:#2ecc71,stroke-width:3px
     style G3 stroke:#2ecc71,stroke-width:3px
@@ -62,7 +62,7 @@ graph TD
     style H2 stroke:#e74c3c,stroke-width:3px
     style H3 stroke:#2ecc71,stroke-width:3px
     style H4 stroke:#2ecc71,stroke-width:3px
-    style J stroke:#2ecc71,stroke-width:3px
+    style J stroke:#e74c3c,stroke-width:3px
     style J1 stroke:#2ecc71,stroke-width:3px
     style J2 stroke:#2ecc71,stroke-width:3px
     style K stroke:#2ecc71,stroke-width:3px

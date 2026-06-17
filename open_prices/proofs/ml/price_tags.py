@@ -32,6 +32,7 @@ from open_prices.proofs.utils import (
     crop_image,
     generate_image_thumbnail_cv2,
     image_bytes_as_webp,
+    open_image_cv2,
 )
 
 from .common import DiscountType, RawCategory, Unit
@@ -800,7 +801,7 @@ def create_price_tags_from_proof_prediction(
 
 
 def run_and_save_price_tag_detection(
-    image: np.ndarray,
+    image: np.ndarray | None,
     proof: Proof,
     overwrite: bool = False,
     run_classification: bool = True,
@@ -854,6 +855,8 @@ def run_and_save_price_tag_detection(
                 )
             return None
 
+    if image is None:
+        image = open_image_cv2(proof.file_path_full)
     result = detect_price_tags(image)
     detections = result.to_list()
     if detections:

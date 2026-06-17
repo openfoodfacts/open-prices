@@ -429,10 +429,10 @@ def proof_post_save_run_ml_models(sender, instance, created, **kwargs):
     """
     if not settings.TESTING and settings.ENABLE_ML_PREDICTIONS:
         if created:
-            async_task(
-                "open_prices.proofs.ml.run_and_save_proof_prediction",
-                instance,
-            )
+            # Import here to avoid circular imports
+            from open_prices.proofs.ml import run_and_save_proof_prediction
+
+            run_and_save_proof_prediction(proof=instance, run_async=True)
 
 
 @receiver(signals.post_save, sender=Proof)

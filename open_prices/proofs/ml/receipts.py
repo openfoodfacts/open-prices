@@ -14,7 +14,11 @@ from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.common import DiscountType, RawCategory, Unit
 from open_prices.proofs.models import Proof, ProofPrediction, ReceiptItem
-from open_prices.proofs.utils import generate_image_thumbnail_cv2, image_bytes_as_webp
+from open_prices.proofs.utils import (
+    generate_image_thumbnail_cv2,
+    image_bytes_as_webp,
+    open_image_cv2,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -290,7 +294,7 @@ def create_receipt_items_from_proof_prediction(
 
 
 def run_and_save_receipt_extraction_prediction(
-    image: np.ndarray, proof: Proof, overwrite: bool = False
+    image: np.ndarray | None, proof: Proof, overwrite: bool = False
 ) -> ProofPrediction | None:
     """Run the receipt extraction model and save the prediction in
     ProofPrediction table.
@@ -323,6 +327,8 @@ def run_and_save_receipt_extraction_prediction(
             )
             return None
 
+    if image is None:
+        image = open_image_cv2(proof.file_path_full)
     # prediction may be None if the model failed to extract
     prediction = extract_from_receipt(image) or {}
     if prediction:
