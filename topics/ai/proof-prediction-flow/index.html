@@ -1364,17 +1364,17 @@
 <h2 id="flow-diagram">Flow Diagram</h2>
 <pre class="mermaid"><code>graph TD
     A["Proof.save()"] --&gt;|"post_save signal"| B["proof_post_save_run_ocr&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
-    A --&gt;|"post_save signal"| C["proof_post_save_run_ml_models&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
+    A --&gt;|"post_save signal"| C["proof_post_save_run_ml_models"]
 
     B --&gt; B1["fetch_and_save_ocr_data"]
 
-    C --&gt; D["run_and_save_proof_prediction"]
-    D --&gt; E["run_and_save_proof_type_prediction"]
+    C --&gt; D["run_and_save_proof_prediction&lt;br/&gt;with run_async=True"]
+    D --&gt; E["run_and_save_proof_type_prediction&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
     E --&gt; E1["predict_proof_type&lt;br/&gt;Triton model"]
     E1 --&gt; E2["ProofPrediction.create&lt;br/&gt;type=CLASSIFICATION"]
 
     D --&gt; F{"proof.type == TYPE_PRICE_TAG?"}
-    F --&gt;|"Yes"| G["run_and_save_price_tag_detection"]
+    F --&gt;|"Yes"| G["run_and_save_price_tag_detection&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
     G --&gt; G1["detect_price_tags&lt;br/&gt;Triton model"]
     G1 --&gt; G2["ProofPrediction.create&lt;br/&gt;type=OBJECT_DETECTION"]
     G2 --&gt; G3["create_price_tags_from_proof_prediction"]
@@ -1390,7 +1390,7 @@
     H3 --&gt; H4
 
     D --&gt; I{"proof.type == TYPE_RECEIPT and run_receipt_extraction?"}
-    I --&gt;|"Yes"| J["run_and_save_receipt_extraction_prediction"]
+    I --&gt;|"Yes"| J["run_and_save_receipt_extraction_prediction&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
     J --&gt; J1["extract_from_receipt&lt;br/&gt;Gemini API"]
     J1 --&gt; J2["ProofPrediction.create&lt;br/&gt;type=PROOF_PREDICTION_RECEIPT_EXTRACTION"]
 
@@ -1405,10 +1405,10 @@
     style B1 stroke:#2ecc71,stroke-width:3px
     style C stroke:#e74c3c,stroke-width:3px
     style D stroke:#2ecc71,stroke-width:3px
-    style E stroke:#2ecc71,stroke-width:3px
+    style E stroke:#e74c3c,stroke-width:3px
     style E1 stroke:#2ecc71,stroke-width:3px
     style E2 stroke:#2ecc71,stroke-width:3px
-    style G stroke:#2ecc71,stroke-width:3px
+    style G stroke:#e74c3c,stroke-width:3px
     style G1 stroke:#2ecc71,stroke-width:3px
     style G2 stroke:#2ecc71,stroke-width:3px
     style G3 stroke:#2ecc71,stroke-width:3px
@@ -1419,7 +1419,7 @@
     style H2 stroke:#e74c3c,stroke-width:3px
     style H3 stroke:#2ecc71,stroke-width:3px
     style H4 stroke:#2ecc71,stroke-width:3px
-    style J stroke:#2ecc71,stroke-width:3px
+    style J stroke:#e74c3c,stroke-width:3px
     style J1 stroke:#2ecc71,stroke-width:3px
     style J2 stroke:#2ecc71,stroke-width:3px
     style K stroke:#2ecc71,stroke-width:3px
