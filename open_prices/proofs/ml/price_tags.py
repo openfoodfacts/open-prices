@@ -29,9 +29,9 @@ from open_prices.proofs.models import (
     ProofPrediction,
 )
 from open_prices.proofs.utils import (
+    convert_image,
     crop_image,
     generate_image_thumbnail_cv2,
-    image_bytes_as_webp,
     open_image_cv2,
 )
 
@@ -368,7 +368,7 @@ def extract_from_price_tag(
             contents=[
                 EXTRACT_PRICE_TAG_PROMPT,
                 genai.types.Part.from_bytes(
-                    data=image_bytes_as_webp(image),
+                    data=convert_image(image, format="webp", quality=80),
                     mime_type="image/webp",
                 ),
             ],
@@ -393,7 +393,7 @@ async def extract_from_price_tag_async(
         contents=[
             EXTRACT_PRICE_TAG_PROMPT,
             genai.types.Part.from_bytes(
-                data=image_bytes_as_webp(image),
+                data=convert_image(image, format="webp", quality=80),
                 mime_type="image/webp",
             ),
         ],

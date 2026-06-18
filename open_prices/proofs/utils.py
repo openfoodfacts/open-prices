@@ -5,6 +5,7 @@ import random
 import string
 from mimetypes import guess_extension
 from pathlib import Path
+from typing import Literal
 
 import cv2
 import numpy as np
@@ -380,14 +381,21 @@ def generate_image_thumbnail_cv2(image: np.ndarray, max_size: int) -> np.ndarray
     return image
 
 
-def image_bytes_as_webp(image: np.ndarray, quality: int = 80) -> bytes:
-    """Convert an image as a numpy array to WebP format and return the bytes.
+def convert_image(
+    image: np.ndarray, format: Literal["jpeg", "webp"] = "jpeg", quality: int = 100
+) -> bytes:
+    """Convert an OpenCV image (NumPy array, BGR) to either JPEG or WebP format.
 
-    :param image: the image to convert, as a numpy array
-    :param quality: the quality of the WebP image (0-100)
-    :return: the image in WebP format as bytes
+    :param image: the image to convert, as a numpy array in BGR format
+    :param format: the format to convert to, either "jpeg" or "webp"
+    :param quality: the quality of the JPEG or WebP image (0-100)
+    :return: the image in JPEG or WebP format as bytes
     """
-    success, buffer = cv2.imencode(".webp", image, [cv2.IMWRITE_WEBP_QUALITY, quality])
+    if format == "jpeg":
+        params = [cv2.IMWRITE_JPEG_QUALITY, quality]
+    else:
+        params = [cv2.IMWRITE_WEBP_QUALITY, quality]
+    success, buffer = cv2.imencode(f".{format}", image, params)
     if not success:
-        raise ValueError("Could not encode image to WebP format")
+        raise ValueError(f"Could not encode image to {format} format")
     return buffer.tobytes()
