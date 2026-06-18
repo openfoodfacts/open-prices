@@ -13,10 +13,12 @@ class CustomPagination(PageNumberPagination):
     - removed keys: next, previous
     """
 
+    ### page size config
     page_size = 10
-    page_size_query_param = "size"
+    page_size_query_param = "size"  # default is None
     max_page_size = 100
-    # page number rules
+    ### page number config
+    # page_query_param = "page"  # default
     last_page_strings = ()  # disable "last" page string
     max_page_number = 1000  # custom rule, see get_page_number()
 
@@ -28,7 +30,13 @@ class CustomPagination(PageNumberPagination):
         - if the page number is greater than max_page_number, raise NotFound
         """
         page_number = super().get_page_number(request, paginator)
-        if page_number > self.max_page_number:
+        try:
+            page_number_int = int(page_number)
+        except (TypeError, ValueError):
+            raise NotFound("Invalid page.") from None
+        if page_number_int < 1:
+            raise NotFound("Invalid page.")
+        if page_number_int > self.max_page_number:
             raise NotFound(
                 f"Maximum page reached. See {settings.OPENPRICES_DOCS_GUIDES_DATA_URL} for alternate ways to access the data."
             )
