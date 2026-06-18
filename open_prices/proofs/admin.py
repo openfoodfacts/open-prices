@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils.html import format_html, mark_safe
 from simple_history.admin import SimpleHistoryAdmin
 
+from open_prices.common.admin import ReadOnlyAdminMixin
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import (
     PriceTag,
@@ -49,7 +50,7 @@ class ProofDraftFilter(admin.SimpleListFilter):
 
 
 @admin.register(PriceTagPrediction)
-class PriceTagPredictionAdmin(SimpleHistoryAdmin):
+class PriceTagPredictionAdmin(ReadOnlyAdminMixin, SimpleHistoryAdmin):
     list_display = (
         "id",
         "price_tag",
@@ -60,35 +61,17 @@ class PriceTagPredictionAdmin(SimpleHistoryAdmin):
     )
     list_filter = ("type",)
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-class PriceTagPredictionInline(admin.TabularInline):
+class PriceTagPredictionInline(ReadOnlyAdminMixin, admin.TabularInline):
     model = PriceTagPrediction
     extra = 0
     fields = ("price_tag", "type", "model_name", "model_version", "created")
     can_delete = False
     show_change_link = True
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(PriceTag)
-class PriceTagAdmin(admin.ModelAdmin):
+class PriceTagAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "status",
@@ -100,15 +83,6 @@ class PriceTagAdmin(admin.ModelAdmin):
     readonly_fields = ("image_display",)  # (all fields are readonly)
     inlines = (PriceTagPredictionInline,)
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
     @admin.display(description="Image")
     def image_display(self, price_tag):
         if price_tag.image_path_full:
@@ -119,25 +93,16 @@ class PriceTagAdmin(admin.ModelAdmin):
             return mark_safe("<div>-</div>")
 
 
-class PriceTagInline(admin.TabularInline):
+class PriceTagInline(ReadOnlyAdminMixin, admin.TabularInline):
     model = PriceTag
     extra = 0
     fields = ("status", "prediction_count", "tags", "created")
     can_delete = False
     show_change_link = True
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(ReceiptItem)
-class ReceiptItemAdmin(admin.ModelAdmin):
+class ReceiptItemAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "status",
@@ -145,35 +110,17 @@ class ReceiptItemAdmin(admin.ModelAdmin):
     )
     list_filter = ("status",)
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-class ReceiptItemInline(admin.TabularInline):
+class ReceiptItemInline(ReadOnlyAdminMixin, admin.TabularInline):
     model = ReceiptItem
     extra = 0
     fields = ("order", "status", "created")
     can_delete = False
     show_change_link = True
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(ProofPrediction)
-class ProofPredictionAdmin(admin.ModelAdmin):
+class ProofPredictionAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "proof",
@@ -190,15 +137,6 @@ class ProofPredictionAdmin(admin.ModelAdmin):
             "price_tags", "receipt_items"
         )
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
     def get_inlines(self, request, obj=None):
         inlines = super().get_inlines(request, obj)
         if obj.type == proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE:
@@ -210,21 +148,12 @@ class ProofPredictionAdmin(admin.ModelAdmin):
         return inlines
 
 
-class ProofPredictionInline(admin.TabularInline):
+class ProofPredictionInline(ReadOnlyAdminMixin, admin.TabularInline):
     model = ProofPrediction
     extra = 0
     fields = ("proof", "type", "model_name", "model_version", "created")
     can_delete = False
     show_change_link = True
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(Proof)

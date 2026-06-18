@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from open_prices.common.admin import ReadOnlyAdminMixin
 from open_prices.moderation import constants as moderation_constants
 from open_prices.moderation.models import Flag
 
@@ -18,7 +19,7 @@ class ContentTypeListFilter(admin.SimpleListFilter):
 
 
 @admin.register(Flag)
-class FlagAdmin(admin.ModelAdmin):
+class FlagAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     list_display = (
         "content_type",
         "object_id",
@@ -28,12 +29,3 @@ class FlagAdmin(admin.ModelAdmin):
         "created",
     )
     list_filter = (ContentTypeListFilter, "reason", "status")
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
