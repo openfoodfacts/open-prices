@@ -54,6 +54,7 @@ from open_prices.proofs.ml.price_tags import (
     LabelPrice,
     create_price_tags_from_proof_prediction,
     extract_from_price_tag,
+    run_and_save_price_tag_classification_from_id,
     run_and_save_price_tag_detection,
 )
 from open_prices.proofs.ml.receipt_anonymization import AnonymizationResult
@@ -902,9 +903,7 @@ class MLModelTest(TestCase):
             "open_prices.proofs.ml.price_tags.detect_price_tags",
             return_value=detect_price_tags_response,
         ):
-            result = run_and_save_price_tag_detection(
-                self.image, deleted_proof, run_extraction=False
-            )
+            result = run_and_save_price_tag_detection(self.image, deleted_proof)
             self.assertIsNone(result)
 
     def test_run_and_save_proof_prediction_for_receipt_proof(self):
@@ -942,8 +941,6 @@ class MLModelTest(TestCase):
                 ):
                     run_and_save_proof_prediction(
                         proof,
-                        run_price_tag_classification=False,
-                        run_price_tag_extraction=False,
                         run_receipt_extraction=False,
                     )
                     mock_predict_proof_type.assert_called_once()
@@ -1046,8 +1043,6 @@ class MLModelTest(TestCase):
                 ):
                     run_and_save_proof_prediction(
                         proof,
-                        run_price_tag_classification=True,
-                        run_price_tag_extraction=False,
                         run_receipt_extraction=False,
                     )
                     mock_predict_proof_type.assert_called_once()
@@ -1183,24 +1178,15 @@ class MLModelTest(TestCase):
                     },
                 )
 
-                with unittest.mock.patch(
-                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
-                    return_value=[
-                        ("invalid", 0.96),
-                        ("medium-quality", 0.03),
-                        ("high-quality", 0.01),
-                    ],
-                ):
-                    result = run_and_save_price_tag_detection(
-                        self.image, proof, run_extraction=False
-                    )
+                result = run_and_save_price_tag_detection(self.image, proof)
         self.assertIsNone(result)
         price_tags = PriceTag.objects.filter(proof=proof).all()
         self.assertEqual(len(price_tags), 2)
         self.assertEqual(price_tags[0].bounding_box, [0.5, 0.5, 1.0, 1.0])
-        self.assertEqual(price_tags[0].tags, ["invalid"])
         self.assertEqual(price_tags[1].bounding_box, [0.1, 0.1, 0.2, 0.2])
-        self.assertEqual(price_tags[1].tags, ["invalid"])
+        # classification is run in the PriceTag post_save signal (muted in tests)
+        self.assertEqual(price_tags[0].tags, [])
+        self.assertEqual(price_tags[1].tags, [])
 
     def test_create_price_tags_from_proof_prediction(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -1240,17 +1226,9 @@ class MLModelTest(TestCase):
                 )
                 before = timezone.now()
 
-                with unittest.mock.patch(
-                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
-                    return_value=[
-                        ("high-quality", 0.96),
-                        ("medium-quality", 0.03),
-                        ("invalid", 0.01),
-                    ],
-                ):
-                    results = create_price_tags_from_proof_prediction(
-                        proof, proof_prediction, threshold=0.41, run_extraction=False
-                    )
+                results = create_price_tags_from_proof_prediction(
+                    proof, proof_prediction, threshold=0.41
+                )
         after = timezone.now()
         self.assertEqual(len(results), 2)
         price_tags = PriceTag.objects.filter(proof=proof).all()
@@ -1265,7 +1243,40 @@ class MLModelTest(TestCase):
         self.assertEqual(price_tag.status, None)
         self.assertEqual(price_tag.created_by, None)
         self.assertEqual(price_tag.updated_by, None)
+        # classification is run in the PriceTag post_save signal (muted in tests)
+        self.assertEqual(price_tag.tags, [])
+
+    def test_run_and_save_price_tag_classification_from_id(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                price_tag = PriceTagFactory(
+                    proof=proof, bounding_box=[0.5, 0.5, 1.0, 1.0]
+                )
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
+                    return_value=[
+                        ("high-quality", 0.96),
+                        ("medium-quality", 0.03),
+                        ("invalid", 0.01),
+                    ],
+                ):
+                    run_and_save_price_tag_classification_from_id(price_tag.id)
+        price_tag.refresh_from_db()
         self.assertEqual(price_tag.tags, ["high-quality"])
+        self.assertTrue(
+            PriceTagPrediction.objects.filter(
+                price_tag=price_tag,
+                type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE,
+            ).exists()
+        )
 
     def test_extract_from_price_tag(self):
         with unittest.mock.patch(

@@ -42,6 +42,10 @@ class Command(BaseCommand):
     Usage:
     - python manage.py run_ml_models --types proof_classification
     - python manage.py run_ml_models --types proof_classification,proof_price_tag_detection --limit 10 --delay 300
+
+    Note: price tags created by `proof_price_tag_detection` already get their
+    classification & extraction run (async) through the PriceTag post_save signal,
+    so avoid combining it with the `price_tag_*` types in the same run.
     """
 
     help = "Run ML models on images with proof predictions, and save the predictions in DB."
@@ -149,8 +153,6 @@ class Command(BaseCommand):
                 self.stdout.write(f"Processing proof {proof.id}...")
                 run_and_save_proof_prediction(
                     proof,
-                    run_price_tag_classification=False,
-                    run_price_tag_extraction=False,
                     run_receipt_extraction="proof_receipt_extraction" in types,
                 )
                 self.stdout.write("Done.")
