@@ -865,9 +865,7 @@ class MLModelTest(TestCase):
             "open_prices.proofs.ml.price_tags.detect_price_tags",
             return_value=detect_price_tags_response,
         ):
-            result = run_and_save_price_tag_detection(
-                self.image, deleted_proof, run_extraction=False
-            )
+            result = run_and_save_price_tag_detection(self.image, deleted_proof)
             self.assertIsNone(result)
 
     def test_run_and_save_proof_prediction_for_receipt_proof(self):
@@ -901,8 +899,6 @@ class MLModelTest(TestCase):
                 ):
                     run_and_save_proof_prediction(
                         proof,
-                        run_price_tag_classification=False,
-                        run_price_tag_extraction=False,
                         run_receipt_extraction=False,
                     )
                     mock_predict_proof_type.assert_called_once()
@@ -997,8 +993,6 @@ class MLModelTest(TestCase):
                 ):
                     run_and_save_proof_prediction(
                         proof,
-                        run_price_tag_classification=True,
-                        run_price_tag_extraction=False,
                         run_receipt_extraction=False,
                     )
                     mock_predict_proof_type.assert_called_once()
@@ -1142,9 +1136,7 @@ class MLModelTest(TestCase):
                         ("high-quality", 0.01),
                     ],
                 ):
-                    result = run_and_save_price_tag_detection(
-                        self.image, proof, run_extraction=False
-                    )
+                    result = run_and_save_price_tag_detection(self.image, proof)
         self.assertIsNone(result)
         price_tags = PriceTag.objects.filter(proof=proof).all()
         self.assertEqual(len(price_tags), 2)
@@ -1200,7 +1192,7 @@ class MLModelTest(TestCase):
                     ],
                 ):
                     results = create_price_tags_from_proof_prediction(
-                        proof, proof_prediction, threshold=0.41, run_extraction=False
+                        proof, proof_prediction, threshold=0.41
                     )
         after = timezone.now()
         self.assertEqual(len(results), 2)
