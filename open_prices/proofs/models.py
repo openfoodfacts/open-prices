@@ -526,11 +526,29 @@ class ProofPrediction(models.Model):
         return f"{self.proof} - {self.model_name} - {self.model_version}"
 
 
+@receiver(signals.post_save, sender=Proof)
+def proof_post_save_delete_receipt_anonymization_prediction_non_draft_proof(
+    sender, instance, created, **kwargs
+):
+    """Delete the receipt anonymization prediction once the proof is not in
+    draft mode anymore. Receipt anonymization contain PII data, so it's
+    best that those are not publicly available."""
+    if (
+        not created
+        and instance.draft is False
+        and instance.type == proof_constants.TYPE_RECEIPT
+    ):
+        ProofPrediction.objects.filter(
+            proof=instance,
+            type=proof_constants.PROOF_PREDICTION_RECEIPT_ANONYMIZATION_TYPE,
+        ).delete()
+
+
 @receiver(signals.post_save, sender=ProofPrediction)
 def proof_prediction_post_create_increment_counts(sender, instance, created, **kwargs):
     if created:
         if instance.proof_id:
-            Proof.objects.filter(id=instance.proof_id).update(
+            Proof.all_objects.filter(id=instance.proof_id).update(
                 prediction_count=F("prediction_count") + 1
             )
 

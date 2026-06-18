@@ -46,6 +46,8 @@ jobs:
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
         echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.net/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
+        # TODO: set-up Stunnel to allow access from PaddleX from staging
+        echo "PADDLEX_API_URL=http://IPADRESS:8080" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
@@ -61,6 +63,7 @@ jobs:
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
         echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.org/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
+        echo "PADDLEX_API_URL=http://paddlex:8080" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
@@ -126,7 +129,7 @@ jobs:
           echo "COMPOSE_HTTP_TIMEOUT=180" >> .env
           echo "COMPOSE_PROJECT_NAME=open_prices" >> .env
           echo "COMPOSE_PATH_SEPARATOR=;" >> .env
-          echo "COMPOSE_FILE=docker-compose.yml;docker/prod.yml" >> .env
+          echo "COMPOSE_FILE=docker-compose.yml;docker/prod.yml;docker/ocr.yml" >> .env
           # This is the network shared with Product Opener.
           # In staging, Product Opener is deployed on the same VM.
           # In production Product Opener is deployed on a separate server and is not dockerized.
@@ -157,6 +160,9 @@ jobs:
           echo "GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}" >> .env
           echo "PRICE_TAG_EXTRACTION_ASYNC_REQUESTS=True" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
+          echo "PADDLEX_API_URL=${{ env.PADDLEX_API_URL }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "OPENAI_BASE_URL=https://api.tensorix.ai/v1" >> .env
           # Disable OCR temporarily, as we have no use of it
           echo "ENABLE_OCR=False" >> .env
           echo "ENABLE_ML_PREDICTIONS=True" >> .env

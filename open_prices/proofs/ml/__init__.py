@@ -13,6 +13,9 @@ from django_q.tasks import async_task
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.classification import run_and_save_proof_type_prediction
 from open_prices.proofs.ml.price_tags import run_and_save_price_tag_detection
+from open_prices.proofs.ml.receipt_anonymization import (
+    run_and_save_receipt_anonymization_prediction,
+)
 from open_prices.proofs.ml.receipts import run_and_save_receipt_extraction_prediction
 from open_prices.proofs.models import Proof
 from open_prices.proofs.utils import open_image_cv2
@@ -68,12 +71,26 @@ def run_and_save_proof_prediction(
                 run_classification=run_price_tag_classification,
                 run_extraction=run_price_tag_extraction,
             )
-        if run_receipt_extraction and proof.type == proof_constants.TYPE_RECEIPT:
-            async_task(
-                "open_prices.proofs.ml.receipts.run_and_save_receipt_extraction_prediction",
-                image=None,
-                proof=proof,
-            )
+        if proof.type == proof_constants.TYPE_RECEIPT:
+            if proof.draft:
+                # Only run receipt anonymization if this is a draft proof.
+                # Receipt anonymization predictions contain PII data, so we
+                # don't want to make it publicly available.
+                # One the draft flag is removed, we delete the anonymization
+                # prediction as well (see
+                # proof_post_save_delete_receipt_anonymization_prediction_non_draft_proof
+                # signal handler).
+                async_task(
+                    "open_prices.proofs.ml.receipt_anonymization.run_and_save_receipt_anonymization_prediction",
+                    image=None,
+                    proof=proof,
+                )
+            if run_receipt_extraction:
+                async_task(
+                    "open_prices.proofs.ml.receipts.run_and_save_receipt_extraction_prediction",
+                    image=None,
+                    proof=proof,
+                )
 
     else:
         # image is an uint8 numpy array in BGR format. BGR is the default format used by OpenCV,
@@ -91,5 +108,11 @@ def run_and_save_proof_prediction(
                 run_classification=run_price_tag_classification,
                 run_extraction=run_price_tag_extraction,
             )
-        if run_receipt_extraction and proof.type == proof_constants.TYPE_RECEIPT:
-            run_and_save_receipt_extraction_prediction(image, proof)
+        if proof.type == proof_constants.TYPE_RECEIPT:
+            if proof.draft:
+                run_and_save_receipt_anonymization_prediction(
+                    image,
+                    proof,
+                )
+            if run_receipt_extraction:
+                run_and_save_receipt_extraction_prediction(image, proof)

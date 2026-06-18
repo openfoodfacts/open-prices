@@ -15,6 +15,7 @@ class ProofFactory(DjangoModelFactory):
     file_path = factory.Faker("file_path")
     mimetype = "image/jpeg"
     type = factory.fuzzy.FuzzyChoice(proof_constants.TYPE_LIST)
+    draft = False
     # date = factory.Faker("date")
     # currency = factory.Faker("currency_symbol")
     # price_count = factory.LazyAttribute(lambda x: random.randrange(0, 100))
