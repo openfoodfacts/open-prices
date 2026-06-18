@@ -482,7 +482,7 @@ class ProofPrediction(models.Model):
         verbose_name="The proof this prediction belongs to",
     )
     type = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=proof_constants.PROOF_PREDICTION_TYPE_CHOICES,
         verbose_name="The type of the prediction",
     )
@@ -787,7 +787,7 @@ class PriceTagPrediction(models.Model):
         help_text="The price tag this prediction belongs to",
     )
     type = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=proof_constants.PRICE_TAG_PREDICTION_TYPE_CHOICES,
         help_text="The type of the prediction",
     )
