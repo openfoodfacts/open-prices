@@ -22,8 +22,6 @@ logger = logging.getLogger(__name__)
 
 def run_and_save_proof_prediction(
     proof: Proof,
-    run_price_tag_classification: bool = True,
-    run_price_tag_extraction: bool = True,
     run_receipt_extraction: bool = True,
     run_async: bool = False,
 ) -> None:
@@ -31,15 +29,10 @@ def run_and_save_proof_prediction(
 
     Currently, the following models are run:
     - proof type classification model
-    - price tag classification model
-    - price tag extraction model
+    - price tag detection model
     - receipt extraction model
 
     :param proof: the Proof object to be classified
-    :param run_price_tag_classification: whether to run the price tag classification model on the
-        detected price tags, defaults to True
-    :param run_price_tag_extraction: whether to run the price tag extraction
-        model on the detected price tags, defaults to True
     :param run_receipt_extraction: whether to run the receipt extraction model, defaults to True
     :param run_async: whether to run the ML tasks asynchronously through Django Q, defaults to
         False (runs synchronously).
@@ -65,8 +58,6 @@ def run_and_save_proof_prediction(
                 "open_prices.proofs.ml.price_tags.run_and_save_price_tag_detection",
                 image=None,
                 proof=proof,
-                run_classification=run_price_tag_classification,
-                run_extraction=run_price_tag_extraction,
             )
         if run_receipt_extraction and proof.type == proof_constants.TYPE_RECEIPT:
             async_task(
@@ -85,11 +76,6 @@ def run_and_save_proof_prediction(
         run_and_save_proof_type_prediction(image, proof)
 
         if proof.type == proof_constants.TYPE_PRICE_TAG:
-            run_and_save_price_tag_detection(
-                image,
-                proof,
-                run_classification=run_price_tag_classification,
-                run_extraction=run_price_tag_extraction,
-            )
+            run_and_save_price_tag_detection(image, proof)
         if run_receipt_extraction and proof.type == proof_constants.TYPE_RECEIPT:
             run_and_save_receipt_extraction_prediction(image, proof)

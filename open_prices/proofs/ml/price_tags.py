@@ -722,8 +722,6 @@ def create_price_tags_from_proof_prediction(
     proof: Proof,
     proof_prediction: ProofPrediction,
     threshold: float = 0.5,
-    run_classification: bool = True,
-    run_extraction: bool = True,
 ) -> list[PriceTag]:
     """Create price tags from a proof prediction containing price tag object
     detections. The following steps are performed:
@@ -738,10 +736,6 @@ def create_price_tags_from_proof_prediction(
         price tag detections
     :param threshold: the minimum confidence threshold for a detection to be
         considered valid, defaults to 0.5
-    :param run_classification: whether to run the price tag classification model on the
-        detected price tags, defaults to True
-    :param run_extraction: whether to run the price tag extraction model on the
-        detected price tags, defaults to True
     :return: the list of PriceTag instances created
     """
     if proof_prediction.model_name != PRICE_TAG_DETECTOR_MODEL_NAME:
@@ -752,14 +746,12 @@ def create_price_tags_from_proof_prediction(
         return []
 
     created_price_tags: list[PriceTag] = []
-    to_process: list[PriceTagWithImage] = []
     for detected_object in proof_prediction.data["objects"]:
         if detected_object["score"] < threshold:
             continue
         # To speed up preprocessing, we only crop the image once here, for both model
         # (price tag classification and extraction)
         bounding_box = detected_object["bounding_box"]
-        cropped_image = crop_image(proof.file_path_full, bounding_box)
         price_tag = PriceTag.objects.create(
             proof=proof,
             proof_prediction=proof_prediction,
@@ -770,32 +762,6 @@ def create_price_tags_from_proof_prediction(
             tags=[],
         )
         created_price_tags.append(price_tag)
-        price_tag_with_image = PriceTagWithImage(price_tag, cropped_image)
-
-        if run_classification:
-            classification = run_and_save_price_tag_classification(
-                cropped_image,
-                price_tag,
-            )
-            if not classification:
-                continue
-            predicted_price_tag_type = classification.data.get("prediction", [{}])[
-                0
-            ].get("label")
-
-            # Price tag type prediction can have three possible values: "invalid",
-            # "medium-quality" and "high-quality". We only run the extraction model
-            # on price tags that are not predicted as "invalid" as there is nothing
-            # to extract on these image crops: either the price tag is too blurry or
-            # the crop is not actually a price tag.
-            if predicted_price_tag_type != "invalid":
-                to_process.append(price_tag_with_image)
-        else:
-            # If we don't run classification, we run extraction on all detected price tags
-            to_process.append(price_tag_with_image)
-
-    if run_extraction:
-        run_and_save_price_tag_extraction(to_process, proof)
 
     return created_price_tags
 
@@ -804,8 +770,6 @@ def run_and_save_price_tag_detection(
     image: np.ndarray | None,
     proof: Proof,
     overwrite: bool = False,
-    run_classification: bool = True,
-    run_extraction: bool = True,
 ) -> ProofPrediction | None:
     """Run the price tag object detection model and save the prediction
     in ProofPrediction table.
@@ -815,10 +779,6 @@ def run_and_save_price_tag_detection(
     :param proof: the Proof instance to associate the ProofPrediction with
     :param overwrite: whether to overwrite existing prediction, defaults to
         False
-    :param run_classification: whether to run the price tag classification model on the
-        detected price tags, defaults to True
-    :param run_extraction: whether to run the price tag extraction model on the
-        detected price tags, defaults to True
     :return: the ProofPrediction instance created, or None if the prediction
         already exists and overwrite is False
     """
@@ -847,12 +807,7 @@ def run_and_save_price_tag_detection(
                     "Creating price tags from existing prediction for proof %s",
                     proof.id,
                 )
-                create_price_tags_from_proof_prediction(
-                    proof,
-                    proof_prediction,
-                    run_classification=run_classification,
-                    run_extraction=run_extraction,
-                )
+                create_price_tags_from_proof_prediction(proof, proof_prediction)
             return None
 
     if image is None:
@@ -874,12 +829,7 @@ def run_and_save_price_tag_detection(
             value=None,
             max_confidence=max_confidence,
         )
-        create_price_tags_from_proof_prediction(
-            proof,
-            proof_prediction,
-            run_classification=run_classification,
-            run_extraction=run_extraction,
-        )
+        create_price_tags_from_proof_prediction(proof, proof_prediction)
         return proof_prediction
     except Exception as e:
         logger.exception(e)
