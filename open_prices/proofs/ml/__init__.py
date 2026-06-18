@@ -8,6 +8,7 @@ Proof ML/AI
 import logging
 from pathlib import Path
 
+from django.conf import settings
 from django_q.tasks import async_task
 
 from open_prices.proofs import constants as proof_constants
@@ -76,20 +77,53 @@ def run_and_save_proof_prediction(
             )
 
     else:
-        # image is an uint8 numpy array in BGR format. BGR is the default format used by OpenCV,
-        # while our object detection and classification models expect RGB format.
-        # The conversion from BGR to RGB is done on-the-fly in the predict_proof_type and
-        # run_and_save_price_tag_detection functions.
         image = open_image_cv2(file_path_full)
 
-        run_and_save_proof_type_prediction(image, proof)
+        triton_available = bool(settings.TRITON_URI)
+        gemini_available = bool(settings.GOOGLE_CREDENTIALS)
 
-        if proof.type == proof_constants.TYPE_PRICE_TAG:
-            run_and_save_price_tag_detection(
-                image,
-                proof,
-                run_classification=run_price_tag_classification,
-                run_extraction=run_price_tag_extraction,
+        if not triton_available:
+            logger.warning(
+                "Skipping proof type prediction: TRITON_URI is not configured"
             )
+        else:
+            try:
+                run_and_save_proof_type_prediction(image, proof)
+            except Exception:
+                logger.exception(
+                    "Error running proof type prediction for proof %s", proof.id
+                )
+
+        if not triton_available:
+            logger.warning("Skipping price tag detection: TRITON_URI is not configured")
+        elif proof.type == proof_constants.TYPE_PRICE_TAG:
+            effective_run_extraction = run_price_tag_extraction and gemini_available
+            if run_price_tag_extraction and not gemini_available:
+                logger.warning(
+                    "Price tag extraction will be skipped: "
+                    "GOOGLE_CREDENTIALS is not configured"
+                )
+            try:
+                run_and_save_price_tag_detection(
+                    image,
+                    proof,
+                    run_classification=run_price_tag_classification,
+                    run_extraction=effective_run_extraction,
+                )
+            except Exception:
+                logger.exception(
+                    "Error running price tag detection for proof %s", proof.id
+                )
+
         if run_receipt_extraction and proof.type == proof_constants.TYPE_RECEIPT:
-            run_and_save_receipt_extraction_prediction(image, proof)
+            if not gemini_available:
+                logger.warning(
+                    "Skipping receipt extraction: GOOGLE_CREDENTIALS is not configured"
+                )
+            else:
+                try:
+                    run_and_save_receipt_extraction_prediction(image, proof)
+                except Exception:
+                    logger.exception(
+                        "Error running receipt extraction for proof %s", proof.id
+                    )

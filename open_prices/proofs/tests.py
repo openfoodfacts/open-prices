@@ -1259,6 +1259,220 @@ class MLModelTest(TestCase):
             )
 
 
+class GranularMLPipelineTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.image = np.ones((100, 100, 3), dtype=np.uint8) * 255
+
+    def _create_proof_with_image(self, tmpdirname):
+        new_image_dir = Path(tmpdirname)
+        file_path = new_image_dir / "1.jpg"
+        cv2.imwrite(file_path.as_posix(), self.image)
+        return file_path, new_image_dir
+
+    def test_triton_steps_skipped_when_triton_uri_is_none(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            file_path, new_image_dir = self._create_proof_with_image(tmpdirname)
+            with self.settings(
+                IMAGES_DIR=new_image_dir, TRITON_URI=None, GOOGLE_CREDENTIALS="test"
+            ):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                with (
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.classification.predict_proof_type",
+                    ) as mock_proof_type,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.price_tags.detect_price_tags",
+                    ) as mock_detect,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.receipts.extract_from_receipt",
+                    ) as mock_receipt,
+                    self.assertLogs("open_prices.proofs.ml", level="WARNING") as cm,
+                ):
+                    run_and_save_proof_prediction(proof, run_receipt_extraction=False)
+                    mock_proof_type.assert_not_called()
+                    mock_detect.assert_not_called()
+                    mock_receipt.assert_not_called()
+
+                self.assertTrue(
+                    any("TRITON_URI is not configured" in msg for msg in cm.output)
+                )
+
+                proof.delete()
+
+    def test_gemini_step_skipped_when_google_credentials_is_none(self):
+        predict_proof_type_response = [
+            ("RECEIPT", 0.95),
+            ("PRICE_TAG", 0.05),
+        ]
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            file_path, new_image_dir = self._create_proof_with_image(tmpdirname)
+            with self.settings(
+                IMAGES_DIR=new_image_dir,
+                TRITON_URI="localhost:5504",
+                GOOGLE_CREDENTIALS=None,
+            ):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_RECEIPT
+                )
+                with (
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.classification.predict_proof_type",
+                        return_value=predict_proof_type_response,
+                    ) as mock_proof_type,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.price_tags.detect_price_tags",
+                    ),
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.receipts.extract_from_receipt",
+                    ) as mock_receipt,
+                    self.assertLogs("open_prices.proofs.ml", level="WARNING") as cm,
+                ):
+                    run_and_save_proof_prediction(proof, run_receipt_extraction=True)
+                    mock_proof_type.assert_called_once()
+                    mock_receipt.assert_not_called()
+
+                self.assertTrue(
+                    any(
+                        "GOOGLE_CREDENTIALS is not configured" in msg
+                        for msg in cm.output
+                    )
+                )
+
+                proof.predictions.all().delete()
+                proof.delete()
+
+    def test_runtime_exception_does_not_prevent_other_steps(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            file_path, new_image_dir = self._create_proof_with_image(tmpdirname)
+            with self.settings(
+                IMAGES_DIR=new_image_dir,
+                TRITON_URI="localhost:5504",
+                GOOGLE_CREDENTIALS="test",
+            ):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                with (
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.run_and_save_proof_type_prediction",
+                        side_effect=ConnectionError("Triton unreachable"),
+                    ) as mock_proof_type,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.run_and_save_price_tag_detection",
+                        side_effect=ConnectionError("Triton unreachable"),
+                    ) as mock_detect,
+                    self.assertLogs("open_prices.proofs.ml", level="ERROR") as cm,
+                ):
+                    run_and_save_proof_prediction(proof, run_receipt_extraction=True)
+                    mock_proof_type.assert_called_once()
+                    mock_detect.assert_called_once()
+
+                self.assertTrue(
+                    any(
+                        "Error running proof type prediction" in msg
+                        for msg in cm.output
+                    )
+                )
+                self.assertTrue(
+                    any("Error running price tag detection" in msg for msg in cm.output)
+                )
+
+                proof.delete()
+
+    def test_all_steps_run_when_fully_configured_price_tag(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            file_path, new_image_dir = self._create_proof_with_image(tmpdirname)
+            with self.settings(
+                IMAGES_DIR=new_image_dir,
+                TRITON_URI="localhost:5504",
+                GOOGLE_CREDENTIALS="test",
+            ):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                with (
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.run_and_save_proof_type_prediction",
+                    ) as mock_proof_type,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.run_and_save_price_tag_detection",
+                    ) as mock_detect,
+                ):
+                    run_and_save_proof_prediction(proof, run_receipt_extraction=True)
+                    mock_proof_type.assert_called_once()
+                    mock_detect.assert_called_once()
+
+                proof.delete()
+
+    def test_all_steps_run_when_fully_configured_receipt(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            file_path, new_image_dir = self._create_proof_with_image(tmpdirname)
+            with self.settings(
+                IMAGES_DIR=new_image_dir,
+                TRITON_URI="localhost:5504",
+                GOOGLE_CREDENTIALS="test",
+            ):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_RECEIPT
+                )
+                with (
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.run_and_save_proof_type_prediction",
+                    ) as mock_proof_type,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.run_and_save_receipt_extraction_prediction",
+                    ) as mock_receipt,
+                ):
+                    run_and_save_proof_prediction(proof, run_receipt_extraction=True)
+                    mock_proof_type.assert_called_once()
+                    mock_receipt.assert_called_once()
+
+                proof.predictions.all().delete()
+                proof.delete()
+
+    def test_price_tag_extraction_skipped_when_gemini_unavailable(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            file_path, new_image_dir = self._create_proof_with_image(tmpdirname)
+            with self.settings(
+                IMAGES_DIR=new_image_dir,
+                TRITON_URI="localhost:5504",
+                GOOGLE_CREDENTIALS=None,
+            ):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                with (
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.run_and_save_proof_type_prediction",
+                    ) as mock_proof_type,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.run_and_save_price_tag_detection",
+                    ) as mock_detect,
+                    self.assertLogs("open_prices.proofs.ml", level="WARNING") as cm,
+                ):
+                    run_and_save_proof_prediction(
+                        proof,
+                        run_price_tag_extraction=True,
+                        run_receipt_extraction=False,
+                    )
+                    mock_proof_type.assert_called_once()
+                    mock_detect.assert_called_once()
+                    _, call_kwargs = mock_detect.call_args
+                    self.assertFalse(call_kwargs["run_extraction"])
+
+                self.assertTrue(
+                    any(
+                        "Price tag extraction will be skipped" in msg
+                        for msg in cm.output
+                    )
+                )
+
+                proof.delete()
+
+
 class TestSelectProofImageDir(TestCase):
     def test_select_proof_image_dir_no_dir(self):
         with tempfile.TemporaryDirectory() as tmpdir:
