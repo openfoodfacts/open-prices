@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe
 from simple_history.admin import SimpleHistoryAdmin
 
+from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import (
     PriceTag,
     PriceTagPrediction,
@@ -91,9 +92,12 @@ class PriceTagAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "status",
+        "prediction_count",
+        "tags",
         "created",
     )
     list_filter = ("status",)
+    readonly_fields = ("image_display",)  # (all fields are readonly)
     inlines = (PriceTagPredictionInline,)
 
     def has_add_permission(self, request, obj=None):
@@ -105,11 +109,20 @@ class PriceTagAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    @admin.display(description="Image")
+    def image_display(self, price_tag):
+        if price_tag.image_path_full:
+            return mark_safe(
+                f'<img src="{price_tag.image_path_full}" title="{price_tag.image_path_full}" />'  # noqa
+            )
+        else:
+            return mark_safe("<div>-</div>")
+
 
 class PriceTagInline(admin.TabularInline):
     model = PriceTag
     extra = 0
-    fields = ("status", "created")
+    fields = ("status", "prediction_count", "tags", "created")
     can_delete = False
     show_change_link = True
 
@@ -145,7 +158,7 @@ class ReceiptItemAdmin(admin.ModelAdmin):
 class ReceiptItemInline(admin.TabularInline):
     model = ReceiptItem
     extra = 0
-    fields = ("status", "created")
+    fields = ("order", "status", "created")
     can_delete = False
     show_change_link = True
 
@@ -170,7 +183,12 @@ class ProofPredictionAdmin(admin.ModelAdmin):
         "created",
     )
     list_filter = ("type",)
-    inlines = (PriceTagInline, ReceiptItemInline)
+    inlines = ()  # see get_inlines
+
+    def get_queryset(self, request):
+        return self.model.objects.select_related("proof").prefetch_related(
+            "price_tags", "receipt_items"
+        )
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -180,6 +198,16 @@ class ProofPredictionAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def get_inlines(self, request, obj=None):
+        inlines = super().get_inlines(request, obj)
+        if obj.type == proof_constants.PROOF_PREDICTION_OBJECT_DETECTION_TYPE:
+            return inlines + (PriceTagInline,)
+        elif obj.type == proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE:
+            return inlines + (ReceiptItemInline,)
+        else:  # PROOF_PREDICTION_CLASSIFICATION_TYPE
+            pass
+        return inlines
 
 
 class ProofPredictionInline(admin.TabularInline):
@@ -213,11 +241,30 @@ class ProofAdmin(admin.ModelAdmin):
         "created",
     )
     list_filter = ("type", ProofDraftFilter)
-    readonly_fields = ("created", "updated")
-    inlines = (ProofPredictionInline,)
+    readonly_fields = (
+        "image_md5_hash",
+        *Proof.COUNT_FIELDS,
+        "tags",
+        "created",
+        "updated",
+        "image_display",
+    )
+    inlines = (ProofPredictionInline,)  # see get_inlines
 
     def get_queryset(self, request):
-        return self.model.all_objects.select_related("location")
+        return self.model.all_objects.select_related("location").prefetch_related(
+            "price_tags", "receipt_items"
+        )
+
+    def get_inlines(self, request, obj=None):
+        inlines = super().get_inlines(request, obj)
+        if obj and obj.type == proof_constants.TYPE_PRICE_TAG:
+            return inlines + (PriceTagInline,)
+        elif obj and obj.type == proof_constants.TYPE_RECEIPT:
+            return inlines + (ReceiptItemInline,)
+        else:  # TYPE_GDPR_REQUEST, TYPE_SHOP_IMPORT
+            pass
+        return inlines
 
     def location_with_link(self, proof):
         if proof.location:
@@ -227,3 +274,14 @@ class ProofAdmin(admin.ModelAdmin):
     location_with_link.short_description = Proof._meta.get_field(
         "location"
     ).verbose_name
+
+    @admin.display(description="Image thumb (click for full image)")
+    def image_display(self, proof):
+        if proof.image_thumb_path:
+            return mark_safe(
+                f'<a href="{proof.file_path_full}" target="_blank">'
+                f'<img src="{proof.image_thumb_path_full}" title="{proof.image_thumb_path_full}" />'  # noqa
+                f"</a>"
+            )
+        else:
+            return mark_safe("<div>-</div>")
