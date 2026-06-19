@@ -24,6 +24,9 @@ class ProofFilter(django_filters.FilterSet):
         choices=location_constants.TYPE_CHOICES,
     )
     tags__contains = django_filters.CharFilter(field_name="tags", lookup_expr="any")
+    tags__not_contains = django_filters.CharFilter(
+        field_name="tags", lookup_expr="any", exclude=True
+    )
 
     def filter_kind(self, queryset, name, value):
         if value == constants.KIND_COMMUNITY:
@@ -60,6 +63,9 @@ class PriceTagFilter(django_filters.FilterSet):
         field_name="price_count", lookup_expr="lte"
     )
     tags__contains = django_filters.CharFilter(field_name="tags", lookup_expr="any")
+    tags__not_contains = django_filters.CharFilter(
+        field_name="tags", lookup_expr="any", exclude=True
+    )
     created__gte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="gte"
     )
