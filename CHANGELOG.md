@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.106.0](https://github.com/openfoodfacts/open-prices/compare/v1.105.0...v1.106.0) (2026-06-19)
+
+
+### Features
+
+* **Proofs:** launch ML tasks concurrently ([#1345](https://github.com/openfoodfacts/open-prices/issues/1345)) ([3d5d852](https://github.com/openfoodfacts/open-prices/commit/3d5d852a653c2523796a392692db4febeeb851a3))
+
+
+### Bug Fixes
+
+* **Admin:** Proofs: fix display of images (following [#1350](https://github.com/openfoodfacts/open-prices/issues/1350)) ([#1357](https://github.com/openfoodfacts/open-prices/issues/1357)) ([efa38d1](https://github.com/openfoodfacts/open-prices/commit/efa38d1de99b53318dd19914def00bda4949b7d8))
+* correct OpenAPI spec for paginated endpoints ([#1336](https://github.com/openfoodfacts/open-prices/issues/1336)) ([729c900](https://github.com/openfoodfacts/open-prices/commit/729c9002d10ad85c9dd0b9a93bcc810d91cd584f))
+* **Price Tags:** Predictions: run extraction even if they are classified as invalid ([#1354](https://github.com/openfoodfacts/open-prices/issues/1354)) ([efa3743](https://github.com/openfoodfacts/open-prices/commit/efa374333b52ac058cf767fc96be7f171fad23b3))
+* typo ([#1342](https://github.com/openfoodfacts/open-prices/issues/1342)) ([060fd5a](https://github.com/openfoodfacts/open-prices/commit/060fd5a49c828bf3e5a644d9bc99b2828dbe86d7))
+* typo ([#1343](https://github.com/openfoodfacts/open-prices/issues/1343)) ([682af72](https://github.com/openfoodfacts/open-prices/commit/682af72a17d502b60e513aedf767084926b1f2be))
+* typo ([#1344](https://github.com/openfoodfacts/open-prices/issues/1344)) ([77daba8](https://github.com/openfoodfacts/open-prices/commit/77daba811180a85e79f874dd33e459d15afef16c))
+
+
+### Documentation
+
+* **Community:** add pages on Funding, Presentations & Project management ([#1330](https://github.com/openfoodfacts/open-prices/issues/1330)) ([328364b](https://github.com/openfoodfacts/open-prices/commit/328364b7fa88c7c0f8acc799858996b99876a99b))
+* **Community:** update Weekly meetings (now 5PM on Jitsi) ([#1333](https://github.com/openfoodfacts/open-prices/issues/1333)) ([fa8b66a](https://github.com/openfoodfacts/open-prices/commit/fa8b66ad2ffd4bfc098d1c0c5d077b4972c2b6f4))
+* **Guides:** add pages on Data & Reuses ([#1331](https://github.com/openfoodfacts/open-prices/issues/1331)) ([bd28b61](https://github.com/openfoodfacts/open-prices/commit/bd28b61bf2c6e3c7685a4d1c977c50989b28c0a6))
+
+
+### Technical
+
+* **Admin:** new ReadOnlyAdminMixin to simplify the code ([#1351](https://github.com/openfoodfacts/open-prices/issues/1351)) ([049d0fe](https://github.com/openfoodfacts/open-prices/commit/049d0feac7e0bde4850f44939c4a3c8471336f77))
+* **Admin:** Proofs: display proof & price_tag thumb image. Display inlines programatically ([#1350](https://github.com/openfoodfacts/open-prices/issues/1350)) ([1360178](https://github.com/openfoodfacts/open-prices/commit/136017883e2260f8623e109e934fa91945e47a18))
+* **Products:** new `force_update` param in sync task ([#1325](https://github.com/openfoodfacts/open-prices/issues/1325)) ([903c469](https://github.com/openfoodfacts/open-prices/commit/903c469effc7c63097e90d468d18a7cdb5cf1e1b))
+* **Proofs:** Predictions: add RECEIPT_ANONYMIZATION type ([#1348](https://github.com/openfoodfacts/open-prices/issues/1348)) ([1c7073a](https://github.com/openfoodfacts/open-prices/commit/1c7073abd03d572430cf99ac676bf3c1c2cc5bba))
+* **Proofs:** rename image_bytes_as_webp into convert_image ([#1349](https://github.com/openfoodfacts/open-prices/issues/1349)) ([4a79cfd](https://github.com/openfoodfacts/open-prices/commit/4a79cfdcfd477080953843e70e884f69674cdb52))
+
 ## [1.105.0](https://github.com/openfoodfacts/open-prices/compare/v1.104.2...v1.105.0) (2026-06-04)
 
 
