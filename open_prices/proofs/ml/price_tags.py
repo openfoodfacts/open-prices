@@ -779,9 +779,7 @@ def create_price_tags_from_proof_prediction(
             )
             if not classification:
                 continue
-            predicted_price_tag_type = classification.data.get("prediction", [{}])[
-                0
-            ].get("label")
+            classification.data.get("prediction", [{}])[0].get("label")
 
             # Price tag type prediction can have three possible values: "invalid",
             # "medium-quality" and "high-quality". We only run the extraction model
@@ -790,6 +788,7 @@ def create_price_tags_from_proof_prediction(
             # the crop is not actually a price tag.
             # 2026-06-18: temporarily always run price tag extractions, even on price
             # tags that are predicted as "invalid"
+            # if predicted_price_tag_type != "invalid":
             to_process.append(price_tag_with_image)
         else:
             # If we don't run classification, we run extraction on all detected price tags
