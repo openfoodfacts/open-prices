@@ -304,9 +304,21 @@ class Proof(models.Model):
         super().save(*args, **kwargs)
 
     @property
+    def file_path_display(self):
+        if self.file_path:
+            return str(settings.IMAGES_DIR_DISPLAY / self.file_path)
+        return None
+
+    @property
     def file_path_full(self):
         if self.file_path:
             return str(settings.IMAGES_DIR / self.file_path)
+        return None
+
+    @property
+    def image_thumb_path_display(self):
+        if self.image_thumb_path:
+            return str(settings.IMAGES_DIR_DISPLAY / self.image_thumb_path)
         return None
 
     @property
@@ -650,6 +662,10 @@ class PriceTag(models.Model):
         from open_prices.proofs.utils import get_price_tag_image_path
 
         return get_price_tag_image_path(self.id)
+
+    @property
+    def image_path_display(self):
+        return str(settings.IMAGES_DIR_DISPLAY / self.image_path)
 
     @property
     def image_path_full(self):

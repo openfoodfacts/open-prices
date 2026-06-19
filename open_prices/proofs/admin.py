@@ -85,9 +85,9 @@ class PriceTagAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
 
     @admin.display(description="Image")
     def image_display(self, price_tag):
-        if price_tag.image_path_full:
+        if price_tag.image_path_display:
             return mark_safe(
-                f'<img src="{price_tag.image_path_full}" title="{price_tag.image_path_full}" />'  # noqa
+                f'<img src="{price_tag.image_path_display}" title="{price_tag.image_path_display}" height="300" />'  # noqa
             )
         else:
             return mark_safe("<div>-</div>")
@@ -208,8 +208,8 @@ class ProofAdmin(admin.ModelAdmin):
     def image_display(self, proof):
         if proof.image_thumb_path:
             return mark_safe(
-                f'<a href="{proof.file_path_full}" target="_blank">'
-                f'<img src="{proof.image_thumb_path_full}" title="{proof.image_thumb_path_full}" />'  # noqa
+                f'<a href="{proof.file_path_display}" target="_blank">'
+                f'<img src="{proof.image_thumb_path_display}" title="{proof.image_thumb_path_display}" height="300" />'  # noqa
                 f"</a>"
             )
         else:
