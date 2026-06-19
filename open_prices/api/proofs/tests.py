@@ -284,11 +284,15 @@ class ProofListFilterApiTest(TestCase):
 
     def test_proof_list_filter_by_tags(self):
         self.assertEqual(Proof.objects.count(), 3)
-        # tags
+        # tags__contains
         url = self.url + "?tags__contains=challenge-1"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["tags"], ["challenge-1"])
+        # tags__not_contains
+        url = self.url + "?tags__not_contains=challenge-1"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
 
     def test_proof_list_filter_by_owner(self):
         self.assertEqual(Proof.objects.count(), 3)
@@ -1107,7 +1111,9 @@ class PriceTagListApiTest(TestCase):
         )
         cls.price_tag_2 = PriceTagFactory(proof=cls.proof)
         cls.price_tag_3 = PriceTagFactory(
-            proof=cls.proof_2, status=proof_constants.PriceTagStatus.deleted
+            proof=cls.proof_2,
+            tags=["invalid"],
+            status=proof_constants.PriceTagStatus.deleted,
         )
 
     def test_price_tag_list(self):
@@ -1177,13 +1183,18 @@ class PriceTagListApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
-    def test_price_list_filter_by_tags(self):
+    def test_price_tag_list_filter_by_tags(self):
+        # tags__contains
         url = self.url + "?tags__contains=prediction-found-product"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(
             response.data["items"][0]["tags"], ["prediction-found-product"]
         )
+        # tags__not_contains
+        url = self.url + "?tags__not_contains=invalid"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
 
 
 class PriceTagDetailApiTest(TestCase):
