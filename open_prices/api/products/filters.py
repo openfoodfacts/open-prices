@@ -1,5 +1,6 @@
 import django_filters
 
+from open_prices.api.utils import ArrayFieldElementContainsFilter
 from open_prices.products.models import Product
 
 
@@ -7,15 +8,11 @@ class ProductFilter(django_filters.FilterSet):
     product_name__like = django_filters.CharFilter(
         field_name="product_name", lookup_expr="icontains"
     )
-    categories_tags__contains = django_filters.CharFilter(
-        field_name="categories_tags", lookup_expr="any"
+    categories_tags__contains = ArrayFieldElementContainsFilter(
+        field_name="categories_tags"
     )
-    labels_tags__contains = django_filters.CharFilter(
-        field_name="labels_tags", lookup_expr="any"
-    )
-    brands_tags__contains = django_filters.CharFilter(
-        field_name="brands_tags", lookup_expr="any"
-    )
+    labels_tags__contains = ArrayFieldElementContainsFilter(field_name="labels_tags")
+    brands_tags__contains = ArrayFieldElementContainsFilter(field_name="brands_tags")
     brands__like = django_filters.CharFilter(
         field_name="brands", lookup_expr="icontains"
     )
