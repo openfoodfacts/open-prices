@@ -1,5 +1,6 @@
 import django_filters
 
+from open_prices.api.utils import ArrayFieldElementContainsFilter
 from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.proofs import constants as proof_constants
@@ -23,9 +24,9 @@ class ProofFilter(django_filters.FilterSet):
         field_name="location__type",
         choices=location_constants.TYPE_CHOICES,
     )
-    tags__contains = django_filters.CharFilter(field_name="tags", lookup_expr="any")
-    tags__not_contains = django_filters.CharFilter(
-        field_name="tags", lookup_expr="any", exclude=True
+    tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
+    tags__not_contains = ArrayFieldElementContainsFilter(
+        field_name="tags", exclude=True
     )
 
     def filter_kind(self, queryset, name, value):
@@ -62,9 +63,9 @@ class PriceTagFilter(django_filters.FilterSet):
     prediction_count__lte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="lte"
     )
-    tags__contains = django_filters.CharFilter(field_name="tags", lookup_expr="any")
-    tags__not_contains = django_filters.CharFilter(
-        field_name="tags", lookup_expr="any", exclude=True
+    tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
+    tags__not_contains = ArrayFieldElementContainsFilter(
+        field_name="tags", exclude=True
     )
     created__gte = django_filters.DateTimeFilter(
         field_name="created", lookup_expr="gte"
