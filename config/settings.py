@@ -7,6 +7,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Directory where user-uploaded images are stored
 IMAGES_DIR = BASE_DIR / "img"
+# for URL generation
+IMAGES_DIR_DISPLAY = Path("/img")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
