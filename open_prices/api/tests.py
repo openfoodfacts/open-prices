@@ -81,6 +81,10 @@ class PaginationTest(TestCase):
         url = self.url + "?page=2"
         response = self.client.get(url)
         self.assertEqual(response.data["page"], 2)
+        # size=100 & page=100
+        url = self.url + "?size=100&page=100"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)  # last page is 11
         # size=1 & page=1000
         url = self.url + "?size=1&page=1000"
         response = self.client.get(url)
@@ -88,15 +92,15 @@ class PaginationTest(TestCase):
         # size=1 & page=1001
         url = self.url + "?size=1&page=1001"
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)  # max page is 1000
         self.assertIn("Maximum page reached", response.json()["detail"])
         # page=last
         url = self.url + "?page=last"
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)  # last page string is disabled
         self.assertIn("Invalid page", response.json()["detail"])
         # page=0
         url = self.url + "?page=0"
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)  # invalid page number
         self.assertIn("Invalid page", response.json()["detail"])

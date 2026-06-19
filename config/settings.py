@@ -220,8 +220,8 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Open Prices API allows you to add product prices",
     "CONTACT": {
         "name": "The Open Food Facts team",
-        "url": f"{OPENFOODFACTS_URL}",
-        "email": f"{OPENFOODFACTS_EMAIL}",
+        "url": OPENFOODFACTS_URL,
+        "email": OPENFOODFACTS_EMAIL,
     },
     "LICENSE": {
         "name": " AGPL-3.0",

@@ -1,5 +1,5 @@
 from django.conf import settings
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import ParseError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -27,17 +27,17 @@ class CustomPagination(PageNumberPagination):
         Override the default get_page_number
 
         Custom rule:
-        - if the page number is greater than max_page_number, raise NotFound
+        - if the page number is greater than max_page_number, raise ParseError
         """
         page_number = super().get_page_number(request, paginator)
         try:
             page_number_int = int(page_number)
         except (TypeError, ValueError):
-            raise NotFound("Invalid page.") from None
+            raise ParseError("Invalid page.") from None
         if page_number_int < 1:
-            raise NotFound("Invalid page.")
+            raise ParseError("Invalid page.")
         if page_number_int > self.max_page_number:
-            raise NotFound(
+            raise ParseError(
                 f"Maximum page reached. See {settings.OPENPRICES_DOCS_GUIDES_DATA_URL} for alternate ways to access the data."
             )
         return page_number
