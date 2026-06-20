@@ -25,3 +25,6 @@ class BadgeDefinition(models.Model):
 
     def __str__(self):
         return self.name
+
+    def user_has_achieved(self, user):
+        return getattr(user, self.metric, 0) >= self.threshold
