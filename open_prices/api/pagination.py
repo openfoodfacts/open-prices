@@ -20,7 +20,7 @@ class CustomPagination(PageNumberPagination):
     ### page number config
     # page_query_param = "page"  # default
     last_page_strings = ()  # disable "last" page string
-    max_page_number = 1000  # custom rule, see get_page_number()
+    max_page_number = 500  # custom rule, see get_page_number()
 
     def get_page_number(self, request, paginator):
         """
