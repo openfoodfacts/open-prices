@@ -28,8 +28,9 @@ class ChallengeListPaginationApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:challenges-list")
-        cls.challenge_1 = ChallengeFactory()
-        cls.challenge_2 = ChallengeFactory()
+        ChallengeFactory()
+        ChallengeFactory()
+        ChallengeFactory()
 
     def test_challenge_list_size(self):
         # default
@@ -37,6 +38,10 @@ class ChallengeListPaginationApiTest(TestCase):
         for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
             with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
                 self.assertIn(PAGINATION_KEY, response.data)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 10)  # default
 
 

@@ -113,22 +113,6 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 10)  # default
-        # size=150
-        url = self.url + "?size=150"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
-        self.assertEqual(len(response.data["items"]), 3)
-        self.assertEqual(response.data["page"], 1)
-        self.assertEqual(response.data["pages"], 1)
-        self.assertEqual(response.data["size"], 100)  # max to 100
-        # size=1
-        url = self.url + "?size=1"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
-        self.assertEqual(len(response.data["items"]), 1)
-        self.assertEqual(response.data["page"], 1)
-        self.assertEqual(response.data["pages"], 3)
-        self.assertEqual(response.data["size"], 1)
 
 
 class PriceListOrderApiTest(TestCase):

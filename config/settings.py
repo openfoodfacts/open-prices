@@ -2,6 +2,17 @@ import os
 import sys
 from pathlib import Path
 
+OPENFOODFACTS_URL = "https://world.openfoodfacts.org"
+OPENFOODFACTS_EMAIL = "contact@openfoodfacts.org"
+OPENPRICES_DOCS_URL = "https://openfoodfacts.github.io/open-prices/"
+OPENPRICES_DOCS_GUIDES_DATA_URL = (
+    "https://openfoodfacts.github.io/open-prices/guides/data/"
+)
+
+
+# Django config
+# ------------------------------------------------------------------------------
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -211,8 +222,8 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Open Prices API allows you to add product prices",
     "CONTACT": {
         "name": "The Open Food Facts team",
-        "url": "https://world.openfoodfacts.org",
-        "email": "contact@openfoodfacts.org",
+        "url": OPENFOODFACTS_URL,
+        "email": OPENFOODFACTS_EMAIL,
     },
     "LICENSE": {
         "name": " AGPL-3.0",
