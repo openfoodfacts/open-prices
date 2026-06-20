@@ -5,6 +5,9 @@ from open_prices.badges import constants as badge_constants
 
 
 class BadgeDefinition(models.Model):
+    COUNT_FIELDS = ("user_count",)
+    META_FIELDS = ("created", "updated")
+
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
 
