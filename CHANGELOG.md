@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.106.1](https://github.com/openfoodfacts/open-prices/compare/v1.106.0...v1.106.1) (2026-06-20)
+
+
+### Technical
+
+* **API:** Proofs: add tags__not_contains filter for proofs & price tags ([#1359](https://github.com/openfoodfacts/open-prices/issues/1359)) ([e57d3fa](https://github.com/openfoodfacts/open-prices/commit/e57d3fabde6e39f0d385fd9b7c5340bc9adb5d1b))
+* **API:** set the max page number queryable to 500 ([#1355](https://github.com/openfoodfacts/open-prices/issues/1355)) ([4fe2ff8](https://github.com/openfoodfacts/open-prices/commit/4fe2ff8318668eb18fd66b3ce0b425d8301a365d))
+* **API:** use `contains` instead of `any` (remove our custom lookup) for Postgres ArrayFields filtering ([#1360](https://github.com/openfoodfacts/open-prices/issues/1360)) ([9b40173](https://github.com/openfoodfacts/open-prices/commit/9b4017358c3632f8f4f72554e79b15c1d65acfa2))
+
 ## [1.106.0](https://github.com/openfoodfacts/open-prices/compare/v1.105.0...v1.106.0) (2026-06-19)
 
 
