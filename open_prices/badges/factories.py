@@ -3,12 +3,12 @@ import factory.fuzzy
 from factory.django import DjangoModelFactory
 
 from open_prices.badges import constants as badge_constants
-from open_prices.badges.models import BadgeDefinition
+from open_prices.badges.models import Badge
 
 
-class BadgeDefinitionFactory(DjangoModelFactory):
+class BadgeFactory(DjangoModelFactory):
     class Meta:
-        model = BadgeDefinition
+        model = Badge
 
     name = factory.Faker("name")
     metric = factory.fuzzy.FuzzyChoice(

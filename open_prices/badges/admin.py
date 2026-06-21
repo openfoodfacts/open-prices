@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from open_prices.badges.models import BadgeDefinition
+from open_prices.badges.models import Badge
 
 
-@admin.register(BadgeDefinition)
-class BadgeDefinitionAdmin(admin.ModelAdmin):
+@admin.register(Badge)
+class BadgeAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "metric",
@@ -13,4 +13,4 @@ class BadgeDefinitionAdmin(admin.ModelAdmin):
         "created",
     )
     list_filter = ("metric",)
-    readonly_fields = (*BadgeDefinition.COUNT_FIELDS, *BadgeDefinition.META_FIELDS)
+    readonly_fields = (*Badge.COUNT_FIELDS, *Badge.META_FIELDS)

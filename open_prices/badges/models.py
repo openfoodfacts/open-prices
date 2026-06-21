@@ -4,7 +4,7 @@ from django.utils import timezone
 from open_prices.badges import constants as badge_constants
 
 
-class BadgeDefinition(models.Model):
+class Badge(models.Model):
     COUNT_FIELDS = ("user_count",)
     META_FIELDS = ("created", "updated")
 
@@ -20,11 +20,16 @@ class BadgeDefinition(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Badge Definition"
-        verbose_name_plural = "Badge Definitions"
+        verbose_name = "Badge"
+        verbose_name_plural = "Badges"
 
     def __str__(self):
         return self.name
 
     def user_has_achieved(self, user):
+        """
+        Examples:
+        - user.price_count = 10, badge.metric = "price_count", badge.threshold = 5 => True
+        - user.price_count = 10, badge.metric = "price_count", badge.threshold = 50 => False
+        """
         return getattr(user, self.metric, 0) >= self.threshold

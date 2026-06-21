@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="BadgeDefinition",
+            name="Badge",
             fields=[
                 (
                     "id",
@@ -47,8 +47,8 @@ class Migration(migrations.Migration):
                 ("user_count", models.PositiveIntegerField(default=0)),
             ],
             options={
-                "verbose_name": "Badge Definition",
-                "verbose_name_plural": "Badge Definitions",
+                "verbose_name": "Badge",
+                "verbose_name_plural": "Badges",
             },
         ),
     ]
