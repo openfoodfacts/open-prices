@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import UniqueConstraint
 from django.utils import timezone
 
 from open_prices.badges import constants as badge_constants
@@ -34,3 +35,25 @@ class Badge(models.Model):
         - user.price_count = 10 & badge.metric = "price_count" & badge.threshold = 50 => False
         """
         return getattr(user, self.metric, 0) >= self.threshold
+
+
+class UserBadge(models.Model):
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="user_badges"
+    )
+    badge = models.ForeignKey(
+        Badge, on_delete=models.CASCADE, related_name="user_badges"
+    )
+    achieved_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = "User Badge"
+        verbose_name_plural = "User Badges"
+        constraints = [
+            UniqueConstraint(
+                fields=["user", "badge"], name="unique_user_badge_constraint"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.badge} - {self.user}"
