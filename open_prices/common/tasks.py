@@ -10,6 +10,7 @@ from openfoodfacts import Flavor
 from open_prices.api.locations.serializers import LocationSerializer
 from open_prices.api.prices.serializers import PriceSerializer
 from open_prices.api.proofs.serializers import ProofSerializer
+from open_prices.badges.models import Badge
 from open_prices.challenges.models import Challenge
 from open_prices.common.history import history_clean_duplicate_command
 from open_prices.common.openfoodfacts import import_product_db
@@ -103,6 +104,16 @@ def update_location_counts_task():
             getattr(location, f"update_{field}")()
 
 
+def update_badge_task():
+    """
+    1. Give badges to users based on their count fields
+    2. Update badge field counts
+    """
+    for badge in Badge.objects.all():
+        badge.update_user_badges()
+        badge.update_user_count()
+
+
 def fix_proof_fields_task():
     """
     Proofs uploaded via the (old) mobile app lack location/date/currency fields
@@ -166,7 +177,8 @@ CRON_SCHEDULES = {
     "challenge_tasks": ("30 1 * * *", {}),  # daily at 01:30
     "history_cleanup_task": ("0 3 * * 1", {}),  # daily at 03:00
     "proof_draft_cleanup_task": ("*/5 * * * *", {}),  # every 5 minutes
-    "update_user_counts_task": ("0 2 * * 1", {}),  # every start of the week (at 02:00)
+    "update_user_counts_task": ("0 2 * * 1", {}),  # daily at 02:00
+    "update_badge_task": ("5 2 * * 1", {}),  # daily at 02:05
     "update_location_counts_task": (
         "10 2 * * 1",  # every start of the week (at 02:10)
         {},
