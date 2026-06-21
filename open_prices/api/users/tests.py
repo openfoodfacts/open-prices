@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from open_prices.badges.factories import BadgeFactory
 from open_prices.users.factories import SessionFactory, UserFactory
 from open_prices.users.models import User
 
@@ -128,3 +129,25 @@ class UserDetailApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["user_id"], self.user_session_1.user.user_id)
+
+
+class UserBadgesListApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory(price_count=15)
+        cls.badge = BadgeFactory(metric="price_count", threshold=10)
+        cls.url = reverse("api:users-badges", args=[cls.user.user_id])
+
+    def test_user_badges_list(self):
+        # anonymous
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 0)
+
+        # set the badge for the user
+        self.badge.update_user_badges()
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["badge"]["id"], self.badge.id)
