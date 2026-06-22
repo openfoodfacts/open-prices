@@ -145,6 +145,35 @@ class LocationModelSaveTest(TestCase):
         )
 
 
+class LocationVersioningTest(TestCase):
+    def test_same_osm_id_different_version_allowed(self):
+        # first version of the location
+        location_v1 = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_id=298872652,
+            osm_type=location_constants.OSM_TYPE_NODE,
+            osm_name="Casino",
+            osm_brand="Casino",
+            osm_version=16,
+        )
+        # second version of the same location
+        location_v2 = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_id=298872652,
+            osm_type=location_constants.OSM_TYPE_NODE,
+            osm_name="Intermarché",
+            osm_brand="Intermarché",
+            osm_version=21,
+        )
+        # both records should exist in the database
+        self.assertEqual(Location.objects.filter(osm_id=298872652).count(), 2)
+        # each record should have the correct brand
+        self.assertEqual(location_v1.osm_brand, "Casino")
+        self.assertEqual(location_v2.osm_brand, "Intermarché")
+        # each record should have a different version
+        self.assertNotEqual(location_v1.osm_version, location_v2.osm_version)
+
+
 class LocationQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
