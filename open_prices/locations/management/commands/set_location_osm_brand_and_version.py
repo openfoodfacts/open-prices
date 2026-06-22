@@ -27,7 +27,10 @@ class Command(BaseCommand):
                 if response:
                     location.osm_brand = response.tag("brand")
                     location.osm_version = response.version()
-                    location.save(update_fields=["osm_brand", "osm_version"])
+                    location.osm_version_date = response.timestamp()
+                    location.save(
+                        update_fields=["osm_brand", "osm_version", "osm_version_date"]
+                    )
                 else:
                     self.stdout.write(f"Could not find historical data for {location}")
                 if index % 100 == 0:
