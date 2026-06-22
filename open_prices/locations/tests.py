@@ -74,13 +74,29 @@ class LocationModelSaveTest(TestCase):
                     osm_id=6509705997,
                     osm_type=LOCATION_OSM_TYPE_NOT_OK,
                 )
-        # unique constraint
+        # unique constraint: same osm_id + osm_type + osm_version should fail
+        LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_id=6509705997,
+            osm_type=location_constants.OSM_TYPE_OK_LIST[0],
+            osm_version=1,
+        )
+
         self.assertRaises(
             ValidationError,
             LocationFactory,
             type=location_constants.TYPE_OSM,
             osm_id=6509705997,
             osm_type=location_constants.OSM_TYPE_OK_LIST[0],
+            osm_version=1,
+        )
+
+        # different osm_version should be allowed (versioning support)
+        LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_id=6509705997,
+            osm_type=location_constants.OSM_TYPE_OK_LIST[0],
+            osm_version=2,
         )
 
     def test_location_decimal_truncate_on_create(self):

@@ -123,6 +123,7 @@ class Location(models.Model):
         "osm_lat",
         "osm_lon",
         "osm_version",
+        "osm_version_date",
     ]
     TYPE_ONLINE_MANDATORY_FIELDS = ["website_url"]
 
@@ -152,6 +153,7 @@ class Location(models.Model):
         max_digits=11, decimal_places=7, blank=True, null=True
     )
     osm_version = models.PositiveIntegerField(blank=True, null=True)
+    osm_version_date = models.DateTimeField(blank=True, null=True)
 
     # type ONLINE
     website_url = models.URLField(blank=True, null=True)
@@ -174,7 +176,7 @@ class Location(models.Model):
         constraints = [
             UniqueConstraint(
                 name=location_constants.TYPE_OSM_UNIQUE_CONSTRAINT_NAME,
-                fields=["osm_id", "osm_type"],
+                fields=["osm_id", "osm_type", "osm_version"],
                 condition=Q(type=location_constants.TYPE_OSM),
             ),
             UniqueConstraint(
