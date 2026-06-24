@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 
 from open_prices.badges.factories import BadgeFactory
 
@@ -56,3 +57,46 @@ class BadgeListOrderApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(len(response.data["items"]), 2)
         self.assertEqual(response.data["items"][0]["id"], self.badge_2.id)
+
+
+class BadgeCreateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:badges-list")
+
+    def test_cannot_create_badge(self):
+        response = self.client.post(self.url, data={"name": "New Badge"})
+        self.assertEqual(response.status_code, 405)
+
+
+class BadgeDetailApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.badge = BadgeFactory()
+
+    def test_cannot_get_badge_detail(self):
+        self.assertRaises(
+            NoReverseMatch, reverse, "api:badges-detail", kwargs={"pk": self.badge.id}
+        )
+
+
+class BadgeUpdateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.badge = BadgeFactory()
+
+    def test_cannot_update_badge(self):
+        self.assertRaises(
+            NoReverseMatch, reverse, "api:badges-detail", kwargs={"pk": self.badge.id}
+        )
+
+
+class BadgeDeleteApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.badge = BadgeFactory()
+
+    def test_cannot_delete_badge(self):
+        self.assertRaises(
+            NoReverseMatch, reverse, "api:badges-detail", kwargs={"pk": self.badge.id}
+        )
