@@ -24,6 +24,7 @@ class Migration(migrations.Migration):
                 ),
                 ("name", models.CharField(max_length=100, unique=True)),
                 ("description", models.TextField(blank=True, null=True)),
+                ("image_url", models.URLField(blank=True, null=True)),
                 (
                     "metric",
                     models.CharField(

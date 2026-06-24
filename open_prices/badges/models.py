@@ -10,6 +10,7 @@ class Badge(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True)
 
     metric = models.CharField(max_length=40, choices=badge_constants.METRIC_CHOICES)
     threshold = models.PositiveIntegerField()
@@ -29,7 +30,7 @@ class Badge(models.Model):
     def user_has_achieved(self, user):
         """
         Examples:
-        - user.price_count = 10, badge.metric = "price_count", badge.threshold = 5 => True
-        - user.price_count = 10, badge.metric = "price_count", badge.threshold = 50 => False
+        - user.price_count = 10 & badge.metric = "price_count" & badge.threshold = 5 => True
+        - user.price_count = 10 & badge.metric = "price_count" & badge.threshold = 50 => False
         """
         return getattr(user, self.metric, 0) >= self.threshold
