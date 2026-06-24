@@ -29,6 +29,16 @@ class Badge(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def update_badge_task(cls):
+        """
+        1. Give badges to users based on their count fields
+        2. Update badge field counts
+        """
+        for badge in cls.objects.all():
+            badge.update_user_badges()
+            badge.update_user_count()
+
     def user_has_achieved(self, user: User) -> bool:
         """
         Examples:

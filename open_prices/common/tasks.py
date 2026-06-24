@@ -105,13 +105,7 @@ def update_location_counts_task():
 
 
 def update_badge_task():
-    """
-    1. Give badges to users based on their count fields
-    2. Update badge field counts
-    """
-    for badge in Badge.objects.all():
-        badge.update_user_badges()
-        badge.update_user_count()
+    Badge.update_badge_task()
 
 
 def fix_proof_fields_task():
