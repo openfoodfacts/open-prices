@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from open_prices.badges import constants as badge_constants
 from open_prices.badges.factories import BadgeFactory
-from open_prices.badges.models import UserBadge
+from open_prices.badges.models import Badge, UserBadge
 from open_prices.users.factories import UserFactory
 
 
@@ -51,8 +51,7 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        self.badge.update_user_badges()
-        self.badge.update_user_count()
+        Badge.update_task()
         self.badge.refresh_from_db()
 
         # Stats should be updated correctly
@@ -70,16 +69,14 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        self.badge.update_user_badges()
-        self.badge.update_user_count()
+        Badge.update_task()
         self.badge.refresh_from_db()
         user_badge_achieved_at = UserBadge.objects.get(
             user=self.user, badge=self.badge
         ).achieved_at
 
         # Update user badges and count again
-        self.badge.update_user_badges()
-        self.badge.update_user_count()
+        Badge.update_task()
         self.badge.refresh_from_db()
 
         # user_badge_achieved_at is unchanged
@@ -97,10 +94,7 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        self.badge.update_user_badges()
-        self.badge.update_user_count()
-        badge_2.update_user_badges()
-        badge_2.update_user_count()
+        Badge.update_task()
         self.badge.refresh_from_db()
         badge_2.refresh_from_db()
 
@@ -117,8 +111,7 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        self.badge.update_user_badges()
-        self.badge.update_user_count()
+        Badge.update_task()
         self.badge.refresh_from_db()
         user_badge_achieved_at = UserBadge.objects.get(
             user=self.user, badge=self.badge
@@ -129,8 +122,7 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count again
-        self.badge.update_user_badges()
-        self.badge.update_user_count()
+        Badge.update_task()
         self.badge.refresh_from_db()
 
         # The badge should still be present for the user

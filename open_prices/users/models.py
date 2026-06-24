@@ -81,6 +81,18 @@ class User(models.Model):
         verbose_name = "User"
         verbose_name_plural = "Users"
 
+    @classmethod
+    def update_task(cls):
+        """
+        - Update user field counts
+        """
+        for user in cls.objects.all():
+            user.update_price_count()
+            user.update_location_count()
+            user.update_product_count()
+            user.update_proof_count()
+            user.update_other_count()
+
     def is_authenticated(self):
         return True
 

@@ -47,7 +47,7 @@ class ProductQuerySet(ApproximateCountQuerySet):
             )
         return queryset
 
-    def to_update_in_counts_task(self):
+    def for_update_task(self):
         """
         Goal: only update counts of products that have prices, to save (some) time.
         We use the annotated price_count instead of the denormalized price_count field to be sure to have up-to-date information.
@@ -182,6 +182,18 @@ class Product(models.Model):
         self.normalize_code()
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @classmethod
+    def update_task(cls):
+        """
+        - Update product field counts
+        - Some products are skipped (see queryset)
+        """
+        for product in cls.objects.for_update_task():
+            product.update_price_count()
+            product.update_location_count()
+            product.update_user_count()
+            product.update_proof_count()
 
     def price__min(self, exclude_discounted=False):
         if exclude_discounted:

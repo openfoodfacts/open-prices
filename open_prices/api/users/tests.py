@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from open_prices.badges.factories import BadgeFactory
+from open_prices.badges.models import Badge
 from open_prices.users.factories import SessionFactory, UserFactory
 from open_prices.users.models import User
 
@@ -140,7 +141,7 @@ class UserBadgeListApiTest(TestCase):
 
     def test_user_badges_list(self):
         # Update user badges and count
-        self.badge.update_user_badges()
+        Badge.update_task()
         self.user.refresh_from_db()
         user_badge = self.user.user_badges.first()
 
@@ -159,7 +160,7 @@ class UserBadgeListApiTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        self.badge.update_user_badges()
+        Badge.update_task()
         self.user.refresh_from_db()
 
         response = self.client.get(self.url)
@@ -169,11 +170,10 @@ class UserBadgeListApiTest(TestCase):
 
     def test_user_badges_list_only_returns_achieved_badges(self):
         # Create a badge that the user has not achieved
-        unachieved_badge = BadgeFactory(metric="price_count", threshold=20)
+        BadgeFactory(metric="price_count", threshold=20)
 
         # Update user badges and count
-        self.badge.update_user_badges()
-        unachieved_badge.update_user_badges()
+        Badge.update_task()
         self.user.refresh_from_db()
 
         response = self.client.get(self.url)

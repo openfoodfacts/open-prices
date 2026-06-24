@@ -147,6 +147,21 @@ class TotalStats(SingletonModel):
     class Meta:
         verbose_name = "Total Stats"
 
+    @classmethod
+    def update_task(cls):
+        """
+        Update all total stats
+        """
+        total_stats = cls.get_solo()
+        total_stats.update_price_stats()
+        total_stats.update_product_stats()
+        total_stats.update_location_stats()
+        total_stats.update_proof_stats()
+        total_stats.update_price_tag_stats()
+        total_stats.update_user_stats()
+        total_stats.update_challenge_stats()
+        total_stats.update_product_created_stats()
+
     def update_price_stats(self):
         from open_prices.prices.models import Price
 

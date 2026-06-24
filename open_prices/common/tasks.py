@@ -58,60 +58,27 @@ def import_all_product_db_task():
 
 
 def update_total_stats_task():
-    """
-    Update all total stats
-    """
-    total_stats = TotalStats.get_solo()
-    total_stats.update_price_stats()
-    total_stats.update_product_stats()
-    total_stats.update_location_stats()
-    total_stats.update_proof_stats()
-    total_stats.update_price_tag_stats()
-    total_stats.update_user_stats()
-    total_stats.update_challenge_stats()
-    total_stats.update_product_created_stats()
+    TotalStats.update_task()
 
 
 def update_product_counts_task():
-    """
-    Update product field counts
-    """
-    for product in Product.objects.to_update_in_counts_task():
-        product.update_price_count()
-        product.update_location_count()
-        product.update_user_count()
-        product.update_proof_count()
+    Product.update_task()
 
 
 def update_user_counts_task():
-    """
-    Update user field counts
-    """
-    for user in User.objects.all():
-        user.update_price_count()
-        user.update_location_count()
-        user.update_product_count()
-        user.update_proof_count()
-        user.update_other_count()
+    User.update_task()
 
 
 def update_location_counts_task():
-    """
-    Update location field counts
-    """
-    for location in Location.objects.all():
-        for field in Location.COUNT_FIELDS:
-            getattr(location, f"update_{field}")()
+    Location.update_task()
+
+
+def update_challenge_task():
+    Challenge.update_task()
 
 
 def update_badge_task():
-    """
-    1. Give badges to users based on their count fields
-    2. Update badge field counts
-    """
-    for badge in Badge.objects.all():
-        badge.update_user_badges()
-        badge.update_user_count()
+    Badge.update_task()
 
 
 def fix_proof_fields_task():
@@ -128,14 +95,6 @@ def fix_proof_fields_task():
 def moderation_tasks():
     moderation_rules.cleanup_products_with_long_barcodes()
     moderation_rules.cleanup_products_with_invalid_barcodes()
-
-
-def challenge_tasks():
-    for challenge in Challenge.objects.to_update_in_daily_task():
-        challenge.calculate_categories_full()
-        challenge.set_price_tags()  # will only apply on 'ONGOING' challenges
-        challenge.set_proof_tags()  # will only apply based on price 'challenge' tags
-        challenge.calculate_stats()
 
 
 def dump_db_task():
@@ -174,7 +133,7 @@ CRON_SCHEDULES = {
     "update_total_stats_task": ("0 1 * * *", {}),  # daily at 01:00
     "fix_proof_fields_task": ("10 1 * * *", {}),  # daily at 01:10
     "moderation_tasks": ("20 1 * * *", {}),  # daily at 01:20
-    "challenge_tasks": ("30 1 * * *", {}),  # daily at 01:30
+    "update_challenge_task": ("30 1 * * *", {}),  # daily at 01:30
     "history_cleanup_task": ("0 3 * * 1", {}),  # daily at 03:00
     "proof_draft_cleanup_task": ("*/5 * * * *", {}),  # every 5 minutes
     "update_user_counts_task": ("0 2 * * 1", {}),  # daily at 02:00
