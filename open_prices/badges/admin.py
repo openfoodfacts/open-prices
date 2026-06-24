@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from open_prices.badges.models import Badge
+from open_prices.badges.models import Badge, UserBadge
+from open_prices.common.admin import ReadOnlyAdminMixin
 
 
 @admin.register(Badge)
@@ -32,3 +33,13 @@ class BadgeAdmin(admin.ModelAdmin):
                 f"</a>"
             )
         return None
+
+
+@admin.register(UserBadge)
+class UserBadgeAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
+    list_display = (
+        "user",
+        "badge",
+        "achieved_at",
+    )
+    list_filter = ("badge",)
