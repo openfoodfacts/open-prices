@@ -30,7 +30,7 @@ class Badge(models.Model):
         return self.name
 
     @classmethod
-    def update_badge_task(cls):
+    def update_task(cls):
         """
         1. Give badges to users based on their count fields
         2. Update badge field counts

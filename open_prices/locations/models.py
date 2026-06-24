@@ -229,6 +229,17 @@ class Location(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    @classmethod
+    def update_task(cls):
+        """
+        - Update location field counts
+        """
+        for location in cls.objects.all():
+            location.update_price_count()
+            location.update_user_count()
+            location.update_product_count()
+            location.update_proof_count()
+
     @property
     def is_type_osm(self):
         return self.type == location_constants.TYPE_OSM

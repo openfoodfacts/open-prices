@@ -141,7 +141,7 @@ class UserBadgeListApiTest(TestCase):
 
     def test_user_badges_list(self):
         # Update user badges and count
-        Badge.update_badge_task()
+        Badge.update_task()
         self.user.refresh_from_db()
         user_badge = self.user.user_badges.first()
 
@@ -160,7 +160,7 @@ class UserBadgeListApiTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        Badge.update_badge_task()
+        Badge.update_task()
         self.user.refresh_from_db()
 
         response = self.client.get(self.url)
@@ -173,7 +173,7 @@ class UserBadgeListApiTest(TestCase):
         BadgeFactory(metric="price_count", threshold=20)
 
         # Update user badges and count
-        Badge.update_badge_task()
+        Badge.update_task()
         self.user.refresh_from_db()
 
         response = self.client.get(self.url)

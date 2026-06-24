@@ -51,7 +51,7 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        Badge.update_badge_task()
+        Badge.update_task()
         self.badge.refresh_from_db()
 
         # Stats should be updated correctly
@@ -69,14 +69,14 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        Badge.update_badge_task()
+        Badge.update_task()
         self.badge.refresh_from_db()
         user_badge_achieved_at = UserBadge.objects.get(
             user=self.user, badge=self.badge
         ).achieved_at
 
         # Update user badges and count again
-        Badge.update_badge_task()
+        Badge.update_task()
         self.badge.refresh_from_db()
 
         # user_badge_achieved_at is unchanged
@@ -94,7 +94,7 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        Badge.update_badge_task()
+        Badge.update_task()
         self.badge.refresh_from_db()
         badge_2.refresh_from_db()
 
@@ -111,7 +111,7 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count
-        Badge.update_badge_task()
+        Badge.update_task()
         self.badge.refresh_from_db()
         user_badge_achieved_at = UserBadge.objects.get(
             user=self.user, badge=self.badge
@@ -122,7 +122,7 @@ class BadgePropertyTest(TestCase):
         self.user.save()
 
         # Update user badges and count again
-        Badge.update_badge_task()
+        Badge.update_task()
         self.badge.refresh_from_db()
 
         # The badge should still be present for the user
