@@ -46,8 +46,8 @@ jobs:
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
         echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.net/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
-        # TODO: set-up Stunnel to allow access from PaddleX from staging
-        echo "PADDLEX_API_URL=http://IPADRESS:8080" >> $GITHUB_ENV
+        # we get access to PaddleX through ovh-stunnel-client -> hetzner-stunnel-server
+        echo "PADDLEX_API_URL=http://10.1.0.113:5610" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
@@ -63,7 +63,8 @@ jobs:
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
         echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.org/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
-        echo "PADDLEX_API_URL=http://paddlex:8080" >> $GITHUB_ENV
+        # we get access to PaddleX through scaleway-stunnel-client -> moji-stunnel-server
+        echo "PADDLEX_API_URL=http://10.13.1.101:5610" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
