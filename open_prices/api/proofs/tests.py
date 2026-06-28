@@ -730,17 +730,16 @@ class ProofDeleteApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_proof_delete_not_ok_if_has_prices(self):
-        # has prices
+    def test_proof_delete_cascades_prices(self):
+        self.assertTrue(Price.objects.filter(proof=self.proof).exists())
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Price.objects.filter(proof_id=self.proof.id).exists())
+        self.assertFalse(Proof.objects.filter(id=self.proof.id).exists())
 
     def test_proof_delete_ok_if_owner(self):
-        # delete proof's prices
-        Price.objects.filter(proof=self.proof).delete()
-        # authenticated and proof has no prices
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
@@ -751,12 +750,8 @@ class ProofDeleteApiTest(TestCase):
         )
 
     def test_proof_delete_ok_if_moderator(self):
-        # set user as moderator
         self.user_session_2.user.is_moderator = True
         self.user_session_2.user.save()
-        # delete proof's prices
-        Price.objects.filter(proof=self.proof).delete()
-        # authenticated as moderator and proof has no prices
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
         )
@@ -767,7 +762,6 @@ class ProofDeleteApiTest(TestCase):
         )
 
     def test_proof_delete_history(self):
-        Price.objects.filter(proof=self.proof).delete()
         response = self.client.delete(
             self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
@@ -780,6 +774,35 @@ class ProofDeleteApiTest(TestCase):
             Proof.history.filter(id=self.proof.id).first().history_user_id,
             self.user_session_1.user.user_id,
         )
+
+    def test_proof_delete_cascades_multiple_prices(self):
+        for _ in range(2):
+            PriceFactory(
+                proof_id=self.proof.id,
+                location_osm_id=self.proof.location_osm_id,
+                location_osm_type=self.proof.location_osm_type,
+                currency=self.proof.currency,
+                date=self.proof.date,
+                owner=self.proof.owner,
+            )
+        self.assertEqual(Price.objects.filter(proof=self.proof).count(), 3)
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Price.objects.filter(proof_id=self.proof.id).count(), 0)
+        self.assertFalse(Proof.objects.filter(id=self.proof.id).exists())
+
+    def test_proof_delete_moderator_cascades_prices(self):
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        self.assertTrue(Price.objects.filter(proof=self.proof).exists())
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Price.objects.filter(proof_id=self.proof.id).exists())
+        self.assertFalse(Proof.objects.filter(id=self.proof.id).exists())
 
 
 class ProofHistoryApiTest(TestCase):
