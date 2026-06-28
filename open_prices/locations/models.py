@@ -32,6 +32,17 @@ class LocationQuerySet(models.QuerySet):
     def has_type_online(self):
         return self.filter(type=location_constants.TYPE_ONLINE)
 
+    def get_latest_by_osm(self, osm_id, osm_type):
+        """
+        return the latest version of a location matching osm_id and osm_type, Used when multiple versions of the same
+        OSM location exist
+        """
+        return (
+            self.filter(osm_id=osm_id, osm_type=osm_type)
+            .order_by("-osm_version", "-updated")
+            .first()
+        )
+
     def has_prices(self):
         return self.filter(price_count__gt=0)
 

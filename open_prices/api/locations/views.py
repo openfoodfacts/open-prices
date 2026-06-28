@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 from django.core.cache import cache
-from django.core.validators import ValidationError
 from django.db.models import Count, F, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
@@ -51,23 +50,27 @@ class LocationViewSet(
         serializer.is_valid(raise_exception=True)
         # get source
         source = get_source_from_request(self.request)
-        # save
-        try:
+        # avoid dulicates: check if location already exists before saving
+        osm_id = serializer.validated_data.get("osm_id")
+        osm_type = serializer.validated_data.get("osm_type")
+        website_url = serializer.validated_data.get("website_url")
+        existing_location = None
+        if osm_id and osm_type:
+            existing_location = Location.objects.get_latest_by_osm(
+                osm_id=osm_id, osm_type=osm_type
+            )
+        elif website_url:
+            existing_location = Location.objects.filter(website_url=website_url).first()
+        if existing_location:
+            response_data = {
+                **self.serializer_class(existing_location).data,
+                "detail": "duplicate",
+            }
+            response_status_code = status.HTTP_200_OK
+        else:
             location = serializer.save(source=source)
             response_data = self.serializer_class(location).data
             response_status_code = status.HTTP_201_CREATED
-        # avoid duplicates: return existing location instead
-        except ValidationError as e:
-            if any(
-                constraint_name in e.messages[0]
-                for constraint_name in location_constants.UNIQUE_CONSTRAINT_NAME_LIST
-            ):
-                location = Location.objects.get(**serializer.validated_data)
-                response_data = {
-                    **self.serializer_class(location).data,
-                    "detail": "duplicate",
-                }
-                response_status_code = status.HTTP_200_OK
         return Response(response_data, status=response_status_code)
 
     @extend_schema(
