@@ -52,7 +52,14 @@ from open_prices.proofs.ml.price_tags import (
     extract_from_price_tag,
     run_and_save_price_tag_detection,
 )
-from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
+from open_prices.proofs.ml.receipt_anonymization import AnonymizationResult
+from open_prices.proofs.models import (
+    PriceTag,
+    PriceTagPrediction,
+    Proof,
+    ProofPrediction,
+    ReceiptItem,
+)
 from open_prices.proofs.utils import (
     compute_file_md5,
     crop_image,
@@ -509,6 +516,30 @@ class ProofModelSaveTest(TestCase):
         self.assertEqual(user_session.user.proof_count, 1)
         self.assertEqual(location.proof_count, 1)
 
+    def test_proof_post_save_delete_receipt_anonymization_prediction_non_draft_proof(
+        self,
+    ):
+        """Receipt anonymization predictions must be deleted once a proof is not a draft
+        anymore."""
+        # create draft proof (receipt)
+        proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            draft=True,
+        )
+        # create a receipt anonymization prediction
+        ProofPredictionFactory(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_RECEIPT_ANONYMIZATION_TYPE,
+        )
+        proof.draft = False
+        proof.save()
+        self.assertIsNone(
+            ProofPrediction.objects.filter(
+                proof=proof,
+                type=proof_constants.PROOF_PREDICTION_RECEIPT_ANONYMIZATION_TYPE,
+            ).first()
+        )
+
 
 class ProofPropertyTest(TestCase):
     @classmethod
@@ -885,7 +916,7 @@ class MLModelTest(TestCase):
             # change temporarily settings.IMAGE_DIR
             with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
                 proof = ProofFactory(
-                    file_path=file_path, type=proof_constants.TYPE_RECEIPT
+                    file_path=file_path, type=proof_constants.TYPE_RECEIPT, draft=True
                 )
 
                 # Patch predict_proof_type to return a fixed response
@@ -898,6 +929,10 @@ class MLModelTest(TestCase):
                         "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=None,
                     ) as mock_detect_price_tags,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.receipt_anonymization.anonymize_receipt",
+                        return_value=AnonymizationResult(words=[]),
+                    ) as mock_anonymize_receipt,
                 ):
                     run_and_save_proof_prediction(
                         proof,
@@ -907,10 +942,11 @@ class MLModelTest(TestCase):
                     )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_not_called()
+                    mock_anonymize_receipt.assert_called_once()
 
-                proof_type_prediction = proof.predictions.filter(
-                    type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
-                ).first()
+                    proof_type_prediction = proof.predictions.filter(
+                        type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
+                    ).first()
                 self.assertIsNotNone(proof_type_prediction)
                 self.assertEqual(
                     proof_type_prediction.type,
@@ -943,12 +979,19 @@ class MLModelTest(TestCase):
                 ).first()
                 self.assertIsNone(price_tag_prediction)
 
+                receipt_anonymization_prediction = proof.predictions.filter(
+                    type=proof_constants.PROOF_PREDICTION_RECEIPT_ANONYMIZATION_TYPE
+                ).first()
+                self.assertIsNotNone(receipt_anonymization_prediction)
+
                 # prediction_count was incremented
                 proof.refresh_from_db()
-                self.assertEqual(proof.prediction_count, 1)
+                # 2 predictions: one price tag prediction, one receipt anonymization
+                self.assertEqual(proof.prediction_count, 2)
 
                 # cleanup
                 proof_type_prediction.delete()
+                receipt_anonymization_prediction.delete()
                 proof.delete()
 
     def test_run_and_save_proof_prediction_for_price_tag_proof(self):

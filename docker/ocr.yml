@@ -1,0 +1,11 @@
+services:
+  paddlex:
+    image: openfoodfacts/paddlex-ocr:paddlex3.3.11-paddlepaddle3.2.0-cpu
+    volumes:
+      - ./conf/OCR.yaml:/root/PaddleX/paddlex/configs/pipelines/OCR.yaml
+      - ./ocr_models:/root/.paddlex/official_models
+    command: ["paddlex", "--serve", "--pipeline", "OCR"]
+    ports:
+      - "8080"
+    networks:
+      - default

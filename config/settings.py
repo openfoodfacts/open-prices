@@ -359,6 +359,12 @@ ENABLE_IMPORT_OPFF_DB_TASK = os.getenv("ENABLE_IMPORT_OPFF_DB_TASK") == "True"
 ENABLE_IMPORT_OPF_DB_TASK = os.getenv("ENABLE_IMPORT_OPF_DB_TASK") == "True"
 
 
+# PaddleOCR
+# ------------------------------------------------------------------------------
+
+PADDLEX_API_URL = os.getenv("PADDLEX_API_URL", "http://127.0.0.1:8080")
+
+
 # Redis (for product updates)
 # ------------------------------------------------------------------------------
 
