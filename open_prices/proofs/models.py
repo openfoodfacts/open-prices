@@ -284,11 +284,16 @@ class Proof(models.Model):
             from open_prices.locations import constants as location_constants
             from open_prices.locations.models import Location
 
-            location, created = Location.objects.get_or_create(
-                type=location_constants.TYPE_OSM,
+            location = Location.objects.get_latest_by_osm(
                 osm_id=self.location_osm_id,
                 osm_type=self.location_osm_type,
             )
+            if not location:
+                location = Location.objects.create(
+                    type=location_constants.TYPE_OSM,
+                    osm_id=self.location_osm_id,
+                    osm_type=self.location_osm_type,
+                )
             self.location = location
 
     def save(self, *args, **kwargs):
