@@ -130,7 +130,7 @@ jobs:
           echo "COMPOSE_HTTP_TIMEOUT=180" >> .env
           echo "COMPOSE_PROJECT_NAME=open_prices" >> .env
           echo "COMPOSE_PATH_SEPARATOR=;" >> .env
-          echo "COMPOSE_FILE=docker-compose.yml;docker/prod.yml;docker/ocr.yml" >> .env
+          echo "COMPOSE_FILE=docker-compose.yml;docker/prod.yml" >> .env
           # This is the network shared with Product Opener.
           # In staging, Product Opener is deployed on the same VM.
           # In production Product Opener is deployed on a separate server and is not dockerized.
