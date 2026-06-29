@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.107.0](https://github.com/openfoodfacts/open-prices/compare/v1.106.1...v1.107.0) (2026-06-29)
+
+
+### Features
+
+* **Badges:** API: endpoint to return the list of achievements for a given user ([#1366](https://github.com/openfoodfacts/open-prices/issues/1366)) ([a7d11b1](https://github.com/openfoodfacts/open-prices/commit/a7d11b15b14a715214f49216998c17bd735f0d17))
+* **Badges:** API: endpoint to return the list of badges ([#1364](https://github.com/openfoodfacts/open-prices/issues/1364)) ([089a08a](https://github.com/openfoodfacts/open-prices/commit/089a08a2b53cfc21cca02c22957ca36c962ed418))
+* **Badges:** new `Badge` table to store the underlying rules ([#1363](https://github.com/openfoodfacts/open-prices/issues/1363)) ([7d73092](https://github.com/openfoodfacts/open-prices/commit/7d730926b8bfb360e82db09792d6d0849d295a51))
+* **Badges:** new `UserBadge` model to store achievements. Update every night ([#1365](https://github.com/openfoodfacts/open-prices/issues/1365)) ([daa019a](https://github.com/openfoodfacts/open-prices/commit/daa019ab394a96984c769f25d8db6482106de055))
+* **Proofs:** add receipt anonymization ([#1358](https://github.com/openfoodfacts/open-prices/issues/1358)) ([066d321](https://github.com/openfoodfacts/open-prices/commit/066d32161097aa8b6564518758957fb4b0e76c74))
+
+
+### Technical
+
+* **Tasks:** move logic to model classmethods. so that they can be called elsewhere (e.g. tests) ([#1373](https://github.com/openfoodfacts/open-prices/issues/1373)) ([3810597](https://github.com/openfoodfacts/open-prices/commit/3810597b0a035d145f480e01391c7b3c7b19e482))
+
 ## [1.106.1](https://github.com/openfoodfacts/open-prices/compare/v1.106.0...v1.106.1) (2026-06-20)
 
 
