@@ -196,7 +196,7 @@ CORS_ALLOW_CREDENTIALS = True
 # https://pillow.readthedocs.io/
 # ------------------------------------------------------------------------------
 
-THUMBNAIL_SIZE = (400, 400)
+THUMBNAIL_SIZE = 400
 
 
 # Django REST Framework (DRF) & django-filters & drf-spectacular
