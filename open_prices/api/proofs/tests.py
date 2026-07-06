@@ -1163,6 +1163,14 @@ class ProofDraftAnonymizeApiTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
+        self.assertDictContainsSubset(
+            {
+                "id": receipt_draft_proof.id,
+                "file_path": "0001/1.webp",
+                "image_thumb_path": "0001/1.400.webp",
+            },
+            response.data,
+        )
 
         # We uploaded a JPEG image, check that it's not on disk anymore (converted to WEBP)
         self.assertFalse(image_path.exists())

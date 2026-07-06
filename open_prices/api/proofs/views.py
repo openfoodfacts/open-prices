@@ -297,7 +297,9 @@ class ProofDraftViewSet(
         Only the file and type fields are expected. ML models runs immediately asynchronously."""
         return base_upload(request, draft=True)
 
-    @extend_schema(request=DraftProofAnonymizeRequestSerializer)
+    @extend_schema(
+        request=DraftProofAnonymizeRequestSerializer, responses=ProofFullSerializer
+    )
     @action(
         detail=True,
         methods=["POST"],
@@ -341,7 +343,7 @@ class ProofDraftViewSet(
             proof._change_reason = "Saving new image path after anonymization"
             proof.save()
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(ProofFullSerializer(proof).data, status=status.HTTP_200_OK)
 
     @extend_schema(request=ProofUpdateSerializer, responses=ProofFullSerializer)
     def partial_update(self, request: Request, pk=None) -> Response:
