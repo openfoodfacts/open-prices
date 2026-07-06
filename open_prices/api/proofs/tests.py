@@ -1,10 +1,15 @@
 import os
 import shutil
+import tempfile
 from decimal import Decimal
 from io import BytesIO
+from pathlib import Path
 
+import cv2
+import numpy as np
 from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
 from PIL import Image
 
@@ -1080,6 +1085,115 @@ class ProofDraftDeleteApiTest(TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data, None)
         self.assertEqual(Proof.objects.filter(id=self.user_1_draft_proof.id).count(), 0)
+
+
+class ProofDraftAnonymizeApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.session = SessionFactory()
+        cls.price_tag_draft_proof = ProofFactory(
+            draft=True,
+            owner=cls.session.user.user_id,
+            type=proof_constants.TYPE_PRICE_TAG,
+        )
+        cls.receipt_non_draft_proof = ProofFactory(
+            draft=False,
+            owner=cls.session.user.user_id,
+            type=proof_constants.TYPE_RECEIPT,
+        )
+
+    def test_anonymize_draft_price_tag_error(self):
+        """Check that price tags cannot be anonymized."""
+        url = reverse(
+            "api:proofs-drafts-anonymize-receipt", args=[self.price_tag_draft_proof.id]
+        )
+        response = self.client.post(
+            url, headers={"Authorization": f"Bearer {self.session.token}"}
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("detail", response.data)
+        self.assertEqual(response.data["detail"], "Only receipts can be anonymized")
+
+    def test_anonymize_non_draft_receipt_error(self):
+        """Check that receipt proofs that are not draft cannot be anonymized."""
+        url = reverse(
+            "api:proofs-drafts-anonymize-receipt",
+            args=[self.receipt_non_draft_proof.id],
+        )
+        response = self.client.post(
+            url, headers={"Authorization": f"Bearer {self.session.token}"}
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("detail", response.data)
+        self.assertEqual(response.data["detail"], "No Proof matches the given query.")
+
+    @override_settings(IMAGES_DIR=Path(tempfile.mkdtemp()))
+    def test_anonymize_draft_receipt(self):
+        """Check the anonymized version of the receipt is saved on disk."""
+
+        tmp_dir = settings.IMAGES_DIR
+        proof_dir = tmp_dir / "0001"
+        proof_dir.mkdir(parents=True, exist_ok=True)
+        image_path = proof_dir / "1.jpg"
+        image_thumb_path = proof_dir / "1.400.jpg"
+        image = np.ones((1000, 1000, 3), dtype=np.uint8) * 255
+        image_thumb = cv2.resize(image, (400, 400))
+        cv2.imwrite(str(image_path), image)
+        cv2.imwrite(str(image_thumb_path), image_thumb)
+
+        receipt_draft_proof = ProofFactory(
+            file_path=str(image_path),
+            image_thumb_path=image_thumb_path,
+            draft=True,
+            owner=self.session.user.user_id,
+            type=proof_constants.TYPE_RECEIPT,
+        )
+        url = reverse(
+            "api:proofs-drafts-anonymize-receipt",
+            args=[receipt_draft_proof.id],
+        )
+        bounding_boxes = [
+            [0.1, 0.6, 0.15, 0.65],
+            [0.4, 0.1, 0.45, 0.15],
+        ]
+        response = self.client.post(
+            url,
+            data={"bounding_boxes": bounding_boxes},
+            headers={"Authorization": f"Bearer {self.session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertDictContainsSubset(
+            {
+                "id": receipt_draft_proof.id,
+                "file_path": "0001/1.webp",
+                "image_thumb_path": "0001/1.400.webp",
+            },
+            response.data,
+        )
+
+        # We uploaded a JPEG image, check that it's not on disk anymore (converted to WEBP)
+        self.assertFalse(image_path.exists())
+        self.assertFalse(image_thumb_path.exists())
+
+        image_path = image_path.with_suffix(".webp")
+        image_thumb_path = image_thumb_path.with_suffix(".webp")
+        image = cv2.imread(str(image_path))
+        image_thumb = cv2.imread(str(image_thumb_path))
+        # Check that the images were anonymized
+        self.assertIsNotNone(image)
+        self.assertIsNotNone(image_thumb)
+        self.assertEqual(image.shape, (1000, 1000, 3))
+        self.assertEqual(image_thumb.shape, (400, 400, 3))
+        # Check that the areas corresponding to the bounding boxes
+        # are in black color now
+        self.assertEqual(image[600:650, 100:150].sum(), 0)
+        self.assertEqual(image[100:150, 400:450].sum(), 0)
+
+        # Retrieve the proof from DB
+        proof = Proof.all_objects.get(id=receipt_draft_proof.id)
+        self.assertEqual(proof.file_path, "0001/1.webp")
+        self.assertEqual(proof.image_thumb_path, "0001/1.400.webp")
 
 
 class PriceTagListApiTest(TestCase):

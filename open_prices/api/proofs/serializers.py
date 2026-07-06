@@ -76,6 +76,32 @@ class ProofDraftUploadSerializer(serializers.ModelSerializer):
         fields = ["file", "type"]
 
 
+class DraftProofAnonymizeRequestSerializer(serializers.Serializer):
+    """Serializer for payload when anonymizing a receipt."""
+
+    bounding_boxes = serializers.ListField(
+        child=serializers.ListField(
+            child=serializers.FloatField(),
+            min_length=4,
+            max_length=4,
+        ),
+        min_length=1,
+    )
+
+    def validate_bounding_boxes(self, value):
+        for bounding_box in value:
+            x_min, y_min, x_max, y_max = bounding_box
+            if x_min >= x_max or y_min >= y_max:
+                raise serializers.ValidationError(
+                    "Bounding box coordinates are invalid"
+                )
+            if x_min < 0 or y_min < 0 or x_max > 1 or y_max > 1:
+                raise serializers.ValidationError(
+                    "Bounding box coordinates are out of bounds"
+                )
+        return value
+
+
 class ProofCreateSerializer(serializers.ModelSerializer):
     location_id = serializers.PrimaryKeyRelatedField(
         queryset=Location.objects.all(), source="location", required=False

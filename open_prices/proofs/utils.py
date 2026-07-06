@@ -90,7 +90,7 @@ def generate_thumbnail(
     file_stem: str,
     extension: str,
     mimetype: str,
-    thumbnail_size: tuple[int, int] = settings.THUMBNAIL_SIZE,
+    thumbnail_size: int = settings.THUMBNAIL_SIZE,
 ) -> str | None:
     """Generate a thumbnail for the image at the given path."""
     if not mimetype.startswith("image"):
@@ -104,9 +104,9 @@ def generate_thumbnail(
         # set any rotation info
         img_thumb = ImageOps.exif_transpose(img)
         # transform into a thumbnail
-        img_thumb.thumbnail(thumbnail_size, Image.Resampling.LANCZOS)
+        img_thumb.thumbnail((thumbnail_size, thumbnail_size), Image.Resampling.LANCZOS)
         image_thumb_full_path = generate_full_path(
-            current_dir, f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}", extension
+            current_dir, f"{file_stem}.{thumbnail_size}", extension
         )
         # avoid 'cannot write mode RGBA/LA/P as JPEG' error
         if mimetype in ("image/jpeg",) and img_thumb.mode in ("RGBA", "LA", "P"):
@@ -115,7 +115,7 @@ def generate_thumbnail(
         img_thumb.save(image_thumb_full_path)
         return generate_relative_path(
             current_dir_id_str,
-            f"{file_stem}.{settings.THUMBNAIL_SIZE[0]}",
+            f"{file_stem}.{thumbnail_size}",
             extension,
         )
 
@@ -150,6 +150,70 @@ def store_file(
     # Build file_path
     file_path = generate_relative_path(current_dir.name, file_stem, extension)
     return (file_path, mimetype, image_thumb_path)
+
+
+def save_anonymized_receipt(
+    image_path: Path,
+    image_thumb_path: Path,
+    bounding_boxes: list[list[float]],
+    root_dir: Path | None = None,
+) -> tuple[Path, Path]:
+    """Redact areas of the proof image containing personal information with black
+    boxes, and save the new image and thumbnail to the filesystem.
+
+    :param image_path: the path to the image file (original-size image)
+    :param image_thumb_path: the path to the thumbnail file
+    :param bounding_boxes: a list of bounding boxes to redact, in the format
+        [x_min, y_min, x_max, y_max]
+    :param root_dir: the root directory that the image paths are relative to, defaults to
+        settings.IMAGES_DIR
+    :return: the relative paths to the new image and thumbnail files
+    """
+    if not bounding_boxes:
+        raise ValueError("bounding_boxes must not be empty")
+    if root_dir is None:
+        root_dir = settings.IMAGES_DIR
+
+    image_full_path = root_dir / image_path
+    image_thumb_full_path = root_dir / image_thumb_path
+    image = open_image_cv2(image_full_path)
+    for bounding_box in bounding_boxes:
+        x_min, y_min, x_max, y_max = bounding_box
+        height = image.shape[0]
+        width = image.shape[1]
+        y_min_px = int(y_min * height)
+        x_min_px = int(x_min * width)
+        y_max_px = int(y_max * height)
+        x_max_px = int(x_max * width)
+        # Draw a black box over the bounding box area
+        image = cv2.rectangle(
+            image,
+            (x_min_px, y_min_px),
+            (x_max_px, y_max_px),
+            # black color
+            (0, 0, 0),
+            thickness=cv2.FILLED,
+        )
+    image_to_remove_paths = []
+    if image_path.suffix != ".webp":
+        # The original image is not necessarily a webp, force webp format here
+        image_to_remove_paths.append(image_full_path)
+        image_full_path = Path(image_full_path).with_suffix(".webp")
+    if image_thumb_path.suffix != ".webp":
+        image_to_remove_paths.append(image_thumb_full_path)
+        image_thumb_full_path = image_thumb_full_path.with_suffix(".webp")
+
+    cv2.imwrite(str(image_full_path), image)
+    thumb_image = generate_image_thumbnail_cv2(image)
+    cv2.imwrite(str(image_thumb_full_path), thumb_image)
+
+    for path in image_to_remove_paths:
+        # Remove the original image if it was converted to webp
+        path.unlink()
+
+    image_path = image_full_path.relative_to(root_dir)
+    thumb_path = image_thumb_full_path.relative_to(root_dir)
+    return image_path, thumb_path
 
 
 def compute_file_md5(file: InMemoryUploadedFile | TemporaryUploadedFile) -> str:
@@ -189,7 +253,7 @@ def compute_file_md5_from_path(file_path: Path) -> str:
 
 
 def select_proof_image_dir(images_dir: Path, max_images_per_dir: int = 1_000) -> Path:
-    """ "Select the directory where to store the image.
+    """Select the directory where to store the image.
 
     We create a new directory when the current one contains more than 1000
     images. The directories are named with a 4-digit number, starting at 0001.
@@ -365,7 +429,9 @@ def open_image_cv2(image_path: str | Path, rgb: bool = False) -> np.ndarray:
     return image  # type: ignore
 
 
-def generate_image_thumbnail_cv2(image: np.ndarray, max_size: int) -> np.ndarray:
+def generate_image_thumbnail_cv2(
+    image: np.ndarray, max_size: int = settings.THUMBNAIL_SIZE
+) -> np.ndarray:
     """Generate a thumbnail for the given image using OpenCV.
 
     :param image: the image to generate a thumbnail for, as a numpy array
@@ -377,7 +443,9 @@ def generate_image_thumbnail_cv2(image: np.ndarray, max_size: int) -> np.ndarray
         scaling_factor = max_size / max(width, height)
         new_width = int(width * scaling_factor)
         new_height = int(height * scaling_factor)
-        image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+        image = cv2.resize(
+            image, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4
+        )
     return image
 
 
