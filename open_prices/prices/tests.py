@@ -1,3 +1,4 @@
+import datetime
 import json
 from decimal import Decimal
 
@@ -14,7 +15,8 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
-from open_prices.prices.models import Price
+from open_prices.prices.models import Price, PriceStatistics5y
+from open_prices.prices.outlier_detection import find_outliers
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
@@ -1231,3 +1233,149 @@ class PriceCommandTest(TestCase):
         for price in Price.objects.all():
             self.assertEqual(price.product_code, "0123456789100")
             self.assertEqual(price.product_id, Product.objects.first().id)
+
+
+class TestOutlierDetection(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product_code = "0123456789100"
+        cls.category_tag = "en:apples"
+        cls.product = ProductFactory.create(code=cls.product_code)
+        cls.location_fr = LocationFactory.create(osm_address_country_code="FR")
+        cls.location_it = LocationFactory.create(osm_address_country_code="IT")
+
+        product_base_price = {
+            "product_code": cls.product_code,
+            "product": cls.product,
+            "type": price_constants.TYPE_PRODUCT,
+            "location": cls.location_fr,
+            "location_osm_id": cls.location_fr.osm_id,
+            "location_osm_type": cls.location_fr.osm_type,
+            "price_per": None,
+            "currency": "EUR",
+            "created": "2026-07-07T12:00:00+02:00",
+        }
+        category_base_price = {
+            "category_tag": cls.category_tag,
+            "product": None,
+            "type": price_constants.TYPE_CATEGORY,
+            "location": cls.location_fr,
+            "location_osm_id": cls.location_fr.osm_id,
+            "location_osm_type": cls.location_fr.osm_type,
+            "price_per": price_constants.PRICE_PER_KILOGRAM,
+            "currency": "EUR",
+            "created": "2026-07-07T12:00:00+02:00",
+        }
+        for price in [
+            "4.5",
+            "5.0",
+            # 6.0 is the median
+            "6.0",
+            "8.0",
+            # 19 is an outlier with `median_threshold=3` (i.e. 3 times the median)
+            "19",
+        ]:
+            PriceFactory.create(price=price, **product_base_price)
+
+        # Price that would be an outlier if linked to location_fr
+        PriceFactory.create(
+            **{
+                k: v
+                for k, v in product_base_price.items()
+                if not k.startswith("location")
+            },
+            price="0.01",
+            location=cls.location_it,
+            location_osm_id=cls.location_it.osm_id,
+            location_osm_type=cls.location_it.osm_type,
+        )
+
+        for price in [
+            # 0.05 is an outlier
+            "0.05",
+            "0.7",
+            "0.8",
+            # 0.85 is the median
+            "0.9",
+            "1.0",
+            "1.0",
+        ]:
+            PriceFactory.create(
+                price=price,
+                **category_base_price,
+            )
+
+        # Price that would be an outlier if linked to location_fr
+        PriceFactory.create(
+            **{
+                k: v
+                for k, v in category_base_price.items()
+                if not k.startswith("location")
+            },
+            price="250",
+            location=cls.location_it,
+            location_osm_id=cls.location_it.osm_id,
+            location_osm_type=cls.location_it.osm_type,
+        )
+        # Price that would be an outlier if price_per were PRICE_PER_KILOGRAM
+        PriceFactory.create(
+            **{
+                k: v
+                for k, v in category_base_price.items()
+                if not k.startswith("price_per")
+            },
+            price="250",
+            price_per=price_constants.PRICE_PER_UNIT,
+        )
+        PriceStatistics5y.refresh_materialized_view()
+
+    def test_find_outliers(self):
+        price_outliers = list(find_outliers(median_threshold=3, min_count=3))
+        product_outliers = [
+            p
+            for p in price_outliers
+            if p.type == price_constants.TYPE_PRODUCT
+            and p.product_code == self.product_code
+        ]
+        self.assertEqual(len(product_outliers), 1)
+        product_outlier = product_outliers[0]
+        self.assertAlmostEqual(float(product_outlier.price), 19)
+        self.assertAlmostEqual(product_outlier.median, 6.0)
+        self.assertEqual(product_outlier.count, 5)
+
+        category_outliers = [
+            p
+            for p in price_outliers
+            if p.type == price_constants.TYPE_CATEGORY
+            and p.category_tag == self.category_tag
+        ]
+        self.assertEqual(len(category_outliers), 1)
+        category_outlier = category_outliers[0]
+        self.assertAlmostEqual(float(category_outlier.price), 0.05)
+        self.assertAlmostEqual(category_outlier.median, 0.85)
+        self.assertEqual(category_outlier.count, 6)
+
+    def test_find_outliers_with_target_date(self):
+        outliers = list(
+            find_outliers(
+                target_date=datetime.date.fromisoformat("2026-07-07"),
+                median_threshold=3,
+                min_count=3,
+            )
+        )
+        product_outliers = [
+            p
+            for p in outliers
+            if p.type == price_constants.TYPE_PRODUCT
+            and p.product_code == self.product_code
+        ]
+        self.assertEqual(len(product_outliers), 1)
+        product_outlier = product_outliers[0]
+        self.assertAlmostEqual(float(product_outlier.price), 19)
+
+        # There should be no outliers for the previous day, as
+        # there are no prices
+        outliers = list(
+            find_outliers(target_date=datetime.date.fromisoformat("2026-07-06"))
+        )
+        self.assertEqual(len(outliers), 0)

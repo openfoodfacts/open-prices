@@ -3,7 +3,7 @@ import decimal
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
-from django.db import models
+from django.db import connection, models
 from django.db.models import Avg, Case, Count, F, Max, Min, Q, Value, When, signals
 from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
@@ -530,3 +530,27 @@ def price_post_delete_update_duplicate_of(sender, instance, **kwargs):
     for price in Price.objects.filter(duplicate_of_id=instance.id).order_by("-created"):
         price.duplicate_of = None
         price.save(update_fields=["duplicate_of"])
+
+
+class PriceStatistics5y(models.Model):
+    id = models.TextField(primary_key=True)
+    osm_address_country_code = models.CharField(max_length=2)
+    code = models.TextField()
+    price_per = models.CharField(max_length=255)
+    currency = models.CharField(max_length=3)
+    type = models.CharField(max_length=10)
+    mean = models.FloatField()
+    count = models.IntegerField()
+    stddev = models.FloatField()
+    min = models.FloatField()
+    max = models.FloatField()
+    median = models.FloatField()
+
+    class Meta:
+        managed = False  # So Django doesn't try to create the table
+        db_table = "price_statistics_5y"
+
+    @classmethod
+    def refresh_materialized_view(cls):
+        with connection.cursor() as cursor:
+            cursor.execute("REFRESH MATERIALIZED VIEW price_statistics_5y;")
