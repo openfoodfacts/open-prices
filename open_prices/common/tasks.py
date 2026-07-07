@@ -131,22 +131,22 @@ CRON_SCHEDULES = {
     "import_opf_db_task": ("20 15 * * *", {}),  # daily at 15:20
     "import_off_db_task": ("30 15 * * *", {}),  # daily at 15:30
     "dump_db_task": ("0 23 * * *", {}),  # daily at 23:00
-    "update_total_stats_task": ("0 1 * * *", {}),  # daily at 01:00
-    "fix_proof_fields_task": ("10 1 * * *", {}),  # daily at 01:10
-    "moderation_tasks": ("20 1 * * *", {}),  # daily at 01:20
+    "fix_proof_fields_task": ("0 1 * * *", {}),  # daily at 01:00
+    "moderation_tasks": ("10 1 * * *", {}),  # daily at 01:10
+    "history_cleanup_task": ("20 1 * * *", {}),  # daily at 01:20
     "update_challenge_task": ("30 1 * * *", {}),  # daily at 01:30
-    "history_cleanup_task": ("0 3 * * 1", {}),  # daily at 03:00
-    "proof_draft_cleanup_task": ("*/5 * * * *", {}),  # every 5 minutes
-    "update_user_counts_task": ("0 2 * * 1", {}),  # daily at 02:00
-    "update_badge_task": ("5 2 * * 1", {}),  # daily at 02:05
+    "update_user_counts_task": ("0 2 * * *", {}),  # daily at 02:00
+    "update_badge_task": ("5 2 * * *", {}),  # daily at 02:05
+    "update_total_stats_task": ("10 2 * * *", {}),  # daily at 02:10
     "update_location_counts_task": (
-        "10 2 * * 1",  # every start of the week (at 02:10)
+        "20 2 * * 1",  # every start of the week (at 02:20)
         {},
     ),
     "update_product_counts_task": (
-        "20 2 * * 1",  # every start of the week (at 02:20)
+        "30 2 * * 1",  # every start of the week (at 02:30)
         {"timeout": 10 * 60 * 60},  # 10 hours
     ),
+    "proof_draft_cleanup_task": ("*/5 * * * *", {}),  # every 5 minutes
 }
 
 for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
