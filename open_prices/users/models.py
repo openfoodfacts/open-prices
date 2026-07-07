@@ -1,12 +1,26 @@
 from django.db import models
-from django.db.models import F, Func
-from django.db.models.functions import ExtractYear
+from django.db.models import Count, F, Func, OuterRef, Subquery
+from django.db.models.functions import Coalesce, ExtractYear
 from django.utils import timezone
 
 
 class UserQuerySet(models.QuerySet):
     def has_prices(self):
         return self.filter(price_count__gt=0)
+
+    def with_badge_count(self):
+        from open_prices.badges.models import UserBadge
+
+        badge_count_subquery = (
+            UserBadge.objects.filter(user=OuterRef("user_id"))
+            .order_by()
+            .values("user")
+            .annotate(count=Count("id"))
+            .values("count")
+        )
+        return self.annotate(
+            badge_count_annotated=Coalesce(Subquery(badge_count_subquery), 0)
+        )
 
 
 class User(models.Model):
@@ -32,6 +46,9 @@ class User(models.Model):
     PRODUCT_COUNT_FIELDS = [
         "product_count",
     ]
+    BADGE_COUNT_FIELDS = [
+        "badge_count",
+    ]
     OTHER_COUNT_FIELDS = [
         "currency_count",
         "year_count",
@@ -42,6 +59,7 @@ class User(models.Model):
         + PROOF_COUNT_FIELDS
         + LOCATION_COUNT_FIELDS
         + PRODUCT_COUNT_FIELDS
+        + BADGE_COUNT_FIELDS
         + OTHER_COUNT_FIELDS
     )
     SERIALIZED_FIELDS = [
@@ -70,6 +88,7 @@ class User(models.Model):
     currency_count = models.PositiveIntegerField(default=0)
     year_count = models.PositiveIntegerField(default=0)
     challenge_count = models.PositiveIntegerField(default=0)
+    badge_count = models.PositiveIntegerField(default=0)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -84,7 +103,7 @@ class User(models.Model):
     @classmethod
     def update_task(cls):
         """
-        - Update user field counts
+        - Update user field counts (except badge_count)
         """
         for user in cls.objects.all():
             user.update_price_count()
@@ -92,6 +111,13 @@ class User(models.Model):
             user.update_product_count()
             user.update_proof_count()
             user.update_other_count()
+
+    @classmethod
+    def update_badge_count_task(cls):
+        """
+        - Update user badge_count field
+        """
+        cls.objects.with_badge_count().update(badge_count=F("badge_count_annotated"))
 
     def is_authenticated(self):
         return True
@@ -169,6 +195,12 @@ class User(models.Model):
             Proof.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
         self.save(update_fields=self.PROOF_COUNT_FIELDS)
+
+    def update_badge_count(self):
+        from open_prices.badges.models import UserBadge
+
+        self.badge_count = UserBadge.objects.filter(user=self.user_id).count()
+        self.save(update_fields=self.BADGE_COUNT_FIELDS)
 
     def update_other_count(self):
         from open_prices.challenges import constants as challenge_constants
