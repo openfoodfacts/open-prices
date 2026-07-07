@@ -18,6 +18,26 @@ class BadgeModelSaveTest(TestCase):
         self.assertRaises(IntegrityError, BadgeFactory, name="Test Badge")
 
 
+class BadgeQuerySetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.badge_5 = BadgeFactory(
+            metric=badge_constants.METRIC_PRICE_COUNT, threshold=5
+        )
+        cls.badge_50 = BadgeFactory(
+            metric=badge_constants.METRIC_PRICE_COUNT, threshold=50
+        )
+
+    def test_has_users(self):
+        UserFactory(price_count=0)
+        UserFactory(price_count=10)
+
+        Badge.update_task()
+
+        self.assertEqual(Badge.objects.count(), 2)
+        self.assertEqual(Badge.objects.has_users().count(), 1)
+
+
 class BadgePropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):

@@ -6,6 +6,11 @@ from open_prices.badges import constants as badge_constants
 from open_prices.users.models import User
 
 
+class BadgeQuerySet(models.QuerySet):
+    def has_users(self):
+        return self.filter(user_count__gt=0)
+
+
 class Badge(models.Model):
     COUNT_FIELDS = ("user_count",)
     META_FIELDS = ("created", "updated")
@@ -21,6 +26,8 @@ class Badge(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(BadgeQuerySet)()
 
     class Meta:
         verbose_name = "Badge"
