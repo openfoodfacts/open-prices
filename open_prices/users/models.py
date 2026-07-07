@@ -1,12 +1,26 @@
 from django.db import models
-from django.db.models import F, Func
-from django.db.models.functions import ExtractYear
+from django.db.models import Count, F, Func, OuterRef, Subquery
+from django.db.models.functions import Coalesce, ExtractYear
 from django.utils import timezone
 
 
 class UserQuerySet(models.QuerySet):
     def has_prices(self):
         return self.filter(price_count__gt=0)
+
+    def with_badge_count(self):
+        from open_prices.badges.models import UserBadge
+
+        badge_count_subquery = (
+            UserBadge.objects.filter(user=OuterRef("user_id"))
+            .order_by()
+            .values("user")
+            .annotate(count=Count("id"))
+            .values("count")
+        )
+        return self.annotate(
+            badge_count_annotated=Coalesce(Subquery(badge_count_subquery), 0)
+        )
 
 
 class User(models.Model):
@@ -89,7 +103,7 @@ class User(models.Model):
     @classmethod
     def update_task(cls):
         """
-        - Update user field counts
+        - Update user field counts (except badge_count)
         """
         for user in cls.objects.all():
             user.update_price_count()
@@ -97,6 +111,13 @@ class User(models.Model):
             user.update_product_count()
             user.update_proof_count()
             user.update_other_count()
+
+    @classmethod
+    def update_badge_count_task(cls):
+        """
+        - Update user badge_count field
+        """
+        cls.objects.with_badge_count().update(badge_count=F("badge_count_annotated"))
 
     def is_authenticated(self):
         return True

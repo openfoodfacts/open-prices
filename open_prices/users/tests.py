@@ -41,6 +41,16 @@ class UserQuerySetTest(TestCase):
     def test_has_prices(self):
         self.assertEqual(User.objects.has_prices().count(), 1)
 
+    def test_with_badge_count(self):
+        BadgeFactory(metric=badge_constants.METRIC_PRICE_COUNT, threshold=1)
+        Badge.update_task()  # create UserBadge entries
+        qs = User.objects.with_badge_count()
+        self.assertEqual(qs.count(), 2)
+        user_with_badge = qs.get(user_id=self.user_with_price.user_id)
+        self.assertEqual(user_with_badge.badge_count_annotated, 1)
+        user_without_badge = qs.get(user_id=self.user_without_price.user_id)
+        self.assertEqual(user_without_badge.badge_count_annotated, 0)
+
 
 class UserPropertyTest(TestCase):
     @classmethod
@@ -183,8 +193,8 @@ class UserPropertyTest(TestCase):
     def test_update_badge_count(self):
         self.user_1.refresh_from_db()
         self.assertEqual(self.user_1.badge_count, 0)
+        Badge.update_task()  # create UserBadge entries
         # update_badge_count() should fix badge counts
-        Badge.update_task()  # first create UserBadge entries
         self.user_1.update_badge_count()
         self.assertEqual(self.user_1.badge_count, 1)
 
@@ -198,3 +208,29 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.currency_count, 2)
         self.assertEqual(self.user_1.year_count, 1)
         self.assertEqual(self.user_1.challenge_count, 2)
+
+    def test_update_task_classmethod(self):
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.price_count, 2)  # price signals
+        self.assertEqual(self.user_1.location_count, 0)
+        self.assertEqual(self.user_1.product_count, 0)
+        self.assertEqual(self.user_1.proof_count, 2)  # proof signals
+        self.assertEqual(self.user_1.badge_count, 0)
+        Badge.update_task()  # create UserBadge entries
+        # update_task() should fix all counts (except badge_count)
+        User.update_task()
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.price_count, 2)
+        self.assertEqual(self.user_1.location_count, 1)
+        self.assertEqual(self.user_1.product_count, 1)
+        self.assertEqual(self.user_1.proof_count, 2)
+        self.assertEqual(self.user_1.badge_count, 0)  # not included
+
+    def test_update_badge_count_task_classmethod(self):
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.badge_count, 0)
+        Badge.update_task()  # create UserBadge entries
+        # update_badge_count_task() should fix badge counts for all users
+        User.update_badge_count_task()
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.badge_count, 1)

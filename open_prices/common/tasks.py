@@ -79,6 +79,7 @@ def update_challenge_task():
 
 def update_badge_task():
     Badge.update_task()
+    User.update_badge_count_task()
 
 
 def fix_proof_fields_task():
