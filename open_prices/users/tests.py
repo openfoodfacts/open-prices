@@ -1,5 +1,8 @@
 from django.test import TestCase
 
+from open_prices.badges import constants as badge_constants
+from open_prices.badges.factories import BadgeFactory
+from open_prices.badges.models import Badge
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
@@ -94,6 +97,7 @@ class UserPropertyTest(TestCase):
             date=cls.proof_1.date,
             owner=cls.user_2.user_id,
         )
+        cls.badge = BadgeFactory(metric=badge_constants.METRIC_PRICE_COUNT, threshold=1)
 
     def test_update_price_count(self):
         self.user_1.refresh_from_db()
@@ -175,6 +179,14 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.proof_count, 2)
         self.assertEqual(self.user_1.proof_kind_community_count, 1)
         self.assertEqual(self.user_1.proof_kind_consumption_count, 1)
+
+    def test_update_badge_count(self):
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.badge_count, 0)
+        # update_badge_count() should fix badge counts
+        Badge.update_task()  # first create UserBadge entries
+        self.user_1.update_badge_count()
+        self.assertEqual(self.user_1.badge_count, 1)
 
     def test_update_other_count(self):
         self.user_1.refresh_from_db()

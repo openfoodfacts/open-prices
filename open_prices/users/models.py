@@ -32,6 +32,9 @@ class User(models.Model):
     PRODUCT_COUNT_FIELDS = [
         "product_count",
     ]
+    BADGE_COUNT_FIELDS = [
+        "badge_count",
+    ]
     OTHER_COUNT_FIELDS = [
         "currency_count",
         "year_count",
@@ -42,6 +45,7 @@ class User(models.Model):
         + PROOF_COUNT_FIELDS
         + LOCATION_COUNT_FIELDS
         + PRODUCT_COUNT_FIELDS
+        + BADGE_COUNT_FIELDS
         + OTHER_COUNT_FIELDS
     )
     SERIALIZED_FIELDS = [
@@ -70,6 +74,7 @@ class User(models.Model):
     currency_count = models.PositiveIntegerField(default=0)
     year_count = models.PositiveIntegerField(default=0)
     challenge_count = models.PositiveIntegerField(default=0)
+    badge_count = models.PositiveIntegerField(default=0)
 
     created = models.DateTimeField(default=timezone.now)
     # updated = models.DateTimeField(auto_now=True)
@@ -169,6 +174,12 @@ class User(models.Model):
             Proof.objects.filter(owner=self.user_id).has_kind_consumption().count()
         )
         self.save(update_fields=self.PROOF_COUNT_FIELDS)
+
+    def update_badge_count(self):
+        from open_prices.badges.models import UserBadge
+
+        self.badge_count = UserBadge.objects.filter(user=self.user_id).count()
+        self.save(update_fields=self.BADGE_COUNT_FIELDS)
 
     def update_other_count(self):
         from open_prices.challenges import constants as challenge_constants
