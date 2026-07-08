@@ -7,7 +7,11 @@ from open_prices.locations.models import Location
 
 
 class Command(BaseCommand):
-    help = "Init Location osm_brand & osm_version fields (depending on it's creation date!)."
+    """
+    Usage: python manage.py set_location_osm_brand_and_version
+    """
+
+    help = "Init Location osm_brand & osm_version fields (depending on its creation date!)."
 
     def handle(self, *args, **options) -> None:  # type: ignore
         qs = Location.objects.has_type_osm()
@@ -19,6 +23,7 @@ class Command(BaseCommand):
 
         for index, location in enumerate(qs.all()):
             try:
+                # we get the version of the location at its creation date
                 response = (
                     common_openstreetmap.get_historical_location_from_openstreetmap(
                         location.osm_id, location.osm_type, location.created
@@ -30,7 +35,7 @@ class Command(BaseCommand):
                     location.save(update_fields=["osm_brand", "osm_version"])
                 else:
                     self.stdout.write(f"Could not find historical data for {location}")
-                if index % 100 == 0:
+                if index and (index % 100 == 0):
                     print(index)
                 time.sleep(1)  # be nice to the OSM API
             except Exception as e:
