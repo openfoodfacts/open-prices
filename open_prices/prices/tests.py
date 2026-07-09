@@ -1240,7 +1240,7 @@ class TestOutlierDetection(TestCase):
     def setUpTestData(cls):
         cls.product_code = "0123456789100"
         cls.category_tag = "en:apples"
-        cls.product = ProductFactory.create(code=cls.product_code)
+        cls.product = ProductFactory(code=cls.product_code)
         cls.location_fr = LocationFactory.create(osm_address_country_code="FR")
         cls.location_it = LocationFactory.create(osm_address_country_code="IT")
 
