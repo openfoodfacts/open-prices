@@ -99,14 +99,16 @@ def cleanup_products_with_invalid_barcodes():
     print(f"Deleted {product_deleted_count} products and {price_deleted_count} prices")
 
 
-def create_flags_from_price_outliers():
-    """Create flags for each outlier detected, for prices that were created the day before.
+def create_flags_from_price_outliers(only_yesterday: bool = True):
+    """Create flags for each price outlier detected.
 
-    By running this task after midnight (UTC), and refreshing the `price_statistics_5y` after,
-    we ensure that new prices don't skew the median value, that is used to detect outliers.
+    :param only_yesterday: if True, only look for outliers for prices that were
+        created yesterday.
     """
-    yesterday = (timezone.now() - timedelta(days=1)).date()
-    outliers = list(find_outliers(target_date=yesterday))
+    target_date = (
+        (timezone.now() - timedelta(days=1)).date() if only_yesterday else None
+    )
+    outliers = list(find_outliers(target_date=target_date))
 
     # As we cannot directly filter per content type without adding a GenericRelation
     # to the Price model, we simply fetch the content type associated with the price

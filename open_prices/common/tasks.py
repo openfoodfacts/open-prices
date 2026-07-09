@@ -142,13 +142,13 @@ CRON_SCHEDULES = {
     "import_opf_db_task": ("20 15 * * *", {}),  # daily at 15:20
     "import_off_db_task": ("30 15 * * *", {}),  # daily at 15:30
     "dump_db_task": ("0 23 * * *", {}),  # daily at 23:00
-    "fix_proof_fields_task": ("0 1 * * *", {}),  # daily at 01:00
-    "moderation_tasks": ("10 1 * * *", {}),  # daily at 01:10
-    "history_cleanup_task": ("20 1 * * *", {}),  # daily at 01:20
     "create_flags_from_price_outliers_and_update_view": (  # daily at 00:30
         "30 0 * * *",
         {},
     ),
+    "fix_proof_fields_task": ("0 1 * * *", {}),  # daily at 01:00
+    "moderation_tasks": ("10 1 * * *", {}),  # daily at 01:10
+    "history_cleanup_task": ("20 1 * * *", {}),  # daily at 01:20
     "update_challenge_task": ("30 1 * * *", {}),  # daily at 01:30
     "update_user_counts_task": ("0 2 * * *", {}),  # daily at 02:00
     "update_badge_task": ("5 2 * * *", {}),  # daily at 02:05
