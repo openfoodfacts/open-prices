@@ -17,7 +17,8 @@ from open_prices.common.openfoodfacts import import_product_db
 from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
 from open_prices.moderation import rules as moderation_rules
-from open_prices.prices.models import Price
+from open_prices.moderation.rules import create_flags_from_price_outliers
+from open_prices.prices.models import Price, PriceStatistics5y
 from open_prices.products.models import Product
 from open_prices.proofs.models import Proof
 from open_prices.stats.models import TotalStats
@@ -125,6 +126,16 @@ def history_cleanup_task():
     history_clean_duplicate_command()
 
 
+def create_flags_from_price_outliers_and_update_view():
+    """Create flag associated with detected price outliers, for prices that were
+    created the day before.
+    Then refresh the `price_statistics_5y` materialized view."""
+    logger.info("Running create_flags_from_price_outliers task")
+    create_flags_from_price_outliers()
+    logger.info("Refreshing materialized view...")
+    PriceStatistics5y.refresh_materialized_view()
+
+
 CRON_SCHEDULES = {
     "import_obf_db_task": ("0 15 * * *", {}),  # daily at 15:00
     "import_opff_db_task": ("10 15 * * *", {}),  # daily at 15:10
@@ -134,6 +145,10 @@ CRON_SCHEDULES = {
     "fix_proof_fields_task": ("0 1 * * *", {}),  # daily at 01:00
     "moderation_tasks": ("10 1 * * *", {}),  # daily at 01:10
     "history_cleanup_task": ("20 1 * * *", {}),  # daily at 01:20
+    "create_flags_from_price_outliers_and_update_view": (  # daily at 00:30
+        "30 0 * * *",
+        {},
+    ),
     "update_challenge_task": ("30 1 * * *", {}),  # daily at 01:30
     "update_user_counts_task": ("0 2 * * *", {}),  # daily at 02:00
     "update_badge_task": ("5 2 * * *", {}),  # daily at 02:05
