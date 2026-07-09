@@ -1241,8 +1241,8 @@ class TestOutlierDetection(TestCase):
         cls.product_code = "0123456789100"
         cls.category_tag = "en:apples"
         cls.product = ProductFactory(code=cls.product_code)
-        cls.location_fr = LocationFactory.create(osm_address_country_code="FR")
-        cls.location_it = LocationFactory.create(osm_address_country_code="IT")
+        cls.location_fr = LocationFactory(osm_address_country_code="FR")
+        cls.location_it = LocationFactory(osm_address_country_code="IT")
 
         product_base_price = {
             "product_code": cls.product_code,
@@ -1275,10 +1275,10 @@ class TestOutlierDetection(TestCase):
             # 19 is an outlier with `median_threshold=3` (i.e. 3 times the median)
             "19",
         ]:
-            PriceFactory.create(price=price, **product_base_price)
+            PriceFactory(price=price, **product_base_price)
 
         # Price that would be an outlier if linked to location_fr
-        PriceFactory.create(
+        PriceFactory(
             **{
                 k: v
                 for k, v in product_base_price.items()
@@ -1300,13 +1300,13 @@ class TestOutlierDetection(TestCase):
             "1.0",
             "1.0",
         ]:
-            PriceFactory.create(
+            PriceFactory(
                 price=price,
                 **category_base_price,
             )
 
         # Price that would be an outlier if linked to location_fr
-        PriceFactory.create(
+        PriceFactory(
             **{
                 k: v
                 for k, v in category_base_price.items()
@@ -1318,7 +1318,7 @@ class TestOutlierDetection(TestCase):
             location_osm_type=cls.location_it.osm_type,
         )
         # Price that would be an outlier if price_per were PRICE_PER_KILOGRAM
-        PriceFactory.create(
+        PriceFactory(
             **{
                 k: v
                 for k, v in category_base_price.items()
@@ -1331,29 +1331,29 @@ class TestOutlierDetection(TestCase):
 
     def test_find_outliers(self):
         price_outliers = list(find_outliers(median_threshold=3, min_count=3))
-        product_outliers = [
+        product_price_outliers = [
             p
             for p in price_outliers
             if p.type == price_constants.TYPE_PRODUCT
             and p.product_code == self.product_code
         ]
-        self.assertEqual(len(product_outliers), 1)
-        product_outlier = product_outliers[0]
-        self.assertAlmostEqual(float(product_outlier.price), 19)
-        self.assertAlmostEqual(product_outlier.median, 6.0)
-        self.assertEqual(product_outlier.count, 5)
+        self.assertEqual(len(product_price_outliers), 1)
+        product_price_outlier = product_price_outliers[0]
+        self.assertAlmostEqual(float(product_price_outlier.price), 19)
+        self.assertAlmostEqual(product_price_outlier.median, 6.0)
+        self.assertEqual(product_price_outlier.count, 5)
 
-        category_outliers = [
+        category_price_outliers = [
             p
             for p in price_outliers
             if p.type == price_constants.TYPE_CATEGORY
             and p.category_tag == self.category_tag
         ]
-        self.assertEqual(len(category_outliers), 1)
-        category_outlier = category_outliers[0]
-        self.assertAlmostEqual(float(category_outlier.price), 0.05)
-        self.assertAlmostEqual(category_outlier.median, 0.85)
-        self.assertEqual(category_outlier.count, 6)
+        self.assertEqual(len(category_price_outliers), 1)
+        category_price_outlier = category_price_outliers[0]
+        self.assertAlmostEqual(float(category_price_outlier.price), 0.05)
+        self.assertAlmostEqual(category_price_outlier.median, 0.85)
+        self.assertEqual(category_price_outlier.count, 6)
 
     def test_find_outliers_with_target_date(self):
         outliers = list(
@@ -1363,15 +1363,15 @@ class TestOutlierDetection(TestCase):
                 min_count=3,
             )
         )
-        product_outliers = [
+        product_price_outliers = [
             p
             for p in outliers
             if p.type == price_constants.TYPE_PRODUCT
             and p.product_code == self.product_code
         ]
-        self.assertEqual(len(product_outliers), 1)
-        product_outlier = product_outliers[0]
-        self.assertAlmostEqual(float(product_outlier.price), 19)
+        self.assertEqual(len(product_price_outliers), 1)
+        product_price_outlier = product_price_outliers[0]
+        self.assertAlmostEqual(float(product_price_outlier.price), 19)
 
         # There should be no outliers for the previous day, as
         # there are no prices
