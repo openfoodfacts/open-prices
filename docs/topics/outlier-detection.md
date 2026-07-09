@@ -14,7 +14,7 @@ and compute the price median for each group.
 
 Let's call `x` the price we want to run the outlier detection algorithm against and `med` the price median of the group associated with the price.
 
-If there at least 3 prices in the group, and `x` is higher than  `3 * med` or lower than `med / 3`, we classify the price as an outlier.
+If there are at least 3 prices in the group, and `x` is higher than  `3 * med` or lower than `med / 3`, we classify the price as an outlier.
 
 ## Implementation
 
