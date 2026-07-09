@@ -1,14 +1,20 @@
+from datetime import timedelta
+
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
+from open_prices.locations.factories import LocationFactory
 from open_prices.moderation.models import Flag, FlagReason, FlagStatus
 from open_prices.moderation.rules import (
     cleanup_products_with_invalid_barcodes,
     cleanup_products_with_long_barcodes,
+    create_flags_from_price_outliers,
 )
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
-from open_prices.prices.models import Price
+from open_prices.prices.models import Price, PriceStatistics5y
 from open_prices.products import constants as product_constants
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
@@ -240,3 +246,48 @@ class ModerationRulesTest(TestCase):
         cleanup_products_with_invalid_barcodes()
         self.assertEqual(Product.objects.count(), 2)  # 1 product deleted
         self.assertEqual(Price.objects.count(), 3)  # 2 prices deleted
+
+
+class TestCreateFlagsFromPriceOutliers(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product_code = "0123456789100"
+        cls.product = ProductFactory(code=cls.product_code)
+        cls.location = LocationFactory(osm_address_country_code="FR")
+        product_base_price = {
+            "product_code": cls.product_code,
+            "product": cls.product,
+            "type": price_constants.TYPE_PRODUCT,
+            "location": cls.location,
+            "location_osm_id": cls.location.osm_id,
+            "location_osm_type": cls.location.osm_type,
+            "price_per": None,
+            "currency": "EUR",
+            "created": (timezone.now() - timedelta(days=1)).date(),
+        }
+        cls.outlier_price = None
+        for price in [
+            "4.5",
+            "5.0",
+            # 6.0 is the median
+            "6.0",
+            "8.0",
+            # 19 is an outlier with `median_threshold=3` (i.e. 3 times the median)
+            "19",
+        ]:
+            price_obj = PriceFactory(price=price, **product_base_price)
+            if price == "19":
+                cls.outlier_price = price_obj
+        PriceStatistics5y.refresh_materialized_view()
+
+    def test_create_flags_from_price_outliers(self):
+        self.assertEqual(Flag.objects.count(), 0)
+        create_flags_from_price_outliers()
+        flags = list(Flag.objects.all())
+        self.assertEqual(len(flags), 1)
+        flag = flags[0]
+        self.assertEqual(flag.object_id, self.outlier_price.id)
+        self.assertEqual(flag.reason, "WRONG_PRICE_VALUE")
+        self.assertEqual(
+            flag.comment, "Price is higher than 3 * median (price: 19.000, median: 6.0)"
+        )
