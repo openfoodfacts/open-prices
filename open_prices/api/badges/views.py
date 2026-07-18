@@ -5,7 +5,9 @@ from open_prices.api.badges.serializers import BadgeSerializer
 from open_prices.badges.models import Badge
 
 
-class BadgeViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class BadgeViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
     queryset = Badge.objects.all()
     serializer_class = BadgeSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]

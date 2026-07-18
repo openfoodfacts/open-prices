@@ -1,8 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
-from django.urls.exceptions import NoReverseMatch
 
 from open_prices.badges.factories import BadgeFactory
+from open_prices.users.factories import SessionFactory
 
 
 class BadgeListApiTest(TestCase):
@@ -74,29 +74,57 @@ class BadgeDetailApiTest(TestCase):
     def setUpTestData(cls):
         cls.badge = BadgeFactory()
 
-    def test_cannot_get_badge_detail(self):
-        self.assertRaises(
-            NoReverseMatch, reverse, "api:badges-detail", kwargs={"pk": self.badge.id}
-        )
+    def test_badge_detail(self):
+        # 404
+        url = reverse("api:badges-detail", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "No Badge matches the given query.")
+        # existing badge
+        url = reverse("api:badges-detail", args=[self.badge.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], self.badge.id)
+        self.assertEqual(response.data["name"], self.badge.name)
 
 
 class BadgeUpdateApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user_session = SessionFactory()
         cls.badge = BadgeFactory()
+        cls.url = reverse("api:badges-detail", args=[cls.badge.id])
+        cls.data = {"name": "Updated Badge Name"}
 
     def test_cannot_update_badge(self):
-        self.assertRaises(
-            NoReverseMatch, reverse, "api:badges-detail", kwargs={"pk": self.badge.id}
+        # anonymous
+        response = self.client.patch(
+            self.url, self.data, content_type="application/json"
         )
+        self.assertEqual(response.status_code, 405)
+        # authenticated
+        response = self.client.patch(
+            self.url,
+            self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 405)
 
 
 class BadgeDeleteApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user_session = SessionFactory()
         cls.badge = BadgeFactory()
+        cls.url = reverse("api:badges-detail", args=[cls.badge.id])
 
     def test_cannot_delete_badge(self):
-        self.assertRaises(
-            NoReverseMatch, reverse, "api:badges-detail", kwargs={"pk": self.badge.id}
+        # anonymous
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 405)
+        # authenticated
+        response = self.client.delete(
+            self.url, headers={"Authorization": f"Bearer {self.user_session.token}"}
         )
+        self.assertEqual(response.status_code, 405)
