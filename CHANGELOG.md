@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.108.0](https://github.com/openfoodfacts/open-prices/compare/v1.107.0...v1.108.0) (2026-07-18)
+
+
+### Features
+
+* **Badges:** API: allow fetching a badge by id ([#1387](https://github.com/openfoodfacts/open-prices/issues/1387)) ([216792f](https://github.com/openfoodfacts/open-prices/commit/216792fcd6e14c1f339c87a4376ae2df5af8100b))
+* **Badges:** API: endpoint to list users who achieved a specific badge ([#1388](https://github.com/openfoodfacts/open-prices/issues/1388)) ([ba8bd9d](https://github.com/openfoodfacts/open-prices/commit/ba8bd9d722a9e25f3f55fcd2b389c404a40b517e))
+
+
+### Bug Fixes
+
+* improve flag creation from price outliers ([#1382](https://github.com/openfoodfacts/open-prices/issues/1382)) ([a349d62](https://github.com/openfoodfacts/open-prices/commit/a349d6201d60d0ec0915a3c1633a0c36c84dcfbd))
+* remove unreachable elif in barcode_fix_short_codes_from_usa ([#1376](https://github.com/openfoodfacts/open-prices/issues/1376)) ([088cf30](https://github.com/openfoodfacts/open-prices/commit/088cf309a29792a78ba73e95c6706f268a777c7a))
+
+
+### Documentation
+
+* add AGENTS.md for AI assistants ([#1386](https://github.com/openfoodfacts/open-prices/issues/1386)) ([d29daa5](https://github.com/openfoodfacts/open-prices/commit/d29daa5b16b714d45ee9152e953a6b3907bb2457))
+
 ## [1.107.0](https://github.com/openfoodfacts/open-prices/compare/v1.106.1...v1.107.0) (2026-07-09)
 
 
