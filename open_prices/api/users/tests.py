@@ -154,7 +154,7 @@ class UserBadgeListApiTest(TestCase):
         self.assertEqual(response.data[0]["user"], self.user.user_id)
         self.assertIn("achieved_at", response.data[0])
 
-    def test_user_badges_list_for_user_without_badges(self):
+    def test_user_badges_list_empty(self):
         # Make the user not meet the threshold for the badge
         self.user.price_count = 5
         self.user.save()
