@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.108.1](https://github.com/openfoodfacts/open-prices/compare/v1.108.0...v1.108.1) (2026-07-19)
+
+
+### Technical
+
+* **Badges:** API: add pagination and ordering on the user badges list endpoint ([#1392](https://github.com/openfoodfacts/open-prices/issues/1392)) ([4e65c88](https://github.com/openfoodfacts/open-prices/commit/4e65c88fa4a0baed4307a6b21c9fe7edb1fdea17))
+* **Badges:** API: add pagination and ordering on the users list endpoint ([#1391](https://github.com/openfoodfacts/open-prices/issues/1391)) ([9b6013c](https://github.com/openfoodfacts/open-prices/commit/9b6013c5de197c302dd3aee73556b329f03784ef))
+* **Locations:** API: always paginate the `/nearby` endpoint ([#1389](https://github.com/openfoodfacts/open-prices/issues/1389)) ([8b01651](https://github.com/openfoodfacts/open-prices/commit/8b01651a11b408b382ba910a0e36ef80e682ced1))
+* **Tests:** API: add more tests on unknown objects (404) ([#1393](https://github.com/openfoodfacts/open-prices/issues/1393)) ([f74952b](https://github.com/openfoodfacts/open-prices/commit/f74952b17d502b6063d8a8b06df6a9b742419c57))
+
 ## [1.108.0](https://github.com/openfoodfacts/open-prices/compare/v1.107.0...v1.108.0) (2026-07-18)
 
 
