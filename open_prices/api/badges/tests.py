@@ -185,8 +185,7 @@ class BadgeUserListApiTest(TestCase):
 
     def test_badge_users_list_pagination(self):
         # Create additional users that meet the badge threshold
-        for _ in range(15):
-            UserFactory(price_count=20)
+        UserFactory.create_batch(15, price_count=20)
 
         # Update user badges and count
         Badge.update_task()
