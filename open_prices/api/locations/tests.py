@@ -454,6 +454,14 @@ class LocationNearbyApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 400)
 
+    def test_nearby_no_results(self):
+        url = f"{self.url}?lat=0&lon=0&radius_km=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("items", response.data)
+        self.assertEqual(response.data["total"], 0)
+        self.assertEqual(len(response.data["items"]), 0)
+
     def test_nearby_radius_km_zero(self):
         url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius_km=0"
         response = self.client.get(url)
