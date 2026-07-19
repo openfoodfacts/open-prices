@@ -331,12 +331,13 @@ class ProofDetailApiTest(TestCase):
         )
         cls.url = reverse("api:proofs-detail", args=[cls.proof.id])
 
-    def test_proof_detail(self):
-        # 404
+    def test_proof_detail_unknown(self):
         url = reverse("api:proofs-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Proof matches the given query.")
+
+    def test_proof_detail(self):
         # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -797,13 +798,14 @@ class ProofHistoryApiTest(TestCase):
         )
         cls.url = reverse("api:proofs-history", args=[cls.proof.id])
 
-    def test_proof_history(self):
-        # 404
+    def test_proof_history_unknown(self):
         url = reverse("api:proofs-history", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Proof matches the given query.")
-        # existing proof
+
+    def test_proof_history(self):
+        # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)

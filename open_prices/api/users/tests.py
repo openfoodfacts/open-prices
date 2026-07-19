@@ -106,19 +106,21 @@ class UserDetailApiTest(TestCase):
         cls.user_session_2 = SessionFactory()
         cls.url = reverse("api:users-detail", args=[cls.user_session_1.user.user_id])
 
-    def test_user_detail(self):
+    def test_user_detail_unknown(self):
         # anonymous
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        # anonymous, unknown user
         url = reverse("api:users-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
-        # authenticated, unknown user
+        # authenticated
         response = self.client.get(
             url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_user_detail(self):
+        # anonymous
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
         # authenticated, but not owner
         response = self.client.get(
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
@@ -138,6 +140,11 @@ class UserBadgeListApiTest(TestCase):
         cls.user = UserFactory(price_count=15)
         cls.badge = BadgeFactory(metric="price_count", threshold=10)
         cls.url = reverse("api:users-badges", args=[cls.user.user_id])
+
+    def test_user_unknown(self):
+        url = reverse("api:users-badges", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
     def test_user_badges_list(self):
         # Update user badges and count

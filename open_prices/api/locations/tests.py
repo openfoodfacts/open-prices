@@ -165,30 +165,31 @@ class LocationDetailApiTest(TestCase):
         cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.url = reverse("api:locations-detail", args=[cls.location.id])
 
-    def test_location_detail(self):
-        # 404
+    def test_location_detail_unknown(self):
         url = reverse("api:locations-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.data["detail"], "No Location matches the given query."
         )
-        # existing location
+
+    def test_location_detail(self):
+        # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.location.id)
         # self.assertEqual(response.data["osm_lat"], 45.1805534)
         self.assertIn("osm_brand_logo_url", response.data)
 
-    def test_location_detail_by_osm(self):
-        # 404
+    def test_location_detail_by_osm_unknown(self):
         url = reverse("api:locations-get-by-osm", args=["NODE", 999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.data["detail"], "No Location matches the given query."
         )
-        # existing location
+
+    def test_location_detail_by_osm(self):
         url = reverse(
             "api:locations-get-by-osm",
             args=[self.location.osm_type, self.location.osm_id],
@@ -559,7 +560,16 @@ class LocationCompareApiTest(TestCase):
             date="2025-01-01",
         )
 
-    def test_cannot_compare_with_bad_request(self):
+    def test_compare_location_unknown(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b=999"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.data["detail"], "No Location matches the given query."
+        )
+
+    def test_compare_bad_request(self):
         # missing parameter
         url = f"{self.url}?location_id_a={self.location_a.id}"
         response = self.client.get(url)
@@ -571,12 +581,6 @@ class LocationCompareApiTest(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 400)
-
-        # location unknown
-        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b=999"
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 404)
 
     def test_compare_same_location(self):
         url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_a.id}"

@@ -75,13 +75,14 @@ class BadgeDetailApiTest(TestCase):
     def setUpTestData(cls):
         cls.badge = BadgeFactory()
 
-    def test_badge_detail(self):
-        # 404
+    def test_badge_detail_unknown(self):
         url = reverse("api:badges-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Badge matches the given query.")
-        # existing badge
+
+    def test_badge_detail(self):
+        # anonymous
         url = reverse("api:badges-detail", args=[self.badge.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -137,6 +138,11 @@ class BadgeUserListApiTest(TestCase):
         cls.user = UserFactory(price_count=15)
         cls.badge = BadgeFactory(metric="price_count", threshold=10)
         cls.url = reverse("api:badges-users", args=[cls.badge.id])
+
+    def test_badge_unknown(self):
+        url = reverse("api:badges-users", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
     def test_badge_users_list(self):
         # Update user badges and count
