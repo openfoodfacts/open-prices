@@ -148,11 +148,11 @@ class UserBadgeListApiTest(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["id"], user_badge.id)
-        self.assertEqual(response.data[0]["badge"]["id"], self.badge.id)
-        self.assertEqual(response.data[0]["user"], self.user.user_id)
-        self.assertIn("achieved_at", response.data[0])
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["items"][0]["id"], user_badge.id)
+        self.assertEqual(response.data["items"][0]["badge"]["id"], self.badge.id)
+        self.assertEqual(response.data["items"][0]["user"], self.user.user_id)
+        self.assertIn("achieved_at", response.data["items"][0])
 
     def test_user_badges_list_empty(self):
         # Make the user not meet the threshold for the badge
@@ -166,7 +166,7 @@ class UserBadgeListApiTest(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data["items"]), 0)
 
     def test_user_badges_list_only_returns_achieved_badges(self):
         # Create a badge that the user has not achieved
@@ -179,8 +179,34 @@ class UserBadgeListApiTest(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["badge"]["id"], self.badge.id)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["items"][0]["badge"]["id"], self.badge.id)
+
+    def test_user_badges_list_pagination(self):
+        # Create additional badges that the user has achieved
+        BadgeFactory.create_batch(15, metric="price_count", threshold=5)
+
+        # Update user badges and count
+        Badge.update_task()
+        self.user.refresh_from_db()
+
+        url = self.url + "?size=1"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1 + 15)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(response.data["pages"], 16)
+
+        url = self.url + "?size=1&page=2"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1 + 15)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["page"], 2)
+        self.assertEqual(response.data["pages"], 16)
 
 
 class UserBadgeCreateApiTest(TestCase):
