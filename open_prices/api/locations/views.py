@@ -198,7 +198,7 @@ class LocationViewSet(
         center_lon = params_serializer.validated_data["lon"]
         radius_km = params_serializer.validated_data["radius_km"]
         queryset = Location.objects.nearby(center_lat, center_lon, radius_km)
-
+        # paginate the response
         paginator = CustomPagination()
         page = paginator.paginate_queryset(queryset, request)
         serializer = LocationNearbySerializer(page, many=True)
