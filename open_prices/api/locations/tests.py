@@ -481,7 +481,7 @@ class LocationNearbyApiTest(TestCase):
         self.assertAlmostEqual(response.data["items"][0]["distance_km"], 0.0, places=2)
         self.assertAlmostEqual(response.data["items"][1]["distance_km"], 1.3, delta=0.1)
 
-    def test_nearby_pagination(self):
+    def test_nearby_list_pagination(self):
         url = (
             f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius_km=5&size=1"
         )
