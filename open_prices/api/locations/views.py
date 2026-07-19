@@ -20,6 +20,7 @@ from open_prices.api.locations.serializers import (
     LocationNearbySerializer,
     LocationSerializer,
 )
+from open_prices.api.pagination import CustomPagination
 from open_prices.api.utils import get_object_or_drf_404, get_source_from_request
 from open_prices.common import openstreetmap, utils
 from open_prices.locations import constants as location_constants
@@ -95,7 +96,6 @@ class LocationViewSet(
         serializer = self.get_serializer(location)
         return Response(serializer.data)
 
-    # TODO: disable pagination
     @extend_schema(responses=CountrySerializer(many=True), filters=False)
     @action(detail=False, methods=["GET"], url_path="osm/countries")
     def list_osm_countries(self, request):
@@ -137,7 +137,6 @@ class LocationViewSet(
 
         return Response(countries_list)
 
-    # TODO: disable pagination
     @extend_schema(responses=CountryCitySerializer(many=True), filters=False)
     @action(
         detail=False,
@@ -200,13 +199,10 @@ class LocationViewSet(
         radius_km = params_serializer.validated_data["radius_km"]
         queryset = Location.objects.nearby(center_lat, center_lon, radius_km)
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = LocationNearbySerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = LocationNearbySerializer(queryset, many=True)
-        return Response(serializer.data)
+        paginator = CustomPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        serializer = LocationNearbySerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @extend_schema(
         parameters=[
