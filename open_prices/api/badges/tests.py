@@ -139,6 +139,11 @@ class BadgeUserListApiTest(TestCase):
         cls.badge = BadgeFactory(metric="price_count", threshold=10)
         cls.url = reverse("api:badges-users", args=[cls.badge.id])
 
+    def test_badge_unknown(self):
+        url = reverse("api:badges-users", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
     def test_badge_users_list(self):
         # Update user badges and count
         Badge.update_task()

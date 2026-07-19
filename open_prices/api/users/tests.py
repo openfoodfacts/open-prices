@@ -106,7 +106,7 @@ class UserDetailApiTest(TestCase):
         cls.user_session_2 = SessionFactory()
         cls.url = reverse("api:users-detail", args=[cls.user_session_1.user.user_id])
 
-    def test_user_unknown(self):
+    def test_user_detail_unknown(self):
         # anonymous
         url = reverse("api:users-detail", args=[999])
         response = self.client.get(url)
