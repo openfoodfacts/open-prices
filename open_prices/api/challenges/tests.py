@@ -143,3 +143,46 @@ class ChallengeListFilterApiTest(TestCase):
         )  # noqa
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["id"], self.challenge_completed.id)  # noqa
+
+
+class ChallengeDetailApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.challenge = ChallengeFactory()
+        cls.url = reverse("api:challenges-detail", args=[cls.challenge.id])
+
+    def test_challenge_detail_unknown(self):
+        url = reverse("api:challenges-detail", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.data["detail"], "No Challenge matches the given query."
+        )
+
+    def test_challenge_detail(self):
+        # anonymous
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], self.challenge.id)
+
+
+class ChallengeUpdateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.challenge = ChallengeFactory()
+        cls.url = reverse("api:challenges-detail", args=[cls.challenge.id])
+
+    def test_cannot_update_challenge(self):
+        response = self.client.put(self.url, data={"name": "Updated Challenge Name"})
+        self.assertEqual(response.status_code, 405)
+
+
+class ChallengeDeleteApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.challenge = ChallengeFactory()
+        cls.url = reverse("api:challenges-detail", args=[cls.challenge.id])
+
+    def test_cannot_delete_challenge(self):
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 405)

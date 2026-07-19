@@ -75,13 +75,14 @@ class BadgeDetailApiTest(TestCase):
     def setUpTestData(cls):
         cls.badge = BadgeFactory()
 
-    def test_badge_detail(self):
-        # 404
+    def test_badge_detail_unknown(self):
         url = reverse("api:badges-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Badge matches the given query.")
-        # existing badge
+
+    def test_badge_detail(self):
+        # anonymous
         url = reverse("api:badges-detail", args=[self.badge.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
