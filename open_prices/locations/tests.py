@@ -74,13 +74,29 @@ class LocationModelSaveTest(TestCase):
                     osm_id=6509705997,
                     osm_type=LOCATION_OSM_TYPE_NOT_OK,
                 )
-        # unique constraint
+        # unique constraint: same osm_id + osm_type + osm_version should fail
+        LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_id=6509705997,
+            osm_type=location_constants.OSM_TYPE_OK_LIST[0],
+            osm_version=1,
+        )
+
         self.assertRaises(
             ValidationError,
             LocationFactory,
             type=location_constants.TYPE_OSM,
             osm_id=6509705997,
             osm_type=location_constants.OSM_TYPE_OK_LIST[0],
+            osm_version=1,
+        )
+
+        # different osm_version should be allowed (versioning support)
+        LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_id=6509705997,
+            osm_type=location_constants.OSM_TYPE_OK_LIST[0],
+            osm_version=2,
         )
 
     def test_location_decimal_truncate_on_create(self):
@@ -127,6 +143,35 @@ class LocationModelSaveTest(TestCase):
             type=location_constants.TYPE_ONLINE,
             website_url=location_constants.WEBSITE_URL_OK_TUPLE_LIST[0][0],
         )
+
+
+class LocationVersioningTest(TestCase):
+    def test_same_osm_id_different_version_allowed(self):
+        # first version of the location
+        location_v1 = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_id=298872652,
+            osm_type=location_constants.OSM_TYPE_NODE,
+            osm_name="Casino",
+            osm_brand="Casino",
+            osm_version=16,
+        )
+        # second version of the same location
+        location_v2 = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_id=298872652,
+            osm_type=location_constants.OSM_TYPE_NODE,
+            osm_name="Intermarché",
+            osm_brand="Intermarché",
+            osm_version=21,
+        )
+        # both records should exist in the database
+        self.assertEqual(Location.objects.filter(osm_id=298872652).count(), 2)
+        # each record should have the correct brand
+        self.assertEqual(location_v1.osm_brand, "Casino")
+        self.assertEqual(location_v2.osm_brand, "Intermarché")
+        # each record should have a different version
+        self.assertNotEqual(location_v1.osm_version, location_v2.osm_version)
 
 
 class LocationQuerySetTest(TestCase):

@@ -32,6 +32,17 @@ class LocationQuerySet(models.QuerySet):
     def has_type_online(self):
         return self.filter(type=location_constants.TYPE_ONLINE)
 
+    def get_latest_by_osm(self, osm_id, osm_type):
+        """
+        return the latest version of a location matching osm_id and osm_type, Used when multiple versions of the same
+        OSM location exist
+        """
+        return (
+            self.filter(osm_id=osm_id, osm_type=osm_type)
+            .order_by("-osm_version", "-updated")
+            .first()
+        )
+
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
@@ -123,6 +134,7 @@ class Location(models.Model):
         "osm_lat",
         "osm_lon",
         "osm_version",
+        "osm_version_date",
     ]
     TYPE_ONLINE_MANDATORY_FIELDS = ["website_url"]
 
@@ -152,6 +164,7 @@ class Location(models.Model):
         max_digits=11, decimal_places=7, blank=True, null=True
     )
     osm_version = models.PositiveIntegerField(blank=True, null=True)
+    osm_version_date = models.DateTimeField(blank=True, null=True)
 
     # type ONLINE
     website_url = models.URLField(blank=True, null=True)
@@ -174,7 +187,7 @@ class Location(models.Model):
         constraints = [
             UniqueConstraint(
                 name=location_constants.TYPE_OSM_UNIQUE_CONSTRAINT_NAME,
-                fields=["osm_id", "osm_type"],
+                fields=["osm_id", "osm_type", "osm_version"],
                 condition=Q(type=location_constants.TYPE_OSM),
             ),
             UniqueConstraint(
