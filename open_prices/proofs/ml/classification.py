@@ -142,6 +142,10 @@ def run_and_save_proof_type_prediction(
     :return: the ProofPrediction instance created, or None if the prediction
         already exists and overwrite is False
     """
+    if not settings.TRITON_URI:
+        logger.warning("TRITON_URI is not configured, skipping proof type prediction")
+        return None
+
     if ProofPrediction.objects.filter(
         proof=proof, model_name=proof_classification_model_config.model_name
     ).exists():
