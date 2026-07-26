@@ -7,6 +7,7 @@ from drf_spectacular.views import (
 from rest_framework import routers
 
 from open_prices.api.auth.views import LoginView, SessionView
+from open_prices.api.badges.views import BadgeViewSet
 from open_prices.api.challenges.views import ChallengeViewSet
 from open_prices.api.locations.views import LocationViewSet
 from open_prices.api.moderation.views import FlagViewSet
@@ -35,6 +36,7 @@ router.register(r"v1/price-tags", PriceTagViewSet, basename="price-tags")
 router.register(r"v1/receipt-items", ReceiptItemViewSet, basename="receipt-items")
 router.register(r"v1/challenges", ChallengeViewSet, basename="challenges")
 router.register(r"v1/flags", FlagViewSet, basename="flags")
+router.register(r"v1/badges", BadgeViewSet, basename="badges")
 
 urlpatterns = [
     # auth urls

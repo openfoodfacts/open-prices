@@ -45,6 +45,10 @@ class ProductListPaginationApiTest(TestCase):
         for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
             with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
                 self.assertIn(PAGINATION_KEY, response.data)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 10)  # default
 
 
@@ -153,29 +157,30 @@ class ProductDetailApiTest(TestCase):
         cls.product = ProductFactory(**PRODUCT_8001505005707)
         cls.url = reverse("api:products-detail", args=[cls.product.id])
 
-    def test_product_detail(self):
-        # 404
+    def test_product_detail_unknown(self):
         url = reverse("api:products-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Product matches the given query.")
-        # existing product
+
+    def test_product_detail(self):
+        # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.product.id)
 
-    def test_product_detail_by_code(self):
-        # 404
+    def test_product_detail_by_code_unknown(self):
         url = reverse("api:products-get-by-code", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Product matches the given query.")
-        # existing product
+
+    def test_product_detail_by_code(self):
         url = reverse("api:products-get-by-code", args=[self.product.code])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.product.id)
-        # existing product with normalization
+        # with normalization
         ProductFactory(code="0123456789100")
         url = reverse("api:products-get-by-code", args=["123456789100"])
         response = self.client.get(url)

@@ -1,0 +1,16 @@
+METRIC_PRICE_COUNT = "price_count"
+METRIC_PROOF_COUNT = "proof_count"
+METRIC_LOCATION_COUNT = "location_count"
+METRIC_COUNTRY_COUNT = "location_type_osm_country_count"
+METRIC_YEAR_COUNT = "year_count"
+METRIC_CHALLENGE_COUNT = "challenge_count"
+
+METRIC_LIST = [
+    METRIC_PRICE_COUNT,
+    METRIC_PROOF_COUNT,
+    METRIC_LOCATION_COUNT,
+    METRIC_COUNTRY_COUNT,
+    METRIC_YEAR_COUNT,
+    METRIC_CHALLENGE_COUNT,
+]
+METRIC_CHOICES = [(key, key) for key in METRIC_LIST]

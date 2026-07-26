@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import IntegrityError
 from django.test import TestCase
 
+from open_prices.badges import constants as badge_constants
+from open_prices.badges.factories import BadgeFactory
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
@@ -117,6 +119,12 @@ class TotalStatsTest(TestCase):
             start_date="2025-07-01", end_date="2025-08-31", is_published=True
         )
         ChallengeFactory(is_published=False)
+        BadgeFactory(
+            metric=badge_constants.METRIC_PRICE_COUNT, threshold=5, user_count=1
+        )
+        BadgeFactory(
+            metric=badge_constants.METRIC_PRICE_COUNT, threshold=50, user_count=0
+        )
 
     def test_update_price_stats(self):
         self.assertEqual(self.total_stats.price_count, 0)
@@ -230,6 +238,15 @@ class TotalStatsTest(TestCase):
         self.total_stats.update_challenge_stats()
 
         self.assertEqual(self.total_stats.challenge_count, 1)
+
+    def test_update_badge_stats(self):
+        self.assertEqual(self.total_stats.badge_count, 0)
+        self.assertEqual(self.total_stats.badge_with_user_count, 0)
+
+        self.total_stats.update_badge_stats()
+
+        self.assertEqual(self.total_stats.badge_count, 2)
+        self.assertEqual(self.total_stats.badge_with_user_count, 1)
 
     def test_update_product_created_stats(self):
         self.assertEqual(self.total_stats.product_created_count, 0)

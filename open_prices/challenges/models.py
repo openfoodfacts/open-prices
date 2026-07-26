@@ -54,7 +54,7 @@ class ChallengeQuerySet(models.QuerySet):
             status_annotated=challenge_constants.CHALLENGE_STATUS_ONGOING
         )
 
-    def to_update_in_daily_task(self):
+    def for_update_task(self):
         """
         Goal: Choose which challenges stats we want to update.
         - Data updated? categories_full, price/proof tags, stats
@@ -136,6 +136,18 @@ class Challenge(models.Model):
         """
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @classmethod
+    def update_task(cls):
+        """
+        - Update challenge categories_full, price/proof tags, stats
+        - Some challenges are skipped (see queryset)
+        """
+        for challenge in cls.objects.for_update_task():
+            challenge.calculate_categories_full()
+            challenge.set_price_tags()  # will only apply on 'ONGOING' challenges
+            challenge.set_proof_tags()  # will only apply based on price 'challenge' tags
+            challenge.calculate_stats()
 
     @property
     def start_date_with_time(self):

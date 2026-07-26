@@ -46,6 +46,8 @@ jobs:
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
         echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.net/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
+        # we get access to PaddleX through ovh-stunnel-client -> hetzner-stunnel-server
+        echo "PADDLEX_API_URL=http://10.1.0.113:5610" >> $GITHUB_ENV
     - name: Set various variable for production deployment
       if: matrix.env == 'open-prices-org'
       run: |
@@ -61,6 +63,8 @@ jobs:
         echo "REDIS_PORT=6379" >> $GITHUB_ENV
         echo "KEYCLOAK_OIDC_CONFIG_URL=https://auth.openfoodfacts.org/realms/openfoodfacts/.well-known/openid-configuration" >> $GITHUB_ENV
         echo "KEYCLOAK_AUDIENCE=account" >> $GITHUB_ENV
+        # we get access to PaddleX through scaleway-stunnel-client -> moji-stunnel-server
+        echo "PADDLEX_API_URL=http://10.13.1.101:5610" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
       uses: tomchv/wait-my-workflow@v1.1.0
       id: wait-build
@@ -157,6 +161,9 @@ jobs:
           echo "GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}" >> .env
           echo "PRICE_TAG_EXTRACTION_ASYNC_REQUESTS=True" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
+          echo "PADDLEX_API_URL=${{ env.PADDLEX_API_URL }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "OPENAI_BASE_URL=https://api.tensorix.ai/v1" >> .env
           # Disable OCR temporarily, as we have no use of it
           echo "ENABLE_OCR=False" >> .env
           echo "ENABLE_ML_PREDICTIONS=True" >> .env

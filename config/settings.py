@@ -2,11 +2,24 @@ import os
 import sys
 from pathlib import Path
 
+OPENFOODFACTS_URL = "https://world.openfoodfacts.org"
+OPENFOODFACTS_EMAIL = "contact@openfoodfacts.org"
+OPENPRICES_DOCS_URL = "https://openfoodfacts.github.io/open-prices/"
+OPENPRICES_DOCS_GUIDES_DATA_URL = (
+    "https://openfoodfacts.github.io/open-prices/guides/data/"
+)
+
+
+# Django config
+# ------------------------------------------------------------------------------
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Directory where user-uploaded images are stored
 IMAGES_DIR = BASE_DIR / "img"
+# for URL generation
+IMAGES_DIR_DISPLAY = Path("/img")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -63,6 +76,7 @@ LOCAL_APPS = [
     "open_prices.users",
     "open_prices.stats",
     "open_prices.moderation",
+    "open_prices.badges",
     "open_prices.api",
     "open_prices.www",
 ]
@@ -182,7 +196,7 @@ CORS_ALLOW_CREDENTIALS = True
 # https://pillow.readthedocs.io/
 # ------------------------------------------------------------------------------
 
-THUMBNAIL_SIZE = (400, 400)
+THUMBNAIL_SIZE = 400
 
 
 # Django REST Framework (DRF) & django-filters & drf-spectacular
@@ -209,8 +223,8 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Open Prices API allows you to add product prices",
     "CONTACT": {
         "name": "The Open Food Facts team",
-        "url": "https://world.openfoodfacts.org",
-        "email": "contact@openfoodfacts.org",
+        "url": OPENFOODFACTS_URL,
+        "email": OPENFOODFACTS_EMAIL,
     },
     "LICENSE": {
         "name": " AGPL-3.0",
@@ -343,6 +357,12 @@ ENABLE_IMPORT_OFF_DB_TASK = os.getenv("ENABLE_IMPORT_OFF_DB_TASK") == "True"
 ENABLE_IMPORT_OBF_DB_TASK = os.getenv("ENABLE_IMPORT_OBF_DB_TASK") == "True"
 ENABLE_IMPORT_OPFF_DB_TASK = os.getenv("ENABLE_IMPORT_OPFF_DB_TASK") == "True"
 ENABLE_IMPORT_OPF_DB_TASK = os.getenv("ENABLE_IMPORT_OPF_DB_TASK") == "True"
+
+
+# PaddleOCR
+# ------------------------------------------------------------------------------
+
+PADDLEX_API_URL = os.getenv("PADDLEX_API_URL", "http://127.0.0.1:8080")
 
 
 # Redis (for product updates)

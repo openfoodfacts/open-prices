@@ -91,6 +91,10 @@ class LocationListPaginationApiTest(TestCase):
         for PAGINATION_KEY in ["items", "page", "pages", "size", "total"]:
             with self.subTest(PAGINATION_KEY=PAGINATION_KEY):
                 self.assertIn(PAGINATION_KEY, response.data)
+        self.assertEqual(response.data["total"], 3)
+        self.assertEqual(len(response.data["items"]), 3)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 10)  # default
 
 
@@ -161,30 +165,31 @@ class LocationDetailApiTest(TestCase):
         cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
         cls.url = reverse("api:locations-detail", args=[cls.location.id])
 
-    def test_location_detail(self):
-        # 404
+    def test_location_detail_unknown(self):
         url = reverse("api:locations-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.data["detail"], "No Location matches the given query."
         )
-        # existing location
+
+    def test_location_detail(self):
+        # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.location.id)
         # self.assertEqual(response.data["osm_lat"], 45.1805534)
         self.assertIn("osm_brand_logo_url", response.data)
 
-    def test_location_detail_by_osm(self):
-        # 404
+    def test_location_detail_by_osm_unknown(self):
         url = reverse("api:locations-get-by-osm", args=["NODE", 999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.data["detail"], "No Location matches the given query."
         )
-        # existing location
+
+    def test_location_detail_by_osm(self):
         url = reverse(
             "api:locations-get-by-osm",
             args=[self.location.osm_type, self.location.osm_id],
@@ -416,7 +421,7 @@ class LocationNearbyApiTest(TestCase):
         cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
 
     def test_nearby_missing_params(self):
-        # all missing
+        # lat, lon & radius_km missing
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 400)
         # lat missing
@@ -450,6 +455,14 @@ class LocationNearbyApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 400)
 
+    def test_nearby_no_results(self):
+        url = f"{self.url}?lat=0&lon=0&radius_km=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("items", response.data)
+        self.assertEqual(response.data["total"], 0)
+        self.assertEqual(len(response.data["items"]), 0)
+
     def test_nearby_radius_km_zero(self):
         url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius_km=0"
         response = self.client.get(url)
@@ -461,7 +474,6 @@ class LocationNearbyApiTest(TestCase):
         url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius_km=5"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("items", response.data)
         self.assertEqual(response.data["total"], 2)  # center + near
         # ordered by distance
         self.assertEqual(response.data["items"][0]["id"], self.location_osm_center.id)
@@ -469,6 +481,27 @@ class LocationNearbyApiTest(TestCase):
         # distance_km in response
         self.assertAlmostEqual(response.data["items"][0]["distance_km"], 0.0, places=2)
         self.assertAlmostEqual(response.data["items"][1]["distance_km"], 1.3, delta=0.1)
+
+    def test_nearby_list_pagination(self):
+        url = (
+            f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius_km=5&size=1"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 2)  # center + near
+        self.assertEqual(response.data["size"], 1)
+        self.assertEqual(response.data["pages"], 2)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(len(response.data["items"]), 1)
+
+        url = f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius_km=5&size=1&page=2"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 2)  # center + near
+        self.assertEqual(response.data["size"], 1)
+        self.assertEqual(response.data["pages"], 2)
+        self.assertEqual(response.data["page"], 2)
+        self.assertEqual(len(response.data["items"]), 1)
 
 
 class LocationCompareApiTest(TestCase):
@@ -527,7 +560,16 @@ class LocationCompareApiTest(TestCase):
             date="2025-01-01",
         )
 
-    def test_cannot_compare_with_bad_request(self):
+    def test_compare_location_unknown(self):
+        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b=999"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.data["detail"], "No Location matches the given query."
+        )
+
+    def test_compare_bad_request(self):
         # missing parameter
         url = f"{self.url}?location_id_a={self.location_a.id}"
         response = self.client.get(url)
@@ -539,12 +581,6 @@ class LocationCompareApiTest(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 400)
-
-        # location unknown
-        url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b=999"
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 404)
 
     def test_compare_same_location(self):
         url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_a.id}"

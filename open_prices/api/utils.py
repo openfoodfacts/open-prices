@@ -1,4 +1,22 @@
+import django_filters
+from django.core.validators import EMPTY_VALUES
 from django.http import Http404
+
+
+class ArrayFieldElementContainsFilter(django_filters.CharFilter):
+    """
+    Input: tags__contains=en:organic
+    Output: tags__contains=['en:organic']
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("lookup_expr", "contains")
+        super().__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+        if value in EMPTY_VALUES:
+            return qs
+        return super().filter(qs, [value])
 
 
 def get_object_or_drf_404(model, **kwargs):

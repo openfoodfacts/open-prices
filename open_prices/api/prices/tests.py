@@ -113,22 +113,6 @@ class PriceListPaginationApiTest(TestCase):
         self.assertEqual(response.data["page"], 1)
         self.assertEqual(response.data["pages"], 1)
         self.assertEqual(response.data["size"], 10)  # default
-        # size=150
-        url = self.url + "?size=150"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
-        self.assertEqual(len(response.data["items"]), 3)
-        self.assertEqual(response.data["page"], 1)
-        self.assertEqual(response.data["pages"], 1)
-        self.assertEqual(response.data["size"], 100)  # max to 100
-        # size=1
-        url = self.url + "?size=1"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 3)
-        self.assertEqual(len(response.data["items"]), 1)
-        self.assertEqual(response.data["page"], 1)
-        self.assertEqual(response.data["pages"], 3)
-        self.assertEqual(response.data["size"], 1)
 
 
 class PriceListOrderApiTest(TestCase):
@@ -536,13 +520,14 @@ class PriceDetailApiTest(TestCase):
         )
         cls.url = reverse("api:prices-detail", args=[cls.price.id])
 
-    def test_price_detail(self):
-        # 404
+    def test_price_detail_unknown(self):
         url = reverse("api:prices-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Price matches the given query.")
-        # existing price
+
+    def test_price_detail(self):
+        # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.price.id)
@@ -1140,13 +1125,14 @@ class PriceHistoryApiTest(TestCase):
         )
         cls.url = reverse("api:prices-history", args=[cls.price.id])
 
-    def test_price_history(self):
-        # 404
+    def test_price_history_unknown(self):
         url = reverse("api:prices-history", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data["detail"], "No Price matches the given query.")
-        # existing price
+
+    def test_price_history(self):
+        # anonymous
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)

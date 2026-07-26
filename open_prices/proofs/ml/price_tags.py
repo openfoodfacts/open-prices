@@ -29,9 +29,9 @@ from open_prices.proofs.models import (
     ProofPrediction,
 )
 from open_prices.proofs.utils import (
+    convert_image,
     crop_image,
     generate_image_thumbnail_cv2,
-    image_bytes_as_webp,
     open_image_cv2,
 )
 
@@ -368,7 +368,7 @@ def extract_from_price_tag(
             contents=[
                 EXTRACT_PRICE_TAG_PROMPT,
                 genai.types.Part.from_bytes(
-                    data=image_bytes_as_webp(image),
+                    data=convert_image(image, format="webp", quality=80),
                     mime_type="image/webp",
                 ),
             ],
@@ -393,7 +393,7 @@ async def extract_from_price_tag_async(
         contents=[
             EXTRACT_PRICE_TAG_PROMPT,
             genai.types.Part.from_bytes(
-                data=image_bytes_as_webp(image),
+                data=convert_image(image, format="webp", quality=80),
                 mime_type="image/webp",
             ),
         ],
@@ -779,17 +779,17 @@ def create_price_tags_from_proof_prediction(
             )
             if not classification:
                 continue
-            predicted_price_tag_type = classification.data.get("prediction", [{}])[
-                0
-            ].get("label")
+            classification.data.get("prediction", [{}])[0].get("label")
 
             # Price tag type prediction can have three possible values: "invalid",
             # "medium-quality" and "high-quality". We only run the extraction model
             # on price tags that are not predicted as "invalid" as there is nothing
             # to extract on these image crops: either the price tag is too blurry or
             # the crop is not actually a price tag.
-            if predicted_price_tag_type != "invalid":
-                to_process.append(price_tag_with_image)
+            # 2026-06-18: temporarily always run price tag extractions, even on price
+            # tags that are predicted as "invalid"
+            # if predicted_price_tag_type != "invalid":
+            to_process.append(price_tag_with_image)
         else:
             # If we don't run classification, we run extraction on all detected price tags
             to_process.append(price_tag_with_image)

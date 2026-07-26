@@ -15,12 +15,9 @@ from django_q.tasks import async_task
 from simple_history.models import HistoricalRecords
 
 from open_prices.challenges.models import Challenge
-
-# Import custom lookups so that they are registered
 from open_prices.common import (
     constants,
     history,
-    lookups,  # noqa: F401
     utils,
 )
 from open_prices.locations import constants as location_constants
@@ -304,9 +301,21 @@ class Proof(models.Model):
         super().save(*args, **kwargs)
 
     @property
+    def file_path_display(self):
+        if self.file_path:
+            return str(settings.IMAGES_DIR_DISPLAY / self.file_path)
+        return None
+
+    @property
     def file_path_full(self):
         if self.file_path:
             return str(settings.IMAGES_DIR / self.file_path)
+        return None
+
+    @property
+    def image_thumb_path_display(self):
+        if self.image_thumb_path:
+            return str(settings.IMAGES_DIR_DISPLAY / self.image_thumb_path)
         return None
 
     @property
@@ -482,7 +491,7 @@ class ProofPrediction(models.Model):
         verbose_name="The proof this prediction belongs to",
     )
     type = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=proof_constants.PROOF_PREDICTION_TYPE_CHOICES,
         verbose_name="The type of the prediction",
     )
@@ -526,11 +535,29 @@ class ProofPrediction(models.Model):
         return f"{self.proof} - {self.model_name} - {self.model_version}"
 
 
+@receiver(signals.post_save, sender=Proof)
+def proof_post_save_delete_receipt_anonymization_prediction_non_draft_proof(
+    sender, instance, created, **kwargs
+):
+    """Delete the receipt anonymization prediction once the proof is not in
+    draft mode anymore. Receipt anonymization contain PII data, so it's
+    best that those are not publicly available."""
+    if (
+        not created
+        and instance.draft is False
+        and instance.type == proof_constants.TYPE_RECEIPT
+    ):
+        ProofPrediction.objects.filter(
+            proof=instance,
+            type=proof_constants.PROOF_PREDICTION_RECEIPT_ANONYMIZATION_TYPE,
+        ).delete()
+
+
 @receiver(signals.post_save, sender=ProofPrediction)
 def proof_prediction_post_create_increment_counts(sender, instance, created, **kwargs):
     if created:
         if instance.proof_id:
-            Proof.objects.filter(id=instance.proof_id).update(
+            Proof.all_objects.filter(id=instance.proof_id).update(
                 prediction_count=F("prediction_count") + 1
             )
 
@@ -650,6 +677,10 @@ class PriceTag(models.Model):
         from open_prices.proofs.utils import get_price_tag_image_path
 
         return get_price_tag_image_path(self.id)
+
+    @property
+    def image_path_display(self):
+        return str(settings.IMAGES_DIR_DISPLAY / self.image_path)
 
     @property
     def image_path_full(self):
@@ -787,7 +818,7 @@ class PriceTagPrediction(models.Model):
         help_text="The price tag this prediction belongs to",
     )
     type = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=proof_constants.PRICE_TAG_PREDICTION_TYPE_CHOICES,
         help_text="The type of the prediction",
     )

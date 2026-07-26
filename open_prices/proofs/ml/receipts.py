@@ -15,8 +15,8 @@ from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.common import DiscountType, RawCategory, Unit
 from open_prices.proofs.models import Proof, ProofPrediction, ReceiptItem
 from open_prices.proofs.utils import (
+    convert_image,
     generate_image_thumbnail_cv2,
-    image_bytes_as_webp,
     open_image_cv2,
 )
 
@@ -211,7 +211,7 @@ def extract_from_receipt(image: np.ndarray) -> JSONType | None:
             contents=[
                 prompt,
                 genai.types.Part.from_bytes(
-                    data=image_bytes_as_webp(image),
+                    data=convert_image(image, format="webp", quality=80),
                     mime_type="image/webp",
                 ),
             ],

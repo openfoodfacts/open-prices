@@ -1,5 +1,6 @@
 import django_filters
 
+from open_prices.api.utils import ArrayFieldElementContainsFilter
 from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.prices.models import Price
@@ -23,22 +24,15 @@ class PriceFilter(django_filters.FilterSet):
     product__source__isnull = django_filters.BooleanFilter(
         field_name="product__source", lookup_expr="isnull"
     )
-    product__categories_tags__contains = django_filters.CharFilter(
-        field_name="product__categories_tags",
-        lookup_expr="any",
+    product__categories_tags__contains = ArrayFieldElementContainsFilter(
+        field_name="product__categories_tags"
     )
     product__categories_tags__overlap = django_filters.BaseInFilter(
         field_name="product__categories_tags",
         lookup_expr="overlap",
     )
-    labels_tags__contains = django_filters.CharFilter(
-        field_name="labels_tags",
-        lookup_expr="icontains",
-    )
-    origins_tags__contains = django_filters.CharFilter(
-        field_name="origins_tags",
-        lookup_expr="icontains",
-    )
+    labels_tags__contains = ArrayFieldElementContainsFilter(field_name="labels_tags")
+    origins_tags__contains = ArrayFieldElementContainsFilter(field_name="origins_tags")
     location__type = django_filters.ChoiceFilter(
         field_name="location__type",
         choices=location_constants.TYPE_CHOICES,
@@ -47,13 +41,9 @@ class PriceFilter(django_filters.FilterSet):
         field_name="proof__type",
         choices=proof_constants.TYPE_CHOICES,
     )
-    tags__contains = django_filters.CharFilter(
-        field_name="tags",
-        lookup_expr="icontains",
-    )
-    location__osm_name__contains = django_filters.CharFilter(
-        field_name="location__osm_name",
-        lookup_expr="icontains",
+    tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
+    location__osm_name__contains = ArrayFieldElementContainsFilter(
+        field_name="location__osm_name"
     )
 
     def filter_kind(self, queryset, name, value):

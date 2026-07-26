@@ -395,8 +395,7 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
     """
     Fix short barcodes from USA
 
-    10 or 11 digits: pad them to 12 digits and calculate their check digit
-    12 digits: add a leading zero
+    10, 11 or 12 digits: pad them to 12 digits and calculate their check digit
 
     This function is based on the fact that most of the short barcodes are from
     the USA, and that they can be converted to a valid EAN-13 barcode by
@@ -413,10 +412,6 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
         barcode_temp = barcode.zfill(12)
         barcode_check_digit = openfoodfacts.barcode.calculate_check_digit(barcode + "0")
         barcode_temp = barcode_temp + barcode_check_digit
-        if barcode_is_valid(barcode_temp):
-            return barcode_temp
-    elif len(barcode) == 12:
-        barcode_temp = "0" + barcode
         if barcode_is_valid(barcode_temp):
             return barcode_temp
     return barcode

@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from open_prices.badges.factories import BadgeFactory
+from open_prices.badges.models import Badge
 from open_prices.users.factories import SessionFactory, UserFactory
 from open_prices.users.models import User
 
@@ -104,19 +106,21 @@ class UserDetailApiTest(TestCase):
         cls.user_session_2 = SessionFactory()
         cls.url = reverse("api:users-detail", args=[cls.user_session_1.user.user_id])
 
-    def test_user_detail(self):
+    def test_user_detail_unknown(self):
         # anonymous
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        # anonymous, unknown user
         url = reverse("api:users-detail", args=[999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
-        # authenticated, unknown user
+        # authenticated
         response = self.client.get(
             url, headers={"Authorization": f"Bearer {self.user_session_1.token}"}
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_user_detail(self):
+        # anonymous
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
         # authenticated, but not owner
         response = self.client.get(
             self.url, headers={"Authorization": f"Bearer {self.user_session_2.token}"}
@@ -128,3 +132,98 @@ class UserDetailApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["user_id"], self.user_session_1.user.user_id)
+
+
+class UserBadgeListApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory(price_count=15)
+        cls.badge = BadgeFactory(metric="price_count", threshold=10)
+        cls.url = reverse("api:users-badges", args=[cls.user.user_id])
+
+    def test_user_unknown(self):
+        url = reverse("api:users-badges", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_badges_list(self):
+        # Update user badges and count
+        Badge.update_task()
+        self.user.refresh_from_db()
+        user_badge = self.user.user_badges.first()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["items"][0]["id"], user_badge.id)
+        self.assertEqual(response.data["items"][0]["badge"]["id"], self.badge.id)
+        self.assertEqual(response.data["items"][0]["user"], self.user.user_id)
+        self.assertIn("achieved_at", response.data["items"][0])
+
+    def test_user_badges_list_empty(self):
+        # Make the user not meet the threshold for the badge
+        self.user.price_count = 5
+        self.user.save()
+
+        # Update user badges and count
+        Badge.update_task()
+        self.user.refresh_from_db()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["items"]), 0)
+
+    def test_user_badges_list_only_returns_achieved_badges(self):
+        # Create a badge that the user has not achieved
+        BadgeFactory(metric="price_count", threshold=20)
+
+        # Update user badges and count
+        Badge.update_task()
+        self.user.refresh_from_db()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["items"][0]["badge"]["id"], self.badge.id)
+
+    def test_user_badges_list_pagination(self):
+        # Create additional badges that the user has achieved
+        BadgeFactory.create_batch(15, metric="price_count", threshold=5)
+
+        # Update user badges and count
+        Badge.update_task()
+        self.user.refresh_from_db()
+
+        url = self.url + "?size=1"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1 + 15)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(response.data["pages"], 16)
+
+        url = self.url + "?size=1&page=2"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1 + 15)
+        self.assertEqual(len(response.data["items"]), 1)
+        self.assertEqual(response.data["page"], 2)
+        self.assertEqual(response.data["pages"], 16)
+
+
+class UserBadgeCreateApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory(price_count=15)
+        cls.badge = BadgeFactory(metric="price_count", threshold=10)
+        cls.url = reverse("api:users-badges", args=[cls.user.user_id])
+
+    def test_cannot_create_user_badge(self):
+        response = self.client.post(self.url, data={"badge": self.badge.id})
+
+        self.assertEqual(response.status_code, 405)

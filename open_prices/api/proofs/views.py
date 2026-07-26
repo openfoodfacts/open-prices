@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import PIL.Image
 from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
@@ -20,6 +22,7 @@ from open_prices.api.proofs.filters import (
     ReceiptItemFilter,
 )
 from open_prices.api.proofs.serializers import (
+    DraftProofAnonymizeRequestSerializer,
     PriceTagCreateSerializer,
     PriceTagFullSerializer,
     PriceTagUpdateSerializer,
@@ -44,9 +47,14 @@ from open_prices.common.permission import (
     OnlyObjectOwnerOrModeratorIsAllowedWrite,
 )
 from open_prices.proofs import constants as proof_constants
+from open_prices.proofs.constants import TYPE_RECEIPT
 from open_prices.proofs.ml.price_tags import extract_from_price_tag
 from open_prices.proofs.models import PriceTag, Proof, ReceiptItem
-from open_prices.proofs.utils import compute_file_md5, store_file
+from open_prices.proofs.utils import (
+    compute_file_md5,
+    save_anonymized_receipt,
+    store_file,
+)
 
 
 def base_upload(request: Request, draft: bool = False) -> Response:
@@ -288,6 +296,54 @@ class ProofDraftViewSet(
 
         Only the file and type fields are expected. ML models runs immediately asynchronously."""
         return base_upload(request, draft=True)
+
+    @extend_schema(
+        request=DraftProofAnonymizeRequestSerializer, responses=ProofFullSerializer
+    )
+    @action(
+        detail=True,
+        methods=["POST"],
+        url_path="anonymize",
+    )
+    def anonymize_receipt(self, request: Request, pk=None) -> Response:
+        """Anonymize a receipt."""
+        proof = self.get_object()
+
+        # No need to check that this is a draft proof, as the queryset filter ensures it
+        if proof.type != TYPE_RECEIPT:
+            return Response(
+                {"detail": "Only receipts can be anonymized"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Warning: bounding boxes here have the same format [x_min, y_min, x_max, y_max]
+        # as the `Word` bounding boxes in the OCR results.
+        # Currently, the format used by the bounding boxes of price tags use a different
+        # format ([y_min, x_min, y_max, x_max]).
+        # The [x_min, y_min, x_max, y_max] format is much more common, and we should migrate
+        # price tag bounding boxes to that format in the future for consistency.
+        serializer = DraftProofAnonymizeRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        image_path = Path(proof.file_path)
+        image_thumb_path = Path(proof.image_thumb_path)
+        # Redact the personal information from the image by drawing black boxes over
+        # the bounding boxes, and save the new image and thumbnail to the filesystem.
+        # We don't update the image hash, so that the proof duplication detection
+        # still works.
+        new_image_path, new_image_thumb_path = save_anonymized_receipt(
+            image_path=image_path,
+            image_thumb_path=image_thumb_path,
+            bounding_boxes=serializer.data["bounding_boxes"],
+        )
+
+        if new_image_path != image_path or new_image_thumb_path != image_thumb_path:
+            proof.file_path = str(new_image_path)
+            proof.image_thumb_path = str(new_image_thumb_path)
+            proof._change_reason = "Saving new image path after anonymization"
+            proof.save()
+
+        return Response(ProofFullSerializer(proof).data, status=status.HTTP_200_OK)
 
     @extend_schema(request=ProofUpdateSerializer, responses=ProofFullSerializer)
     def partial_update(self, request: Request, pk=None) -> Response:

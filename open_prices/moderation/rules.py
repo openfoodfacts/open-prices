@@ -2,12 +2,21 @@
 A list of rules, to clean up the data
 """
 
+import logging
+from datetime import timedelta
+
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.db.models.functions import Length
+from django.utils import timezone
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
+from open_prices.moderation.models import Flag, FlagReason
 from open_prices.prices import constants as price_constants
+from open_prices.prices.outlier_detection import find_outliers
 from open_prices.products.models import Product
+
+logger = logging.getLogger(__name__)
 
 
 def cleanup_products_with_long_barcodes():
@@ -88,3 +97,39 @@ def cleanup_products_with_invalid_barcodes():
 
     # recap
     print(f"Deleted {product_deleted_count} products and {price_deleted_count} prices")
+
+
+def create_flags_from_price_outliers(only_yesterday: bool = True):
+    """Create flags for each price outlier detected.
+
+    :param only_yesterday: if True, only look for outliers for prices that were
+        created yesterday.
+    """
+    target_date = (
+        (timezone.now() - timedelta(days=1)).date() if only_yesterday else None
+    )
+    outliers = list(find_outliers(target_date=target_date))
+
+    # As we cannot directly filter per content type without adding a GenericRelation
+    # to the Price model, we simply fetch the content type associated with the price
+    # table here
+    price_content_type = ContentType.objects.get(app_label="prices", model="price")
+    for price in outliers:
+        is_higher = price.price >= price.median
+        if Flag.objects.filter(
+            object_id=price.id,
+            content_type=price_content_type,
+            reason=FlagReason.WRONG_PRICE_VALUE,
+        ).count():
+            continue
+        flag = Flag.objects.create(
+            content_object=price,
+            reason=FlagReason.WRONG_PRICE_VALUE,
+            source="outlier-detection",
+            comment=(
+                f"Price is {'higher' if is_higher else 'lower'} than "
+                f"{'3 * median' if is_higher else 'median / 3'} "
+                f"(price: {price.price}, median: {price.median})"
+            ),
+        )
+        logger.info("New flag created for price outlier %s: %s", price.id, flag)

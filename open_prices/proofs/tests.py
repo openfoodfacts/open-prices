@@ -52,7 +52,14 @@ from open_prices.proofs.ml.price_tags import (
     extract_from_price_tag,
     run_and_save_price_tag_detection,
 )
-from open_prices.proofs.models import PriceTag, PriceTagPrediction, Proof, ReceiptItem
+from open_prices.proofs.ml.receipt_anonymization import AnonymizationResult
+from open_prices.proofs.models import (
+    PriceTag,
+    PriceTagPrediction,
+    Proof,
+    ProofPrediction,
+    ReceiptItem,
+)
 from open_prices.proofs.utils import (
     compute_file_md5,
     crop_image,
@@ -61,6 +68,7 @@ from open_prices.proofs.utils import (
     match_price_tag_with_price,
     match_product_price_tag_with_product_price,
     match_receipt_item_with_price,
+    save_anonymized_receipt,
     select_proof_image_dir,
 )
 from open_prices.users.factories import SessionFactory
@@ -509,6 +517,30 @@ class ProofModelSaveTest(TestCase):
         self.assertEqual(user_session.user.proof_count, 1)
         self.assertEqual(location.proof_count, 1)
 
+    def test_proof_post_save_delete_receipt_anonymization_prediction_non_draft_proof(
+        self,
+    ):
+        """Receipt anonymization predictions must be deleted once a proof is not a draft
+        anymore."""
+        # create draft proof (receipt)
+        proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            draft=True,
+        )
+        # create a receipt anonymization prediction
+        ProofPredictionFactory(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_RECEIPT_ANONYMIZATION_TYPE,
+        )
+        proof.draft = False
+        proof.save()
+        self.assertIsNone(
+            ProofPrediction.objects.filter(
+                proof=proof,
+                type=proof_constants.PROOF_PREDICTION_RECEIPT_ANONYMIZATION_TYPE,
+            ).first()
+        )
+
 
 class ProofPropertyTest(TestCase):
     @classmethod
@@ -885,7 +917,7 @@ class MLModelTest(TestCase):
             # change temporarily settings.IMAGE_DIR
             with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
                 proof = ProofFactory(
-                    file_path=file_path, type=proof_constants.TYPE_RECEIPT
+                    file_path=file_path, type=proof_constants.TYPE_RECEIPT, draft=True
                 )
 
                 # Patch predict_proof_type to return a fixed response
@@ -898,6 +930,10 @@ class MLModelTest(TestCase):
                         "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=None,
                     ) as mock_detect_price_tags,
+                    unittest.mock.patch(
+                        "open_prices.proofs.ml.receipt_anonymization.anonymize_receipt",
+                        return_value=AnonymizationResult(words=[]),
+                    ) as mock_anonymize_receipt,
                 ):
                     run_and_save_proof_prediction(
                         proof,
@@ -907,10 +943,11 @@ class MLModelTest(TestCase):
                     )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_not_called()
+                    mock_anonymize_receipt.assert_called_once()
 
-                proof_type_prediction = proof.predictions.filter(
-                    type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
-                ).first()
+                    proof_type_prediction = proof.predictions.filter(
+                        type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
+                    ).first()
                 self.assertIsNotNone(proof_type_prediction)
                 self.assertEqual(
                     proof_type_prediction.type,
@@ -943,12 +980,19 @@ class MLModelTest(TestCase):
                 ).first()
                 self.assertIsNone(price_tag_prediction)
 
+                receipt_anonymization_prediction = proof.predictions.filter(
+                    type=proof_constants.PROOF_PREDICTION_RECEIPT_ANONYMIZATION_TYPE
+                ).first()
+                self.assertIsNotNone(receipt_anonymization_prediction)
+
                 # prediction_count was incremented
                 proof.refresh_from_db()
-                self.assertEqual(proof.prediction_count, 1)
+                # 2 predictions: one price tag prediction, one receipt anonymization
+                self.assertEqual(proof.prediction_count, 2)
 
                 # cleanup
                 proof_type_prediction.delete()
+                receipt_anonymization_prediction.delete()
                 proof.delete()
 
     def test_run_and_save_proof_prediction_for_price_tag_proof(self):
@@ -2339,3 +2383,49 @@ class GenerateImageThumbnailCv2Test(TestCase):
         result = generate_image_thumbnail_cv2(image, max_size=200)
         self.assertEqual(result.shape[0], 133)
         self.assertEqual(result.shape[1], 200)
+
+
+class TestSaveAnonymizedReceipt(unittest.TestCase):
+    def test_save_anonymized_receipt(self):
+        with tempfile.TemporaryDirectory() as tmpdir_str:
+            # Save as JPEG
+            root_dir = Path(tmpdir_str)
+            proof_dir = root_dir / "0002"
+            proof_dir.mkdir(parents=True)
+            full_image_path = proof_dir / "full.jpg"
+            # Create a test image (white color)
+            height = 400
+            width = 600
+            image = np.ones((height, width, 3), dtype=np.uint8) * 255
+            cv2.imwrite(str(full_image_path), image)
+            cv2.imwrite(str(proof_dir / "thumbnail.jpg"), cv2.resize(image, (400, 400)))
+            bounding_boxes = [
+                [0.2, 0.5, 0.25, 0.60],  # absolute: (120, 200, 150, 240)
+                [0.3, 0.6, 0.40, 0.65],  # absolute: (180, 240, 240, 260)
+            ]
+            new_image_path, new_thumb_path = save_anonymized_receipt(
+                image_path=Path("0002/full.jpg"),
+                image_thumb_path=Path("0002/thumbnail.jpg"),
+                bounding_boxes=bounding_boxes,
+                root_dir=root_dir,
+            )
+
+            # Check that new files are now WEBP images, with relative paths preserved
+            self.assertEqual(str(new_image_path), "0002/full.webp")
+            self.assertEqual(str(new_thumb_path), "0002/thumbnail.webp")
+            new_image = cv2.imread(str(root_dir / new_image_path))
+            self.assertIsNotNone(new_image)
+            self.assertIsNotNone(cv2.imread(str(root_dir / new_thumb_path)))
+            self.assertEqual(new_image.shape[0], height)
+            self.assertEqual(new_image.shape[1], width)
+            # check that the areas corresponding to the bounding boxes are in black color
+            for box in bounding_boxes:
+                x_min, y_min, x_max, y_max = box
+                x_min, y_min, x_max, y_max = (
+                    int(x_min * width),
+                    int(y_min * height),
+                    int(x_max * width),
+                    int(y_max * height),
+                )
+                area = new_image[y_min:y_max, x_min:x_max]
+                self.assertTrue(np.all(area == 0))

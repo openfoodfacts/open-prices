@@ -8,8 +8,7 @@ from open_prices.products.models import Product
 class ApproximateCountTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        for _ in range(10):
-            ProductFactory()
+        ProductFactory.create_batch(10)
 
     def test_approximate_count_without_filters(self):
         count = Product.objects.count()
