@@ -17,8 +17,13 @@
         branches:
           - main
 
+    permissions:
+      contents: read
+
     jobs:
       publish-docs:
+        permissions:
+          contents: write
         runs-on: ubuntu-slim
         strategy:
           matrix:
