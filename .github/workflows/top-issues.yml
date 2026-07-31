@@ -14,6 +14,10 @@ jobs:
     name: Display and label top issues.
     runs-on: ubuntu-slim
     if: github.repository_owner == 'openfoodfacts'
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
     - name: Run top issues action
       uses: rickstaa/top-issues-action@v1
