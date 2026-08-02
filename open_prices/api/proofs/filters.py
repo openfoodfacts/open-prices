@@ -61,7 +61,7 @@ class PriceTagFilter(django_filters.FilterSet):
         field_name="prediction_count", lookup_expr="gte"
     )
     prediction_count__lte = django_filters.NumberFilter(
-        field_name="price_count", lookup_expr="lte"
+        field_name="prediction_count", lookup_expr="lte"
     )
     tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
     tags__not_contains = ArrayFieldElementContainsFilter(

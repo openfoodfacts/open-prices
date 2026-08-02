@@ -1224,6 +1224,7 @@ class PriceTagListApiTest(TestCase):
             price=cls.price,
             status=proof_constants.PriceTagStatus.linked_to_price.value,
             tags=["prediction-found-product"],
+            prediction_count=2,
         )
         cls.price_tag_2 = PriceTagFactory(proof=cls.proof)
         cls.price_tag_3 = PriceTagFactory(
@@ -1296,6 +1297,21 @@ class PriceTagListApiTest(TestCase):
         # price tag 2 is returned
         self.assertEqual(response.data["items"][0]["id"], self.price_tag_2.id)
         url = self.url + "?status__isnull=False"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+
+    def test_price_tag_list_filter_by_prediction_count(self):
+        # exact
+        url = self.url + "?prediction_count=2"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], self.price_tag_1.id)
+        # gte
+        url = self.url + "?prediction_count__gte=1"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # lte
+        url = self.url + "?prediction_count__lte=1"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
