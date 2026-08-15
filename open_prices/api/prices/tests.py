@@ -509,6 +509,153 @@ class PriceListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 0)
 
 
+class PriceListNearbyFilterApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:prices-list")
+        cls.CENTER_LAT = 48.0
+        cls.CENTER_LON = 2.0
+        cls.location_center = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=cls.CENTER_LAT,
+            osm_lon=cls.CENTER_LON,
+        )
+        cls.location_near = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=cls.CENTER_LAT + 0.01,  # ~1.3km away
+            osm_lon=cls.CENTER_LON + 0.01,
+        )
+        cls.location_far = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=cls.CENTER_LAT + 0.1,  # ~13km away
+            osm_lon=cls.CENTER_LON + 0.1,
+        )
+        cls.location_without_coordinates = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=None,
+            osm_lon=None,
+        )
+        cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+
+        cls.price_center = cls.create_price_for_osm_location(
+            cls.location_center, price=10
+        )
+        cls.price_near = cls.create_price_for_osm_location(cls.location_near, price=20)
+        cls.create_price_for_osm_location(cls.location_far, price=30)
+        cls.create_price_for_osm_location(cls.location_without_coordinates, price=40)
+        PriceFactory(location_id=cls.location_online.id, price=50)
+
+    @classmethod
+    def create_price_for_osm_location(cls, location, price):
+        return PriceFactory(
+            location_id=location.id,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+            price=price,
+        )
+
+    def test_price_list_filter_by_nearby_location(self):
+        response = self.client.get(
+            self.url,
+            {"lat": self.CENTER_LAT, "lon": self.CENTER_LON, "radius_km": 5},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(
+            {item["id"] for item in response.data["items"]},
+            {self.price_center.id, self.price_near.id},
+        )
+
+    def test_price_list_nearby_filter_combines_with_other_filters(self):
+        response = self.client.get(
+            self.url,
+            {
+                "lat": self.CENTER_LAT,
+                "lon": self.CENTER_LON,
+                "radius_km": 5,
+                "price__gte": 15,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], self.price_near.id)
+
+    def test_price_list_nearby_filter_requires_all_parameters(self):
+        parameter_sets = [
+            {"lat": self.CENTER_LAT},
+            {"lon": self.CENTER_LON},
+            {"radius_km": 5},
+            {"lat": self.CENTER_LAT, "lon": self.CENTER_LON},
+            {"lat": self.CENTER_LAT, "radius_km": 5},
+            {"lon": self.CENTER_LON, "radius_km": 5},
+        ]
+        for parameters in parameter_sets:
+            with self.subTest(parameters=parameters):
+                response = self.client.get(self.url, parameters)
+                self.assertEqual(response.status_code, 400)
+
+    def test_price_list_nearby_filter_validates_parameters(self):
+        parameter_sets = [
+            {"lat": "invalid", "lon": self.CENTER_LON, "radius_km": 5},
+            {"lat": 91, "lon": self.CENTER_LON, "radius_km": 5},
+            {"lat": self.CENTER_LAT, "lon": 181, "radius_km": 5},
+            {"lat": self.CENTER_LAT, "lon": self.CENTER_LON, "radius_km": -1},
+            {"lat": "", "lon": "", "radius_km": ""},
+        ]
+        for parameters in parameter_sets:
+            with self.subTest(parameters=parameters):
+                response = self.client.get(self.url, parameters)
+                self.assertEqual(response.status_code, 400)
+
+    def test_price_list_nearby_filter_with_zero_radius(self):
+        response = self.client.get(
+            self.url,
+            {"lat": self.CENTER_LAT, "lon": self.CENTER_LON, "radius_km": 0},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], self.price_center.id)
+
+    def test_price_list_nearby_filter_with_a_large_radius(self):
+        response = self.client.get(
+            self.url,
+            {"lat": self.CENTER_LAT, "lon": self.CENTER_LON, "radius_km": 1000},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # the online location & the one without coordinates stay excluded
+        self.assertEqual(response.data["total"], 3)
+
+    def test_price_stats_uses_the_nearby_filter(self):
+        # /stats runs the same filter_queryset, so it narrows down as well
+        url = reverse("api:prices-stats")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price__count"], 5)
+
+        response = self.client.get(
+            url,
+            {"lat": self.CENTER_LAT, "lon": self.CENTER_LON, "radius_km": 5},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # the whole aggregate is computed on the filtered queryset, not the count alone
+        self.assertEqual(response.data["price__count"], 2)
+        self.assertEqual(response.data["price__min"], self.price_center.price)
+        self.assertEqual(response.data["price__max"], self.price_near.price)
+
+    def test_price_stats_nearby_filter_requires_all_parameters(self):
+        response = self.client.get(
+            reverse("api:prices-stats"), {"lat": self.CENTER_LAT}
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+
 class PriceDetailApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
