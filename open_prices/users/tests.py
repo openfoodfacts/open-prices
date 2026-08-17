@@ -166,10 +166,12 @@ class UserPropertyTest(TestCase):
     def test_update_location_count(self):
         self.user_1.refresh_from_db()
         self.assertEqual(self.user_1.location_count, 0)
+        self.assertEqual(self.user_1.location_type_osm_city_count, 0)
         self.assertEqual(self.user_1.location_type_osm_country_count, 0)
         # update_location_count() should fix location counts
         self.user_1.update_location_count()
         self.assertEqual(self.user_1.location_count, 1)  # proof locations
+        self.assertEqual(self.user_1.location_type_osm_city_count, 1)
         self.assertEqual(self.user_1.location_type_osm_country_count, 1)
 
     def test_update_product_count(self):
@@ -182,11 +184,19 @@ class UserPropertyTest(TestCase):
     def test_update_proof_count(self):
         self.user_1.refresh_from_db()
         self.assertEqual(self.user_1.proof_count, 2)  # proof signals
+        self.assertEqual(self.user_1.proof_type_price_tag_count, 0)
+        self.assertEqual(self.user_1.proof_type_receipt_count, 0)
+        self.assertEqual(self.user_1.proof_type_gdpr_request_count, 0)
+        self.assertEqual(self.user_1.proof_type_shop_import_count, 0)
         self.assertEqual(self.user_1.proof_kind_community_count, 0)
         self.assertEqual(self.user_1.proof_kind_consumption_count, 0)
         # update_proof_count() should fix proof counts
         self.user_1.update_proof_count()
         self.assertEqual(self.user_1.proof_count, 2)
+        self.assertEqual(self.user_1.proof_type_price_tag_count, 1)
+        self.assertEqual(self.user_1.proof_type_receipt_count, 0)
+        self.assertEqual(self.user_1.proof_type_gdpr_request_count, 1)
+        self.assertEqual(self.user_1.proof_type_shop_import_count, 0)
         self.assertEqual(self.user_1.proof_kind_community_count, 1)
         self.assertEqual(self.user_1.proof_kind_consumption_count, 1)
 

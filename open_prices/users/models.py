@@ -1,3 +1,5 @@
+from collections import Counter
+
 from django.db import models
 from django.db.models import Count, F, Func, OuterRef, Subquery
 from django.db.models.functions import Coalesce, ExtractYear
@@ -36,11 +38,16 @@ class User(models.Model):
     ]
     PROOF_COUNT_FIELDS = [
         "proof_count",
+        "proof_type_price_tag_count",
+        "proof_type_receipt_count",
+        "proof_type_gdpr_request_count",
+        "proof_type_shop_import_count",
         "proof_kind_community_count",
         "proof_kind_consumption_count",
     ]
     LOCATION_COUNT_FIELDS = [
         "location_count",
+        "location_type_osm_city_count",
         "location_type_osm_country_count",
     ]
     PRODUCT_COUNT_FIELDS = [
@@ -80,9 +87,14 @@ class User(models.Model):
     price_in_proof_not_owned_count = models.PositiveIntegerField(default=0)
     price_not_owned_in_proof_owned_count = models.PositiveIntegerField(default=0)
     location_count = models.PositiveIntegerField(default=0)
+    location_type_osm_city_count = models.PositiveIntegerField(default=0)
     location_type_osm_country_count = models.PositiveIntegerField(default=0)
     product_count = models.PositiveIntegerField(default=0)
     proof_count = models.PositiveIntegerField(default=0)
+    proof_type_price_tag_count = models.PositiveIntegerField(default=0)
+    proof_type_receipt_count = models.PositiveIntegerField(default=0)
+    proof_type_gdpr_request_count = models.PositiveIntegerField(default=0)
+    proof_type_shop_import_count = models.PositiveIntegerField(default=0)
     proof_kind_community_count = models.PositiveIntegerField(default=0)
     proof_kind_consumption_count = models.PositiveIntegerField(default=0)
     currency_count = models.PositiveIntegerField(default=0)
@@ -165,6 +177,16 @@ class User(models.Model):
         self.location_count = Proof.objects.filter(
             owner=self.user_id
         ).calculate_field_distinct_count("location_id")
+        # NOTE: we could count by distinct city+country in the future
+        self.location_type_osm_city_count = (
+            Proof.objects.select_related("location")
+            .filter(
+                owner=self.user_id,
+                location_id__isnull=False,
+                location__type=location_constants.TYPE_OSM,
+            )
+            .calculate_field_distinct_count("location__osm_address_city")
+        )
         self.location_type_osm_country_count = (
             Proof.objects.select_related("location")
             .filter(
@@ -185,9 +207,25 @@ class User(models.Model):
         self.save(update_fields=self.PRODUCT_COUNT_FIELDS)
 
     def update_proof_count(self):
+        from open_prices.proofs import constants as proof_constants
         from open_prices.proofs.models import Proof
 
         self.proof_count = Proof.objects.filter(owner=self.user_id).count()
+        proof_count_per_type = Counter(
+            Proof.objects.filter(owner=self.user_id).values_list("type", flat=True)
+        )
+        self.proof_type_price_tag_count = proof_count_per_type.get(
+            proof_constants.TYPE_PRICE_TAG, 0
+        )
+        self.proof_type_receipt_count = proof_count_per_type.get(
+            proof_constants.TYPE_RECEIPT, 0
+        )
+        self.proof_type_gdpr_request_count = proof_count_per_type.get(
+            proof_constants.TYPE_GDPR_REQUEST, 0
+        )
+        self.proof_type_shop_import_count = proof_count_per_type.get(
+            proof_constants.TYPE_SHOP_IMPORT, 0
+        )
         self.proof_kind_community_count = (
             Proof.objects.filter(owner=self.user_id).has_kind_community().count()
         )
