@@ -3,7 +3,7 @@ from OSMPythonTools.api import Api, ApiResult
 from OSMPythonTools.nominatim import Nominatim
 
 OSM_FIELDS_FROM_NOMINATIM = ["name", "display_name", "lat", "lon"]
-OSM_FIELDS_FROM_OPENSTREETMAP = ["brand", "version"]
+OSM_FIELDS_FROM_OPENSTREETMAP = ["brand", "version", "version_date"]
 OSM_TAG_FIELDS_MAPPING = {"class": "tag_key", "type": "tag_value"}
 OSM_ADDRESS_FIELDS = [
     "postcode",
@@ -45,6 +45,7 @@ def get_location_from_openstreetmap(osm_id: int, osm_type: str) -> dict:
         "lat": response.lat(),
         "lon": response.lon(),
         "version": response.version(),
+        "version_date": response.timestamp(),
         "tags": response.tags(),
     }
 
