@@ -1,6 +1,11 @@
+import math
+
 from django.conf import settings
 from OSMPythonTools.api import Api, ApiResult
 from OSMPythonTools.nominatim import Nominatim
+
+EARTH_RADIUS_KM = 6371.0
+BIG_LOCATION_MOVE_METERS = 100  # a move further than this counts as a "big" change
 
 OSM_FIELDS_FROM_NOMINATIM = ["name", "display_name", "lat", "lon"]
 OSM_FIELDS_FROM_OPENSTREETMAP = ["brand", "version", "version_date"]
@@ -40,6 +45,20 @@ def get_location_from_openstreetmap(
     return response
 
 
+def get_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Haversine distance in kilometers between two lat/lon points."""
+    lat1_rad, lon1_rad, lat2_rad, lon2_rad = (
+        math.radians(coord) for coord in (lat1, lon1, lat2, lon2)
+    )
+    delta_lat = lat2_rad - lat1_rad
+    delta_lon = lon2_rad - lon1_rad
+    a = (
+        math.sin(delta_lat / 2) ** 2
+        + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2
+    )
+    return 2 * EARTH_RADIUS_KM * math.asin(math.sqrt(a))
+
+
 def get_location_dict_from_openstreetmap(osm_id: int, osm_type: str) -> dict:
     response = get_location_from_openstreetmap(osm_id, osm_type, history=False)
     return {
@@ -71,6 +90,46 @@ def get_historical_location_from_openstreetmap(
         if historical_datetime < location_version.timestamp():
             return response.history()[index - 1]
     return response.history()[-1]
+
+
+def has_moved_significantly(location, osm_data: dict) -> bool:
+    lat, lon = osm_data.get("lat"), osm_data.get("lon")
+    if lat is None or lon is None:
+        return False
+    if location.osm_lat is None or location.osm_lon is None:
+        return False
+    distance_km = get_distance_km(
+        float(location.osm_lat), float(location.osm_lon), lat, lon
+    )
+    return distance_km * 1000 > BIG_LOCATION_MOVE_METERS
+
+
+def has_tag_changed(location, osm_data: dict) -> bool:
+    """Whether the location's primary OSM tag (e.g. "shop"="supermarket") changed value, or disappeared."""
+    if not location.osm_tag_key or "tag_value" not in osm_data:
+        return False
+    return osm_data["tag_value"] != location.osm_tag_value
+
+
+def has_big_osm_change(location, osm_data: dict) -> bool:
+    """
+    A "big" change = the OSM version changed AND (the name, brand or primary
+    tag changed, or the point moved by more than BIG_LOCATION_MOVE_METERS).
+
+    `osm_data` is a dict with "version", "name", "brand", "lat" & "lon" keys
+    (see `get_location_dict_from_openstreetmap`), plus an optional
+    "tag_value" key holding the current value of the location's
+    `osm_tag_key`, so this can be compared against either a live OSM
+    response or a previously stored dict.
+    """
+    if osm_data.get("version") == location.osm_version:
+        return False
+    return (
+        osm_data.get("name") != location.osm_name
+        or osm_data.get("brand") != location.osm_brand
+        or has_tag_changed(location, osm_data)
+        or has_moved_significantly(location, osm_data)
+    )
 
 
 def get_location_dict(location):
