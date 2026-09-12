@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.109.1](https://github.com/openfoodfacts/open-prices/compare/v1.109.0...v1.109.1) (2026-09-12)
+
+
+### Technical
+
+* **Locations:** add a `osm_version_date` field ([#1429](https://github.com/openfoodfacts/open-prices/issues/1429)) ([449dade](https://github.com/openfoodfacts/open-prices/commit/449dade680911c81ac4109214eb07abc01165c34))
+
 ## [1.109.0](https://github.com/openfoodfacts/open-prices/compare/v1.108.1...v1.109.0) (2026-08-20)
 
 
