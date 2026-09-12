@@ -7,7 +7,7 @@ from open_prices.locations.models import Location
 
 
 class Command(BaseCommand):
-    help = "Init Location osm_brand & osm_version fields (depending on it's creation date!)."
+    help = "Init Location osm_brand & osm_version fields (depending on its creation date!)."
 
     def handle(self, *args, **options) -> None:  # type: ignore
         qs = Location.objects.has_type_osm()
@@ -27,7 +27,10 @@ class Command(BaseCommand):
                 if response:
                     location.osm_brand = response.tag("brand")
                     location.osm_version = response.version()
-                    location.save(update_fields=["osm_brand", "osm_version"])
+                    location.osm_version_date = response.version_date()
+                    location.save(
+                        update_fields=["osm_brand", "osm_version", "osm_version_date"]
+                    )
                 else:
                     self.stdout.write(f"Could not find historical data for {location}")
                 if index % 100 == 0:

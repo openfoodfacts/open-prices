@@ -11,6 +11,7 @@ class LocationAdmin(admin.ModelAdmin):
         "osm_id",
         "osm_type",
         "osm_name",
+        "osm_address_country",
         "website_url",
         "price_count",
         "user_count",
@@ -19,4 +20,4 @@ class LocationAdmin(admin.ModelAdmin):
         "created",
     )
     list_filter = ("type", "osm_type")
-    search_fields = ("osm_id",)
+    search_fields = ("id", "osm_id", "website_url")
