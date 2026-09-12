@@ -1112,6 +1112,29 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#other-useful-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other useful commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other useful commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List packages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#preview-the-docs-locally" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1121,8 +1144,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#generate-the-sql-schema-image" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1130,6 +1153,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1432,6 +1460,29 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#other-useful-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other useful commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other useful commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List packages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#preview-the-docs-locally" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1441,8 +1492,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#generate-the-sql-schema-image" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1450,6 +1501,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1537,11 +1593,22 @@
 <p>To run tests locally, just launch:</p>
 <div class="highlight"><pre><span></span><code>uv run --env-file .env python manage.py test
 </code></pre></div>
-<h2 id="preview-the-docs-locally">Preview the docs locally</h2>
+<h2 id="other-useful-commands">Other useful commands</h2>
+<h3 id="list-packages">List packages</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># list of packages installed</span>
+uv<span class="w"> </span>run<span class="w"> </span>pip<span class="w"> </span>list
+
+<span class="c1"># list packages to update</span>
+uv<span class="w"> </span>run<span class="w"> </span>pip<span class="w"> </span>list<span class="w"> </span>--outdated
+
+<span class="c1"># list packages to update (with pip-audit)</span>
+uv<span class="w"> </span>run<span class="w"> </span>pip-audit<span class="w"> </span>--strict<span class="w"> </span>--no-deps<span class="w"> </span>-r<span class="w"> </span>&lt;<span class="o">(</span>uv<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--no-hashes<span class="w"> </span>--no-dev<span class="o">)</span>
+</code></pre></div>
+<h3 id="preview-the-docs-locally">Preview the docs locally</h3>
 <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>mkdocs<span class="w"> </span>serve<span class="w"> </span>-a<span class="w"> </span><span class="m">127</span>.0.0.1:8765
 </code></pre></div>
 <p>Open http://127.0.0.1:8765/ in your browser.</p>
-<h2 id="generate-the-sql-schema-image">Generate the SQL schema image</h2>
+<h3 id="generate-the-sql-schema-image">Generate the SQL schema image</h3>
 <div class="highlight"><pre><span></span><code>uv run --env-file .env python manage.py graph_models -a -X ContentType,LogEntry,AbstractUser,AbstractBaseSession,Group,Permission,Success,Failure,Task,Schedule,OrmQ,User,Session -o docs/schema/schema.png
 </code></pre></div>
 <h2 id="work-with-ml-models">Work with ML models</h2>
