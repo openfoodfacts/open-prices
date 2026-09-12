@@ -38,7 +38,22 @@ To run tests locally, just launch:
 uv run --env-file .env python manage.py test
 ```
 
-## Preview the docs locally
+## Other useful commands
+
+### List packages
+
+```bash
+# list of packages installed
+uv run pip list
+
+# list packages to update
+uv run pip list --outdated
+
+# list packages to update (with pip-audit)
+uv run pip-audit --strict --no-deps -r <(uv export --no-hashes --no-dev)
+```
+
+### Preview the docs locally
 
 ```bash
 uv run mkdocs serve -a 127.0.0.1:8765
@@ -46,7 +61,7 @@ uv run mkdocs serve -a 127.0.0.1:8765
 
 Open http://127.0.0.1:8765/ in your browser.
 
-## Generate the SQL schema image
+### Generate the SQL schema image
 
 ```
 uv run --env-file .env python manage.py graph_models -a -X ContentType,LogEntry,AbstractUser,AbstractBaseSession,Group,Permission,Success,Failure,Task,Schedule,OrmQ,User,Session -o docs/schema/schema.png

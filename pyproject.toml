@@ -54,6 +54,7 @@ dev = [
   "toml-sort>=0.24.3,<0.25.0",
   "types-requests>=2.32.4.20250913,<3.0.0",
   "types-tqdm>=4.67.0.20250809,<5.0.0",
+  "pip-audit>=2.10.1",
 ]
 
 [tool.ruff]
