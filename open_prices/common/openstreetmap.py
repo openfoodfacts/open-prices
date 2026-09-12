@@ -3,7 +3,7 @@ from OSMPythonTools.api import Api, ApiResult
 from OSMPythonTools.nominatim import Nominatim
 
 OSM_FIELDS_FROM_NOMINATIM = ["name", "display_name", "lat", "lon"]
-OSM_FIELDS_FROM_OPENSTREETMAP = ["brand", "version"]
+OSM_FIELDS_FROM_OPENSTREETMAP = ["brand", "version", "version_date"]
 OSM_TAG_FIELDS_MAPPING = {"class": "tag_key", "type": "tag_value"}
 OSM_ADDRESS_FIELDS = [
     "postcode",
@@ -32,9 +32,16 @@ def get_location_from_nominatim(osm_id: int, osm_type: str) -> list:
     return client.query(search_query, lookup=True).toJSON()
 
 
-def get_location_from_openstreetmap(osm_id: int, osm_type: str) -> dict:
+def get_location_from_openstreetmap(
+    osm_id: int, osm_type: str, history: bool
+) -> ApiResult:
     api = Api()
-    response = api.query(f"{osm_type.lower()}/{osm_id}")
+    response = api.query(f"{osm_type.lower()}/{osm_id}", history=history)
+    return response
+
+
+def get_location_dict_from_openstreetmap(osm_id: int, osm_type: str) -> dict:
+    response = get_location_from_openstreetmap(osm_id, osm_type, history=False)
     return {
         "name": response.tag("name"),
         # "tag_key": "",
@@ -45,16 +52,9 @@ def get_location_from_openstreetmap(osm_id: int, osm_type: str) -> dict:
         "lat": response.lat(),
         "lon": response.lon(),
         "version": response.version(),
+        "version_date": response.timestamp(),
         "tags": response.tags(),
     }
-
-
-def get_location_with_history_from_openstreetmap(
-    osm_id: int, osm_type: str
-) -> ApiResult:
-    api = Api()
-    response = api.query(f"{osm_type.lower()}/{osm_id}", history=True)
-    return response
 
 
 def get_historical_location_from_openstreetmap(
@@ -64,7 +64,7 @@ def get_historical_location_from_openstreetmap(
     Loop until we find a version that is more recent than the historical_datetime  # noqa
     And return the previous version
     """
-    response = get_location_with_history_from_openstreetmap(osm_id, osm_type)
+    response = get_location_from_openstreetmap(osm_id, osm_type, history=True)
     if len(response.history()) == 1:
         return response.history()[0]
     for index, location_version in enumerate(response.history()):
@@ -112,7 +112,7 @@ def get_location_dict(location):
         pass
     # fetch extra data from OpenStreetMap
     try:
-        response = get_location_from_openstreetmap(
+        response = get_location_dict_from_openstreetmap(
             osm_id=location.osm_id, osm_type=location.osm_type.lower()
         )
         if response:
