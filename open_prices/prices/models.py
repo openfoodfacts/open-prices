@@ -16,6 +16,7 @@ from open_prices.challenges.models import Challenge
 from open_prices.common import (
     constants,
     history,
+    openfoodfacts,
     utils,
 )
 from open_prices.locations import constants as location_constants
@@ -351,6 +352,24 @@ class Price(models.Model):
         self.set_location()
         self.set_is_duplicate_of()
         super().save(*args, **kwargs)
+
+    @classmethod
+    def update_task(cls):
+        """
+        - Update category_tag to the current canonical taxonomy id, in case
+          it was renamed upstream since the price was created (see #1338)
+        """
+        for price in cls.objects.has_type_category():
+            price.update_category_tag()
+
+    def update_category_tag(self):
+        normalized_category_tag = openfoodfacts.normalize_taxonomized_tags(
+            "category", [self.category_tag]
+        )[0]
+        if normalized_category_tag != self.category_tag:
+            self.category_tag = normalized_category_tag
+            self._change_reason = "Price.update_category_tag() method"
+            self.save(update_fields=["category_tag"])
 
     def set_tag(self, tag: str, save: bool = True):
         if tag not in self.tags:

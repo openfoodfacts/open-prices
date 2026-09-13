@@ -1078,6 +1078,67 @@ class PriceModelUpdateTest(TestCase):
         self.assertEqual(self.price.product, product_8001505005707)
 
 
+class PriceModelUpdateCategoryTagTest(TestCase):
+    """
+    Covers https://github.com/openfoodfacts/open-prices/issues/1338:
+    `category_tag` is only normalized to the taxonomy's canonical id once,
+    at creation time. When Open Food Facts renames a category's canonical id
+    (e.g. "en:kiwis" -> "en:kiwifruits"), prices already stored under the
+    old id should get merged with prices using the new one.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        # bulk_create to skip save() & clean(), simulating prices stored
+        # under a category id that was canonical at creation time but has
+        # since been renamed upstream
+        Price.objects.bulk_create(
+            [
+                PriceFactory.build(
+                    type=price_constants.TYPE_CATEGORY,
+                    category_tag="en:kiwis",  # stale, renamed to "en:kiwifruits"
+                    price_per=price_constants.PRICE_PER_KILOGRAM,
+                ),
+                PriceFactory.build(
+                    type=price_constants.TYPE_CATEGORY,
+                    category_tag="en:kiwifruits",  # already canonical
+                    price_per=price_constants.PRICE_PER_KILOGRAM,
+                ),
+                PriceFactory.build(
+                    type=price_constants.TYPE_CATEGORY,
+                    category_tag="en:mandarin-oranges",  # stale, renamed to "en:mandarins"
+                    price_per=price_constants.PRICE_PER_KILOGRAM,
+                ),
+            ]
+        )
+
+    def test_update_category_tag(self):
+        price = Price.objects.get(category_tag="en:kiwis")
+        price.update_category_tag()
+        self.assertEqual(price.category_tag, "en:kiwifruits")
+        price.refresh_from_db()
+        self.assertEqual(price.category_tag, "en:kiwifruits")
+
+    def test_update_category_tag_already_canonical(self):
+        # no-op, and no extra save() call, if already canonical
+        price = Price.objects.get(category_tag="en:kiwifruits")
+        price.update_category_tag()
+        self.assertEqual(price.category_tag, "en:kiwifruits")
+
+    def test_update_task_classmethod(self):
+        self.assertEqual(Price.objects.count(), 3)
+        Price.update_task()
+        # the two kiwi prices now share the current canonical category tag
+        self.assertEqual(
+            Price.objects.filter(category_tag="en:kiwifruits").count(), 2
+        )
+        # the mandarin price was independently normalized to its own
+        # canonical tag
+        self.assertEqual(
+            Price.objects.filter(category_tag="en:mandarins").count(), 1
+        )
+
+
 class PriceModelDeleteTest(TestCase):
     @classmethod
     def setUpTestData(cls):
