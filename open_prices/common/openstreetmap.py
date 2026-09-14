@@ -5,9 +5,14 @@ from OSMPythonTools.api import Api, ApiResult
 from OSMPythonTools.nominatim import Nominatim
 
 EARTH_RADIUS_KM = 6371.0
-BIG_LOCATION_MOVE_METERS = 100  # a move further than this counts as a "big" change
+LOCATION_MAJOR_MOVE_METERS = 100  # a move further than this counts as a "major" change
 
-OSM_FIELDS_FROM_NOMINATIM = ["name", "display_name", "lat", "lon"]
+OSM_FIELDS_FROM_NOMINATIM = [
+    "name",
+    "display_name",
+    "lat",
+    "lon",
+]  # + OSM_TAG_FIELDS + OSM_ADDRESS_FIELDS
 OSM_FIELDS_FROM_OPENSTREETMAP = ["brand", "version", "version_date"]
 OSM_TAG_FIELDS_MAPPING = {"class": "tag_key", "type": "tag_value"}
 OSM_ADDRESS_FIELDS = [
@@ -32,14 +37,20 @@ COUNTRIES_JSON_PATH = (
 
 
 def get_location_from_nominatim(osm_id: int, osm_type: str) -> list:
+    """
+    Nominatim API.
+    https://wiki.openstreetmap.org/wiki/Nominatim
+    """
     client = Nominatim()
     search_query = f"{osm_type.lower()}/{osm_id}"
     return client.query(search_query, lookup=True).toJSON()
 
 
-def get_location_from_openstreetmap(
-    osm_id: int, osm_type: str, history: bool
-) -> ApiResult:
+def get_location_from_osm(osm_id: int, osm_type: str, history: bool) -> ApiResult:
+    """
+    Main OSM API.
+    https://wiki.openstreetmap.org/wiki/API_v0.6
+    """
     api = Api()
     response = api.query(f"{osm_type.lower()}/{osm_id}", history=history)
     return response
@@ -59,12 +70,24 @@ def get_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float
     return 2 * EARTH_RADIUS_KM * math.asin(math.sqrt(a))
 
 
-def get_location_dict_from_openstreetmap(osm_id: int, osm_type: str) -> dict:
-    response = get_location_from_openstreetmap(osm_id, osm_type, history=False)
+def get_location_dict_from_osm(
+    osm_id: int, osm_type: str, existing_osm_response: ApiResult | None = None
+) -> dict:
+    """
+    Input: OSM API response
+    Output: Dictionary with a subset of location details.
+    `response` can be passed in when the caller already fetched it (e.g. to
+    decide whether to update a Location), to avoid querying the OSM API twice.
+    """
+    response = (
+        get_location_from_osm(osm_id, osm_type, history=False)
+        if existing_osm_response is None
+        else existing_osm_response
+    )
     return {
         "name": response.tag("name"),
-        # "tag_key": "",
-        # "tag_value": "",
+        # "tag_key": "",  # fetched from nominatim
+        # "tag_value": "",  # fetched from nominatim
         "brand": response.tag("brand"),
         "brand_wikidata": response.tag("brand:wikidata"),
         "brand_wikipedia": response.tag("brand:wikipedia"),
@@ -72,7 +95,7 @@ def get_location_dict_from_openstreetmap(osm_id: int, osm_type: str) -> dict:
         "lon": response.lon(),
         "version": response.version(),
         "version_date": response.timestamp(),
-        "tags": response.tags(),
+        "tags": response.tags(),  # not used
     }
 
 
@@ -83,7 +106,7 @@ def get_historical_location_from_openstreetmap(
     Loop until we find a version that is more recent than the historical_datetime  # noqa
     And return the previous version
     """
-    response = get_location_from_openstreetmap(osm_id, osm_type, history=True)
+    response = get_location_from_osm(osm_id, osm_type, history=True)
     if len(response.history()) == 1:
         return response.history()[0]
     for index, location_version in enumerate(response.history()):
@@ -101,7 +124,7 @@ def has_moved_significantly(location, osm_data: dict) -> bool:
     distance_km = get_distance_km(
         float(location.osm_lat), float(location.osm_lon), lat, lon
     )
-    return distance_km * 1000 > BIG_LOCATION_MOVE_METERS
+    return distance_km * 1000 > LOCATION_MAJOR_MOVE_METERS
 
 
 def has_tag_changed(location, osm_data: dict) -> bool:
@@ -111,13 +134,22 @@ def has_tag_changed(location, osm_data: dict) -> bool:
     return osm_data["tag_value"] != location.osm_tag_value
 
 
-def has_big_osm_change(location, osm_data: dict) -> bool:
+def is_deleted_osm_error(exception: Exception) -> bool:
     """
-    A "big" change = the OSM version changed AND (the name, brand or primary
-    tag changed, or the point moved by more than BIG_LOCATION_MOVE_METERS).
+    True if `exception` was raised because OSM returned 410 Gone, i.e. the
+    element existed in the past but has since been deleted.
+    """
+    cause = exception.args[-1] if exception.args else None
+    return getattr(cause, "code", None) == 410
+
+
+def has_major_osm_change(location, osm_data: dict) -> bool:
+    """
+    A "major" change = the OSM version changed AND (the name, brand or primary
+    tag changed, or the point moved by more than LOCATION_MAJOR_MOVE_METERS).
 
     `osm_data` is a dict with "version", "name", "brand", "lat" & "lon" keys
-    (see `get_location_dict_from_openstreetmap`), plus an optional
+    (see `get_location_dict_from_osm`), plus an optional
     "tag_value" key holding the current value of the location's
     `osm_tag_key`, so this can be compared against either a live OSM
     response or a previously stored dict.
@@ -128,13 +160,20 @@ def has_big_osm_change(location, osm_data: dict) -> bool:
         osm_data.get("name") != location.osm_name
         or osm_data.get("brand") != location.osm_brand
         or has_tag_changed(location, osm_data)
-        or has_moved_significantly(location, osm_data)
+        or (location.is_osm_type_node and has_moved_significantly(location, osm_data))
     )
 
 
-def get_location_dict(location):
+def get_location_dict_from_all_apis(
+    location, existing_osm_response: ApiResult | None = None
+):
+    """
+    Fetches location details from 2 APIs: Nominatim and the OSM API.
+    `existing_osm_response` can be passed in when the caller already fetched it from
+    the OSM API, to avoid querying it twice.
+    """
     location_dict = dict()
-    # fetch data from Nominatim
+    # first fetch data from Nominatim
     try:
         response = get_location_from_nominatim(
             osm_id=location.osm_id, osm_type=location.osm_type.lower()
@@ -169,10 +208,12 @@ def get_location_dict(location):
     except Exception:
         # logger.exception("Error returned from OpenStreetMap")
         pass
-    # fetch extra data from OpenStreetMap
+    # fetch extra data from OSM
     try:
-        response = get_location_dict_from_openstreetmap(
-            osm_id=location.osm_id, osm_type=location.osm_type.lower()
+        response = get_location_dict_from_osm(
+            osm_id=location.osm_id,
+            osm_type=location.osm_type.lower(),
+            existing_osm_response=existing_osm_response,
         )
         if response:
             for osm_field in OSM_FIELDS_FROM_OPENSTREETMAP:
