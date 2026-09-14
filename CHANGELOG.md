@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.109.1](https://github.com/openfoodfacts/open-prices/compare/v1.109.0...v1.109.1) (2026-09-14)
+
+
+### Technical
+
+* **deps:** add `pip-audit` to check which packages need updating (security-wise) ([#1431](https://github.com/openfoodfacts/open-prices/issues/1431)) ([f17b70c](https://github.com/openfoodfacts/open-prices/commit/f17b70c2a9b08406cf5c0bca6c3697c9ef52c13a))
+* **deps:** update django, djangorestframework, pyjwt, python-multipart, requests ([#1432](https://github.com/openfoodfacts/open-prices/issues/1432)) ([b4349b2](https://github.com/openfoodfacts/open-prices/commit/b4349b2b05bfb809d92cd71e5451c3ac1d2846bc))
+* **Locations:** add a `osm_version_date` field ([#1429](https://github.com/openfoodfacts/open-prices/issues/1429)) ([449dade](https://github.com/openfoodfacts/open-prices/commit/449dade680911c81ac4109214eb07abc01165c34))
+* **Locations:** exploration script to detect changes in OSM POI (path to versioning) ([#1021](https://github.com/openfoodfacts/open-prices/issues/1021)) ([a7e063a](https://github.com/openfoodfacts/open-prices/commit/a7e063a65c16aab9832cf3095e4c380a7260b52e))
+* **Locations:** improve the exploration script to detect OSM changes: if minor change, update the location ([#1435](https://github.com/openfoodfacts/open-prices/issues/1435)) ([e970cfb](https://github.com/openfoodfacts/open-prices/commit/e970cfbf53fc7d09dc69a7f614ba693800e4ad4d))
+
 ## [1.109.0](https://github.com/openfoodfacts/open-prices/compare/v1.108.1...v1.109.0) (2026-08-20)
 
 
