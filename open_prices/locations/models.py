@@ -251,6 +251,10 @@ class Location(models.Model):
         return self.type == location_constants.TYPE_ONLINE
 
     @property
+    def is_osm_type_node(self):
+        return self.is_type_osm and self.osm_type == location_constants.OSM_TYPE_NODE
+
+    @property
     def osm_brand_logo_url(self):
         if self.is_type_osm and self.osm_brand:
             return location_utils.get_brand_logo_url(self.osm_brand)

@@ -160,7 +160,7 @@ def has_major_osm_change(location, osm_data: dict) -> bool:
         osm_data.get("name") != location.osm_name
         or osm_data.get("brand") != location.osm_brand
         or has_tag_changed(location, osm_data)
-        or has_moved_significantly(location, osm_data)
+        or (location.is_osm_type_node and has_moved_significantly(location, osm_data))
     )
 
 
