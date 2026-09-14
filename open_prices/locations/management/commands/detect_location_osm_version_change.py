@@ -10,8 +10,8 @@ from open_prices.locations.tasks import fetch_and_save_data_from_openstreetmap
 
 class Status:
     UNCHANGED = "unchanged"
-    SMALL_CHANGE = "small_change"
-    BIG_CHANGE = "big_change"
+    MINOR_CHANGE = "minor_change"
+    MAJOR_CHANGE = "major_change"
     NOT_FOUND = "not_found"
     DELETED = "deleted"
     ERROR = "error"
@@ -24,8 +24,8 @@ class Command(BaseCommand):
 
     help = """
     Detect Locations that may have changed (rebranded) on OSM, based on their OSM version change.
-    Small changes are fetched & the location is updated.
-    Big changes are only reported, for manual review.
+    Minor changes are fetched & the location is updated.
+    Major changes are only reported, for manual review.
     This command does not create new Locations.
     """
 
@@ -61,10 +61,10 @@ class Command(BaseCommand):
             f"Total locations unchanged on OSM: {counters[Status.UNCHANGED]}"
         )
         self.stdout.write(
-            f"Total locations with small OSM changes: {counters[Status.SMALL_CHANGE]}. They have been updated!"
+            f"Total locations with minor OSM changes: {counters[Status.MINOR_CHANGE]}. They have been updated!"
         )
         self.stdout.write(
-            f"Total locations with big OSM changes: {counters[Status.BIG_CHANGE]}"
+            f"Total locations with major OSM changes: {counters[Status.MAJOR_CHANGE]}"
         )
         self.stdout.write(
             f"Total locations not found on OSM: {counters[Status.NOT_FOUND]}"
@@ -102,14 +102,14 @@ class Command(BaseCommand):
         self.stdout.write(
             f"=== {location.id} / {location.osm_type} / {location.osm_id}"
         )
-        if common_openstreetmap.has_big_osm_change(location, osm_data):
+        if common_openstreetmap.has_major_osm_change(location, osm_data):
             for field, new_value in osm_data.items():
                 old_value = getattr(location, f"osm_{field}")
                 if old_value != new_value:
                     self.stdout.write(f"{field}: {old_value} -> {new_value}")
-            return Status.BIG_CHANGE
+            return Status.MAJOR_CHANGE
 
         # small change: fetch full data and update the location
         fetch_and_save_data_from_openstreetmap(location, existing_osm_response=response)
-        self.stdout.write("Small change, location updated!")
-        return Status.SMALL_CHANGEB
+        self.stdout.write("Minor change, location updated!")
+        return Status.MINOR_CHANGE

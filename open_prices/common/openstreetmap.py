@@ -5,7 +5,7 @@ from OSMPythonTools.api import Api, ApiResult
 from OSMPythonTools.nominatim import Nominatim
 
 EARTH_RADIUS_KM = 6371.0
-BIG_LOCATION_MOVE_METERS = 100  # a move further than this counts as a "big" change
+LOCATION_MAJOR_MOVE_METERS = 100  # a move further than this counts as a "major" change
 
 OSM_FIELDS_FROM_NOMINATIM = [
     "name",
@@ -124,7 +124,7 @@ def has_moved_significantly(location, osm_data: dict) -> bool:
     distance_km = get_distance_km(
         float(location.osm_lat), float(location.osm_lon), lat, lon
     )
-    return distance_km * 1000 > BIG_LOCATION_MOVE_METERS
+    return distance_km * 1000 > LOCATION_MAJOR_MOVE_METERS
 
 
 def has_tag_changed(location, osm_data: dict) -> bool:
@@ -143,10 +143,10 @@ def is_deleted_osm_error(exception: Exception) -> bool:
     return getattr(cause, "code", None) == 410
 
 
-def has_big_osm_change(location, osm_data: dict) -> bool:
+def has_major_osm_change(location, osm_data: dict) -> bool:
     """
-    A "big" change = the OSM version changed AND (the name, brand or primary
-    tag changed, or the point moved by more than BIG_LOCATION_MOVE_METERS).
+    A "major" change = the OSM version changed AND (the name, brand or primary
+    tag changed, or the point moved by more than LOCATION_MAJOR_MOVE_METERS).
 
     `osm_data` is a dict with "version", "name", "brand", "lat" & "lon" keys
     (see `get_location_dict_from_osm`), plus an optional
