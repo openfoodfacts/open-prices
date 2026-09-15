@@ -74,12 +74,12 @@ class Command(BaseCommand):
 
     def _process_location(self, location) -> str:
         """
-        Fetch the current OSM data for `location`, compare it to what's
-        stored, and either report a big change or persist a small one.
+        Fetch the latest OSM data for `location`, compare it to what's
+        stored, and either report a major change or persist a minor one.
 
         Returns one of the Status values.
         """
-        # we get the current (latest) version of the location
+        # we fetch the latest version of the location
         response = common_openstreetmap.get_location_from_osm(
             location.osm_id, location.osm_type, history=False
         )
@@ -102,6 +102,7 @@ class Command(BaseCommand):
         self.stdout.write(
             f"=== {location.id} / {location.osm_type} / {location.osm_id}"
         )
+        # major change: print the differences
         if common_openstreetmap.has_major_osm_change(location, osm_data):
             for field, new_value in osm_data.items():
                 old_value = getattr(location, f"osm_{field}")
@@ -109,7 +110,8 @@ class Command(BaseCommand):
                     self.stdout.write(f"{field}: {old_value} -> {new_value}")
             return Status.MAJOR_CHANGE
 
-        # small change: fetch full data and update the location
+        # minor change: fetch full data and update the location
+        location._change_reason = "detect_location_osm_version_change command"
         fetch_and_save_data_from_openstreetmap(location, existing_osm_response=response)
         self.stdout.write("Minor change, location updated!")
         return Status.MINOR_CHANGE
