@@ -2,6 +2,8 @@ import os
 import sys
 from pathlib import Path
 
+from corsheaders.defaults import default_headers
+
 OPENFOODFACTS_URL = "https://world.openfoodfacts.org"
 OPENFOODFACTS_EMAIL = "contact@openfoodfacts.org"
 OPENPRICES_DOCS_URL = "https://openfoodfacts.github.io/open-prices/"
@@ -190,6 +192,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+# allow web clients to identify themselves with the X-User-Agent header
+# (same as the Open Food Facts API)
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "x-user-agent",
+)
 
 
 # Pillow
