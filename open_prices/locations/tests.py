@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core import management
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -126,6 +127,52 @@ class LocationModelSaveTest(TestCase):
             LocationFactory,
             type=location_constants.TYPE_ONLINE,
             website_url=location_constants.WEBSITE_URL_OK_TUPLE_LIST[0][0],
+        )
+
+
+class LocationModelHistoryTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
+
+    def test_location_history(self):
+        self.assertEqual(self.location.history.count(), 1)
+        self.assertEqual(self.location.history.first().history_type, "+")
+        self.assertEqual(self.location.history.first().history_user_id, None)
+        # update the location (osm_name)
+        self.location.osm_name = "Franprix"
+        self.location.save()
+        self.assertEqual(self.location.history.count(), 2)
+        self.assertEqual(self.location.history.first().history_type, "~")
+        fields_changed_list = [
+            change.field
+            for change in self.location.history.first()
+            .diff_against(self.location.history.first().prev_record)
+            .changes
+        ]
+        self.assertEqual(fields_changed_list, ["osm_name"])
+        # update the location on a field that does not trigger history (excluded)
+        self.location.price_count += 1
+        self.location.save(update_fields=["price_count"])
+        self.assertEqual(self.location.history.count(), 3)  # empty change
+        fields_changed_list = [
+            change.field
+            for change in self.location.history.first()
+            .diff_against(self.location.history.first().prev_record)
+            .changes
+        ]
+        self.assertEqual(fields_changed_list, [])
+        # command to cleanup historical instances with 0 changes
+        management.call_command("clean_duplicate_history", "--auto")
+        self.assertEqual(
+            Location.history.filter(id=self.location.id).count(), 2
+        )  # removed
+        # delete the location
+        location_id = self.location.id
+        self.location.delete()
+        self.assertEqual(Location.history.filter(id=location_id).count(), 3)
+        self.assertEqual(
+            Location.history.filter(id=location_id).first().history_type, "-"
         )
 
 
