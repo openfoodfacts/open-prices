@@ -17,8 +17,9 @@ from django.db.models.functions import ACos, Cos, Radians, Sin
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
+from simple_history.models import HistoricalRecords
 
-from open_prices.common import utils
+from open_prices.common import history, utils
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
 from open_prices.locations import utils as location_utils
@@ -168,6 +169,15 @@ class Location(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+
+    history = HistoricalRecords(
+        excluded_fields=COUNT_FIELDS,
+        get_user=history.get_history_user_from_request,
+        history_user_id_field=models.CharField(null=True),
+        history_user_getter=history.history_user_getter,
+        history_user_setter=history.history_user_setter,
+        # cascade_delete_history=False,  # default
+    )
 
     objects = models.Manager.from_queryset(LocationQuerySet)()
 

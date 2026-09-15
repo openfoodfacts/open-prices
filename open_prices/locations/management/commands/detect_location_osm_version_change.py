@@ -110,6 +110,7 @@ class Command(BaseCommand):
             return Status.MAJOR_CHANGE
 
         # small change: fetch full data and update the location
+        location._change_reason = "detect_location_osm_version_change command"
         fetch_and_save_data_from_openstreetmap(location, existing_osm_response=response)
         self.stdout.write("Minor change, location updated!")
         return Status.MINOR_CHANGE
