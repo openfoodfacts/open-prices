@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.110.0](https://github.com/openfoodfacts/open-prices/compare/v1.109.0...v1.110.0) (2026-09-16)
+
+
+### Features
+
+* accepter et logguer l'en-tête X-User-Agent (alignement avec l'API Open Food Facts) ([#1418](https://github.com/openfoodfacts/open-prices/issues/1418)) ([b3c2ad2](https://github.com/openfoodfacts/open-prices/commit/b3c2ad24c6473122b65e22163f7a2f15bcdaf0a6))
+* **Locations:** track changes in a history table ([#1436](https://github.com/openfoodfacts/open-prices/issues/1436)) ([eda5c46](https://github.com/openfoodfacts/open-prices/commit/eda5c46e6a8c7d4d2af4e7774de16ee8855adfed))
+
+
+### Technical
+
+* **deps:** add `pip-audit` to check which packages need updating (security-wise) ([#1431](https://github.com/openfoodfacts/open-prices/issues/1431)) ([f17b70c](https://github.com/openfoodfacts/open-prices/commit/f17b70c2a9b08406cf5c0bca6c3697c9ef52c13a))
+* **deps:** remove some unused packages (pytest, pytest-cov, python-multipart...) ([#1438](https://github.com/openfoodfacts/open-prices/issues/1438)) ([52859aa](https://github.com/openfoodfacts/open-prices/commit/52859aac7f4d969b03bfe01306ec90a1188c68fd))
+* **deps:** update django, djangorestframework, pyjwt, python-multipart, requests ([#1432](https://github.com/openfoodfacts/open-prices/issues/1432)) ([b4349b2](https://github.com/openfoodfacts/open-prices/commit/b4349b2b05bfb809d92cd71e5451c3ac1d2846bc))
+* **Locations:** add a `osm_version_date` field ([#1429](https://github.com/openfoodfacts/open-prices/issues/1429)) ([449dade](https://github.com/openfoodfacts/open-prices/commit/449dade680911c81ac4109214eb07abc01165c34))
+* **Locations:** exploration script to detect changes in OSM POI (path to versioning) ([#1021](https://github.com/openfoodfacts/open-prices/issues/1021)) ([a7e063a](https://github.com/openfoodfacts/open-prices/commit/a7e063a65c16aab9832cf3095e4c380a7260b52e))
+* **Locations:** improve the exploration script to detect OSM changes: if minor change, update the location ([#1435](https://github.com/openfoodfacts/open-prices/issues/1435)) ([e970cfb](https://github.com/openfoodfacts/open-prices/commit/e970cfbf53fc7d09dc69a7f614ba693800e4ad4d))
+* **Tests:** un-mute post_save signals for Location & Product ([#1437](https://github.com/openfoodfacts/open-prices/issues/1437)) ([6253142](https://github.com/openfoodfacts/open-prices/commit/6253142a39084e755eb7105a71ff2ea7cb7d38bc))
+
 ## [1.109.0](https://github.com/openfoodfacts/open-prices/compare/v1.108.1...v1.109.0) (2026-08-20)
 
 
