@@ -1129,14 +1129,10 @@ class PriceModelUpdateCategoryTagTest(TestCase):
         self.assertEqual(Price.objects.count(), 3)
         Price.update_task()
         # the two kiwi prices now share the current canonical category tag
-        self.assertEqual(
-            Price.objects.filter(category_tag="en:kiwifruits").count(), 2
-        )
+        self.assertEqual(Price.objects.filter(category_tag="en:kiwifruits").count(), 2)
         # the mandarin price was independently normalized to its own
         # canonical tag
-        self.assertEqual(
-            Price.objects.filter(category_tag="en:mandarins").count(), 1
-        )
+        self.assertEqual(Price.objects.filter(category_tag="en:mandarins").count(), 1)
 
 
 class PriceModelDeleteTest(TestCase):
