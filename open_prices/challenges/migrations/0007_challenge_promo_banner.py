@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="challenge",
-            name="promo_banner_link",
+            name="promo_banner_url",
             field=models.CharField(blank=True, max_length=200, null=True),
         ),
     ]

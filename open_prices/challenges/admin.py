@@ -91,7 +91,7 @@ class ChallengeAdmin(admin.ModelAdmin):
                 "fields": (
                     "promo_banner_image_url",
                     "promo_banner_image_url_display",
-                    "promo_banner_link",
+                    "promo_banner_url",
                     "promo_banner_alt_text",
                 )
             },
@@ -115,7 +115,7 @@ class ChallengeAdmin(admin.ModelAdmin):
     def promo_banner_image_url_display(self, obj):
         if obj.promo_banner_image_url:
             return mark_safe(
-                f'<a href="{obj.promo_banner_link}" target="_blank">'
+                f'<a href="{obj.promo_banner_url}" target="_blank">'
                 f'<img src="{obj.promo_banner_image_url}" title="{obj.promo_banner_image_url}" height=300 />'  # noqa
                 f"</a>"
             )
