@@ -157,6 +157,13 @@ class ImportPublicDataTest(TestCase):
                 for row in rows:
                     stream.write(json.dumps(row, cls=DjangoJSONEncoder) + "\n")
 
+    def set_missing_references(self):
+        self.rows["proofs"][2]["location_id"] = 99999
+        self.rows["prices"][3]["location_id"] = 99999
+        self.rows["prices"][3]["proof_id"] = 99999
+        self.rows["prices"][3]["duplicate_of"] = 99999
+        self.write_exports()
+
     def run_import(self, **options):
         output = StringIO()
         call_command(
@@ -317,6 +324,103 @@ class ImportPublicDataTest(TestCase):
         with self.assertRaises(CommandError):
             self.run_import(dry_run=True)
         self.assert_no_imported_rows()
+
+    def test_refuses_non_postgresql_before_querying_the_database(self):
+        with (
+            patch.object(connection, "vendor", "sqlite"),
+            patch.object(
+                connection,
+                "cursor",
+                side_effect=AssertionError("Database must not be queried"),
+            ),
+            self.assertRaisesRegex(CommandError, "PostgreSQL"),
+        ):
+            self.run_import()
+
+    def test_allows_missing_references_only_when_requested(self):
+        product = Product(code=self.existing_code)
+        Product.objects.bulk_create([product])
+        self.set_missing_references()
+
+        output = self.run_import(allow_missing_references=True)
+
+        self.assertIn("Cleared 4 missing references.", output)
+        proof = Proof.objects.get(pk=2003)
+        self.assertIsNone(proof.location_id)
+        self.assertEqual(proof.price_count, 0)
+        price = Price.objects.get(pk=3004)
+        self.assertIsNone(price.location_id)
+        self.assertIsNone(price.proof_id)
+        self.assertIsNone(price.duplicate_of_id)
+        self.assertEqual(price.product_id, product.pk)
+        first_price = Price.objects.get(pk=3001)
+        self.assertEqual(first_price.location_id, 1001)
+        self.assertEqual(first_price.proof_id, 2001)
+        self.assertEqual(first_price.duplicate_of_id, 3004)
+        self.assertEqual(first_price.product_id, product.pk)
+        self.assertEqual(Proof.objects.get(pk=2001).location_id, 1001)
+        self.assertEqual(Proof.objects.get(pk=2001).price_count, 2)
+        populated_location = Location.objects.get(pk=1001)
+        self.assertEqual(populated_location.price_count, 3)
+        self.assertEqual(populated_location.proof_count, 2)
+        self.assertEqual(populated_location.product_count, 2)
+        self.assertEqual(populated_location.user_count, 2)
+        empty_location = Location.objects.get(pk=1002)
+        for field in Location.COUNT_FIELDS:
+            self.assertEqual(getattr(empty_location, field), 0, field)
+        product.refresh_from_db()
+        self.assertEqual(product.price_count, 2)
+        self.assertEqual(product.location_count, 1)
+        self.assertEqual(product.proof_count, 1)
+        stats = TotalStats.objects.get()
+        for field, expected in {
+            "price_count": 4,
+            "proof_count": 3,
+            "proof_with_price_count": 2,
+            "location_count": 2,
+            "location_with_price_count": 1,
+            "product_count": 2,
+            "product_with_price_count": 2,
+        }.items():
+            self.assertEqual(getattr(stats, field), expected, field)
+
+    def test_dry_run_reports_missing_references_without_writing(self):
+        self.set_missing_references()
+
+        output = self.run_import(allow_missing_references=True, dry_run=True)
+
+        self.assertIn("Would clear 4 missing references.", output)
+        self.assert_no_imported_rows()
+
+    def test_self_duplicate_is_rejected_even_when_missing_references_are_allowed(self):
+        self.rows["prices"][3]["duplicate_of"] = 3004
+        self.write_exports()
+
+        with self.assertRaises(CommandError) as caught:
+            self.run_import(allow_missing_references=True)
+
+        self.assertIn("prices.jsonl:4", str(caught.exception))
+        self.assertIn("duplicate_of", str(caught.exception))
+        self.assert_no_imported_rows()
+
+    def test_product_lookups_are_cached_across_batches(self):
+        product = Product(code=self.existing_code)
+        Product.objects.bulk_create([product])
+        with patch.object(
+            Product.objects, "in_bulk", wraps=Product.objects.in_bulk
+        ) as lookups:
+            self.run_import()
+
+        self.assertEqual(lookups.call_count, 2)
+        self.assertEqual(
+            [set(call.args[0]) for call in lookups.call_args_list],
+            [{self.existing_code}, {self.new_code}],
+        )
+        self.assertEqual(Price.objects.get(pk=3004).product_id, product.pk)
+        self.assertEqual(
+            Price.objects.get(pk=3003).product_id,
+            Product.objects.get(code=self.new_code).pk,
+        )
 
     def test_refuses_repeated_import_without_changing_existing_data(self):
         self.run_import()
