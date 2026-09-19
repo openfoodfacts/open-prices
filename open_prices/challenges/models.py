@@ -102,6 +102,10 @@ class Challenge(models.Model):
 
     example_proof_url = models.CharField(max_length=200, blank=True, null=True)
 
+    promo_banner_image_url = models.CharField(max_length=200, blank=True, null=True)
+    promo_banner_url = models.CharField(max_length=200, blank=True, null=True)
+    promo_banner_alt_text = models.CharField(max_length=200, blank=True, null=True)
+
     is_published = models.BooleanField(default=False)
 
     stats = models.JSONField(

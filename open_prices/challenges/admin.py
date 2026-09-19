@@ -38,6 +38,7 @@ class ChallengeAdmin(admin.ModelAdmin):
     search_fields = ("id",)
     readonly_fields = (
         "example_proof_url_display",
+        "promo_banner_image_url_display",
         "categories_full",
         "categories_full_count_annotated",
         "location_count_annotated",
@@ -84,6 +85,17 @@ class ChallengeAdmin(admin.ModelAdmin):
         ("Status", {"fields": ("is_published", "status_annotated")}),
         ("Stats", {"fields": ("stats_pretty",)}),
         ("Metadata", {"fields": ("created", "updated")}),
+        (
+            "Promo banner",
+            {
+                "fields": (
+                    "promo_banner_image_url",
+                    "promo_banner_image_url_display",
+                    "promo_banner_url",
+                    "promo_banner_alt_text",
+                )
+            },
+        ),
     )
 
     def get_queryset(self, request):
@@ -95,6 +107,16 @@ class ChallengeAdmin(admin.ModelAdmin):
             return mark_safe(
                 f'<a href="{obj.example_proof_url}" target="_blank">'
                 f'<img src="{obj.example_proof_url}" title="{obj.example_proof_url}" height=300 />'  # noqa
+                f"</a>"
+            )
+        return None
+
+    @admin.display(description="Image")
+    def promo_banner_image_url_display(self, obj):
+        if obj.promo_banner_image_url:
+            return mark_safe(
+                f'<a href="{obj.promo_banner_url}" target="_blank">'
+                f'<img src="{obj.promo_banner_image_url}" title="{obj.promo_banner_image_url}" height=300 />'  # noqa
                 f"</a>"
             )
         return None
