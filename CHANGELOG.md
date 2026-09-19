@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.111.0](https://github.com/openfoodfacts/open-prices/compare/v1.110.0...v1.111.0) (2026-09-19)
+
+
+### Features
+
+* **Challenges:** Add promo banner fields to model and admin ([#1440](https://github.com/openfoodfacts/open-prices/issues/1440)) ([619d1b6](https://github.com/openfoodfacts/open-prices/commit/619d1b65847ca846791f09cdeec8895bee3e3df3))
+
+
+### Bug Fixes
+
+* **Ml:** update stale hardcoded category taxonomy ids in RawCategory (ml) ([#1425](https://github.com/openfoodfacts/open-prices/issues/1425)) ([e5fe3bb](https://github.com/openfoodfacts/open-prices/commit/e5fe3bbd16a004b02ccfac30aa4cb8d2bab7e7f9))
+
+
+### Technical
+
+* **deps:** re-add `croniter`, needed by `django-q2` ([#1442](https://github.com/openfoodfacts/open-prices/issues/1442)) ([3de7848](https://github.com/openfoodfacts/open-prices/commit/3de7848ec239c689b5c84eaad839177c36f8f462))
+* **Locations:** only create history entry for an OSM update (not on creation or backfill) ([#1439](https://github.com/openfoodfacts/open-prices/issues/1439)) ([c8a4da2](https://github.com/openfoodfacts/open-prices/commit/c8a4da2888658df60a0a0c6fe3ac10c7246334dd))
+
 ## [1.110.0](https://github.com/openfoodfacts/open-prices/compare/v1.109.0...v1.110.0) (2026-09-16)
 
 
