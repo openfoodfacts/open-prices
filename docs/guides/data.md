@@ -18,6 +18,8 @@ gzipped JSONL dumps:
 * [proofs](https://prices.openfoodfacts.org/data/proofs.jsonl.gz)
 * [locations](https://prices.openfoodfacts.org/data/locations.jsonl.gz)
 
+To load these exports into a development database, see [Import public data](import-data.md).
+
 ## License
 
 Make sure you comply with the OdBL licence, mentioning the source of your data, and ensuring to avoid combining non free data you can't release legally as open data. Another requirement is contributing back any product you add using this SDK.
