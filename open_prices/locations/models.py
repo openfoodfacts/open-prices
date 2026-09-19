@@ -305,4 +305,5 @@ def location_post_create_fetch_and_save_data_from_openstreetmap(
                 async_task(
                     "open_prices.locations.tasks.fetch_and_save_data_from_openstreetmap",
                     instance,
+                    save_without_historical_record=True,
                 )

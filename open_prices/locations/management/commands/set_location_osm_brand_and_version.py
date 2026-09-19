@@ -62,7 +62,9 @@ class Command(BaseCommand):
                         location.osm_brand = response.tag("brand")
                         location.osm_version = response.version()
                         location.osm_version_date = response.timestamp()
-                        location.save(
+                        # this is a one-off backfill, not a real OSM change:
+                        # don't create a history entry for it
+                        location.save_without_historical_record(
                             update_fields=[
                                 "osm_brand",
                                 "osm_version",
