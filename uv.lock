@@ -428,6 +428,18 @@ wheels = [
 ]
 
 [[package]]
+name = "croniter"
+version = "6.2.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-dateutil" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/37/57/2e2a65aee2a70483cb28e2b7e15a072d00a523207593b44400d4717bb100/croniter-6.2.4.tar.gz", hash = "sha256:fc124f751b1b04805c2a04b061898b436b45ab2320b045e1e052ea895de65189", size = 166267, upload-time = "2026-07-10T09:52:59.955Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/ba/d678e5bd329646ca51d3c92addbc77804e86d21f4b6b6a027218e6abb010/croniter-6.2.4-py3-none-any.whl", hash = "sha256:8ef3d544107a5c05a150a2d78f8bf5a8eb9c5c4d93405a736b824109574e3f4d", size = 46677, upload-time = "2026-07-10T09:52:58.425Z" },
+]
+
+[[package]]
 name = "cryptography"
 version = "46.0.5"
 source = { registry = "https://pypi.org/simple" }
@@ -2045,6 +2057,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "babel" },
+    { name = "croniter" },
     { name = "django" },
     { name = "django-cors-headers" },
     { name = "django-debug-toolbar" },
@@ -2091,6 +2104,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "babel", specifier = ">=2.17.0,<3.0.0" },
+    { name = "croniter", specifier = ">=6.2.4" },
     { name = "django", specifier = "==5.2.17" },
     { name = "django-cors-headers", specifier = "==4.9.0" },
     { name = "django-debug-toolbar", specifier = "==6.3.0" },
