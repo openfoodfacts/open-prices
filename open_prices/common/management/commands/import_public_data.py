@@ -4,11 +4,18 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 
-from open_prices.common.data_import import import_exports
+from open_prices.common.import_data import import_exports
 
 
 class Command(BaseCommand):
-    help = "Import public locations, proofs and prices JSONL exports into an empty database."
+    help = (
+        "Import public locations, proofs and prices JSONL exports into a development "
+        "PostgreSQL database with migrations applied. Location, proof (including draft) "
+        "and price tables must be empty; existing products and local accounts are kept. "
+        "Run before starting the app or workers, and keep input files unchanged during "
+        "the import. Product metadata and proof images are not downloaded. "
+        "See open_prices/common/import_data.py for implementation details."
+    )
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         for name in ("locations", "proofs", "prices"):
@@ -18,16 +25,28 @@ class Command(BaseCommand):
                 type=Path,
                 help="Path to a .jsonl or .jsonl.gz export.",
             )
-        parser.add_argument("--batch-size", type=int, default=1000)
+        parser.add_argument(
+            "--batch-size",
+            type=int,
+            default=1000,
+            help="Maximum records per batch write (default: 1000; must be positive).",
+        )
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Validate files and references without writing to the database.",
+            help=(
+                "Validate field values, duplicate IDs and references without writing "
+                "to the database or advancing ID sequences."
+            ),
         )
         parser.add_argument(
             "--allow-missing-references",
             action="store_true",
-            help="Set missing location, proof and duplicate-price references to NULL.",
+            help=(
+                "Allow filtered exports by setting missing location, proof and "
+                "duplicate-price references to NULL and reporting their count. "
+                "By default, missing references cause an error."
+            ),
         )
 
     def handle(self, *args: Any, **options: Any) -> None:

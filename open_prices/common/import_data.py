@@ -1,4 +1,63 @@
-"""Load the public API JSONL exports into an empty development database."""
+"""Load public API exports with the ``import_public_data`` management command.
+
+Inputs and destination
+----------------------
+The locations, proofs and prices inputs are JSONL or gzip-compressed JSONL API
+exports, not Django fixtures for ``loaddata``. Use PostgreSQL with migrations
+applied and empty locations, proofs (including drafts) and prices tables. Existing
+product metadata and local accounts are retained; this command neither creates
+the database nor deletes or merges an existing price dataset. Run it before
+starting the development app or its workers: the import locks location, proof,
+price and product tables against concurrent writes.
+
+Validation and import
+---------------------
+``--dry-run`` checks field values, duplicate IDs and references without inserting
+records or advancing sequences. Errors identify the input file and line. By
+default, all referenced locations, proofs and duplicate prices must be included.
+``--allow-missing-references`` clears missing links to NULL for filtered exports
+and reports their count, including during a dry run. Invalid values, duplicate
+IDs and self-referencing duplicate prices still fail. Valid links are preserved,
+including duplicates pointing to prices later in the file.
+
+The import runs in one transaction; errors roll back rows and counter changes.
+It preserves source IDs, timestamps and decimal values, rebuilds location, proof,
+product, existing local user and total counters, then resets imported ID
+sequences. Products resolve by ``product_code``, reusing local rows or creating
+minimal ones. Source ``product_id`` values are ignored; without a code, the local
+product link is NULL. Counters reflect only the remaining links, and prediction
+counts are zero because predictions are not imported.
+
+Files are read twice, so keep them unchanged during the command. Memory holds
+IDs, product codes and their local ID cache, missing references and one batch of
+records. ``--batch-size`` controls batch writes (default: 1000; must be positive).
+Existing products are looked up once per code; bulk inserts return new product
+IDs. Location counters use one table update. Restoring ``updated`` timestamps
+after Django's ``auto_now`` requires an additional bulk update per batch. Local
+user counters use ``User.update_task()``, with several queries and five saves per
+user, so a large existing user table makes the import slower.
+
+Data outside the exports
+------------------------
+Bulk writes bypass model save hooks: no history, OCR, prediction jobs or external
+requests are triggered. Accounts, predictions, price tags, history, challenges
+and moderation data are not imported. Proof image paths are preserved, but the
+image files must be supplied separately under the configured images directory.
+Category prices already contain ``category_tag`` and need no product enrichment.
+
+To optionally fetch barcode product names, brands and images, run the following
+in ``manage.py shell`` after importing. This makes network requests and may take
+time; products absent from Open Food Facts remain minimal rows. For bulk catalog
+synchronization, see ``docs/topics/open-food-facts-product-data.md``.
+
+    from open_prices.products.models import Product
+    from open_prices.products.tasks import fetch_and_save_data_from_openfoodfacts
+    from open_prices.stats.models import TotalStats
+
+    for product in Product.objects.filter(price_count__gt=0, source__isnull=True).iterator():
+        fetch_and_save_data_from_openfoodfacts(product)
+    TotalStats.get_solo().update_product_stats()
+"""
 
 import gzip
 import json

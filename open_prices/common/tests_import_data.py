@@ -483,7 +483,7 @@ class ImportPublicDataTest(TestCase):
 
         with (
             patch(
-                "open_prices.common.data_import.rebuild_counts",
+                "open_prices.common.import_data.rebuild_counts",
                 side_effect=fail_after_insertion,
             ),
             self.assertRaises(CommandError),
