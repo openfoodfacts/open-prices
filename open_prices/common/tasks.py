@@ -13,7 +13,7 @@ from open_prices.common.openfoodfacts import import_product_db
 from open_prices.locations.models import Location
 from open_prices.moderation import rules as moderation_rules
 from open_prices.moderation.rules import create_flags_from_price_outliers
-from open_prices.prices.models import PriceStatistics5y
+from open_prices.prices.models import Price, PriceStatistics5y
 from open_prices.products.models import Product
 from open_prices.proofs.models import Proof
 from open_prices.stats.models import TotalStats

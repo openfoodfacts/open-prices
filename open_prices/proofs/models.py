@@ -426,6 +426,7 @@ def proof_post_save_run_ocr(sender, instance, created, **kwargs):
             async_task(
                 "open_prices.proofs.ml.ocr.fetch_and_save_ocr_data",
                 f"{settings.IMAGES_DIR}/{instance.file_path}",
+                group=constants.TASK_GROUP_PROOF_OCR,
             )
 
 
@@ -792,10 +793,12 @@ def price_tag_post_save_run_ml_models(sender, instance, created, **kwargs):
             async_task(
                 "open_prices.proofs.ml.price_tags.run_and_save_price_tag_classification_from_id",
                 instance.id,
+                group=constants.TASK_GROUP_PRICE_TAG_ML,
             )
             async_task(
                 "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
                 instance.id,
+                group=constants.TASK_GROUP_PRICE_TAG_ML,
             )
 
 

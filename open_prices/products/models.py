@@ -9,6 +9,7 @@ from django.utils import timezone
 from django_q.tasks import async_task
 from openfoodfacts.barcode import normalize_barcode
 
+from open_prices.common import constants as common_constants
 from open_prices.common.db_func import LevenshteinLessEqual
 from open_prices.common.managers import ApproximateCountQuerySet
 from open_prices.products import constants as product_constants
@@ -262,4 +263,5 @@ def product_post_create_fetch_and_save_data_from_openfoodfacts(
             async_task(
                 "open_prices.products.tasks.fetch_and_save_data_from_openfoodfacts",
                 instance,
+                group=common_constants.TASK_GROUP_FETCH_OPENFOODFACTS,
             )

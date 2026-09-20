@@ -37,6 +37,7 @@ from open_prices.api.proofs.serializers import (
     ReceiptItemFullSerializer,
 )
 from open_prices.api.utils import get_source_from_request
+from open_prices.common import constants as common_constants
 from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.common.authentication import (
     CustomAuthentication,
@@ -462,6 +463,7 @@ class PriceTagViewSet(
             async_task(
                 "open_prices.proofs.ml.price_tags.update_price_tag_extraction",
                 price_tag.id,
+                group=common_constants.TASK_GROUP_PRICE_TAG_ML,
             )
 
         # return full price tag
