@@ -8,7 +8,6 @@ from django.test import TestCase, override_settings
 
 from open_prices.common.export_data import export_public_data
 from open_prices.common.import_data import import_exports
-from open_prices.common.tasks import dump_db_task
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices.factories import PriceFactory
@@ -69,6 +68,10 @@ class ExportPublicDataTest(TestCase):
         self.assertEqual([row["id"] for row in rows], [self.prices[1].pk])
 
     def test_dump_db_task_exports_the_public_data(self):
+        # common.tasks queries the Schedule table when imported, so it cannot be
+        # imported at module level (the test database does not exist yet then)
+        from open_prices.common.tasks import dump_db_task
+
         dump_db_task()
 
         for name in EXPORT_NAMES:
