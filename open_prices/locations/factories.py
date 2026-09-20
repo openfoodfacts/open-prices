@@ -14,6 +14,7 @@ class LocationFactory(DjangoModelFactory):
 
     class Params:
         osm_name_faker = factory.Faker("name")
+        osm_address_city_faker = factory.Faker("city")
         osm_address_country_faker = factory.Faker("country")
         osm_address_country_code_faker = factory.Faker("country_code")
         website_url_faker = factory.Faker("uri")
@@ -36,6 +37,11 @@ class LocationFactory(DjangoModelFactory):
     )
     osm_name = factory.LazyAttribute(
         lambda x: x.osm_name_faker if x.type == location_constants.TYPE_OSM else None
+    )
+    osm_address_city = factory.LazyAttribute(
+        lambda x: (
+            x.osm_address_city_faker if x.type == location_constants.TYPE_OSM else None
+        )
     )
     osm_address_country = factory.LazyAttribute(
         lambda x: (

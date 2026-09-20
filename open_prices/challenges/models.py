@@ -259,18 +259,21 @@ class Challenge(models.Model):
         ).calculate_field_distinct_count("location_id")
         user_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
+            .filter(owner__isnull=False)
             .values("owner")
             .annotate(count=Count("id"))
             .order_by("-count")[:10]
         )
         user_proof_count_ranking = list(
             Proof.objects.has_tag(self.tag)
+            .filter(owner__isnull=False)
             .values("owner")
             .annotate(count=Count("id"))
             .order_by("-count")[:10]
         )
         user_price_from_proof_count_ranking = list(
             Price.objects.has_tag(self.tag)
+            .filter(proof__owner__isnull=False)
             .select_related("proof")
             .values("proof__owner")
             .annotate(owner=F("proof__owner"), count=Count("id"))
@@ -280,6 +283,7 @@ class Challenge(models.Model):
         location_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .select_related("location")
+            .filter(location_id__isnull=False)
             .values("location_id")
             .annotate(
                 id=F("location_id"),
@@ -306,6 +310,13 @@ class Challenge(models.Model):
         location_city_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .select_related("location")
+            .filter(
+                location_id__isnull=False,
+                location__osm_address_city__isnull=False,
+                location__osm_address_country__isnull=False,
+            )
+            .exclude(location__osm_address_city="")
+            .exclude(location__osm_address_country="")
             .values("location__osm_address_city", "location__osm_address_country")
             .annotate(
                 osm_address_city=F("location__osm_address_city"),
@@ -324,6 +335,10 @@ class Challenge(models.Model):
         location_country_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .select_related("location")
+            .filter(
+                location_id__isnull=False, location__osm_address_country__isnull=False
+            )
+            .exclude(location__osm_address_country="")
             .values("location__osm_address_country")
             .annotate(
                 osm_address_country=F("location__osm_address_country"),
@@ -335,8 +350,8 @@ class Challenge(models.Model):
         )
         product_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
-            .has_type_product()
             .select_related("product")
+            .has_type_product()
             .values("product_id")
             .annotate(
                 id=F("product_id"),
