@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.112.0](https://github.com/openfoodfacts/open-prices/compare/v1.111.0...v1.112.0) (2026-09-20)
+
+
+### Features
+
+* **Data:** script to easily import public data exports (for local development) ([#1443](https://github.com/openfoodfacts/open-prices/issues/1443)) ([86be4ff](https://github.com/openfoodfacts/open-prices/commit/86be4ff65fb6eee0603261ee8a167b4837b2b421))
+
+
+### Bug Fixes
+
+* **Challenges:** Stats: filter out online locations from city & country stats ([#1444](https://github.com/openfoodfacts/open-prices/issues/1444)) ([7c736e6](https://github.com/openfoodfacts/open-prices/commit/7c736e67076dd038b2da58527a7a4271732f4ed9))
+* re-normalize price category tags when the taxonomy renames a canonical id ([#1426](https://github.com/openfoodfacts/open-prices/issues/1426)) ([ac171f1](https://github.com/openfoodfacts/open-prices/commit/ac171f11301a4d786fab4d58ad76191c3a9c3b06))
+
+
+### Technical
+
+* **Data:** move the public data export script to a dedicated file ([#1446](https://github.com/openfoodfacts/open-prices/issues/1446)) ([55de7ca](https://github.com/openfoodfacts/open-prices/commit/55de7ca945e6321624fddd0d57fc863e218de07e))
+* **Tasks:** add 'group' tag & show more successful tasks in the admin ([#1447](https://github.com/openfoodfacts/open-prices/issues/1447)) ([35b4a49](https://github.com/openfoodfacts/open-prices/commit/35b4a4963e9c12024f115ab7a036bb7cf90b67b7))
+* **Tests:** assertDictContainsSubset is deprecated ([2f0bf3f](https://github.com/openfoodfacts/open-prices/commit/2f0bf3f2e2d1575399428c343cb118f19a695b49))
+
 ## [1.111.0](https://github.com/openfoodfacts/open-prices/compare/v1.110.0...v1.111.0) (2026-09-19)
 
 
