@@ -263,7 +263,7 @@ Q_CLUSTER = {
     "retry": 2 * 60 * 60 + 1,
     "max_attempts": 2,
     "queue_limit": 50,
-    # keep the last 250 successful tasks per group (instead of 250 overall)
+    "save_limit": 250,  # default
     "save_limit_per": "group",
     "bulk": 10,
     "orm": "default",
