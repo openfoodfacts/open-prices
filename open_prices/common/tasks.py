@@ -1,24 +1,19 @@
 import logging
-import os
-from pathlib import Path
 
 from django.conf import settings
 from django_q.models import Schedule
 from django_q.tasks import schedule
 from openfoodfacts import Flavor
 
-from open_prices.api.locations.serializers import LocationSerializer
-from open_prices.api.prices.serializers import PriceSerializer
-from open_prices.api.proofs.serializers import ProofSerializer
 from open_prices.badges.models import Badge
 from open_prices.challenges.models import Challenge
+from open_prices.common.export_data import export_public_data
 from open_prices.common.history import history_clean_duplicate_command
 from open_prices.common.openfoodfacts import import_product_db
-from open_prices.common.utils import export_model_to_jsonl_gz
 from open_prices.locations.models import Location
 from open_prices.moderation import rules as moderation_rules
 from open_prices.moderation.rules import create_flags_from_price_outliers
-from open_prices.prices.models import Price, PriceStatistics5y
+from open_prices.prices.models import PriceStatistics5y
 from open_prices.products.models import Product
 from open_prices.proofs.models import Proof
 from open_prices.stats.models import TotalStats
@@ -103,15 +98,7 @@ def dump_db_task():
     """
     Dump the database as JSONL files to the data directory
     """
-    output_dir = Path(os.path.join(settings.BASE_DIR, "data"))
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    for table_name, model_class, schema_class in (
-        ("prices", Price, PriceSerializer),
-        ("proofs", Proof, ProofSerializer),
-        ("locations", Location, LocationSerializer),
-    ):
-        export_model_to_jsonl_gz(table_name, model_class, schema_class, output_dir)
+    export_public_data()
 
 
 def proof_draft_cleanup_task():
