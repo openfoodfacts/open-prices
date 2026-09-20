@@ -69,6 +69,10 @@ def update_location_counts_task():
     Location.update_task()
 
 
+def update_price_category_tag_task():
+    Price.update_task()
+
+
 def update_challenge_task():
     Challenge.update_task()
 
@@ -140,6 +144,7 @@ CRON_SCHEDULES = {
     "update_user_counts_task": ("0 2 * * *", {}),  # daily at 02:00
     "update_badge_task": ("5 2 * * *", {}),  # daily at 02:05
     "update_total_stats_task": ("10 2 * * *", {}),  # daily at 02:10
+    "update_price_category_tag_task": ("40 2 * * *", {}),  # daily at 02:40
     "update_location_counts_task": (
         "20 2 * * 1",  # every start of the week (at 02:20)
         {},
