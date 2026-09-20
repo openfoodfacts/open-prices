@@ -5,6 +5,7 @@ from freezegun import freeze_time
 from open_prices.challenges import constants as challenge_constants
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.challenges.models import Challenge
+from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
@@ -213,12 +214,19 @@ class ChallengeStatusQuerySetAndPropertyTest(TestCase):
 class ChallengePropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.location = LocationFactory()
+        cls.location_osm = LocationFactory()
+        cls.location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
         cls.proof_in_challenge = ProofFactory(
             type=proof_constants.TYPE_PRICE_TAG,
-            location_id=cls.location.id,
-            location_osm_id=cls.location.osm_id,
-            location_osm_type=cls.location.osm_type,
+            location_id=cls.location_osm.id,
+            location_osm_id=cls.location_osm.osm_id,
+            location_osm_type=cls.location_osm.osm_type,
+            owner="user_1",
+            tags=["test"],
+        )
+        cls.proof_in_challenge_with_location_online = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_id=cls.location_online.id,
             owner="user_1",
             tags=["test"],
         )
@@ -236,9 +244,9 @@ class ChallengePropertyTest(TestCase):
                 product_code="8001505005707",
                 product=cls.product_8001505005707,
                 proof=cls.proof_in_challenge,
-                location_id=cls.location.id,
-                location_osm_id=cls.location.osm_id,
-                location_osm_type=cls.location.osm_type,
+                location_id=cls.location_osm.id,
+                location_osm_id=cls.location_osm.osm_id,
+                location_osm_type=cls.location_osm.osm_type,
                 owner="user_1",
                 tags=["test"],
             )
@@ -247,9 +255,9 @@ class ChallengePropertyTest(TestCase):
                 category_tag="en:breakfasts",
                 price_per=price_constants.PRICE_PER_UNIT,
                 proof=cls.proof_in_challenge,
-                location_id=cls.location.id,
-                location_osm_id=cls.location.osm_id,
-                location_osm_type=cls.location.osm_type,
+                location_id=cls.location_osm.id,
+                location_osm_id=cls.location_osm.osm_id,
+                location_osm_type=cls.location_osm.osm_type,
                 owner="user_1",
             )
             PriceFactory(
@@ -257,9 +265,9 @@ class ChallengePropertyTest(TestCase):
                 category_tag="en:spreads",
                 price_per=price_constants.PRICE_PER_UNIT,
                 proof=cls.proof_in_challenge,
-                location_id=cls.location.id,
-                location_osm_id=cls.location.osm_id,
-                location_osm_type=cls.location.osm_type,
+                location_id=cls.location_osm.id,
+                location_osm_id=cls.location_osm.osm_id,
+                location_osm_type=cls.location_osm.osm_type,
                 owner="user_2",
             )
             PriceFactory(
@@ -267,9 +275,25 @@ class ChallengePropertyTest(TestCase):
                 category_tag="en:tomatoes",
                 price_per=price_constants.PRICE_PER_UNIT,
                 proof=cls.proof_in_challenge,
-                location_id=cls.location.id,
-                location_osm_id=cls.location.osm_id,
-                location_osm_type=cls.location.osm_type,
+                location_id=cls.location_osm.id,
+                location_osm_id=cls.location_osm.osm_id,
+                location_osm_type=cls.location_osm.osm_type,
+                owner="user_1",
+            )
+            cls.price_with_location_online = PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:breakfasts",
+                price_per=price_constants.PRICE_PER_UNIT,
+                proof=cls.proof_in_challenge_with_location_online,
+                location_id=cls.location_online.id,
+                owner="user_1",
+            )
+            cls.price_without_location = PriceFactory(
+                type=price_constants.TYPE_CATEGORY,
+                category_tag="en:breakfasts",
+                price_per=price_constants.PRICE_PER_UNIT,
+                proof=None,
+                location_id=None,
                 owner="user_1",
             )
         # create the challenge afterwards
@@ -281,33 +305,33 @@ class ChallengePropertyTest(TestCase):
         )
 
     def test_set_price_tags(self):
-        self.assertEqual(Price.objects.count(), 5)
+        self.assertEqual(Price.objects.count(), 7)
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()
-        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 3)
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 5)
         self.assertIn("test", self.price_with_existing_tag.tags)
 
     def test_set_proof_tags(self):
-        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.count(), 3)
         self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()
-        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
         self.assertIn("test", self.proof_in_challenge.tags)
 
     def test_reset_price_tags(self):
-        self.assertEqual(Price.objects.count(), 5)
+        self.assertEqual(Price.objects.count(), 7)
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
-        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 3)
+        self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 5)
         self.challenge_ongoing.reset_price_tags()
         self.assertEqual(Price.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.assertIn("test", self.price_with_existing_tag.tags)
 
     def test_reset_proof_tags(self):
-        self.assertEqual(Proof.objects.count(), 2)
+        self.assertEqual(Proof.objects.count(), 3)
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()
-        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 1)
+        self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 2)
         self.challenge_ongoing.reset_proof_tags()
         self.assertEqual(Proof.objects.has_tag(self.challenge_ongoing.tag).count(), 0)
         self.assertIn("test", self.proof_in_challenge.tags)
@@ -317,59 +341,71 @@ class ChallengePropertyTest(TestCase):
         self.challenge_ongoing.set_price_tags()  # we need to set the price tags first
         self.challenge_ongoing.set_proof_tags()  # we need to set the proof tags first
         self.challenge_ongoing.calculate_stats()
-        self.assertEqual(self.challenge_ongoing.stats["price_count"], 3)
-        self.assertEqual(self.challenge_ongoing.stats["proof_count"], 1)
+        self.assertEqual(self.challenge_ongoing.stats["price_count"], 5)
+        self.assertEqual(self.challenge_ongoing.stats["proof_count"], 2)
         self.assertEqual(self.challenge_ongoing.stats["user_count"], 2)
         self.assertEqual(self.challenge_ongoing.stats["price_user_count"], 2)
         self.assertEqual(self.challenge_ongoing.stats["proof_user_count"], 1)
         self.assertEqual(self.challenge_ongoing.stats["price_product_count"], 1 + 2)
-        self.assertEqual(self.challenge_ongoing.stats["proof_location_count"], 1)
+        self.assertEqual(self.challenge_ongoing.stats["proof_location_count"], 1 + 1)
         self.assertEqual(
             self.challenge_ongoing.stats["user_price_count_ranking"],
-            [{"owner": "user_1", "count": 2}, {"owner": "user_2", "count": 1}],
+            [{"owner": "user_1", "count": 4}, {"owner": "user_2", "count": 1}],
         )
         self.assertEqual(
             self.challenge_ongoing.stats["user_proof_count_ranking"],
-            [{"owner": "user_1", "count": 1}],
+            [{"owner": "user_1", "count": 2}],
         )
         self.assertEqual(
             self.challenge_ongoing.stats["user_price_from_proof_count_ranking"],
-            [{"owner": "user_1", "count": 3}],
+            [{"owner": "user_1", "count": 4}],
         )
         self.assertEqual(
             self.challenge_ongoing.stats["location_price_count_ranking"],
             [
                 {
-                    "id": self.location.id,
-                    "type": self.location.type,
-                    "osm_name": self.location.osm_name,
-                    "osm_address_city": self.location.osm_address_city,
-                    "osm_address_country": self.location.osm_address_country,
-                    "osm_address_country_code": self.location.osm_address_country_code,
-                    "website_url": self.location.website_url,
+                    "id": self.location_osm.id,
+                    "type": self.location_osm.type,
+                    "osm_name": self.location_osm.osm_name,
+                    "osm_address_city": self.location_osm.osm_address_city,
+                    "osm_address_country": self.location_osm.osm_address_country,
+                    "osm_address_country_code": self.location_osm.osm_address_country_code,
+                    "website_url": self.location_osm.website_url,
                     "count": 3,
-                }
+                },
+                {
+                    "id": self.location_online.id,
+                    "type": self.location_online.type,
+                    "osm_name": self.location_online.osm_name,
+                    "osm_address_city": self.location_online.osm_address_city,
+                    "osm_address_country": self.location_online.osm_address_country,
+                    "osm_address_country_code": self.location_online.osm_address_country_code,
+                    "website_url": self.location_online.website_url,
+                    "count": 1,
+                },
             ],
         )
         self.assertEqual(
             self.challenge_ongoing.stats["location_city_price_count_ranking"],
             [
                 {
-                    "osm_address_city": self.location.osm_address_city,
-                    "osm_address_country": self.location.osm_address_country,
-                    "osm_address_country_code": self.location.osm_address_country_code,
+                    "osm_address_city": self.location_osm.osm_address_city,
+                    "osm_address_country": self.location_osm.osm_address_country,
+                    "osm_address_country_code": self.location_osm.osm_address_country_code,
                     "count": 3,
                 }
+                # location_online is filtered out
             ],
         )
         self.assertEqual(
             self.challenge_ongoing.stats["location_country_price_count_ranking"],
             [
                 {
-                    "osm_address_country": self.location.osm_address_country,
-                    "osm_address_country_code": self.location.osm_address_country_code,
+                    "osm_address_country": self.location_osm.osm_address_country,
+                    "osm_address_country_code": self.location_osm.osm_address_country_code,
                     "count": 3,
                 }
+                # location_online is filtered out
             ],
         )
         self.assertEqual(
