@@ -1,6 +1,7 @@
 from decimal import Decimal
 from unittest.mock import patch
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
@@ -118,7 +119,7 @@ class ProductQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.product_without_price = ProductFactory(
-            code="0123456789100", creator="open-prices"
+            code="0123456789100", creator=settings.OFF_DEFAULT_USER
         )
         cls.product_with_price = ProductFactory(
             code="0123456789101", creator="openfoodfacts-contributors"
