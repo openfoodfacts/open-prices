@@ -19,7 +19,7 @@ from django.utils import timezone
 from django_q.tasks import async_task
 from simple_history.models import HistoricalRecords
 
-from open_prices.common import history, utils
+from open_prices.common import constants, history, utils
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
 from open_prices.locations import utils as location_utils
@@ -306,4 +306,5 @@ def location_post_create_fetch_and_save_data_from_openstreetmap(
                     "open_prices.locations.tasks.fetch_and_save_data_from_openstreetmap",
                     instance,
                     save_without_historical_record=True,
+                    group=constants.TASK_GROUP_FETCH_OPENSTREETMAP,
                 )

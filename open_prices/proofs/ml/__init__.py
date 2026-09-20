@@ -10,6 +10,7 @@ from pathlib import Path
 
 from django_q.tasks import async_task
 
+from open_prices.common import constants as common_constants
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.classification import run_and_save_proof_type_prediction
 from open_prices.proofs.ml.price_tags import run_and_save_price_tag_detection
@@ -62,6 +63,7 @@ def run_and_save_proof_prediction(
             "open_prices.proofs.ml.classification.run_and_save_proof_type_prediction",
             image=None,
             proof=proof,
+            group=common_constants.TASK_GROUP_PROOF_ML,
         )
         if proof.type == proof_constants.TYPE_PRICE_TAG:
             async_task(
@@ -70,6 +72,7 @@ def run_and_save_proof_prediction(
                 proof=proof,
                 run_classification=run_price_tag_classification,
                 run_extraction=run_price_tag_extraction,
+                group=common_constants.TASK_GROUP_PRICE_TAG_ML,
             )
         if proof.type == proof_constants.TYPE_RECEIPT:
             if proof.draft:
@@ -84,12 +87,14 @@ def run_and_save_proof_prediction(
                     "open_prices.proofs.ml.receipt_anonymization.run_and_save_receipt_anonymization_prediction",
                     image=None,
                     proof=proof,
+                    group=common_constants.TASK_GROUP_PROOF_ML,
                 )
             if run_receipt_extraction:
                 async_task(
                     "open_prices.proofs.ml.receipts.run_and_save_receipt_extraction_prediction",
                     image=None,
                     proof=proof,
+                    group=common_constants.TASK_GROUP_PROOF_ML,
                 )
 
     else:

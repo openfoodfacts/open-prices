@@ -507,6 +507,7 @@ def price_post_create_update_tags(sender, instance, created, **kwargs):
         async_task(
             "open_prices.prices.tasks.update_tags",
             instance,
+            group=constants.TASK_GROUP_PRICE_UPDATE_TAGS,
         )
 
 

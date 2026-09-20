@@ -13,3 +13,12 @@ SOURCE_MOBILE = "MOBILE"  # Smoothie - OpenFoodFacts
 SOURCE_API = "API"  # API
 SOURCE_OTHER = "OTHER"  # None, MyMeals
 SOURCE_LIST = [SOURCE_WEB, SOURCE_MOBILE, SOURCE_API, SOURCE_OTHER]
+
+# django-q task groups (see Q_CLUSTER "save_limit_per": the task history
+# is pruned per group, so every async task should be given one)
+TASK_GROUP_FETCH_OPENFOODFACTS = "fetch_openfoodfacts"
+TASK_GROUP_FETCH_OPENSTREETMAP = "fetch_openstreetmap"
+TASK_GROUP_PRICE_UPDATE_TAGS = "price_update_tags"
+TASK_GROUP_PROOF_OCR = "proof_ocr"
+TASK_GROUP_PROOF_ML = "proof_ml"
+TASK_GROUP_PRICE_TAG_ML = "price_tag_ml"
