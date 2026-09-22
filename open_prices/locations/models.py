@@ -1,6 +1,7 @@
 import math
 
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core.validators import ValidationError
 from django.db import models
 from django.db.models import (
@@ -116,6 +117,7 @@ class Location(models.Model):
         "osm_display_name",
         "osm_tag_key",
         "osm_tag_value",
+        "osm_tags",
         "osm_brand",
         "osm_address_postcode",
         "osm_address_city",
@@ -142,6 +144,7 @@ class Location(models.Model):
     osm_display_name = models.CharField(blank=True, null=True)
     osm_tag_key = models.CharField(blank=True, null=True)
     osm_tag_value = models.CharField(blank=True, null=True)
+    osm_tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
     osm_brand = models.CharField(blank=True, null=True)
     osm_address_postcode = models.CharField(blank=True, null=True)
     osm_address_city = models.CharField(blank=True, null=True)
