@@ -128,12 +128,6 @@ class LocationListFilterApiTest(TestCase):
         LocationFactory(**LOCATION_OSM_WAY_872934393)
         LocationFactory(**LOCATION_ONLINE_DECATHLON)
 
-    def test_location_list_filter_by_osm_name(self):
-        url = self.url + "?osm_name__like=monop"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["osm_name"], "Monoprix")
-
     def test_location_list_filter_by_type(self):
         url = self.url + "?type=ONLINE"
         response = self.client.get(url)
@@ -141,6 +135,18 @@ class LocationListFilterApiTest(TestCase):
         self.assertEqual(
             response.data["items"][0]["type"], location_constants.TYPE_ONLINE
         )
+
+    def test_location_list_filter_by_osm_name(self):
+        url = self.url + "?osm_name__like=monop"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["osm_name"], "Monoprix")
+
+    def test_location_list_filter_by_osm_type(self):
+        url = self.url + "?osm_type=NODE"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["items"][0]["osm_type"], "NODE")
 
     def test_location_list_filter_by_price_count(self):
         # exact price_count
