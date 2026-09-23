@@ -15,6 +15,8 @@ LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 652825274,
     "osm_type": location_constants.OSM_TYPE_NODE,
+    "osm_tag_key": "shop",
+    "osm_tag_value": "supermarket",
     "osm_name": "Monoprix",
     "osm_address_country": "France",
     "osm_lat": "45.1805534",
@@ -26,6 +28,8 @@ LOCATION_OSM_NODE_6509705997 = {
     "type": location_constants.TYPE_OSM,
     "osm_id": 6509705997,
     "osm_type": location_constants.OSM_TYPE_NODE,
+    "osm_tag_key": "amenity",
+    "osm_tag_value": "vending_machine",
     "osm_name": "Carrefour",
     "price_count": 0,
 }
@@ -147,6 +151,21 @@ class LocationListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["items"][0]["osm_type"], "NODE")
+
+    def test_location_list_filter_by_osm_tag_key_and_value(self):
+        # requires all parameters
+        parameter_set = [{"osm_tag_key": "shop"}, {"osm_tag_value": "supermarket"}]
+        for parameters in parameter_set:
+            with self.subTest(parameters=parameters):
+                response = self.client.get(self.url, parameters)
+                self.assertEqual(response.status_code, 400)
+
+        # all parameters provided
+        url = self.url + "?osm_tag_key=shop&osm_tag_value=supermarket"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["osm_tag_key"], "shop")
+        self.assertEqual(response.data["items"][0]["osm_tag_value"], "supermarket")
 
     def test_location_list_filter_by_price_count(self):
         # exact price_count
