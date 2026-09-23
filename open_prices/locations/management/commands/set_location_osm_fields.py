@@ -11,11 +11,11 @@ from open_prices.locations.models import Location
 class Command(BaseCommand):
     """
     Usage:
-    - python manage.py set_location_osm_brand_and_version
-    - python manage.py set_location_osm_brand_and_version --apply
+    - python manage.py set_location_osm_fields
+    - python manage.py set_location_osm_fields --apply
     """
 
-    help = "Fill Location osm_brand, osm_version & osm_version_date fields (depending on its creation date!)."
+    help = "Fill Location osm_brand, osm_version, osm_version_date & osm_tags fields (depending on its creation date!)."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         apply = options["apply"]
 
         self.stdout.write(
-            "=== Running script to set Location osm_brand, osm_version & osm_version_date fields..."
+            "=== Running script to set Location osm_brand, osm_version, osm_version_date & osm_tags fields..."
         )
         if not apply:
             self.stdout.write("Running in dry run mode. Use --apply to apply changes.")
@@ -45,8 +45,14 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Of which {qs.filter(osm_version_date=None).count()} have their osm_version_date field empty..."
         )
+        self.stdout.write(
+            f"Of which {qs.filter(osm_tags=[]).count()} have their osm_tags field empty..."
+        )
         qs = qs.filter(
-            Q(osm_brand=None) | Q(osm_version=None) | Q(osm_version_date=None)
+            Q(osm_brand=None)
+            | Q(osm_version=None)
+            | Q(osm_version_date=None)
+            | Q(osm_tags=[])
         )
         self.stdout.write(f"Filtered down to {qs.count()} locations that need updates.")
 
@@ -59,9 +65,15 @@ class Command(BaseCommand):
                         )
                     )
                     if response:
-                        location.osm_brand = response.tag("brand")
-                        location.osm_version = response.version()
-                        location.osm_version_date = response.timestamp()
+                        osm_data = common_openstreetmap.get_location_dict_from_osm(
+                            location.osm_id,
+                            location.osm_type,
+                            existing_osm_response=response,
+                        )
+                        location.osm_brand = osm_data["brand"]
+                        location.osm_version = osm_data["version"]
+                        location.osm_version_date = osm_data["version_date"]
+                        location.osm_tags = osm_data["tags"]
                         # this is a one-off backfill, not a real OSM change:
                         # don't create a history entry for it
                         location.save_without_historical_record(
@@ -69,6 +81,7 @@ class Command(BaseCommand):
                                 "osm_brand",
                                 "osm_version",
                                 "osm_version_date",
+                                "osm_tags",
                             ]
                         )
                     else:

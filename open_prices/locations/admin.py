@@ -22,3 +22,9 @@ class LocationAdmin(SimpleHistoryAdmin):
     )
     list_filter = ("type", "osm_type")
     search_fields = ("id", "osm_id", "website_url")
+    readonly_fields = (
+        *Location.TYPE_OSM_OPTIONAL_FIELDS,
+        *Location.COUNT_FIELDS,
+        "created",
+        "updated",
+    )

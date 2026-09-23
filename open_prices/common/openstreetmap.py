@@ -13,7 +13,14 @@ OSM_FIELDS_FROM_NOMINATIM = [
     "lat",
     "lon",
 ]  # + OSM_TAG_FIELDS + OSM_ADDRESS_FIELDS
-OSM_FIELDS_FROM_OPENSTREETMAP = ["brand", "version", "version_date"]
+OSM_FIELDS_FROM_OPENSTREETMAP = ["brand", "version", "version_date", "tags"]
+# https://wiki.openstreetmap.org/wiki/Key:diet
+OSM_DIET_TAG_PREFIX = "diet:"
+OSM_TAG_KEYS = {
+    "organic",
+    "bulk_purchase",
+    "cuisine",
+}
 OSM_TAG_FIELDS_MAPPING = {"class": "tag_key", "type": "tag_value"}
 OSM_ADDRESS_FIELDS = [
     "postcode",
@@ -70,6 +77,18 @@ def get_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float
     return 2 * EARTH_RADIUS_KM * math.asin(math.sqrt(a))
 
 
+def _build_tags(response) -> list:
+    """
+    Filter and build the list of relevant OSM tags.
+    - https://wiki.openstreetmap.org/wiki/Key:diet:*
+    """
+    tags = set()
+    for key, value in response.tags().items():
+        if key in OSM_TAG_KEYS or key.startswith(OSM_DIET_TAG_PREFIX):
+            tags.add(f"{key}:{value}")
+    return sorted(tags)
+
+
 def get_location_dict_from_osm(
     osm_id: int, osm_type: str, existing_osm_response: ApiResult | None = None
 ) -> dict:
@@ -95,7 +114,7 @@ def get_location_dict_from_osm(
         "lon": response.lon(),
         "version": response.version(),
         "version_date": response.timestamp(),
-        "tags": response.tags(),  # not used
+        "tags": _build_tags(response),
     }
 
 
