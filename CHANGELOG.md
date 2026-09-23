@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.113.0](https://github.com/openfoodfacts/open-prices/compare/v1.112.0...v1.113.0) (2026-09-23)
+
+
+### Features
+
+* **Locations:** API: new filter by osm_tag_key & osm_tag_value (must be provided together) ([#1453](https://github.com/openfoodfacts/open-prices/issues/1453)) ([66ccff9](https://github.com/openfoodfacts/open-prices/commit/66ccff9d5ef48642f181a41d223b2ad45a492bb1))
+* **Locations:** API: new filter by osm_type ([#1451](https://github.com/openfoodfacts/open-prices/issues/1451)) ([3cabde9](https://github.com/openfoodfacts/open-prices/commit/3cabde9096fbfc83421701b54635ff832d36d9d7))
+* **Locations:** new `osm_tags` field + script to backfill + keep only organic, diet, cuisine & bulk_purchase ([#1450](https://github.com/openfoodfacts/open-prices/issues/1450)) ([1d16d25](https://github.com/openfoodfacts/open-prices/commit/1d16d251fdd5b0ad9129ad4e08f8b20c6e6c8a5f))
+
 ## [1.112.0](https://github.com/openfoodfacts/open-prices/compare/v1.111.0...v1.112.0) (2026-09-20)
 
 
