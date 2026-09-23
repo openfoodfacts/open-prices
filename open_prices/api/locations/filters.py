@@ -22,4 +22,4 @@ class LocationFilter(django_filters.FilterSet):
 
     class Meta:
         model = Location
-        fields = ["type", "price_count"]
+        fields = ["type", "osm_type", "price_count"]
