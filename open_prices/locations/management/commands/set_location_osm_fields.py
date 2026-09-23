@@ -11,8 +11,8 @@ from open_prices.locations.models import Location
 class Command(BaseCommand):
     """
     Usage:
-    - python manage.py set_location_osm_brand_and_version
-    - python manage.py set_location_osm_brand_and_version --apply
+    - python manage.py set_location_osm_fields
+    - python manage.py set_location_osm_fields --apply
     """
 
     help = "Fill Location osm_brand, osm_version, osm_version_date & osm_tags fields (depending on its creation date!)."
