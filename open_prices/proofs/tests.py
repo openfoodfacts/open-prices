@@ -1905,7 +1905,11 @@ class CreateReceiptItemsFromProofPredictionTest(TestCase):
             **LOCATION_OSM_NODE_652825274,
             osm_tags=[location_constants.OSM_TAG_ORGANIC_ONLY],
         )
-        proof = ProofFactory(type=proof_constants.TYPE_RECEIPT, location=location)
+        proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+        )
         proof_prediction = ProofPredictionFactory(
             proof=proof,
             type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
@@ -1930,7 +1934,11 @@ class CreateReceiptItemsFromProofPredictionTest(TestCase):
 
     def test_location_non_organic_only_leaves_organic_untouched(self):
         location = LocationFactory(**LOCATION_OSM_NODE_652825274, osm_tags=[])
-        proof = ProofFactory(type=proof_constants.TYPE_RECEIPT, location=location)
+        proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+        )
         proof_prediction = ProofPredictionFactory(
             proof=proof,
             type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
