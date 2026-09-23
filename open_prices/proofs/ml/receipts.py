@@ -136,6 +136,13 @@ class ReceiptItemType(BaseModel):
         "3) if the image quality is not good enough to read the price. "
         "Otherwise, the value must be false.",
     )
+    organic: bool = Field(
+        False,
+        description="true if the product entry is organic. Receipts rarely show "
+        "enough detail to detect this from the image; this is not extracted from "
+        "the image and defaults to false, but may be set afterwards based on "
+        "shop context (e.g. an organic-only store).",
+    )
 
 
 class Receipt(BaseModel):
@@ -272,6 +279,11 @@ def create_receipt_items_from_proof_prediction(
             )
         product_lookup[price.product_name] = price.product_code
 
+    # raw/unbranded items (type=CATEGORY) rarely show enough detail on a
+    # receipt to detect they're organic, so if the shop itself is tagged as
+    # exclusively organic on OSM, trust that instead
+    location_is_organic_only = bool(proof.location and proof.location.is_organic_only)
+
     created = []
     for index, predicted_item in enumerate(proof_prediction.data.get("items", [])):
         # Check if we have a matching product code
@@ -279,6 +291,9 @@ def create_receipt_items_from_proof_prediction(
         matching_product_code = product_lookup.get(predicted_item.get("product_name"))
         if matching_product_code:
             predicted_item["predicted_product_code"] = matching_product_code
+
+        if location_is_organic_only and predicted_item.get("type") == "CATEGORY":
+            predicted_item["organic"] = True
 
         receipt_item = ReceiptItem.objects.create(
             proof=proof,

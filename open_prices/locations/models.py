@@ -273,6 +273,11 @@ class Location(models.Model):
             return location_utils.get_brand_logo_url(self.osm_brand)
         return None
 
+    @property
+    def is_organic_only(self):
+        """True if OSM tags this location as exclusively selling organic products."""
+        return "organic:only" in self.osm_tags
+
     def update_price_count(self):
         self.price_count = self.prices.count()
         self.save(update_fields=["price_count"])

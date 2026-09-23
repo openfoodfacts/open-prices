@@ -642,6 +642,15 @@ def run_and_save_price_tag_extraction(
             raw_barcode=raw_barcode,
             similar_barcodes=similar_barcodes,
         )
+        # raw/unbranded products (type=CATEGORY) rarely show an organic logo
+        # clearly enough to be detected from the image alone, so if the shop
+        # itself is tagged as exclusively organic on OSM, trust that instead
+        if (
+            data.type == "CATEGORY"
+            and proof.location
+            and proof.location.is_organic_only
+        ):
+            data.organic = True
         try:
             prediction = PriceTagPrediction.objects.create(
                 price_tag=price_tag,
