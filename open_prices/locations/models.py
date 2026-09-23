@@ -34,6 +34,9 @@ class LocationQuerySet(models.QuerySet):
     def has_type_online(self):
         return self.filter(type=location_constants.TYPE_ONLINE)
 
+    def has_osm_tag(self, tag):
+        return self.filter(osm_tags__contains=[tag])
+
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
@@ -273,10 +276,8 @@ class Location(models.Model):
             return location_utils.get_brand_logo_url(self.osm_brand)
         return None
 
-    @property
-    def is_organic_only(self):
-        """True if OSM tags this location as exclusively selling organic products."""
-        return "organic:only" in self.osm_tags
+    def has_osm_tag(self, tag):
+        return tag in self.osm_tags
 
     def update_price_count(self):
         self.price_count = self.prices.count()

@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field, computed_field
 
 from open_prices.common import google as common_google
 from open_prices.common import openfoodfacts as common_openfoodfacts
+from open_prices.locations import constants as location_constants
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.ml.classification import (
@@ -648,7 +649,7 @@ def run_and_save_price_tag_extraction(
         if (
             data.type == "CATEGORY"
             and proof.location
-            and proof.location.is_organic_only
+            and proof.location.has_osm_tag(location_constants.OSM_TAG_ORGANIC_ONLY)
         ):
             data.organic = True
         try:

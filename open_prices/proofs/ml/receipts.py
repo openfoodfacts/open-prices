@@ -9,6 +9,7 @@ from openfoodfacts.types import JSONType
 from pydantic import BaseModel, Field
 
 from open_prices.common import google as common_google
+from open_prices.locations import constants as location_constants
 from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
@@ -282,7 +283,10 @@ def create_receipt_items_from_proof_prediction(
     # raw/unbranded items (type=CATEGORY) rarely show enough detail on a
     # receipt to detect they're organic, so if the shop itself is tagged as
     # exclusively organic on OSM, trust that instead
-    location_is_organic_only = bool(proof.location and proof.location.is_organic_only)
+    location_osm_tag_organic_only = bool(
+        proof.location
+        and proof.location.has_osm_tag(location_constants.OSM_TAG_ORGANIC_ONLY)
+    )
 
     created = []
     for index, predicted_item in enumerate(proof_prediction.data.get("items", [])):
@@ -292,7 +296,7 @@ def create_receipt_items_from_proof_prediction(
         if matching_product_code:
             predicted_item["predicted_product_code"] = matching_product_code
 
-        if location_is_organic_only and predicted_item.get("type") == "CATEGORY":
+        if location_osm_tag_organic_only and predicted_item.get("type") == "CATEGORY":
             predicted_item["organic"] = True
 
         receipt_item = ReceiptItem.objects.create(

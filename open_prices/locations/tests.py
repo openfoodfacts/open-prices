@@ -254,6 +254,32 @@ class LocationQuerySetNearbyTest(TestCase):
         self.assertEqual(location_nearby_qs.first().id, self.location_osm_center.id)
 
 
+class LocationHasOsmTagQuerysetAndPropertyTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.location_with_osm_tag = LocationFactory(
+            osm_tags=[location_constants.OSM_TAG_ORGANIC_ONLY, "diet:halal:yes"]
+        )
+        cls.location_without_tag = LocationFactory(osm_tags=[])
+
+    def test_has_osm_tag_queryset(self):
+        qs = Location.objects.has_osm_tag(location_constants.OSM_TAG_ORGANIC_ONLY)
+        self.assertIn(self.location_with_osm_tag, qs)
+        self.assertNotIn(self.location_without_tag, qs)
+
+    def test_has_osm_tag_property(self):
+        self.assertTrue(
+            self.location_with_osm_tag.has_osm_tag(
+                location_constants.OSM_TAG_ORGANIC_ONLY
+            )
+        )
+        self.assertFalse(
+            self.location_without_tag.has_osm_tag(
+                location_constants.OSM_TAG_ORGANIC_ONLY
+            )
+        )
+
+
 class LocationPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
