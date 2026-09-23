@@ -34,7 +34,7 @@ class LocationQuerySet(models.QuerySet):
     def has_type_online(self):
         return self.filter(type=location_constants.TYPE_ONLINE)
 
-    def has_osm_tag(self, tag):
+    def has_osm_tag(self, tag: str):
         return self.filter(osm_tags__contains=[tag])
 
     def has_prices(self):
@@ -259,24 +259,24 @@ class Location(models.Model):
             location.update_proof_count()
 
     @property
-    def is_type_osm(self):
+    def is_type_osm(self) -> bool:
         return self.type == location_constants.TYPE_OSM
 
     @property
-    def is_type_online(self):
+    def is_type_online(self) -> bool:
         return self.type == location_constants.TYPE_ONLINE
 
     @property
-    def is_osm_type_node(self):
+    def is_osm_type_node(self) -> bool:
         return self.is_type_osm and self.osm_type == location_constants.OSM_TYPE_NODE
 
     @property
-    def osm_brand_logo_url(self):
+    def osm_brand_logo_url(self) -> str | None:
         if self.is_type_osm and self.osm_brand:
             return location_utils.get_brand_logo_url(self.osm_brand)
         return None
 
-    def has_osm_tag(self, tag):
+    def has_osm_tag(self, tag: str) -> bool:
         return tag in self.osm_tags
 
     def update_price_count(self):
