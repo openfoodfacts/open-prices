@@ -26,6 +26,7 @@ from simple_history.utils import bulk_update_with_history
 
 from open_prices.challenges.factories import ChallengeFactory
 from open_prices.common import constants
+from open_prices.common import google as common_google
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices import constants as price_constants
@@ -53,6 +54,7 @@ from open_prices.proofs.ml.price_tags import (
     run_and_save_price_tag_detection,
 )
 from open_prices.proofs.ml.receipt_anonymization import AnonymizationResult
+from open_prices.proofs.ml.receipts import create_receipt_items_from_proof_prediction
 from open_prices.proofs.models import (
     PriceTag,
     PriceTagPrediction,
@@ -1895,6 +1897,75 @@ class PriceTagMatchingUtilsTest(TestCase):
         self.assertFalse(
             match_price_tag_with_price(self.price_tag_category, self.price_category)
         )
+
+
+class CreateReceiptItemsFromProofPredictionTest(TestCase):
+    def test_location_organic_only_sets_organic_for_category_items(self):
+        location = LocationFactory(
+            **LOCATION_OSM_NODE_652825274,
+            osm_tags=[location_constants.OSM_TAG_ORGANIC_ONLY],
+        )
+        proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+        )
+        proof_prediction = ProofPredictionFactory(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
+            model_name=common_google.GEMINI_MODEL_NAME,
+            data={
+                "items": [
+                    {"type": "CATEGORY", "product_name": "Apples", "organic": False},
+                    {"type": "PRODUCT", "product_name": "Nutella", "organic": False},
+                ]
+            },
+        )
+        created = create_receipt_items_from_proof_prediction(proof, proof_prediction)
+        self.assertEqual(len(created), 2)
+        category_item = next(
+            item for item in created if item.predicted_data["type"] == "CATEGORY"
+        )
+        product_item = next(
+            item for item in created if item.predicted_data["type"] == "PRODUCT"
+        )
+        self.assertTrue(category_item.predicted_data["organic"])
+        self.assertFalse(product_item.predicted_data["organic"])
+
+    def test_location_non_organic_only_leaves_organic_untouched(self):
+        location = LocationFactory(**LOCATION_OSM_NODE_652825274, osm_tags=[])
+        proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            location_osm_id=location.osm_id,
+            location_osm_type=location.osm_type,
+        )
+        proof_prediction = ProofPredictionFactory(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
+            model_name=common_google.GEMINI_MODEL_NAME,
+            data={
+                "items": [
+                    {"type": "CATEGORY", "product_name": "Apples", "organic": False},
+                ]
+            },
+        )
+        created = create_receipt_items_from_proof_prediction(proof, proof_prediction)
+        self.assertFalse(created[0].predicted_data["organic"])
+
+    def test_location_empty_leaves_organic_untouched(self):
+        proof = ProofFactory(type=proof_constants.TYPE_RECEIPT, location=None)
+        proof_prediction = ProofPredictionFactory(
+            proof=proof,
+            type=proof_constants.PROOF_PREDICTION_RECEIPT_EXTRACTION_TYPE,
+            model_name=common_google.GEMINI_MODEL_NAME,
+            data={
+                "items": [
+                    {"type": "CATEGORY", "product_name": "Apples", "organic": False},
+                ]
+            },
+        )
+        created = create_receipt_items_from_proof_prediction(proof, proof_prediction)
+        self.assertFalse(created[0].predicted_data["organic"])
 
 
 class ReceiptItemQuerySetTest(TestCase):

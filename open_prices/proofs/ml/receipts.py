@@ -9,6 +9,7 @@ from openfoodfacts.types import JSONType
 from pydantic import BaseModel, Field
 
 from open_prices.common import google as common_google
+from open_prices.locations import constants as location_constants
 from open_prices.prices import constants as price_constants
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
@@ -135,6 +136,13 @@ class ReceiptItemType(BaseModel):
         "2) if there is a reflection preventing accurate price of product name reading, "
         "3) if the image quality is not good enough to read the price. "
         "Otherwise, the value must be false.",
+    )
+    organic: bool = Field(
+        False,
+        description="true if the product entry is organic. Receipts rarely show "
+        "enough detail to detect this from the image; this is not extracted from "
+        "the image and defaults to false, but may be set afterwards based on "
+        "shop context (e.g. an organic-only store).",
     )
 
 
@@ -272,6 +280,14 @@ def create_receipt_items_from_proof_prediction(
             )
         product_lookup[price.product_name] = price.product_code
 
+    # raw/unbranded items (type=CATEGORY) rarely show enough detail on a
+    # receipt to detect they're organic, so if the shop itself is tagged as
+    # exclusively organic on OSM, trust that instead
+    location_osm_tag_organic_only = bool(
+        proof.location
+        and proof.location.has_osm_tag(location_constants.OSM_TAG_ORGANIC_ONLY)
+    )
+
     created = []
     for index, predicted_item in enumerate(proof_prediction.data.get("items", [])):
         # Check if we have a matching product code
@@ -279,6 +295,9 @@ def create_receipt_items_from_proof_prediction(
         matching_product_code = product_lookup.get(predicted_item.get("product_name"))
         if matching_product_code:
             predicted_item["predicted_product_code"] = matching_product_code
+
+        if location_osm_tag_organic_only and predicted_item.get("type") == "CATEGORY":
+            predicted_item["organic"] = True
 
         receipt_item = ReceiptItem.objects.create(
             proof=proof,
