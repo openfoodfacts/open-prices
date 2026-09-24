@@ -31,11 +31,11 @@ RECEIPT_SCHEMA_VERSION = "2.0"
 class ReceiptItemType(BaseModel):
     type: Literal["PRODUCT", "CATEGORY"] = Field(
         ...,
-        description="The type of product the receipt entry is referring to. It should be "
-        "`PRODUCT` for packaged products with barcode, and `CATEGORY` for raw "
-        "products without barcode. The barcode is usually not displayed on receipts, "
-        "so the `CATEGORY` type is often inferred from the product name and from the fact "
-        "the product is sold per weight.",
+        description="The type of product the receipt entry is referring to. The type must be "
+        "`CATEGORY` only if the entry is sold per weight (priced per kilogram or per liter) "
+        "- typically fruits, vegetables and other raw/bulk products. Every other entry must "
+        "be `PRODUCT`, regardless of whether a barcode is visible: barcodes are usually not "
+        "displayed on receipts, so their absence must not be used to infer `CATEGORY`.",
     )
     category_group: str | None = Field(
         ...,
