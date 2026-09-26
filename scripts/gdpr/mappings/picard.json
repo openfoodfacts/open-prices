@@ -1,0 +1,82 @@
+{
+  "shop_name": "Picard",
+  "shop_website": "https://www.picard.fr",
+  "shop_currency": "EUR",
+  "fields": [
+    {
+      "open_prices": "product_code",
+      "shop": "CODE PRODUIT",
+      "comments": "a 5-number code. need to do an extra API search to find the corresponding product",
+      "example": ""
+    },
+    {
+      "open_prices": "product_name",
+      "shop": "LIBELLE ARTICLE",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "price",
+      "shop": "PRIX TTC",
+      "comments": "has commas instead of points",
+      "example": "2,37"
+    },
+    {
+      "open_prices": "discount",
+      "shop": "IDENTIFIANT REMISE",
+      "comments": "a string ID to another table",
+      "example": ""
+    },
+    {
+      "open_prices": "receipt_quantity",
+      "shop": "NOMBRE UNITES",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "date",
+      "shop": "DATE TICKET",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "location",
+      "shop": "NOM DU MAGASIN",
+      "comments": "",
+      "example": ""
+    }
+  ],
+  "filters": [],
+  "locations": [
+    {
+      "shop": "LEVALLOIS ANATOLE FRANCE",
+      "osm_id": "11808206241",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "LEVALLOIS WILSON",
+      "osm_id": "3394926393",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "PARIS BEAUBOURG",
+      "osm_id": "3180967161",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "STE ANNE (PARIS)",
+      "osm_id": "2193296801",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "BOBILLOT",
+      "osm_id": "4405715496",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "ITALIE (PARIS)",
+      "osm_id": "1917523409",
+      "osm_type": "NODE"
+    }
+  ]
+}

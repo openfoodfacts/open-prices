@@ -1,0 +1,97 @@
+{
+  "shop_name": "E.Leclerc",
+  "shop_website": "https://www.e.leclerc",
+  "shop_currency": "EUR",
+  "fields": [
+    {
+      "open_prices": "product_code",
+      "shop": "ean",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "product_name",
+      "shop": "article_libelle",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "price",
+      "shop": "article_ca",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "discount",
+      "shop": "",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "receipt_quantity",
+      "shop": "article_quantite_vendue",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "date",
+      "shop": "date_ticket",
+      "comments": "format YYYY-MM-DD",
+      "example": ""
+    },
+    {
+      "open_prices": "location",
+      "shop": "code_postal",
+      "comments": "",
+      "example": ""
+    }
+  ],
+  "filters": [],
+  "locations": [
+    {
+      "shop": "6994",
+      "osm_id": "9781215613",
+      "osm_type": "NODE"
+    },
+    {
+      "shop": "24114",
+      "osm_id": "68444156",
+      "osm_type": "WAY"
+    },
+    {
+      "shop": "26200",
+      "osm_id": "494412508 (ou 74567491 ?)",
+      "osm_type": "WAY"
+    },
+    {
+      "shop": "26500",
+      "osm_id": "68843921",
+      "osm_type": "WAY"
+    },
+    {
+      "shop": "33220",
+      "osm_id": "338992083 (ou 353622139 ?)",
+      "osm_type": "WAY"
+    },
+    {
+      "shop": "33350",
+      "osm_id": "175761843",
+      "osm_type": "WAY"
+    },
+    {
+      "shop": "33560",
+      "osm_id": "163498185",
+      "osm_type": "WAY"
+    },
+    {
+      "shop": "84507",
+      "osm_id": "73795574",
+      "osm_type": "WAY"
+    },
+    {
+      "shop": "87000",
+      "osm_id": "70180379",
+      "osm_type": "WAY"
+    }
+  ]
+}

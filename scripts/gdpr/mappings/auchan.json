@@ -1,0 +1,57 @@
+{
+  "shop_name": "Auchan",
+  "shop_website": "https://www.auchan.fr",
+  "shop_currency": "EUR",
+  "fields": [
+    {
+      "open_prices": "product_code",
+      "shop": "CODE PRODUIT",
+      "comments": "raw products have a length of 4 or 12 or 13 but ending with lots of 0 (fruits, vegetables, meat, cheese) (ex: 4400, 200512000000, 2630329000000)",
+      "example": ""
+    },
+    {
+      "open_prices": "product_name",
+      "shop": "NOM_PRODUIT",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "price",
+      "shop": "PRIX_UNITAIRE",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "discount",
+      "shop": "",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "receipt_quantity",
+      "shop": "QUANTITE_VENDUE",
+      "comments": "",
+      "example": ""
+    },
+    {
+      "open_prices": "date",
+      "shop": "JOUR",
+      "comments": "format YYYY-MM-DD",
+      "example": ""
+    },
+    {
+      "open_prices": "location",
+      "shop": "CODE_POSTAL",
+      "comments": "",
+      "example": ""
+    }
+  ],
+  "filters": [],
+  "locations": [
+    {
+      "shop": "AUCHAN MONTELIMAR",
+      "osm_id": "74403022",
+      "osm_type": "WAY"
+    }
+  ]
+}
