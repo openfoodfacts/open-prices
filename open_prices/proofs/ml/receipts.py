@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # The schema version must be changed every time we introduce a breaking change
 # in the Receipt model.
-RECEIPT_SCHEMA_VERSION = "2.0"
+RECEIPT_SCHEMA_VERSION = "2.1"
 
 
 class ReceiptItemType(BaseModel):
