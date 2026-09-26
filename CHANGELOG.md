@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.114.0](https://github.com/openfoodfacts/open-prices/compare/v1.113.0...v1.114.0) (2026-09-26)
+
+
+### Features
+
+* **Predictions:** set category price to organic if from a location with `organic:only` ([#1456](https://github.com/openfoodfacts/open-prices/issues/1456)) ([35b78ee](https://github.com/openfoodfacts/open-prices/commit/35b78eec728aa0af448133519e219f4f4591df92))
+
+
+### Technical
+
+* **Predictions:** tweak receipt LLM prompt (reduce category false-positives) ([#1458](https://github.com/openfoodfacts/open-prices/issues/1458)) ([11ed911](https://github.com/openfoodfacts/open-prices/commit/11ed9110e5427f85aba737b6c96d5fbbc55d2e73))
+
 ## [1.113.0](https://github.com/openfoodfacts/open-prices/compare/v1.112.0...v1.113.0) (2026-09-23)
 
 
