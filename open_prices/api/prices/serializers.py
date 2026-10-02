@@ -59,11 +59,16 @@ class PriceUpdateSerializer(serializers.ModelSerializer):
         fields = Price.UPDATE_FIELDS
 
 
-class PriceStatsSerializer(serializers.Serializer):
+class PriceStatsPeriodSerializer(serializers.Serializer):
     price__count = serializers.IntegerField()
     price__min = serializers.DecimalField(max_digits=10, decimal_places=2)
     price__max = serializers.DecimalField(max_digits=10, decimal_places=2)
     price__avg = serializers.DecimalField(max_digits=10, decimal_places=2)
+    proof__count = serializers.IntegerField()
+
+
+class PriceStatsSerializer(PriceStatsPeriodSerializer):
+    last_30_days = PriceStatsPeriodSerializer()
 
 
 class PriceHistorySerializer(history.HistorySerializer):
