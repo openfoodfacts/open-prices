@@ -1,7 +1,7 @@
 import time
 
 from django.conf import settings
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -28,7 +28,19 @@ class LoginView(APIView):
     serializer_class = LoginSerializer
     parser_classes = [FormParser, MultiPartParser]
 
-    @extend_schema(responses=SessionResponseSerializer, tags=["auth"])
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "set_cookie",
+                OpenApiTypes.INT,
+                OpenApiParameter.QUERY,
+                description="Set to 1 to also return the access token in a session cookie.",
+                enum=[1],
+            )
+        ],
+        responses=SessionResponseSerializer,
+        tags=["auth"],
+    )
     def post(self, request: Request) -> Response:
         """
         Authentication: provide username/password or a keycloak access_token
