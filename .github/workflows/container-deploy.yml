@@ -66,7 +66,7 @@ jobs:
         # we get access to PaddleX through scaleway-stunnel-client -> moji-stunnel-server
         echo "PADDLEX_API_URL=http://10.13.1.101:5610" >> $GITHUB_ENV
     - name: Wait for docker image container build workflow
-      uses: tomchv/wait-my-workflow@v1.1.0
+      uses: tomchv/wait-my-workflow@15c168cfa0cf8d5234974e0047908173d3ab39a1 # v1.1.0
       id: wait-build
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -88,7 +88,7 @@ jobs:
       run: echo Timeout && false # fail if build time out
 
     - name: Checkout git repository
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
       with:
         host: ${{ env.SSH_HOST }}
         username: ${{ env.SSH_USERNAME }}
@@ -110,7 +110,7 @@ jobs:
           git checkout -qf ${{ github.sha }}
 
     - name: Set environment variables
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
       with:
         host: ${{ env.SSH_HOST }}
         username: ${{ env.SSH_USERNAME }}
@@ -180,7 +180,7 @@ jobs:
           echo "KEYCLOAK_AUDIENCE=${{ env.KEYCLOAK_AUDIENCE }}" >> .env
 
     - name: Create Docker volumes
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
       with:
         host: ${{ env.SSH_HOST }}
         username: ${{ env.SSH_USERNAME }}
@@ -193,7 +193,7 @@ jobs:
           make create_external_volumes
 
     - name: Start services
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
       with:
         host: ${{ env.SSH_HOST }}
         username: ${{ env.SSH_USERNAME }}
@@ -213,7 +213,7 @@ jobs:
           make cp-static-files
 
     - name: Check services are up
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
       id: livecheck
       if: ${{ always() }}
       with:
@@ -230,7 +230,7 @@ jobs:
           make livecheck
 
     - name: Cleanup obsolete Docker objects
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
       if: ${{ always() }}
       with:
         host: ${{ env.SSH_HOST }}

@@ -33,7 +33,7 @@
               python-version: ${{ matrix.python-version }}
 
           - name: Install uv
-            uses: astral-sh/setup-uv@v7
+            uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
 
           - name: Load cached uv
             uses: actions/cache@v6
@@ -53,7 +53,7 @@
             # we only deploy on push to main from the main repository
             if: |
               github.repository_owner == 'openfoodfacts' && github.event_name == 'push' && github.event.ref == 'refs/heads/main'
-            uses: JamesIves/github-pages-deploy-action@v4.9.0
+            uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
             with:
               token: ${{ secrets.GITHUB_TOKEN }}
               branch: gh-pages # The branch the action should deploy to.
