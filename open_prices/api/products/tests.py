@@ -1,6 +1,12 @@
-from django.test import TestCase
-from django.urls import reverse
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
+from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
+from rest_framework.response import Response
+from rest_framework.test import APIRequestFactory, force_authenticate
+
+from open_prices.api.products.views import ProductViewSet
 from open_prices.products.factories import ProductFactory
 from open_prices.users.factories import SessionFactory
 
@@ -273,6 +279,36 @@ class ProductOffCreateOrUpdateApiTest(TestCase):
         #     content_type="application/json",
         # )
         # self.assertEqual(response.status_code, 200)
+
+
+class ProductOffUploadImageLanguageTest(SimpleTestCase):
+    def upload_image(self, data: dict) -> Response:
+        request = APIRequestFactory().patch("/", data, format="json")
+        force_authenticate(request, user=SimpleNamespace(is_authenticated=True))
+        view = ProductViewSet.as_view({"patch": "upload_image_in_off"})
+        return view(request, code="8001505005707")
+
+    @patch("open_prices.api.products.views.upload_product_image_in_off")
+    def test_invalid_language_does_not_call_off(self, upload: Mock) -> None:
+        upload.return_value = {"status": "success"}
+        for language in ["nl_BE", "nl-BE", "", None, "123", "12", [], {}]:
+            with self.subTest(language=language):
+                response = self.upload_image({"product_language_code": language})
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("product_language_code", response.data)
+        upload.assert_not_called()
+
+    @patch("open_prices.api.products.views.upload_product_image_in_off")
+    def test_valid_and_default_language(self, upload: Mock) -> None:
+        upload.return_value = {"status": "success"}
+        for data, language in [({}, "en"), ({"product_language_code": "nl"}, "nl")]:
+            with self.subTest(language=language):
+                response = self.upload_image(data)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(upload.call_args.kwargs["country_code"], language)
+                self.assertEqual(
+                    upload.call_args.kwargs["selected"], {"front": {language: {}}}
+                )
 
 
 class ProductOffUploadImageApiTest(TestCase):
