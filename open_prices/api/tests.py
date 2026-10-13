@@ -1,7 +1,8 @@
 import base64
+import json
 
 from django.db.models.signals import post_save
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from factory.django import mute_signals
 
@@ -26,6 +27,24 @@ class StatusTest(TestCase):
                 response = self.client.get(self.url, headers=HEADERS_OK)
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.json(), {"status": "running"})
+
+
+class SchemaTest(SimpleTestCase):
+    def test_login_set_cookie_query_parameter_schema(self) -> None:
+        response = self.client.get(
+            reverse("api:schema"), {"api_version": "v1", "format": "json"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        schema = json.loads(response.content)
+        parameters = schema["paths"]["/api/v1/auth"]["post"]["parameters"]
+        set_cookie_parameter = next(
+            parameter for parameter in parameters if parameter["name"] == "set_cookie"
+        )
+
+        self.assertEqual(set_cookie_parameter["in"], "query")
+        self.assertEqual(set_cookie_parameter["schema"]["type"], "integer")
+        self.assertEqual(set_cookie_parameter["schema"]["enum"], [1])
 
 
 class PaginationTest(TestCase):
