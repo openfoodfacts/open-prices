@@ -1054,6 +1054,26 @@ class ProofDraftPartialUpdateApiTest(TestCase):
         self.user_1_draft_proof.refresh_from_db()
         self.assertEqual(self.user_1_draft_proof.draft, False)
 
+    def test_proof_draft_partial_update_online_location(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        data = {
+            "location_id": location_online.id,
+            "type": proof_constants.TYPE_RECEIPT,
+            "currency": "EUR",
+            "date": "2024-07-15",
+        }
+        response = self.client.patch(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["location"]["id"], location_online.id)
+        self.user_1_draft_proof.refresh_from_db()
+        self.assertEqual(self.user_1_draft_proof.location, location_online)
+        self.assertIsNone(self.user_1_draft_proof.location_osm_id)
+
 
 class ProofDraftDeleteApiTest(TestCase):
     @classmethod
