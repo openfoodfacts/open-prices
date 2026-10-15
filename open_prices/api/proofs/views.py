@@ -234,7 +234,7 @@ class ProofViewSet(
     @extend_schema(
         request=FlagCreateSerializer, responses=FlagSerializer, tags=["moderation"]
     )
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=["POST"], permission_classes=[IsAuthenticated])
     def flag(self, request: Request, pk=None) -> Response:
         proof = self.get_object()
         serializer = FlagCreateSerializer(data=request.data)
