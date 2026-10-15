@@ -13,6 +13,7 @@ from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.moderation.models import Flag, FlagReason, FlagStatus
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price, PriceStatistics5y
@@ -1171,6 +1172,36 @@ class PriceModelDeleteTest(TestCase):
         self.assertEqual(self.user_proof.price_count, 0)
         self.assertEqual(self.location.price_count, 0)
         self.assertEqual(self.product.price_count, 0)
+
+    def test_flags_are_kept_and_closed(self):
+        price_id = self.price.id
+        flag_open = Flag.objects.create(
+            content_object=self.price, reason=FlagReason.WRONG_PRICE_VALUE
+        )
+        flag_closed = Flag.objects.create(
+            content_object=self.price,
+            reason=FlagReason.OTHER,
+            status=FlagStatus.CLOSED,
+        )
+        self.assertEqual(self.price.flags.count(), 2)
+        # delete price
+        self.price.delete()
+        # flags are kept (for moderation history), open ones are closed
+        self.assertEqual(Flag.objects.count(), 2)
+        flag_open.refresh_from_db()
+        self.assertEqual(flag_open.status, FlagStatus.CLOSED)
+        self.assertEqual(flag_open.object_id, price_id)
+        self.assertIsNone(flag_open.content_object)
+        flag_closed.refresh_from_db()
+        self.assertEqual(flag_closed.status, FlagStatus.CLOSED)
+
+    def test_flags_are_kept_and_closed_on_queryset_delete(self):
+        flag = Flag.objects.create(
+            content_object=self.price, reason=FlagReason.WRONG_PRICE_VALUE
+        )
+        Price.objects.filter(id=self.price.id).delete()
+        flag.refresh_from_db()
+        self.assertEqual(flag.status, FlagStatus.CLOSED)
 
 
 class PriceModelHistoryTest(TestCase):

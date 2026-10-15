@@ -3,7 +3,6 @@ import os
 from datetime import timedelta
 
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -22,6 +21,7 @@ from open_prices.common import (
 )
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
+from open_prices.moderation.models import Flag, FlagStatus
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs import validators as proof_validators
 from open_prices.users.models import User
@@ -243,7 +243,6 @@ class Proof(models.Model):
     source = models.CharField(blank=True, null=True)
 
     tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
-    flags = GenericRelation("moderation.Flag", related_query_name="proof")
 
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
@@ -333,6 +332,11 @@ class Proof(models.Model):
         if self.owner_consumption:
             return constants.KIND_CONSUMPTION
         return constants.KIND_COMMUNITY
+
+    @property
+    def flags(self):
+        # not a GenericRelation: flags must be kept when the proof is deleted
+        return Flag.objects.filter_by_content_object(self)
 
     def update_price_count(self):
         self.price_count = self.prices.count()
@@ -456,6 +460,16 @@ def proof_post_save_update_prices(sender, instance, created, **kwargs):
                     setattr(price, field, getattr(instance, field))
                     price._change_reason = "Proof.update_location() method"
                     price.save()
+
+
+@receiver(signals.pre_delete, sender=Proof)
+def proof_pre_delete_close_flags(sender, instance, **kwargs):
+    """
+    Keep the flags (moderation history), but close the open ones
+    """
+    instance.flags.filter(status=FlagStatus.OPEN).update(
+        status=FlagStatus.CLOSED, updated=timezone.now()
+    )
 
 
 @receiver(signals.post_delete, sender=Proof)

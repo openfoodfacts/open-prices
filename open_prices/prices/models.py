@@ -1,6 +1,5 @@
 import decimal
 
-from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import connection, models
@@ -21,6 +20,7 @@ from open_prices.common import (
 )
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
+from open_prices.moderation.models import Flag, FlagStatus
 from open_prices.prices import constants as price_constants
 from open_prices.prices import validators as price_validators
 from open_prices.products.models import Product
@@ -265,7 +265,6 @@ class Price(models.Model):
     source = models.CharField(blank=True, null=True)
 
     tags = ArrayField(base_field=models.CharField(), blank=True, default=list)
-    flags = GenericRelation("moderation.Flag", related_query_name="price")
 
     # If this price is a duplicate of another price, we store the reference
     duplicate_of = models.ForeignKey(
@@ -475,6 +474,11 @@ class Price(models.Model):
     def get_history_list(self):
         return history.build_instance_history_list(self)
 
+    @property
+    def flags(self):
+        # not a GenericRelation: flags must be kept when the price is deleted
+        return Flag.objects.filter_by_content_object(self)
+
 
 @receiver(signals.post_save, sender=Price)
 def price_post_create_increment_counts(sender, instance, created, **kwargs):
@@ -516,6 +520,16 @@ def price_pre_delete_update_price_tag(sender, instance, **kwargs):
     instance.price_tags.update(
         status=None,
         # price_id=None,  # will be done in the CASCADE
+    )
+
+
+@receiver(signals.pre_delete, sender=Price)
+def price_pre_delete_close_flags(sender, instance, **kwargs):
+    """
+    Keep the flags (moderation history), but close the open ones
+    """
+    instance.flags.filter(status=FlagStatus.OPEN).update(
+        status=FlagStatus.CLOSED, updated=timezone.now()
     )
 
 
