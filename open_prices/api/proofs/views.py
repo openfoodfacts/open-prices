@@ -362,7 +362,12 @@ class ProofDraftViewSet(
             if field in serializer.validated_data:
                 setattr(proof, field, serializer.validated_data[field])
         if "location" in serializer.validated_data:
-            proof.location = serializer.validated_data["location"]
+            # keep the OSM fields in line with the chosen location, otherwise
+            # Proof.save() would set the location back from stale OSM fields
+            location = serializer.validated_data["location"]
+            proof.location = location
+            proof.location_osm_id = location.osm_id
+            proof.location_osm_type = location.osm_type
 
         # Check required fields for finalization
         missing_fields = []
