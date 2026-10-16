@@ -684,6 +684,42 @@ class ProofUpdateApiTest(TestCase):
         self.assertEqual(response.data["receipt_price_count"], 4)
         self.assertEqual(Proof.objects.get(id=self.proof.id).price_count, 15)  # ignored
 
+    def test_proof_update_location_id_online(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        proof = ProofFactory(**PROOF_RECEIPT, owner=self.user_session_1.user.user_id)
+        price = PriceFactory(
+            proof_id=proof.id,
+            location_osm_id=proof.location_osm_id,
+            location_osm_type=proof.location_osm_type,
+            date=proof.date,
+            currency=proof.currency,
+            owner=proof.owner,
+        )
+        response = self.client.patch(
+            reverse("api:proofs-detail", args=[proof.id]),
+            {"location_id": location_online.id},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["location_id"], location_online.id)
+        self.assertIsNone(response.data["location_osm_id"])
+        self.assertIsNone(response.data["location_osm_type"])
+        proof.refresh_from_db()
+        self.assertEqual(proof.location, location_online)
+        price.refresh_from_db()
+        self.assertEqual(price.location, location_online)
+        self.assertIsNone(price.location_osm_id)
+
+    def test_proof_update_location_id_unknown(self):
+        response = self.client.patch(
+            self.url,
+            {"location_id": 999999},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_proof_update_history(self):
         response = self.client.patch(
             self.url,

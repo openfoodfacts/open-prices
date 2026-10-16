@@ -452,10 +452,12 @@ def proof_post_save_update_prices(sender, instance, created, **kwargs):
             from open_prices.prices.models import Price
 
             for price in instance.prices.all():
+                # online locations have no osm fields to resolve the location from
+                price.location = instance.location
                 for field in Price.DUPLICATE_PROOF_FIELDS:
                     setattr(price, field, getattr(instance, field))
-                    price._change_reason = "Proof.update_location() method"
-                    price.save()
+                price._change_reason = "Proof.update_location() method"
+                price.save()
 
 
 @receiver(signals.post_delete, sender=Proof)
