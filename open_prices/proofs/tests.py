@@ -2243,6 +2243,54 @@ class GenerateImageThumbnailCv2Test(TestCase):
 
 
 class TestSaveAnonymizedReceipt(unittest.TestCase):
+    def _assert_failed_write_preserves_originals(self, failing_write: int) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir_str:
+            root_dir = Path(tmpdir_str)
+            proof_dir = root_dir / "0002"
+            proof_dir.mkdir()
+            original_paths = [proof_dir / "full.jpg", proof_dir / "thumbnail.jpg"]
+            image = np.full((100, 100, 3), 255, dtype=np.uint8)
+            for path in original_paths:
+                self.assertTrue(cv2.imwrite(str(path), image))
+            original_contents = [path.read_bytes() for path in original_paths]
+            real_imwrite = cv2.imwrite
+            calls = 0
+
+            def fail_selected_write(path: str, data: np.ndarray) -> bool:
+                nonlocal calls
+                calls += 1
+                return False if calls == failing_write else real_imwrite(path, data)
+
+            error: OSError | None = None
+            with unittest.mock.patch(
+                "open_prices.proofs.utils.cv2.imwrite", side_effect=fail_selected_write
+            ):
+                try:
+                    save_anonymized_receipt(
+                        image_path=Path("0002/full.jpg"),
+                        image_thumb_path=Path("0002/thumbnail.jpg"),
+                        bounding_boxes=[[0.1, 0.1, 0.2, 0.2]],
+                        root_dir=root_dir,
+                    )
+                except OSError as exc:
+                    error = exc
+
+            for path, original in zip(original_paths, original_contents, strict=True):
+                self.assertTrue(
+                    path.exists(), f"Original removed after failed write: {path.name}"
+                )
+                self.assertEqual(path.read_bytes(), original)
+            self.assertIsInstance(error, OSError)
+            self.assertEqual(calls, failing_write)
+
+    def test_failed_image_write_preserves_originals(self) -> None:
+        """Keep both original files when the anonymized image cannot be saved."""
+        self._assert_failed_write_preserves_originals(failing_write=1)
+
+    def test_failed_thumbnail_write_preserves_originals(self) -> None:
+        """Keep both originals when the image write succeeds but thumbnail fails."""
+        self._assert_failed_write_preserves_originals(failing_write=2)
+
     def test_save_anonymized_receipt(self):
         with tempfile.TemporaryDirectory() as tmpdir_str:
             # Save as JPEG
