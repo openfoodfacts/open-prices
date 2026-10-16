@@ -4,6 +4,7 @@ import tempfile
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 
 import cv2
 import numpy as np
@@ -1195,7 +1196,7 @@ class ProofDraftAnonymizeApiTest(TestCase):
         self.assertEqual(proof.file_path, "0001/1.webp")
         self.assertEqual(proof.image_thumb_path, "0001/1.400.webp")
 
-    def test_anonymize_draft_receipt_rejects_nan_coordinates(self):
+    def test_anonymize_draft_receipt_rejects_nan_coordinates(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             image_path = root / "receipt.jpg"
@@ -1205,12 +1206,15 @@ class ProofDraftAnonymizeApiTest(TestCase):
             self.assertTrue(cv2.imwrite(str(thumb_path), image))
             originals = [image_path.read_bytes(), thumb_path.read_bytes()]
             with override_settings(IMAGES_DIR=root):
-                proof = ProofFactory(
-                    file_path="receipt.jpg",
-                    image_thumb_path="thumbnail.jpg",
-                    draft=True,
-                    owner=self.session.user.user_id,
-                    type=proof_constants.TYPE_RECEIPT,
+                proof = cast(
+                    Proof,
+                    ProofFactory(
+                        file_path="receipt.jpg",
+                        image_thumb_path="thumbnail.jpg",
+                        draft=True,
+                        owner=self.session.user.user_id,
+                        type=proof_constants.TYPE_RECEIPT,
+                    ),
                 )
                 url = reverse("api:proofs-drafts-anonymize-receipt", args=[proof.id])
                 self.client.raise_request_exception = False
