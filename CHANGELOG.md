@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.114.1](https://github.com/openfoodfacts/open-prices/compare/v1.114.0...v1.114.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **API:** resolve Flag serializers OpenAPI schema warnings ([#1491](https://github.com/openfoodfacts/open-prices/issues/1491)) ([dfd09ec](https://github.com/openfoodfacts/open-prices/commit/dfd09ec90e099ae518b636179d3e316b68a7f1e3))
+* **Moderation:** allow auth users to flag proofs and prices they do not own ([#1472](https://github.com/openfoodfacts/open-prices/issues/1472)) ([5b3fce6](https://github.com/openfoodfacts/open-prices/commit/5b3fce68c28f904a61e7af31ee705b5c497b4f5a))
+
+
+### Documentation
+
+* **Auth:** API: document `set_cookie` param & fix cookie name ([#1469](https://github.com/openfoodfacts/open-prices/issues/1469)) ([8934ab6](https://github.com/openfoodfacts/open-prices/commit/8934ab64751f624925254e065367de0c1c26ef8b))
+* **History:** move history stuff to its own page ([#1487](https://github.com/openfoodfacts/open-prices/issues/1487)) ([5567c54](https://github.com/openfoodfacts/open-prices/commit/5567c5450650f8be161c3a89981cedc4844da797))
+* **Moderation:** update content (flags, moderators, automated rules) ([#1488](https://github.com/openfoodfacts/open-prices/issues/1488)) ([5ad317f](https://github.com/openfoodfacts/open-prices/commit/5ad317f80c3f076821ed9415b861c7360d803c34))
+
+
+### Technical
+
+* **Docs:** API: fail on OpenAPI schema warnings ([#1492](https://github.com/openfoodfacts/open-prices/issues/1492)) ([e2f0089](https://github.com/openfoodfacts/open-prices/commit/e2f008932a08099a305dee76963abfd6c0f54944))
+* **Labeler:** fix rules to match app folders & add Documentation, Location, Moderation ([#1490](https://github.com/openfoodfacts/open-prices/issues/1490)) ([9e08218](https://github.com/openfoodfacts/open-prices/commit/9e08218c6fb5427f4049c14de72418529569d1f7))
+* **Tasks:** simplify comments ([#1484](https://github.com/openfoodfacts/open-prices/issues/1484)) ([b0b6f8b](https://github.com/openfoodfacts/open-prices/commit/b0b6f8b638a479a64b07d0f42fb624669cd26da3))
+
 ## [1.114.0](https://github.com/openfoodfacts/open-prices/compare/v1.113.0...v1.114.0) (2026-09-26)
 
 
