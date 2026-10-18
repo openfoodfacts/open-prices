@@ -44,8 +44,20 @@ Prices:
     - 'open_prices/prices/**'
     - 'open_prices/api/prices/**'
 
+📍 Location:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/locations/**'
+    - 'open_prices/api/locations/**'
+
 Challenges:
 - changed-files:
   - any-glob-to-any-file:
     - 'open_prices/challenges/**'
     - 'open_prices/api/challenges/**'
+
+Moderation:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/moderation/**'
+    - 'open_prices/api/moderation/**'
