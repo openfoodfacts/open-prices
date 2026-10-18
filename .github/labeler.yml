@@ -12,19 +12,11 @@ GitHub Actions:
     - 'mkdocs.yml'
     - 'build_mkdocs.sh'
 
-GDPR imports:
-- changed-files:
-  - any-glob-to-any-file: '**/*gdpr*'
-
 Proofs:
 - changed-files:
   - any-glob-to-any-file:
     - 'open_prices/proofs/**'
     - 'open_prices/api/proofs/**'
-
-DB migrations:
-- changed-files:
-  - any-glob-to-any-file: '**/migrations/**'
 
 Users:
 - changed-files:
@@ -61,3 +53,11 @@ Moderation:
   - any-glob-to-any-file:
     - 'open_prices/moderation/**'
     - 'open_prices/api/moderation/**'
+
+DB migrations:
+- changed-files:
+  - any-glob-to-any-file: '**/migrations/**'
+
+GDPR imports:
+- changed-files:
+  - any-glob-to-any-file: '**/*gdpr*'
