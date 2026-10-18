@@ -1,36 +1,63 @@
 # Add labels to any any pull request with changes to the specified paths
 
-# Pull requests that update GitHub Actions code. If you navigate to the folder, you will have a README of what it does
-GitHub Actions:
+📚 Documentation:
 - changed-files:
-  - any-glob-to-any-file: '.github/**/*'
+  - any-glob-to-any-file:
+    - 'docs/**'
+    - 'mkdocs.yml'
+    - 'build_mkdocs.sh'
+
+Proofs:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/proofs/**'
+    - 'open_prices/api/proofs/**'
+
+Users:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/users/**'
+    - 'open_prices/api/users/**'
+
+Products:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/products/**'
+    - 'open_prices/api/products/**'
+
+Prices:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/prices/**'
+    - 'open_prices/api/prices/**'
+
+📍 Location:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/locations/**'
+    - 'open_prices/api/locations/**'
+
+Challenges:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/challenges/**'
+    - 'open_prices/api/challenges/**'
+
+Moderation:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/moderation/**'
+    - 'open_prices/api/moderation/**'
+
+DB migrations:
+- changed-files:
+  - any-glob-to-any-file: '**/migrations/**'
 
 GDPR imports:
 - changed-files:
   - any-glob-to-any-file: '**/*gdpr*'
 
-Proofs:
+# Pull requests that update GitHub Actions code. If you navigate to the folder, you will have a README of what it does
+GitHub Actions:
 - changed-files:
-  - any-glob-to-any-file: '**/*proof*'
-
-DB migrations:
-- changed-files:
-  - any-glob-to-any-file: '**/*migrations*'
-
-Users:
-- changed-files:
-  - any-glob-to-any-file: '**/*user*'
-
-Products:
-- changed-files:
-  - any-glob-to-any-file: '**/*products*'
-
-Prices:
-- changed-files:
-  - any-glob-to-any-file: '**/*prices*'
-
-Challenges:
-- changed-files:
-  - any-glob-to-any-file: 'open_prices/challenges/models.py'
-  - any-glob-to-any-file: 'open_prices/challenges/tests.py'
-  - any-glob-to-any-file: '**/*challenges*'
+  - any-glob-to-any-file: '.github/**/*'
