@@ -1034,6 +1034,40 @@ class PriceModelSaveTest(TransactionTestCase):
             # Delete the price so that we only compare to ref
             new_price.delete()
 
+    def test_price_set_is_duplicate_of_on_update(self):
+        user_session_1 = SessionFactory()
+        user_session_2 = SessionFactory()
+        proof_1 = ProofFactory(owner=user_session_1.user.user_id)
+        proof_2 = ProofFactory(owner=user_session_2.user.user_id)
+        location = LocationFactory()
+        product = ProductFactory()
+        price_kwargs = {
+            "type": "PRODUCT",
+            "location_osm_id": location.osm_id,
+            "location_osm_type": location.osm_type,
+            "product_code": product.code,
+            "date": "2025-01-01",
+            "currency": "EUR",
+            "price": Decimal("1.99"),
+        }
+        ref_price = PriceFactory(
+            **price_kwargs, proof_id=proof_1.id, owner=user_session_1.user.user_id
+        )
+        new_price = PriceFactory(
+            **price_kwargs, proof_id=proof_2.id, owner=user_session_2.user.user_id
+        )
+        self.assertEqual(new_price.duplicate_of_id, ref_price.id)
+        # edit the price so that it doesn't match anymore: no longer a duplicate
+        new_price.price = Decimal("2.49")
+        new_price.save()
+        new_price.refresh_from_db()
+        self.assertIsNone(new_price.duplicate_of_id)
+        # edit it back: duplicate again
+        new_price.price = Decimal("1.99")
+        new_price.save()
+        new_price.refresh_from_db()
+        self.assertEqual(new_price.duplicate_of_id, ref_price.id)
+
 
 class PriceModelUpdateTest(TestCase):
     @classmethod

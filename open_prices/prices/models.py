@@ -440,6 +440,9 @@ class Price(models.Model):
           without discount), product code/category tag, labels tags, and
           origins tags
         - it was created later than the other price (we keep the first one)
+
+        Otherwise duplicate_of is reset, so that a price that was edited
+        and no longer matches is not flagged as a duplicate anymore.
         """
         # Look for possible duplicates
         possible_duplicates = (
@@ -471,6 +474,8 @@ class Price(models.Model):
         if duplicate is not None and duplicate.created < self.created:
             # Set the duplicate_of field to the first found duplicate
             self.duplicate_of = duplicate
+        else:
+            self.duplicate_of = None
 
     def get_history_list(self):
         return history.build_instance_history_list(self)
