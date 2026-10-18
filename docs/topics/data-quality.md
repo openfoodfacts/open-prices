@@ -32,7 +32,7 @@ See `open_prices/prices/validators.py` & `open_prices/proofs/validators.py` for 
 
 ### Detection (automatic)
 
-On each save, a price is marked as a duplicate (`duplicate_of` field) of an older price if they share the same location, date, currency, price fields (`price`, `price_per`, discount fields), product (`product_code` or `category_tag`), `labels_tags` and `origins_tags`.
+On each save, a price is marked as a duplicate (`duplicate_of` field) of an older price if they share the same type, location, date, currency, price fields (`price`, `price_per`, discount fields), product (`product_code` or `category_tag`), `labels_tags` and `origins_tags`. Prices without a location or a date are never considered duplicates.
 
 Duplicates are kept in the database. API consumers can hide them with the `duplicate_of__isnull=true` filter.
 
@@ -43,7 +43,7 @@ If a duplicate price is edited and no longer matches, the `duplicate_of` field i
 Two management commands are available (not scheduled, run with `make cli args='<command>'`):
 
 - `update_duplicate_of_field`: (re)compute `duplicate_of` on existing prices
-- `remove_duplicate_prices`: delete duplicate prices coming from the same `PRICE_TAG` proof (same `product_code` & `price`), keeping the oldest one. Dry run by default, use `--apply` to delete
+- `remove_duplicate_prices`: delete duplicate prices coming from the same `PRICE_TAG` proof (same `product_code` & `price`), keeping the one with the lowest ID. Dry run by default, use `--apply` to delete
 
 ## Duplicate proofs 🖼️
 
@@ -60,4 +60,4 @@ Only exact copies are detected: the same image uploaded by another user, or a ne
 Two management commands are available (not scheduled, run with `make cli args='<command>'`):
 
 - `compute_missing_image_hash`: compute the image hash of older proofs that don't have it yet
-- `remove_duplicate_proofs`: for proofs with the same owner, date, type, location and image hash, keep the oldest one, move the prices of the other proofs to it, and delete them. Dry run by default, use `--apply` to delete
+- `remove_duplicate_proofs`: for proofs with the same owner, date, type, location and image hash, keep the one with the lowest ID, move the prices of the other proofs to it, and delete them. Dry run by default, use `--apply` to delete
