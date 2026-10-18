@@ -1054,6 +1054,52 @@ class ProofDraftPartialUpdateApiTest(TestCase):
         self.user_1_draft_proof.refresh_from_db()
         self.assertEqual(self.user_1_draft_proof.draft, False)
 
+    def test_proof_draft_partial_update_online_location(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        data = {
+            "location_id": location_online.id,
+            "type": proof_constants.TYPE_RECEIPT,
+            "currency": "EUR",
+            "date": "2024-07-15",
+        }
+        response = self.client.patch(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["location"]["id"], location_online.id)
+        self.user_1_draft_proof.refresh_from_db()
+        self.assertEqual(self.user_1_draft_proof.location, location_online)
+        self.assertIsNone(self.user_1_draft_proof.location_osm_id)
+
+    def test_proof_draft_partial_update_osm_to_online_location(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        draft_proof = ProofFactory(
+            draft=True,
+            owner=self.user_1_session.user.user_id,
+            location_osm_id=LOCATION_OSM_NODE_652825274["osm_id"],
+            location_osm_type=LOCATION_OSM_NODE_652825274["osm_type"],
+        )
+        url = reverse("api:proofs-drafts-detail", args=[draft_proof.id])
+        data = {
+            "location_id": location_online.id,
+            "currency": "EUR",
+            "date": "2024-07-15",
+        }
+        response = self.client.patch(
+            url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        draft_proof.refresh_from_db()
+        self.assertEqual(draft_proof.location, location_online)
+        self.assertIsNone(draft_proof.location_osm_id)
+        self.assertIsNone(draft_proof.location_osm_type)
+
 
 class ProofDraftDeleteApiTest(TestCase):
     @classmethod
