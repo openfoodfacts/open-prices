@@ -1559,23 +1559,33 @@
 <h2 id="what-is-used">What is used</h2>
 <h3 id="backend">Backend</h3>
 <ul>
-<li>Product table
-    - all 4 product flavors (food, beauty, pet food, products, as well as obsolete food products) are stored
-    - we keep only a subset of fields (code, name, brands, categories...)</li>
-<li>Taxonomies
-    - we manipulate taxonomies for specific use cases (e.g. challenges)</li>
-<li>Contributing back
-    - we allow creating products back to OFF (with the <code>open-prices</code> username)</li>
+<li>Product table<ul>
+<li>all 4 product flavors (food, beauty, pet food, products, as well as obsolete food products) are stored</li>
+<li>we keep only a subset of fields (code, name, brands, categories...)</li>
+</ul>
+</li>
+<li>Taxonomies<ul>
+<li>we manipulate taxonomies for specific use cases (e.g. challenges)</li>
+</ul>
+</li>
+<li>Contributing back<ul>
+<li>we allow creating products back to OFF (with the <code>open-prices</code> username)</li>
+</ul>
+</li>
 <li>all thanks to <a href="https://github.com/openfoodfacts/openfoodfacts-python">openfoodfacts-python</a></li>
 </ul>
 <p>see <code>open_prices/common/openfoodfacts.py</code></p>
 <h3 id="frontend">Frontend</h3>
 <ul>
-<li>Taxonomies (categories, labels, origins, languages) are used in some forms
-    - thanks to <a href="https://github.com/openfoodfacts/openfoodfacts-python">openfoodfacts-python</a>
-    - see <a href="https://github.com/openfoodfacts/open-prices-frontend/tree/main/data">https://github.com/openfoodfacts/open-prices-frontend/tree/main/data</a></li>
-<li>Barcode scanner
-    - thanks to <a href="https://github.com/openfoodfacts/openfoodfacts-webcomponents">openfoodfacts-webcomponents</a></li>
+<li>Taxonomies (categories, labels, origins, languages) are used in some forms<ul>
+<li>thanks to <a href="https://github.com/openfoodfacts/openfoodfacts-python">openfoodfacts-python</a></li>
+<li>see <a href="https://github.com/openfoodfacts/open-prices-frontend/tree/main/data">https://github.com/openfoodfacts/open-prices-frontend/tree/main/data</a></li>
+</ul>
+</li>
+<li>Barcode scanner<ul>
+<li>thanks to <a href="https://github.com/openfoodfacts/openfoodfacts-webcomponents">openfoodfacts-webcomponents</a></li>
+</ul>
+</li>
 </ul>
 <h2 id="data-sync">Data sync</h2>
 <p>With Redis, Open Prices gets instant product changes.</p>

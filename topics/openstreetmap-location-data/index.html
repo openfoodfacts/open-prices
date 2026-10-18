@@ -1559,20 +1559,28 @@
 <h2 id="what-is-used">What is used</h2>
 <h3 id="backend">Backend</h3>
 <ul>
-<li>Location table
-    - when a new OSM ID is added by a contributor, we store it
-    - we keep only a subset of fields (name, type, brand, lat, lng, version...)</li>
+<li>Location table<ul>
+<li>when a new OSM ID is added by a contributor, we store it</li>
+<li>we keep only a subset of fields (name, type, brand, lat, lng, version...)</li>
+</ul>
+</li>
 </ul>
 <p>see <code>open_prices/common/openstreetmap.py</code></p>
 <h3 id="frontend">Frontend</h3>
 <ul>
-<li>Location search
-    - we use a combination of Komoot Photon &amp; Nominatim</li>
-<li>Brand data
-    - we regularly contribute to <a href="https://nsi.guide">nsi.guide</a> to add missing brands
-    - we display brand logos thanks to <a href="https://github.com/openfoodfacts/brand-images">openfoodfacts/brand-images</a></li>
-<li>Contributing back
-    - not yet... but discussed regularly :)</li>
+<li>Location search<ul>
+<li>we use a combination of Komoot Photon &amp; Nominatim</li>
+</ul>
+</li>
+<li>Brand data<ul>
+<li>we regularly contribute to <a href="https://nsi.guide">nsi.guide</a> to add missing brands</li>
+<li>we display brand logos thanks to <a href="https://github.com/openfoodfacts/brand-images">openfoodfacts/brand-images</a></li>
+</ul>
+</li>
+<li>Contributing back<ul>
+<li>not yet... but discussed regularly :)</li>
+</ul>
+</li>
 </ul>
 <h2 id="data-sync">Data sync</h2>
 <p>Currently, we fetch &amp; store location data on creation only.</p>
