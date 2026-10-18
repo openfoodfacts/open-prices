@@ -34,7 +34,7 @@ class LoginView(APIView):
                 "set_cookie",
                 OpenApiTypes.INT,
                 OpenApiParameter.QUERY,
-                description="Set to 1 to also return the access token in a session cookie.",
+                description='Set to 1 to also return the access token in a "opsession" cookie.',
                 enum=[1],
             )
         ],
