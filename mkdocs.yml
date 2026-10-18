@@ -49,7 +49,9 @@ nav:
     - Open Food Facts (Product data): topics/open-food-facts-product-data.md
     - OpenStreetMap (Location data): topics/openstreetmap-location-data.md
     - Gamification: topics/gamification.md
-    - Moderation: topics/moderation.md
+    - Moderation:
+      - Home: topics/moderation.md
+      - Price outlier detection: topics/outlier-detection.md
     - History: topics/history.md
     - AI:
       - Home: topics/ai/README.md
