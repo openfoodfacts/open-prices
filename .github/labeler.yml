@@ -18,26 +18,34 @@ GDPR imports:
 
 Proofs:
 - changed-files:
-  - any-glob-to-any-file: '**/*proof*'
+  - any-glob-to-any-file:
+    - 'open_prices/proofs/**'
+    - 'open_prices/api/proofs/**'
 
 DB migrations:
 - changed-files:
-  - any-glob-to-any-file: '**/*migrations*'
+  - any-glob-to-any-file: '**/migrations/**'
 
 Users:
 - changed-files:
-  - any-glob-to-any-file: '**/*user*'
+  - any-glob-to-any-file:
+    - 'open_prices/users/**'
+    - 'open_prices/api/users/**'
 
 Products:
 - changed-files:
-  - any-glob-to-any-file: '**/*products*'
+  - any-glob-to-any-file:
+    - 'open_prices/products/**'
+    - 'open_prices/api/products/**'
 
 Prices:
 - changed-files:
-  - any-glob-to-any-file: '**/*prices*'
+  - any-glob-to-any-file:
+    - 'open_prices/prices/**'
+    - 'open_prices/api/prices/**'
 
 Challenges:
 - changed-files:
-  - any-glob-to-any-file: 'open_prices/challenges/models.py'
-  - any-glob-to-any-file: 'open_prices/challenges/tests.py'
-  - any-glob-to-any-file: '**/*challenges*'
+  - any-glob-to-any-file:
+    - 'open_prices/challenges/**'
+    - 'open_prices/api/challenges/**'
