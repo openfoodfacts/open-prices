@@ -52,12 +52,12 @@ class LoginView(APIView):
         - **access_token**: keycloak access_token (clear text)
 
         A **token** is returned. If the **set_cookie** parameter is set to 1,
-        the token is also set as a cookie named "session" in the response.
+        the token is also set as a cookie named "opsession" in the response.
 
         To authenticate, you can either:
         - use the **Authorization** header with the **Bearer** scheme,
         e.g.: "Authorization: bearer token"
-        - use the **session** cookie, e.g.: "Cookie: session=token"
+        - use the **opsession** cookie, e.g.: "Cookie: opsession=token"
         """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
