@@ -1257,6 +1257,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#check-the-openapi-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check the OpenAPI schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#generate-the-sql-schema-image" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1605,6 +1616,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#check-the-openapi-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check the OpenAPI schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#generate-the-sql-schema-image" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1719,6 +1741,10 @@ uv<span class="w"> </span>run<span class="w"> </span>pip-audit<span class="w"> <
 <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>mkdocs<span class="w"> </span>serve<span class="w"> </span>-a<span class="w"> </span><span class="m">127</span>.0.0.1:8765
 </code></pre></div>
 <p>Open http://127.0.0.1:8765/ in your browser.</p>
+<h3 id="check-the-openapi-schema">Check the OpenAPI schema</h3>
+<p>Fails on any schema generation warning or error (also run in the CI):</p>
+<div class="highlight"><pre><span></span><code>uv run --env-file .env python manage.py spectacular --api-version api --validate --fail-on-warn --file /dev/null
+</code></pre></div>
 <h3 id="generate-the-sql-schema-image">Generate the SQL schema image</h3>
 <div class="highlight"><pre><span></span><code>uv run --env-file .env python manage.py graph_models -a -X ContentType,LogEntry,AbstractUser,AbstractBaseSession,Group,Permission,Success,Failure,Task,Schedule,OrmQ,User,Session -o docs/schema/schema.png
 </code></pre></div>
