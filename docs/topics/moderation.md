@@ -37,4 +37,4 @@ Before editing or deleting an object, moderators can check its [History](history
 Some moderation runs automatically, as scheduled tasks (see `open_prices/common/tasks.py`):
 
 - **price outliers** (daily): prices that are much higher or lower than the product's median get a `WRONG_PRICE_VALUE` flag, with `source="outlier-detection"`. See [Price outlier detection](outlier-detection.md)
-- **barcode cleanup** (daily): products with a long (> 13 digits) or invalid barcode, unknown to Open Food Facts, are deleted along with their prices, but only for prices created through the price tag validation workflows
+- **barcode cleanup** (daily): for products with a long (> 13 digits) or invalid barcode, unknown to Open Food Facts, prices created through the price tag validation workflows are deleted. The product is then deleted if it has no prices left
