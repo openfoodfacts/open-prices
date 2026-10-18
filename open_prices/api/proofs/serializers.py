@@ -113,9 +113,22 @@ class ProofCreateSerializer(serializers.ModelSerializer):
 
 
 class ProofUpdateSerializer(serializers.ModelSerializer):
+    location_id = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), source="location", required=False
+    )
+
     class Meta:
         model = Proof
-        fields = Proof.UPDATE_FIELDS
+        fields = Proof.UPDATE_FIELDS + ["location_id"]
+
+    def update(self, instance, validated_data):
+        location = validated_data.get("location")
+        if location:
+            # Proof.set_location() resolves the location from the osm fields,
+            # so align them with the new location (None for online locations)
+            validated_data["location_osm_id"] = location.osm_id
+            validated_data["location_osm_type"] = location.osm_type
+        return super().update(instance, validated_data)
 
 
 class ProofProcessWithGeminiSerializer(serializers.Serializer):
