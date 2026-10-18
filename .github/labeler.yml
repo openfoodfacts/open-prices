@@ -1,10 +1,5 @@
 # Add labels to any any pull request with changes to the specified paths
 
-# Pull requests that update GitHub Actions code. If you navigate to the folder, you will have a README of what it does
-GitHub Actions:
-- changed-files:
-  - any-glob-to-any-file: '.github/**/*'
-
 📚 Documentation:
 - changed-files:
   - any-glob-to-any-file:
@@ -61,3 +56,8 @@ DB migrations:
 GDPR imports:
 - changed-files:
   - any-glob-to-any-file: '**/*gdpr*'
+
+# Pull requests that update GitHub Actions code. If you navigate to the folder, you will have a README of what it does
+GitHub Actions:
+- changed-files:
+  - any-glob-to-any-file: '.github/**/*'
