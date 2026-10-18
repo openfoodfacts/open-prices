@@ -44,3 +44,6 @@ jobs:
         run: |
           make create_external_networks
           make tests
+
+      - name: Check OpenAPI schema
+        run: make api-schema-check
