@@ -12,7 +12,7 @@
         <link rel="prev" href="../gamification/">
       
       
-        <link rel="next" href="../history/">
+        <link rel="next" href="../outlier-detection/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>Moderation - Open Prices</title>
+        <title>Home - Open Prices</title>
       
     
     
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Moderation
+              Home
             
           </span>
         </div>
@@ -665,16 +665,20 @@
   
   
   
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
         
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -688,7 +692,158 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Moderation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flags 🚩
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moderators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Moderators 🛡️
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated rules 🤖
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../outlier-detection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Price outlier detection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -1251,6 +1406,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flags 🚩
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moderators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Moderators 🛡️
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated rules 🤖
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1276,9 +1472,37 @@
 
 <h1 id="moderation">Moderation</h1>
 <p>Open Prices relies on moderation to improve data quality over time.</p>
-<p>Any contributor can report an issue on a <code>Price</code> or <code>Proof</code>.</p>
-<p>A few contributors have moderation rights to review and edit/delete problematic entries.</p>
-<p>See also <a href="../history/">History</a> to track changes made on objects.</p>
+<h2 id="flags">Flags 🚩</h2>
+<p>Any logged-in contributor can flag a <code>Price</code> or a <code>Proof</code>.</p>
+<p>A flag has:</p>
+<ul>
+<li>a <code>reason</code>: <code>WRONG_TYPE</code>, <code>WRONG_PRICE_VALUE</code>, <code>WRONG_CURRENCY</code>, <code>WRONG_PRODUCT</code>, <code>WRONG_LOCATION</code>, <code>WRONG_DATE</code> or <code>OTHER</code></li>
+<li>an optional <code>comment</code></li>
+<li>a <code>status</code>: <code>OPEN</code> (default) or <code>CLOSED</code></li>
+<li>an <code>owner</code> (the user who flagged)</li>
+<li>a <code>source</code> (the app used)</li>
+</ul>
+<p>API endpoints:</p>
+<ul>
+<li><code>POST /api/v1/prices/{id}/flag</code> &amp; <code>POST /api/v1/proofs/{id}/flag</code>: create a flag (logged-in users)</li>
+<li><code>GET /api/v1/flags</code>: list flags, filterable by <code>content_type</code>, <code>object_id</code>, <code>reason</code> &amp; <code>status</code> (moderators only)</li>
+<li><code>PATCH /api/v1/flags/{id}</code>: update a flag's <code>status</code> (moderators only)</li>
+</ul>
+<p>see the "moderation" section of the <a href="https://prices.openfoodfacts.org/api/docs">API docs</a></p>
+<h2 id="moderators">Moderators 🛡️</h2>
+<p>A few contributors have moderation rights (<code>is_moderator</code> on the <code>User</code>, set via the Django admin). Moderators can:</p>
+<ul>
+<li>review flags in the <a href="https://prices.openfoodfacts.org/moderation">moderation dashboard</a></li>
+<li>edit or delete any <code>Price</code> or <code>Proof</code> (other contributors can only edit or delete their own)</li>
+<li>close flags once handled</li>
+</ul>
+<p>Before editing or deleting an object, moderators can check its <a href="../history/">History</a>.</p>
+<h2 id="automated-rules">Automated rules 🤖</h2>
+<p>Some moderation runs automatically, as scheduled tasks (see <code>open_prices/common/tasks.py</code>):</p>
+<ul>
+<li><strong>price outliers</strong> (daily): prices that are much higher or lower than the product's median get a <code>WRONG_PRICE_VALUE</code> flag, with <code>source="outlier-detection"</code>. See <a href="../outlier-detection/">Price outlier detection</a></li>
+<li><strong>barcode cleanup</strong> (daily): for products with a long (&gt; 13 digits) or invalid barcode, unknown to Open Food Facts, prices created through the price tag validation workflows are deleted. The product is then deleted if it has no prices left</li>
+</ul>
 
 
 
