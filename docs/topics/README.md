@@ -6,5 +6,6 @@ Deep dives into specific technical areas of Open Prices.
 - [Open Food Facts (Product data)](open-food-facts-product-data.md)
 - [OpenStreetMap (Location data)](openstreetmap-location-data.md)
 - [Gamification](gamification.md)
-- [Moderation & Historisation](moderation-historisation.md)
+- [Moderation](moderation.md)
+- [History](history.md)
 - [AI](ai/README.md) - Machine learning models, predictions, and related architectures
