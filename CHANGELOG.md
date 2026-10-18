@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.114.2](https://github.com/openfoodfacts/open-prices/compare/v1.114.1...v1.114.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* **Prices:** reset duplicate_of when an edited price no longer matches ([#1460](https://github.com/openfoodfacts/open-prices/issues/1460)) ([bafc762](https://github.com/openfoodfacts/open-prices/commit/bafc7628626779660650cd73964ecc3c583ba206))
+* **Proofs:** API: accept `location_id` when updating a proof ([#1476](https://github.com/openfoodfacts/open-prices/issues/1476)) ([bb64612](https://github.com/openfoodfacts/open-prices/commit/bb646127814b3e1f573e15a47b8531e9415d6f4d))
+
+
+### Documentation
+
+* **Data quality:** new page (validation, duplicate prices & proofs, links to moderation & history) ([#1495](https://github.com/openfoodfacts/open-prices/issues/1495)) ([89eb18e](https://github.com/openfoodfacts/open-prices/commit/89eb18ef41b9d2a198d439b7363f5fe96266df81))
+* fix nested lists rendering (2-space indent) ([#1496](https://github.com/openfoodfacts/open-prices/issues/1496)) ([3f26d85](https://github.com/openfoodfacts/open-prices/commit/3f26d85e651044d6bd0635d7b3eb45e9694f640a))
+
+
+### Technical
+
+* **CodeRabbit:** skip release-please PRs ([#1494](https://github.com/openfoodfacts/open-prices/issues/1494)) ([2674790](https://github.com/openfoodfacts/open-prices/commit/2674790c00e5405094b6cf9f7a02cdba4cdcf5b2))
+
 ## [1.114.1](https://github.com/openfoodfacts/open-prices/compare/v1.114.0...v1.114.1) (2026-10-18)
 
 
