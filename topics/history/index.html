@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../gamification/">
+        <link rel="prev" href="../moderation/">
       
       
         <link rel="next" href="../ai/">
@@ -23,7 +23,7 @@
     
     
       
-        <title>Moderation & Historisation - Open Prices</title>
+        <title>History - Open Prices</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#moderation-historisation" class="md-skip">
+        <a href="#history" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Moderation & Historisation
+              History
             
           </span>
         </div>
@@ -661,6 +661,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../moderation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Moderation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -680,7 +708,7 @@
   <span class="md-ellipsis">
     
   
-    Moderation & Historisation
+    History
   
 
     
@@ -698,7 +726,7 @@
   <span class="md-ellipsis">
     
   
-    Moderation & Historisation
+    History
   
 
     
@@ -724,10 +752,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#moderation" class="md-nav__link">
+  <a href="#what-is-tracked" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Moderation
+        What is tracked 🕰️
       
     </span>
   </a>
@@ -735,10 +763,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#historisation" class="md-nav__link">
+  <a href="#api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Historisation
+        API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleanup
       
     </span>
   </a>
@@ -769,10 +808,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" >
         
           
-          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
             
   
   
@@ -790,8 +829,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1289,10 +1328,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#moderation" class="md-nav__link">
+  <a href="#what-is-tracked" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Moderation
+        What is tracked 🕰️
       
     </span>
   </a>
@@ -1300,10 +1339,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#historisation" class="md-nav__link">
+  <a href="#api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Historisation
+        API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleanup
       
     </span>
   </a>
@@ -1327,7 +1377,7 @@
 
 
   
-    <a href="https://github.com/openfoodfacts/open-prices/blob/main/docs/topics/moderation-historisation.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/openfoodfacts/open-prices/blob/main/docs/topics/history.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1335,13 +1385,23 @@
   
 
 
-<h1 id="moderation-historisation">Moderation &amp; Historisation</h1>
-<p>Open Prices combines moderation and history tracking to improve data quality over time.</p>
-<h2 id="moderation">Moderation</h2>
-<p>Any contributor can report an issue on a <code>Price</code> or <code>Proof</code>.</p>
-<p>A few contributors have moderation rights to review and edit/delete problematic entries.</p>
-<h2 id="historisation">Historisation</h2>
-<p>Open Prices keeps history on <code>Price</code> &amp; <code>Proof</code> objects.</p>
+<h1 id="history">History</h1>
+<p>Open Prices keeps the history of <code>Price</code>, <code>Proof</code> and <code>Location</code> objects, using <a href="https://django-simple-history.readthedocs.io/">django-simple-history</a>.</p>
+<h2 id="what-is-tracked">What is tracked 🕰️</h2>
+<p>Each change (creation, update, deletion) stores a snapshot of the object, along with:</p>
+<ul>
+<li>the date of the change</li>
+<li>the type of change: <code>+</code> (created), <code>~</code> (changed) or <code>-</code> (deleted)</li>
+<li>the user who made the change (if authenticated)</li>
+</ul>
+<h2 id="api">API</h2>
+<ul>
+<li><code>GET /api/v1/prices/{id}/history</code> &amp; <code>GET /api/v1/proofs/{id}/history</code>: list the changes of an object</li>
+</ul>
+<p><code>Location</code> history is only available in the Django admin for now.</p>
+<h2 id="cleanup">Cleanup</h2>
+<p>A record is created on every save, even when no field changed. A daily task removes these duplicate entries.</p>
+<p>See also <a href="../moderation/">Moderation</a>: moderators can check an object's history before editing or deleting it.</p>
 
 
 
