@@ -835,7 +835,7 @@ class ProofFlagApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_proof_flag_ok_if_authenticated(self):
+    def test_proof_flag_ok_if_owner(self):
         response = self.client.post(
             self.url,
             {
@@ -851,6 +851,36 @@ class ProofFlagApiTest(TestCase):
         self.assertEqual(response.data["comment"], "This proof is spam")
         self.assertEqual(response.data["status"], FlagStatus.OPEN)
         self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
+
+    def test_proof_flag_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This proof is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.proof.id)
+        self.assertEqual(response.data["owner"], self.user_session_2.user.user_id)
+
+    def test_proof_flag_ok_if_not_owner_nor_moderator(self):
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This proof is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.proof.id)
+        self.assertEqual(response.data["owner"], self.user_session_2.user.user_id)
 
 
 class ProofDraftListApiTest(TestCase):
