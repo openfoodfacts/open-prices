@@ -48,11 +48,12 @@ nav:
     - Core: topics/core.md
     - Open Food Facts (Product data): topics/open-food-facts-product-data.md
     - OpenStreetMap (Location data): topics/openstreetmap-location-data.md
-    - Gamification: topics/gamification.md
-    - Moderation:
-      - Home: topics/moderation.md
+    - Data quality:
+      - Home: topics/data-quality.md
+      - Moderation: topics/moderation.md
       - Price outlier detection: topics/outlier-detection.md
-    - History: topics/history.md
+      - History: topics/history.md
+    - Gamification: topics/gamification.md
     - AI:
       - Home: topics/ai/README.md
       - "Proof Prediction Flow": topics/ai/proof-prediction-flow.md
