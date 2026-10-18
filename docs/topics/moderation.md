@@ -1,6 +1,6 @@
 # Moderation
 
-Open Prices relies on moderation to improve data quality over time.
+Open Prices relies on moderation to improve data quality over time (see also [Data quality](data-quality.md)).
 
 ## Flags 🚩
 

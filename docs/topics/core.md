@@ -23,7 +23,7 @@ This model helps Open Prices support:
 - assisted contribution workflows
 - API-based contribution from external clients
 
-It also enables quality checks, moderation, and history tracking while keeping the same core structure.
+It also enables [quality checks](data-quality.md), [moderation](moderation.md), and [history tracking](history.md) while keeping the same core structure.
 
 ## Contribution workflows
 
