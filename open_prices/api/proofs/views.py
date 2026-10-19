@@ -339,8 +339,8 @@ class ProofDraftViewSet(
         )
 
         if new_image_path != image_path or new_image_thumb_path != image_thumb_path:
-            proof.file_path = str(new_image_path)
-            proof.image_thumb_path = str(new_image_thumb_path)
+            proof.file_path = new_image_path.as_posix()
+            proof.image_thumb_path = new_image_thumb_path.as_posix()
             proof._change_reason = "Saving new image path after anonymization"
             proof.save()
 

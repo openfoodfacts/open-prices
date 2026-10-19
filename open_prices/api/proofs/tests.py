@@ -3,7 +3,8 @@ import shutil
 import tempfile
 from decimal import Decimal
 from io import BytesIO
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+from unittest.mock import patch
 
 import cv2
 import numpy as np
@@ -1194,6 +1195,36 @@ class ProofDraftAnonymizeApiTest(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("detail", response.data)
         self.assertEqual(response.data["detail"], "No Proof matches the given query.")
+
+    def test_anonymize_draft_receipt_windows_paths(self) -> None:
+        """Store portable image references even when anonymization uses Windows paths."""
+        proof = ProofFactory.create(
+            file_path="0001/receipt.jpg",
+            image_thumb_path="0001/receipt.400.jpg",
+            draft=True,
+            owner=self.session.user.user_id,
+            type=proof_constants.TYPE_RECEIPT,
+        )
+        url = reverse("api:proofs-drafts-anonymize-receipt", args=[proof.id])
+        with patch(
+            "open_prices.api.proofs.views.save_anonymized_receipt",
+            return_value=(
+                PureWindowsPath("0001/receipt.webp"),
+                PureWindowsPath("0001/receipt.400.webp"),
+            ),
+        ):
+            response = self.client.post(
+                url,
+                data={"bounding_boxes": [[0.1, 0.1, 0.2, 0.2]]},
+                headers={"Authorization": f"Bearer {self.session.token}"},
+                content_type="application/json",
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["file_path"], "0001/receipt.webp")
+        self.assertEqual(response.data["image_thumb_path"], "0001/receipt.400.webp")
+        proof.refresh_from_db()
+        self.assertEqual(proof.file_path, "0001/receipt.webp")
+        self.assertEqual(proof.image_thumb_path, "0001/receipt.400.webp")
 
     @override_settings(IMAGES_DIR=Path(tempfile.mkdtemp()))
     def test_anonymize_draft_receipt(self):
