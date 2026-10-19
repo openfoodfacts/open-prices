@@ -136,6 +136,8 @@ class PriceQuerySet(models.QuerySet):
 
 
 class Price(models.Model):
+    _duplicate_price_ids: list[int]
+
     TYPE_PRODUCT_FIELDS = ["product_code"]
     TYPE_CATEGORY_FIELDS = ["category_tag", "labels_tags", "origins_tags"]
     UPDATE_FIELDS = [
@@ -539,6 +541,16 @@ def price_post_delete_decrement_counts(sender, instance, **kwargs):
         )
 
 
+@receiver(signals.pre_delete, sender=Price)  # type: ignore[untyped-decorator]
+def price_pre_delete_collect_duplicates(
+    sender: type[Price], instance: Price, **kwargs: object
+) -> None:
+    # SET_NULL clears these references before post_delete runs.
+    instance._duplicate_price_ids = list(
+        Price.objects.filter(duplicate_of_id=instance.id).values_list("id", flat=True)
+    )
+
+
 @receiver(signals.post_delete, sender=Price)
 def price_post_delete_update_duplicate_of(sender, instance, **kwargs):
     """When a price is deleted, we need to update the duplicate_of field
@@ -547,7 +559,9 @@ def price_post_delete_update_duplicate_of(sender, instance, **kwargs):
     the search for possible duplicates is run again."""
     # Sort by created descending, so that the most recent price is
     # re-evaluated first
-    for price in Price.objects.filter(duplicate_of_id=instance.id).order_by("-created"):
+    for price in Price.objects.filter(id__in=instance._duplicate_price_ids).order_by(
+        "-created"
+    ):
         price.duplicate_of = None
         price.save(update_fields=["duplicate_of"])
 

@@ -1,6 +1,7 @@
 import datetime
 import json
 from decimal import Decimal
+from typing import cast
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
@@ -1171,6 +1172,56 @@ class PriceModelDeleteTest(TestCase):
         self.assertEqual(self.user_proof.price_count, 0)
         self.assertEqual(self.location.price_count, 0)
         self.assertEqual(self.product.price_count, 0)
+
+    def create_duplicates(self, count: int) -> list[Price]:
+        duplicates = cast(
+            list[Price],
+            [
+                PriceFactory(
+                    proof_id=self.user_proof.id,
+                    location_osm_id=self.location.osm_id,
+                    location_osm_type=self.location.osm_type,
+                    product_code=self.product.code,
+                    owner=self.user_session.user.user_id,
+                    price=self.price.price,
+                    date=self.price.date,
+                    currency=self.price.currency,
+                    created=self.price.created + datetime.timedelta(seconds=index + 1),
+                )
+                for index in range(count)
+            ],
+        )
+        for duplicate in duplicates:
+            self.assertEqual(duplicate.duplicate_of_id, self.price.id)
+        return duplicates
+
+    def test_delete_reference_reassigns_surviving_duplicates(self) -> None:
+        first, second = self.create_duplicates(2)
+
+        self.price.delete()
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertIsNone(first.duplicate_of_id)
+        self.assertEqual(second.duplicate_of_id, first.id)
+
+    def test_bulk_delete_reassigns_only_surviving_duplicates(self) -> None:
+        first, second, third = self.create_duplicates(3)
+
+        Price.objects.filter(id__in=[self.price.id, first.id]).delete()
+
+        second.refresh_from_db()
+        third.refresh_from_db()
+        self.assertIsNone(second.duplicate_of_id)
+        self.assertEqual(third.duplicate_of_id, second.id)
+
+    def test_delete_duplicate_preserves_reference(self) -> None:
+        first, second = self.create_duplicates(2)
+
+        first.delete()
+
+        second.refresh_from_db()
+        self.assertEqual(second.duplicate_of_id, self.price.id)
 
 
 class PriceModelHistoryTest(TestCase):
