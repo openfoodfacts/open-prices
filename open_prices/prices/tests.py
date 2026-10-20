@@ -1,10 +1,15 @@
 import datetime
 import json
+import re
 from decimal import Decimal
+from typing import cast
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.db import connection, transaction  # type: ignore[import-untyped]
+from django.db.models.signals import pre_delete  # type: ignore[import-untyped]
 from django.test import TestCase, TransactionTestCase
+from django.test.utils import CaptureQueriesContext  # type: ignore[import-untyped]
 from freezegun import freeze_time
 from simple_history.utils import bulk_update_with_history
 
@@ -13,6 +18,7 @@ from open_prices.common import constants
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.moderation.models import Flag, FlagReason
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price, PriceStatistics5y
@@ -20,8 +26,8 @@ from open_prices.prices.outlier_detection import find_outliers
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
-from open_prices.proofs.factories import ProofFactory
-from open_prices.proofs.models import Proof
+from open_prices.proofs.factories import PriceTagFactory, ProofFactory
+from open_prices.proofs.models import PriceTag, Proof
 from open_prices.users.factories import SessionFactory
 from open_prices.users.models import User
 
@@ -1205,6 +1211,177 @@ class PriceModelDeleteTest(TestCase):
         self.assertEqual(self.user_proof.price_count, 0)
         self.assertEqual(self.location.price_count, 0)
         self.assertEqual(self.product.price_count, 0)
+
+    def create_duplicates(
+        self, count: int, reference: Price | None = None
+    ) -> list[Price]:
+        reference = reference if reference is not None else self.price
+        duplicates = cast(
+            list[Price],
+            [
+                PriceFactory(
+                    proof_id=reference.proof_id,
+                    location_osm_id=self.location.osm_id,
+                    location_osm_type=self.location.osm_type,
+                    product_code=self.product.code,
+                    owner=self.user_session.user.user_id,
+                    price=reference.price,
+                    date=reference.date,
+                    currency=reference.currency,
+                    created=reference.created + datetime.timedelta(seconds=index + 1),
+                )
+                for index in range(count)
+            ],
+        )
+        for duplicate in duplicates:
+            self.assertEqual(duplicate.duplicate_of_id, reference.id)
+        return duplicates
+
+    def test_delete_reference_reassigns_surviving_duplicates(self) -> None:
+        first, second = self.create_duplicates(2)
+
+        self.price.delete()
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertIsNone(first.duplicate_of_id)
+        self.assertEqual(second.duplicate_of_id, first.id)
+
+    def test_bulk_delete_reassigns_only_surviving_duplicates(self) -> None:
+        first, second, third = self.create_duplicates(3)
+
+        Price.objects.filter(id__in=[self.price.id, first.id]).delete()
+
+        second.refresh_from_db()
+        third.refresh_from_db()
+        self.assertIsNone(second.duplicate_of_id)
+        self.assertEqual(third.duplicate_of_id, second.id)
+
+    def test_delete_duplicate_preserves_reference(self) -> None:
+        first, second = self.create_duplicates(2)
+
+        first.delete()
+
+        second.refresh_from_db()
+        self.assertEqual(second.duplicate_of_id, self.price.id)
+
+    def test_bulk_delete_without_duplicates_batches_snapshot_queries(self) -> None:
+        prices = Price.objects.bulk_create(
+            [
+                Price(
+                    type="PRODUCT",
+                    product=self.product,
+                    product_code=self.product.code,
+                    location=self.location,
+                    date=self.price.date,
+                    currency=self.price.currency,
+                    price=self.price.price + Decimal(index + 1),
+                )
+                for index in range(10)
+            ]
+        )
+        with CaptureQueriesContext(connection) as queries:
+            Price.objects.filter(pk__in=[price.pk for price in prices]).delete()
+        # Isolate snapshot SELECTs: existing deletion signals still do per-row work.
+        snapshots = [
+            query
+            for query in queries.captured_queries
+            if re.match(
+                r'^SELECT .* FROM "prices" WHERE "prices"\."duplicate_of_id"',
+                query["sql"],
+            )
+        ]
+        self.assertEqual(len(snapshots), 1)
+
+    def test_delete_queryset_filtered_by_price_tag_preserves_duplicates(self) -> None:
+        proof = cast(
+            Proof,
+            ProofFactory(
+                type=proof_constants.TYPE_PRICE_TAG,
+                owner=self.user_session.user.user_id,
+                date=self.price.date,
+                currency=self.price.currency,
+            ),
+        )
+        self.price.proof = proof
+        self.price.receipt_quantity = None
+        self.price.save()
+        first, second = self.create_duplicates(2)
+        tag = cast(PriceTag, PriceTagFactory(proof=proof, price=self.price))
+
+        Price.objects.filter(
+            price_tags__pk=tag.pk, price_tags__status=tag.status
+        ).delete()
+
+        second.refresh_from_db()
+        self.assertEqual(second.duplicate_of_id, first.id)
+
+    def test_delete_queryset_can_be_reused_after_rollback(self) -> None:
+        first, _second = self.create_duplicates(2)
+        queryset = Price.objects.filter(pk=self.price.pk)
+
+        def abort_delete(
+            sender: type[Price], instance: Price, **kwargs: object
+        ) -> None:
+            raise RuntimeError("cancel deletion")
+
+        pre_delete.connect(abort_delete, sender=Price, weak=False)
+        try:
+            with self.assertRaisesMessage(RuntimeError, "cancel deletion"):
+                with transaction.atomic():
+                    queryset.delete()
+        finally:
+            pre_delete.disconnect(abort_delete, sender=Price)
+
+        extra = self.create_duplicates(3)[-1]
+        queryset.delete()
+        extra.refresh_from_db()
+        self.assertEqual(extra.duplicate_of_id, first.id)
+
+    def test_delete_reference_with_related_flag_reassigns_duplicates(self) -> None:
+        first, second = self.create_duplicates(2)
+        Flag.objects.create(content_object=self.price, reason=FlagReason.OTHER)
+
+        self.price.delete()
+
+        second.refresh_from_db()
+        self.assertEqual(second.duplicate_of_id, first.id)
+
+    def test_deleting_proof_keeps_prices_and_duplicate_links(self) -> None:
+        first, second = self.create_duplicates(2)
+
+        cast(Proof, self.user_proof).delete()
+
+        self.price.refresh_from_db()
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertIsNone(self.price.proof_id)
+        self.assertEqual(first.duplicate_of_id, self.price.id)
+        self.assertEqual(second.duplicate_of_id, self.price.id)
+
+    def test_bulk_delete_reassigns_independent_groups(self) -> None:
+        first, second = self.create_duplicates(2)
+        other = cast(
+            Price,
+            PriceFactory(
+                proof_id=self.user_proof.id,
+                location_osm_id=self.location.osm_id,
+                location_osm_type=self.location.osm_type,
+                product_code=self.product.code,
+                owner=self.user_session.user.user_id,
+                price=self.price.price + Decimal("1.00"),
+                date=self.price.date,
+                currency=self.price.currency,
+            ),
+        )
+        third, fourth = self.create_duplicates(2, reference=other)
+
+        Price.objects.filter(pk__in=[self.price.pk, other.pk]).delete()
+
+        second.refresh_from_db()
+        fourth.refresh_from_db()
+        self.assertEqual(second.duplicate_of_id, first.pk)
+        self.assertEqual(fourth.duplicate_of_id, third.pk)
 
 
 class PriceModelHistoryTest(TestCase):
