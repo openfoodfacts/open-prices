@@ -1,7 +1,10 @@
+import datetime
 from decimal import Decimal
+from typing import cast
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone  # type: ignore[import-untyped]
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
@@ -16,6 +19,7 @@ from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
+from open_prices.users.models import Session
 
 PRICE_8001505005707 = {
     "type": price_constants.TYPE_PRODUCT,
@@ -1285,6 +1289,66 @@ class PriceHistoryApiTest(TestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["history_type"], "+")
         self.assertEqual(response.data[0]["changes"], [])
+
+
+class PriceReferenceEditApiTest(TestCase):  # type: ignore[misc]
+    # Django is installed without type stubs in the project environment.
+    def setUp(self) -> None:
+        self.session = cast(Session, SessionFactory())
+        location = LocationFactory()
+        product = ProductFactory()
+        proof = ProofFactory(
+            type="RECEIPT",
+            owner=self.session.user.user_id,
+            date="2025-01-01",
+            currency="EUR",
+        )
+        created = timezone.now()
+        self.prices = [
+            cast(
+                Price,
+                PriceFactory(
+                    type="PRODUCT",
+                    proof=proof,
+                    owner=self.session.user.user_id,
+                    product_code=product.code,
+                    location_osm_id=location.osm_id,
+                    location_osm_type=location.osm_type,
+                    date="2025-01-01",
+                    currency="EUR",
+                    price=Decimal("1.99"),
+                    created=created + datetime.timedelta(seconds=index),
+                ),
+            )
+            for index in range(3)
+        ]
+        for price in self.prices[1:]:
+            self.assertEqual(price.duplicate_of_id, self.prices[0].pk)
+
+    def patch_reference(self, payload: dict[str, str]) -> None:
+        response = self.client.patch(
+            reverse("api:prices-detail", args=[self.prices[0].pk]),
+            payload,
+            headers={"Authorization": f"Bearer {self.session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        for price in self.prices:
+            price.refresh_from_db()
+
+    def test_correcting_reference_amount_reclassifies_surviving_copies(self) -> None:
+        self.patch_reference({"price": "2.49"})
+        reference, first, second = self.prices
+        self.assertEqual(reference.price, Decimal("2.49"))
+        self.assertEqual(first.price, Decimal("1.99"))
+        self.assertIsNone(first.duplicate_of_id)
+        self.assertEqual(second.duplicate_of_id, first.pk)
+
+    def test_unrelated_reference_edit_preserves_links(self) -> None:
+        self.patch_reference({"owner_comment": "Corrected note"})
+        reference, first, second = self.prices
+        self.assertEqual(first.duplicate_of_id, reference.pk)
+        self.assertEqual(second.duplicate_of_id, reference.pk)
 
 
 class PriceFlagApiTest(TestCase):

@@ -1,6 +1,8 @@
 import datetime
 import json
 from decimal import Decimal
+from typing import Any, cast
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
@@ -23,7 +25,7 @@ from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 from open_prices.users.factories import SessionFactory
-from open_prices.users.models import User
+from open_prices.users.models import Session, User
 
 PRODUCT_8001505005707 = {
     "code": "8001505005707",
@@ -1470,3 +1472,232 @@ class TestOutlierDetection(TestCase):
             find_outliers(target_date=datetime.date.fromisoformat("2026-07-06"))
         )
         self.assertEqual(len(outliers), 0)
+
+
+class PriceReferenceEditTest(TestCase):  # type: ignore[misc]
+    # Django is installed without type stubs in the project environment.
+    def setUp(self) -> None:
+        session = cast(Session, SessionFactory())
+        self.proof = cast(Proof, ProofFactory(owner=session.user.user_id))
+        self.location = cast(Location, LocationFactory())
+        self.product = cast(Product, ProductFactory())
+        self.reference = self.make_price()
+
+    def make_price(self, **changes: Any) -> Price:
+        values: dict[str, Any] = {
+            "type": "PRODUCT",
+            "proof_id": self.proof.pk,
+            "owner": self.proof.owner,
+            "product_code": self.product.code,
+            "location_osm_id": self.location.osm_id,
+            "location_osm_type": self.location.osm_type,
+            "date": "2025-01-01",
+            "currency": "EUR",
+            "price": Decimal("1.99"),
+        }
+        values.update(changes)
+        return cast(Price, PriceFactory(**values))
+
+    def test_reference_amount_edit_reassigns_multiple_copies(self) -> None:
+        first, second = self.make_price(), self.make_price()
+        self.reference.price = Decimal("2.49")
+        self.reference.save()
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertIsNone(first.duplicate_of_id)
+        self.assertEqual(second.duplicate_of_id, first.pk)
+        self.assertEqual(first.history.count(), 2)
+        self.assertEqual(second.history.count(), 2)
+
+    def test_reference_edit_clears_single_copy(self) -> None:
+        copy = self.make_price()
+        self.reference.currency = "USD"
+        self.reference.save()
+        copy.refresh_from_db()
+        self.assertIsNone(copy.duplicate_of_id)
+
+    def test_reference_without_date_cannot_keep_copies(self) -> None:
+        copy = self.make_price()
+        self.reference.date = None
+        self.reference.save()
+        copy.refresh_from_db()
+        self.assertIsNone(copy.duplicate_of_id)
+
+    def test_unchanged_match_does_not_save_copies(self) -> None:
+        copy = self.make_price()
+        self.reference.owner_comment = "Checked receipt"
+        self.reference.save()
+        copy.refresh_from_db()
+        self.assertEqual(copy.duplicate_of_id, self.reference.pk)
+        self.assertEqual(copy.history.count(), 1)
+
+    def test_partial_match_edit_uses_persisted_other_fields(self) -> None:
+        copy = self.make_price()
+        self.reference.price = Decimal("2.49")
+        self.reference.currency = "USD"  # not included in this save
+        self.reference.save(update_fields=(field for field in ["price"]))
+        self.reference.refresh_from_db()
+        self.assertEqual(self.reference.price, Decimal("2.49"))
+        copy.refresh_from_db()
+        self.assertEqual(self.reference.currency, "EUR")
+        self.assertIsNone(copy.duplicate_of_id)
+
+    def test_partial_unrelated_edit_ignores_unsaved_match_change(self) -> None:
+        copy = self.make_price()
+        self.reference.price = Decimal("2.49")  # remains unsaved
+        self.reference.owner_comment = "Checked receipt"
+        self.reference.save(update_fields=["owner_comment"])
+        copy.refresh_from_db()
+        self.reference.refresh_from_db()
+        self.assertEqual(self.reference.price, Decimal("1.99"))
+        self.assertEqual(copy.duplicate_of_id, self.reference.pk)
+        self.assertEqual(copy.history.count(), 1)
+
+    def test_reference_edit_can_join_older_group(self) -> None:
+        # Make the other group older without changing the normal id ordering.
+        older = self.reference
+        older.price = Decimal("2.49")
+        older.save()
+        reference = self.make_price()
+        first, second = self.make_price(), self.make_price()
+        reference.price = Decimal("2.49")
+        reference.save()
+        reference.refresh_from_db()
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(reference.duplicate_of_id, older.pk)
+        self.assertIsNone(first.duplicate_of_id)
+        self.assertEqual(second.duplicate_of_id, first.pk)
+
+    def test_dependent_failure_rolls_back_reference_and_history(self) -> None:
+        copy = self.make_price()
+        original_save = Price.save
+
+        def fail_dependent(instance: Price, *args: Any, **kwargs: Any) -> None:
+            if instance.pk == copy.pk:
+                raise RuntimeError("dependent save failed")
+            original_save(instance, *args, **kwargs)
+
+        self.reference.price = Decimal("2.49")
+        with patch.object(Price, "save", fail_dependent):
+            with self.assertRaisesMessage(RuntimeError, "dependent save failed"):
+                # No outer atomic block: the model must make its own unit atomic.
+                self.reference.save()
+        self.reference.refresh_from_db()
+        copy.refresh_from_db()
+        self.assertEqual(self.reference.price, Decimal("1.99"))
+        self.assertEqual(copy.duplicate_of_id, self.reference.pk)
+        self.assertEqual(self.reference.history.count(), 1)
+
+    def test_nullable_matching_field_changes(self) -> None:
+        self.reference.price_is_discounted = True
+        self.reference.save()
+        copy = self.make_price(price_is_discounted=True)
+        self.reference.discount_type = "SALE"
+        self.reference.save()
+        copy.refresh_from_db()
+        self.assertIsNone(copy.duplicate_of_id)
+
+    def test_partial_unchanged_match_uses_persisted_other_fields(self) -> None:
+        copy = self.make_price()
+        self.reference.currency = "USD"  # not persisted by this save
+        self.reference.save(update_fields=["price"])
+        copy.refresh_from_db()
+        self.assertEqual(copy.duplicate_of_id, self.reference.pk)
+        self.assertEqual(copy.history.count(), 1)
+
+    def test_reclassification_keeps_validation_and_rolls_back_bad_proof(self) -> None:
+        copy = self.make_price()
+        other = cast(Session, SessionFactory())
+        invalid_proof = cast(
+            Proof, ProofFactory(type="RECEIPT", owner=other.user.user_id)
+        )
+        Price.objects.filter(pk=copy.pk).update(proof_id=invalid_proof.pk)
+        self.reference.price = Decimal("2.49")
+        with self.assertRaises(ValidationError):
+            self.reference.save()
+        self.reference.refresh_from_db()
+        self.assertEqual(self.reference.price, Decimal("1.99"))
+        self.assertEqual(self.reference.history.count(), 1)
+
+    def test_cached_candidates_preserve_self_exclusion_and_created_precedence(
+        self,
+    ) -> None:
+        first = self.make_price(
+            created=self.reference.created + datetime.timedelta(seconds=2)
+        )
+        second = self.make_price(
+            created=self.reference.created + datetime.timedelta(seconds=1)
+        )
+        self.reference.price = Decimal("2.49")
+        self.reference.save()
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(first.duplicate_of_id, second.pk)
+        self.assertIsNone(second.duplicate_of_id)
+
+    def test_cache_is_not_reused_for_another_reference_edit(self) -> None:
+        first, second = self.make_price(), self.make_price()
+        self.reference.price = Decimal("2.49")
+        self.reference.save()
+        first.refresh_from_db()
+        first.price = Decimal("3.49")
+        first.save()
+        second.refresh_from_db()
+        self.assertIsNone(second.duplicate_of_id)
+
+    def test_different_incoming_match_groups_use_different_candidates(self) -> None:
+        other = self.make_price(price=Decimal("2.99"))
+        first, second = self.make_price(), self.make_price()
+        Price.objects.filter(pk=second.pk).update(price=Decimal("2.99"))
+        self.reference.price = Decimal("2.49")
+        self.reference.save()
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertIsNone(first.duplicate_of_id)
+        self.assertEqual(second.duplicate_of_id, other.pk)
+
+    def test_reclassification_emits_normal_save_signals(self) -> None:
+        from django.db.models import signals  # type: ignore[import-untyped]
+
+        copy = self.make_price()
+        seen: list[tuple[str, int]] = []
+
+        def before(sender: object, instance: Price, **kwargs: Any) -> None:
+            seen.append(("before", instance.pk))
+
+        def after(sender: object, instance: Price, **kwargs: Any) -> None:
+            seen.append(("after", instance.pk))
+
+        signals.pre_save.connect(before, sender=Price)
+        signals.post_save.connect(after, sender=Price)
+        try:
+            self.reference.price = Decimal("2.49")
+            self.reference.save()
+        finally:
+            signals.pre_save.disconnect(before, sender=Price)
+            signals.post_save.disconnect(after, sender=Price)
+        self.assertEqual(seen.count(("before", copy.pk)), 1)
+        self.assertEqual(seen.count(("after", copy.pk)), 1)
+        copy.refresh_from_db()
+        self.assertEqual(copy.history.count(), 2)
+
+    def test_duplicate_lookups_are_bounded_for_many_dependents(self) -> None:
+        from django.db import connection  # type: ignore[import-untyped]
+        from django.test.utils import (  # type: ignore[import-untyped]
+            CaptureQueriesContext,
+        )
+
+        for _ in range(10):
+            self.make_price()
+        self.reference.price = Decimal("2.49")
+        with CaptureQueriesContext(connection) as queries:
+            self.reference.save()
+        matching_selects = [
+            q
+            for q in queries
+            if q["sql"].startswith('SELECT "prices"."id",')
+            and 'ORDER BY "prices"."id" ASC LIMIT' in q["sql"]
+        ]
+        # One lookup for the edit and one two-candidate lookup for its old group.
+        self.assertEqual(len(matching_selects), 2)
