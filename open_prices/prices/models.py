@@ -1,4 +1,5 @@
 import decimal
+from contextvars import ContextVar
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
@@ -28,8 +29,23 @@ from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof
 from open_prices.users.models import User
 
+# Operation-scoped state: token reset handles nested deletes and exceptions.
+_duplicate_delete_batch: ContextVar[
+    tuple[object, dict[int, list[int]] | None] | None
+] = ContextVar("duplicate_delete_batch", default=None)
+
 
 class PriceQuerySet(models.QuerySet):
+    def delete(self) -> tuple[int, dict[str, int]]:
+        token = _duplicate_delete_batch.set((self, None))
+        try:
+            return super().delete()
+        finally:
+            _duplicate_delete_batch.reset(token)
+
+    delete.alters_data = True  # type: ignore[attr-defined]
+    delete.queryset_only = True  # type: ignore[attr-defined]
+
     def has_discount(self):
         return self.filter(price_is_discounted=True)
 
@@ -513,14 +529,6 @@ def price_post_create_update_tags(sender, instance, created, **kwargs):
         )
 
 
-@receiver(signals.pre_delete, sender=Price)
-def price_pre_delete_update_price_tag(sender, instance, **kwargs):
-    instance.price_tags.update(
-        status=None,
-        # price_id=None,  # will be done in the CASCADE
-    )
-
-
 @receiver(signals.post_delete, sender=Price)
 def price_post_delete_decrement_counts(sender, instance, **kwargs):
     if instance.owner:
@@ -543,11 +551,40 @@ def price_post_delete_decrement_counts(sender, instance, **kwargs):
 
 @receiver(signals.pre_delete, sender=Price)  # type: ignore[untyped-decorator]
 def price_pre_delete_collect_duplicates(
-    sender: type[Price], instance: Price, **kwargs: object
+    sender: type[Price],
+    instance: Price,
+    origin: object = None,
+    using: str = "default",
+    **kwargs: object,
 ) -> None:
     # SET_NULL clears these references before post_delete runs.
+    batch = _duplicate_delete_batch.get()
+    if batch is not None and batch[0] is origin:
+        ids_by_reference = batch[1]
+        if ids_by_reference is None:
+            ids_by_reference = {}
+            for reference_id, price_id in (
+                Price.objects.using(using)
+                .filter(duplicate_of__in=origin)
+                .values_list("duplicate_of_id", "id")
+            ):
+                ids_by_reference.setdefault(reference_id, []).append(price_id)
+            _duplicate_delete_batch.set((origin, ids_by_reference))
+        instance._duplicate_price_ids = ids_by_reference.get(instance.id, [])
+        return
     instance._duplicate_price_ids = list(
-        Price.objects.filter(duplicate_of_id=instance.id).values_list("id", flat=True)
+        Price.objects.using(using)
+        .filter(duplicate_of_id=instance.id)
+        .values_list("id", flat=True)
+    )
+
+
+@receiver(signals.pre_delete, sender=Price)
+def price_pre_delete_update_price_tag(sender, instance, **kwargs):
+    # Collect duplicate IDs first: origin may be filtered by price-tag status.
+    instance.price_tags.update(
+        status=None,
+        # price_id=None,  # will be done in the CASCADE
     )
 
 
