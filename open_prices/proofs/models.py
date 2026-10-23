@@ -7,7 +7,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, router, transaction
 from django.db.models import Case, Count, F, Q, Value, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
@@ -296,9 +296,16 @@ class Proof(models.Model):
         - run validations
         - set location (create if needed)
         """
-        self.full_clean()
-        self.set_location()
-        super().save(*args, **kwargs)
+        using = (
+            kwargs.get("using")
+            or (args[2] if len(args) > 2 else None)
+            or router.db_for_write(type(self), instance=self)
+        )
+        # Keep proof, linked-price propagation and their history atomic.
+        with transaction.atomic(using=using):
+            self.full_clean()
+            self.set_location()
+            super().save(*args, **kwargs)
 
     @property
     def file_path_display(self):
