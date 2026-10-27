@@ -61,3 +61,7 @@ GDPR imports:
 GitHub Actions:
 - changed-files:
   - any-glob-to-any-file: '.github/**/*'
+
+🧽 Data Quality:
+- changed-files:
+  - any-glob-to-any-file: 'docs/topics/data-quality.md
