@@ -889,6 +889,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -905,6 +923,47 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pages
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1364,6 +1423,36 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pages
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1389,9 +1478,96 @@
 
 <h1 id="ai-machine-learning">AI &amp; Machine Learning</h1>
 <p>Documentation on the machine learning models and prediction pipelines used in Open Prices.</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>What it does</th>
+<th>Runs on</th>
+<th>Provider</th>
+<th>Stored as</th>
+<th>More info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OCR</td>
+<td>extracts the text of the image</td>
+<td>every proof</td>
+<td>Google Cloud Vision</td>
+<td><code>.json.gz</code> file next to the image</td>
+<td>unused</td>
+</tr>
+<tr>
+<td>Proof classification</td>
+<td>predicts the proof type (price tag, receipt...)</td>
+<td>every proof</td>
+<td>Triton (<code>price_proof_classification</code>)</td>
+<td><code>ProofPrediction</code> (<code>CLASSIFICATION</code>)</td>
+<td><a href="https://huggingface.co/openfoodfacts/price-proof-classification">Hugging Face</a></td>
+</tr>
+<tr>
+<td>Price tag detection</td>
+<td>detects price tags on the image, and creates a <code>PriceTag</code> for each one</td>
+<td><code>PRICE_TAG</code> proofs</td>
+<td>Triton (<code>price_tag_detection</code>)</td>
+<td><code>ProofPrediction</code> (<code>OBJECT_DETECTION</code>)</td>
+<td><a href="https://huggingface.co/openfoodfacts/price-tag-detection">Hugging Face</a></td>
+</tr>
+<tr>
+<td>Price tag classification</td>
+<td>predicts the price tag quality (invalid, medium, high)</td>
+<td>each price tag</td>
+<td>Triton (<code>price_tag_classification</code>)</td>
+<td><code>PriceTagPrediction</code> (<code>PRICE_TAG_CLF</code>)</td>
+<td><a href="https://huggingface.co/openfoodfacts/price-tag-classification">Hugging Face</a></td>
+</tr>
+<tr>
+<td>Price tag extraction</td>
+<td>extracts the product, price, discount...</td>
+<td>each price tag (including invalid ones, temporarily)</td>
+<td>Gemini</td>
+<td><code>PriceTagPrediction</code> (<code>PRICE_TAG_EXTRACTION</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td>Price tag extraction (WIP)</td>
+<td>same as above, with a fine-tuned Qwen3 model (to replace Gemini)</td>
+<td></td>
+<td></td>
+<td></td>
+<td>WIP, not integrated yet. <a href="https://huggingface.co/openfoodfacts/price-tag-extractor">Hugging Face</a></td>
+</tr>
+<tr>
+<td>Receipt extraction</td>
+<td>extracts the shop, date &amp; items</td>
+<td><code>RECEIPT</code> proofs</td>
+<td>Gemini</td>
+<td><code>ProofPrediction</code> (<code>RECEIPT_EXTRACTION</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td>Receipt anonymization</td>
+<td>detects personal info (names, fidelity card ids) to hide with black boxes</td>
+<td><code>RECEIPT</code> proofs (draft only)</td>
+<td>PaddleOCR + LLM (OpenAI-compatible API)</td>
+<td><code>ProofPrediction</code> (<code>RECEIPT_ANONYMIZATION</code>), deleted once the proof is no longer a draft</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>All models run asynchronously (Django Q tasks) when a proof is created (or when a price tag is added manually). On proof creation, they can be disabled with <code>ENABLE_ML_PREDICTIONS</code> (and OCR with <code>ENABLE_OCR</code>).</p>
+<p>The code lives in <code>open_prices/proofs/ml/</code> (and <a href="https://github.com/openfoodfacts/openfoodfacts-python">openfoodfacts-python</a>)</p>
+<h2 id="providers">Providers</h2>
+<ul>
+<li><strong>Triton</strong>: <a href="https://github.com/triton-inference-server/server">NVIDIA Triton Inference Server</a>, self-hosted by Open Food Facts. It serves our own computer vision models (proof classification, price tag detection &amp; classification). Configured with <code>TRITON_URI</code></li>
+<li><strong>Gemini</strong>: Google's LLM, called through its API to extract structured data (price tags &amp; receipts). We plan to switch to an alternate LLM soon</li>
+<li><strong>Google Cloud Vision</strong>: Google's OCR API</li>
+<li><strong>PaddleOCR</strong>: OCR model, used with an LLM (through an OpenAI-compatible API) for receipt anonymization</li>
+</ul>
+<h2 id="pages">Pages</h2>
 <ul>
 <li><strong><a href="proof-prediction-flow/">Proof Prediction Flow</a></strong> - Map of sync/async operations when a proof is created, covering type classification, price tag detection, extraction, and receipt processing</li>
-<li>WIP</li>
 </ul>
 
 

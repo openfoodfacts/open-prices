@@ -1520,7 +1520,7 @@
     G3 --&gt; G4["FOR EACH detection (score &gt;= threshold):&lt;br/&gt;PriceTag.create(created_by=None)"]
     G4 --&gt; G5["run_and_save_price_tag_classification"]
     G5 --&gt; G6["PriceTagPrediction.create&lt;br/&gt;type=PRICE_TAG_CLF"]
-    G6 --&gt; G7{"predicted type != invalid?"}
+    G6 --&gt; G7{"classification OK?&lt;br/&gt;(invalid ones included, temporarily)"}
     G7 --&gt;|"Yes"| H["run_and_save_price_tag_extraction"]
     H --&gt; H1{PRICE_TAG_EXTRACTION_ASYNC_REQUESTS?}
     H1 --&gt;|"Yes"| H2["Gemini API batch&lt;br/&gt;&lt;b&gt;asyncio&lt;/b&gt;"]
