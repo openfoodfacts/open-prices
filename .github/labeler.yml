@@ -24,6 +24,7 @@ Products:
   - any-glob-to-any-file:
     - 'open_prices/products/**'
     - 'open_prices/api/products/**'
+    - 'docs/topics/open-food-facts-product-data.md'
 
 Prices:
 - changed-files:
@@ -36,6 +37,7 @@ Prices:
   - any-glob-to-any-file:
     - 'open_prices/locations/**'
     - 'open_prices/api/locations/**'
+    - 'docs/topics/openstreetmap-location-data.md'
 
 Challenges:
 - changed-files:
@@ -48,6 +50,29 @@ Moderation:
   - any-glob-to-any-file:
     - 'open_prices/moderation/**'
     - 'open_prices/api/moderation/**'
+    - 'docs/topics/moderation.md'
+
+🧽 Data quality:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'docs/topics/data-quality.md'
+    - 'docs/topics/moderation.md'
+    - 'docs/topics/outlier-detection.md'
+    - 'docs/topics/history.md'
+
+Gamification:
+- changed-files:
+  - any-glob-to-any-file: 'docs/topics/gamification.md'
+
+machine learning:
+- changed-files:
+  - any-glob-to-any-file: 'docs/topics/ai/**'
+
+Data exports:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'docs/guides/data.md'
+    - 'docs/guides/import-data.md'
 
 DB migrations:
 - changed-files:
@@ -61,7 +86,3 @@ GDPR imports:
 GitHub Actions:
 - changed-files:
   - any-glob-to-any-file: '.github/**/*'
-
-🧽 Data Quality:
-- changed-files:
-  - any-glob-to-any-file: 'docs/topics/data-quality.md
