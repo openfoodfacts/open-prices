@@ -24,7 +24,7 @@ graph TD
     G3 --> G4["FOR EACH detection (score >= threshold):<br/>PriceTag.create(created_by=None)"]
     G4 --> G5["run_and_save_price_tag_classification"]
     G5 --> G6["PriceTagPrediction.create<br/>type=PRICE_TAG_CLF"]
-    G6 --> G7{"predicted type != invalid?"}
+    G6 --> G7{"classification OK?<br/>(invalid ones included, temporarily)"}
     G7 -->|"Yes"| H["run_and_save_price_tag_extraction"]
     H --> H1{PRICE_TAG_EXTRACTION_ASYNC_REQUESTS?}
     H1 -->|"Yes"| H2["Gemini API batch<br/><b>asyncio</b>"]
