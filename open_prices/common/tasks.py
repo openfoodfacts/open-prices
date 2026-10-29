@@ -142,8 +142,8 @@ CRON_SCHEDULES = {
     "update_user_counts_task": ("0 2 * * *", {}),
     "update_badge_task": ("5 2 * * *", {}),
     "update_total_stats_task": ("10 2 * * *", {}),
-    "update_price_category_tag_task": ("40 2 * * *", {}),
     # every start of the week
+    "update_price_category_tag_task": ("15 2 * * 1", {}),
     "update_location_counts_task": ("20 2 * * 1", {}),
     "update_product_counts_task": ("30 2 * * 1", {"timeout": 10 * 60 * 60}),
     # every 5 minutes
