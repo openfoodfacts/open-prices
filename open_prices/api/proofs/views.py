@@ -27,6 +27,7 @@ from open_prices.api.proofs.serializers import (
     PriceTagFullSerializer,
     PriceTagUpdateSerializer,
     ProofCreateSerializer,
+    ProofDraftFinalizeSerializer,
     ProofDraftUploadSerializer,
     ProofFullSerializer,
     ProofHalfFullSerializer,
@@ -346,18 +347,27 @@ class ProofDraftViewSet(
 
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_200_OK)
 
-    @extend_schema(request=ProofUpdateSerializer, responses=ProofFullSerializer)
+    @extend_schema(request=ProofDraftFinalizeSerializer, responses=ProofFullSerializer)
     def partial_update(self, request: Request, pk=None) -> Response:
         """Finalize a draft proof - set draft=False and add full metadata."""
         proof = self.get_object()
         # Validate required fields
-        serializer = self.get_serializer(proof, data=request.data, partial=True)
+        serializer = ProofDraftFinalizeSerializer(
+            proof, data=request.data, partial=True
+        )
         serializer.is_valid(raise_exception=True)
 
         # Update fields
         for field in Proof.UPDATE_FIELDS:
             if field in serializer.validated_data:
                 setattr(proof, field, serializer.validated_data[field])
+        if "location" in serializer.validated_data:
+            # keep the OSM fields in line with the chosen location, otherwise
+            # Proof.save() would set the location back from stale OSM fields
+            location = serializer.validated_data["location"]
+            proof.location = location
+            proof.location_osm_id = location.osm_id
+            proof.location_osm_type = location.osm_type
 
         # Check required fields for finalization
         missing_fields = []
