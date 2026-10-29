@@ -2,15 +2,15 @@
 
 Documentation on the machine learning models and prediction pipelines used in Open Prices.
 
-| Model | What it does | Runs on | Provider | Stored as |
-|---|---|---|---|---|
-| OCR | extracts the text of the image | every proof | Google Cloud Vision | `.json.gz` file next to the image |
-| Proof classification | predicts the proof type (price tag, receipt...) | every proof | Triton (`price_proof_classification`) | `ProofPrediction` (`CLASSIFICATION`) |
-| Price tag detection | detects price tags on the image, and creates a `PriceTag` for each one | `PRICE_TAG` proofs | Triton (`price_tag_detection`) | `ProofPrediction` (`OBJECT_DETECTION`) |
-| Price tag classification | predicts the price tag quality (invalid, medium, high) | each price tag | Triton (`price_tag_classification`) | `PriceTagPrediction` (`PRICE_TAG_CLF`) |
-| Price tag extraction | extracts the product, price, discount... | each price tag (not invalid) | Gemini | `PriceTagPrediction` (`PRICE_TAG_EXTRACTION`) |
-| Receipt extraction | extracts the shop, date & items | `RECEIPT` proofs | Gemini | `ProofPrediction` (`RECEIPT_EXTRACTION`) |
-| Receipt anonymization | detects personal info (names, fidelity card ids) to hide with black boxes | `RECEIPT` proofs (draft only) | PaddleOCR + LLM (OpenAI-compatible API) | `ProofPrediction` (`RECEIPT_ANONYMIZATION`), deleted once the proof is no longer a draft |
+| Model | What it does | Runs on | Provider | Stored as | More info |
+|---|---|---|---|---|---|
+| OCR | extracts the text of the image | every proof | Google Cloud Vision | `.json.gz` file next to the image | unused for now (no model reads it), may be deprecated |
+| Proof classification | predicts the proof type (price tag, receipt...) | every proof | Triton (`price_proof_classification`) | `ProofPrediction` (`CLASSIFICATION`) | [Hugging Face](https://huggingface.co/openfoodfacts/price-proof-classification) |
+| Price tag detection | detects price tags on the image, and creates a `PriceTag` for each one | `PRICE_TAG` proofs | Triton (`price_tag_detection`) | `ProofPrediction` (`OBJECT_DETECTION`) | [Hugging Face](https://huggingface.co/openfoodfacts/price-tag-detection) |
+| Price tag classification | predicts the price tag quality (invalid, medium, high) | each price tag | Triton (`price_tag_classification`) | `PriceTagPrediction` (`PRICE_TAG_CLF`) | [Hugging Face](https://huggingface.co/openfoodfacts/price-tag-classification) |
+| Price tag extraction | extracts the product, price, discount... | each price tag (not invalid) | Gemini | `PriceTagPrediction` (`PRICE_TAG_EXTRACTION`) | a fine-tuned Qwen3 model is also available on [Hugging Face](https://huggingface.co/openfoodfacts/price-tag-extractor), unused for now |
+| Receipt extraction | extracts the shop, date & items | `RECEIPT` proofs | Gemini | `ProofPrediction` (`RECEIPT_EXTRACTION`) | |
+| Receipt anonymization | detects personal info (names, fidelity card ids) to hide with black boxes | `RECEIPT` proofs (draft only) | PaddleOCR + LLM (OpenAI-compatible API) | `ProofPrediction` (`RECEIPT_ANONYMIZATION`), deleted once the proof is no longer a draft | |
 
 All models run asynchronously (Django Q tasks) when a proof is created (or when a price tag is added manually). On proof creation, they can be disabled with `ENABLE_ML_PREDICTIONS` (and OCR with `ENABLE_OCR`).
 
