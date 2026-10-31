@@ -538,6 +538,12 @@ class PriceModelSaveTest(TransactionTestCase):
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
+        PriceFactory(
+            type=price_constants.TYPE_CATEGORY,
+            category_tag="en:olive-oils",
+            price=12,
+            price_per=price_constants.PRICE_PER_LITER,
+        )
         self.assertRaises(
             ValidationError,
             PriceFactory,

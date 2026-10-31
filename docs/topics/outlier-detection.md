@@ -7,7 +7,7 @@ The algorithm is simple. We first group all prices per:
 - barcode (if `type=PRODUCT`) or category_tag (if `type=CATEGORY`)
 - type (`PRODUCT` or `CATEGORY`)
 - country code (ex: `FR`)
-- price per (`UNIT` or `KILOGRAM`)
+- price per (`UNIT`, `KILOGRAM` or `LITER`)
 - currency code (ex: `EUR`)
 
 and compute the price median for each group.
