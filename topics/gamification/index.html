@@ -871,6 +871,67 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Challenges 🏆">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-prices-proofs-are-in-a-challenge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which prices &amp; proofs are in a challenge?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challenge-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Challenge tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challenge-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Challenge stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Badges 🎖️
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1447,6 +1508,67 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Challenges 🏆">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-prices-proofs-are-in-a-challenge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which prices &amp; proofs are in a challenge?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challenge-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Challenge tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challenge-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Challenge stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Badges 🎖️
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1498,20 +1620,102 @@
 
 <h1 id="gamification">Gamification</h1>
 <p>Open Prices includes gamification mechanisms to encourage and reward contributions.</p>
+<table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>When</th>
+<th>See</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Challenges</td>
+<td>on price creation + daily</td>
+<td><a href="#challenges">below</a></td>
+</tr>
+<tr>
+<td>Badges</td>
+<td>daily</td>
+<td><a href="#badges">below</a></td>
+</tr>
+<tr>
+<td>Rankings</td>
+<td>daily</td>
+<td><a href="#rankings">below</a></td>
+</tr>
+</tbody>
+</table>
 <h2 id="challenges">Challenges 🏆</h2>
 <p>Challenges are used to focus community effort during a time window.</p>
-<p>A challenge can target:</p>
-<ul>
-<li>specific periods (start/end dates)</li>
-<li>specific categories</li>
-<li>optionally specific locations</li>
-</ul>
 <p>see <a href="https://prices.openfoodfacts.org/challenges">https://prices.openfoodfacts.org/challenges</a></p>
+<h3 id="configuration">Configuration</h3>
+<p>Challenges are created &amp; edited by admins (in the Django admin). A challenge can target:</p>
+<ul>
+<li>specific periods (<code>start_date</code> &amp; <code>end_date</code>, mandatory once published)</li>
+<li>optionally specific categories (<code>categories</code>), e.g. <code>en:breakfast-cereals</code>. Their children in the Open Food Facts category taxonomy are also included (stored in <code>categories_full</code>)</li>
+<li>optionally specific locations (<code>locations</code>)</li>
+</ul>
+<p>Its status is computed from <code>is_published</code> and the dates:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DRAFT</code></td>
+<td><code>is_published</code> is <code>False</code></td>
+</tr>
+<tr>
+<td><code>UPCOMING</code></td>
+<td>published, <code>start_date</code> in the future</td>
+</tr>
+<tr>
+<td><code>ONGOING</code></td>
+<td>published, between <code>start_date</code> and <code>end_date</code></td>
+</tr>
+<tr>
+<td><code>COMPLETED</code></td>
+<td>published, <code>end_date</code> in the past</td>
+</tr>
+</tbody>
+</table>
+<h3 id="which-prices-proofs-are-in-a-challenge">Which prices &amp; proofs are in a challenge?</h3>
+<p>A price is in a challenge if:</p>
+<ul>
+<li>it was <strong>created</strong> (not the price <code>date</code>!) between the challenge start &amp; end dates</li>
+<li>and (if the challenge has categories) its <code>category_tag</code> is in the challenge <code>categories_full</code> (for <code>CATEGORY</code> prices), or its product <code>categories_tags</code> overlap the challenge <code>categories</code> (for <code>PRODUCT</code> prices)</li>
+<li>and (if the challenge has locations) its location is one of the challenge locations</li>
+</ul>
+<p>A proof is in a challenge if at least one of its prices is.</p>
+<h3 id="challenge-tags">Challenge tags</h3>
+<p>Prices &amp; proofs in a challenge are tagged with <code>challenge-&lt;id&gt;</code> (e.g. <code>challenge-12</code>) in their <code>tags</code> field. These tags are set automatically, they cannot be edited via the API:</p>
+<ul>
+<li>on price creation (async task): the price (and its proof) is tagged for each <code>ONGOING</code> challenge it matches</li>
+<li>daily (<code>update_challenge_task</code>): all matching prices &amp; proofs are tagged, for challenges that are not completed or completed less than 7 days ago (after that, the challenge is "frozen")</li>
+</ul>
+<p>Note: tags are only added, never removed (e.g. if a price is edited and no longer matches the challenge).</p>
+<p>The tags can be used to filter the API, e.g. <code>/api/v1/prices?tags__contains=challenge-12</code>.</p>
+<h3 id="challenge-stats">Challenge stats</h3>
+<p>The challenge <code>stats</code> field is computed daily from the challenge tags: price, proof, user, product &amp; location counts, as well as the top 10 users (by prices, proofs &amp; prices from their proofs), locations and cities.</p>
+<p>See <code>open_prices/challenges/models.py</code></p>
+<h2 id="badges">Badges 🎖️</h2>
+<p>Badges reward contributors who reach a threshold on a given metric, e.g. "10 receipts uploaded". They are created by admins (in the Django admin).</p>
+<p>see <a href="https://prices.openfoodfacts.org/badges">https://prices.openfoodfacts.org/badges</a></p>
+<p>Every day (<code>update_badge_task</code>), users who have reached a badge threshold are given the badge. Badges are never taken away.</p>
+<p>See <code>open_prices/badges/</code> &amp; <code>/api/v1/badges</code></p>
 <h2 id="rankings">Rankings 🏅</h2>
-<p>We have a simple overall contributor ranking, as well as challenge-specific rankings</p>
+<p>We have a simple overall contributor ranking, as well as challenge-specific rankings (see <a href="#challenge-stats">Challenge stats</a>)</p>
 <p>see <a href="https://prices.openfoodfacts.org/stats">https://prices.openfoodfacts.org/stats</a></p>
 <h2 id="future-ideas">Future ideas 💡</h2>
-<p>badges, mayorship...</p>
+<ul>
+<li>mayorship (top contributor of a location)</li>
+<li>yearly recap: a personal end-of-year summary of each contributor's activity (prices &amp; proofs added, locations visited, challenges joined, badges earned...)</li>
+</ul>
+<p>Have other ideas, or feedback on the existing ones? Anyone can join the conversation in the <a href="https://github.com/openfoodfacts/open-prices/discussions/399">Gamification discussion</a> 🙌</p>
 
 
 
