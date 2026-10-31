@@ -1,3 +1,5 @@
+from math import isfinite
+
 from rest_framework import serializers
 
 from open_prices.api.locations.serializers import LocationSerializer
@@ -90,6 +92,10 @@ class DraftProofAnonymizeRequestSerializer(serializers.Serializer):
 
     def validate_bounding_boxes(self, value):
         for bounding_box in value:
+            if not all(isfinite(coordinate) for coordinate in bounding_box):
+                raise serializers.ValidationError(
+                    "Bounding box coordinates must be finite"
+                )
             x_min, y_min, x_max, y_max = bounding_box
             if x_min >= x_max or y_min >= y_max:
                 raise serializers.ValidationError(

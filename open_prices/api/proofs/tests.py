@@ -4,6 +4,7 @@ import tempfile
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 
 import cv2
 import numpy as np
@@ -1260,6 +1261,51 @@ class ProofDraftAnonymizeApiTest(TestCase):
         proof = Proof.all_objects.get(id=receipt_draft_proof.id)
         self.assertEqual(proof.file_path, "0001/1.webp")
         self.assertEqual(proof.image_thumb_path, "0001/1.400.webp")
+
+    def test_anonymize_draft_receipt_rejects_nan_coordinates(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            image_path = root / "receipt.jpg"
+            thumb_path = root / "thumbnail.jpg"
+            image = np.full((100, 100, 3), 255, dtype=np.uint8)
+            self.assertTrue(cv2.imwrite(str(image_path), image))
+            self.assertTrue(cv2.imwrite(str(thumb_path), image))
+            originals = [image_path.read_bytes(), thumb_path.read_bytes()]
+            with override_settings(IMAGES_DIR=root):
+                proof = cast(
+                    Proof,
+                    ProofFactory(
+                        file_path="receipt.jpg",
+                        image_thumb_path="thumbnail.jpg",
+                        draft=True,
+                        owner=self.session.user.user_id,
+                        type=proof_constants.TYPE_RECEIPT,
+                    ),
+                )
+                url = reverse("api:proofs-drafts-anonymize-receipt", args=[proof.id])
+                self.client.raise_request_exception = False
+                for coordinate in range(4):
+                    with self.subTest(coordinate=coordinate):
+                        box: list[float | str] = [0.1, 0.1, 0.9, 0.9]
+                        box[coordinate] = "NaN"
+                        response = self.client.post(
+                            url,
+                            data={"bounding_boxes": [box]},
+                            headers={"Authorization": f"Bearer {self.session.token}"},
+                            content_type="application/json",
+                        )
+                        self.assertEqual(response.status_code, 400)
+                        self.assertIn("bounding_boxes", response.data)
+                        proof.refresh_from_db()
+                        self.assertTrue(proof.draft)
+                        self.assertEqual(proof.file_path, "receipt.jpg")
+                        self.assertEqual(proof.image_thumb_path, "thumbnail.jpg")
+                        self.assertEqual(
+                            [image_path.read_bytes(), thumb_path.read_bytes()],
+                            originals,
+                        )
+                        self.assertFalse(image_path.with_suffix(".webp").exists())
+                        self.assertFalse(thumb_path.with_suffix(".webp").exists())
 
 
 class PriceTagListApiTest(TestCase):
