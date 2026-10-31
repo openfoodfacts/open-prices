@@ -233,16 +233,12 @@ class Label(BaseModel):
 
         price_grouped_by_per: dict[Unit, list[LabelPrice]] = {unit: [] for unit in Unit}
         for price in sorted_prices:
-            # Convert price_per to Unit.KILOGRAM if it is LITER
-            price_per = (
-                price.price_per if price.price_per != Unit.LITER else Unit.KILOGRAM
-            )
-            price_grouped_by_per[price_per].append(price)
+            price_grouped_by_per[price.price_per].append(price)
 
         if self.type == "CATEGORY":
-            # We first consider the price per KILOGRAM for raw products then
-            # per UNIT
-            selected_units = [Unit.KILOGRAM, Unit.UNIT]
+            # We first consider the price per KILOGRAM for raw products, then
+            # per LITER, then per UNIT
+            selected_units = [Unit.KILOGRAM, Unit.LITER, Unit.UNIT]
         else:
             # We only consider the price per UNIT for packaged products.
             selected_units = [Unit.UNIT]

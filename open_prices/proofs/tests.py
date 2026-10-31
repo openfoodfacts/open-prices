@@ -45,10 +45,13 @@ from open_prices.proofs.ml.classification import (
     proof_classification_model_config,
     run_and_save_proof_type_prediction,
 )
+from open_prices.proofs.ml.common import DiscountType, Unit
 from open_prices.proofs.ml.ocr import fetch_and_save_ocr_data
 from open_prices.proofs.ml.price_tags import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
     PRICE_TAG_DETECTOR_MODEL_VERSION,
+    Label,
+    LabelPrice,
     create_price_tags_from_proof_prediction,
     extract_from_price_tag,
     run_and_save_price_tag_detection,
@@ -1303,6 +1306,58 @@ class MLModelTest(TestCase):
                 generate_content_kwargs["config"].thinking_config.thinking_level.name,
                 "MINIMAL",
             )
+
+
+class LabelSelectedPriceTest(TestCase):
+    def build_label(self, type, prices):
+        return Label(
+            type=type,
+            prices=[
+                LabelPrice(price=price, currency="EUR", price_per=price_per)
+                for (price, price_per) in prices
+            ],
+            origin=None,
+            organic=False,
+            barcode="",
+            product_name="",
+        )
+
+    def test_selected_price_category(self):
+        for prices, expected in [
+            # price per KILOGRAM first
+            ([(3, Unit.UNIT), (2, Unit.KILOGRAM)], (2, Unit.KILOGRAM)),
+            ([(10, Unit.LITER), (2, Unit.KILOGRAM)], (2, Unit.KILOGRAM)),
+            # then price per LITER (no longer converted to KILOGRAM)
+            ([(10, Unit.LITER)], (10, Unit.LITER)),
+            ([(5, Unit.UNIT), (10, Unit.LITER)], (10, Unit.LITER)),
+            # then price per UNIT
+            ([(3, Unit.UNIT)], (3, Unit.UNIT)),
+        ]:
+            with self.subTest(prices=prices):
+                selected_price = self.build_label("CATEGORY", prices).selected_price
+                self.assertEqual(selected_price.price, expected[0])
+                self.assertEqual(selected_price.price_per, expected[1])
+
+    def test_selected_price_category_discounted_per_liter(self):
+        label = self.build_label("CATEGORY", [(10, Unit.LITER), (8, Unit.LITER)])
+        label.prices[1].price_is_discounted = True
+        label.prices[1].discount_type = DiscountType.SALE
+        selected_price = label.selected_price
+        self.assertEqual(selected_price.price, 8)
+        self.assertEqual(selected_price.price_per, Unit.LITER)
+        self.assertTrue(selected_price.price_is_discounted)
+        self.assertEqual(selected_price.price_without_discount, 10)
+
+    def test_selected_price_product(self):
+        # only the price per UNIT is considered
+        selected_price = self.build_label(
+            "PRODUCT", [(15, Unit.LITER), (3, Unit.UNIT)]
+        ).selected_price
+        self.assertEqual(selected_price.price, 3)
+        self.assertEqual(selected_price.price_per, Unit.UNIT)
+        self.assertIsNone(
+            self.build_label("PRODUCT", [(15, Unit.LITER)]).selected_price
+        )
 
 
 class TestSelectProofImageDir(TestCase):
