@@ -29,6 +29,7 @@ from open_prices.common import constants
 from open_prices.common import google as common_google
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
+from open_prices.moderation.models import Flag, FlagReason, FlagStatus
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
@@ -730,6 +731,21 @@ class ProofModelDeleteTest(TestCase):
         self.location.refresh_from_db()
         self.assertEqual(self.user_session.user.proof_count, 0)
         self.assertEqual(self.location.proof_count, 0)
+
+    def test_flags_are_kept_and_closed(self):
+        proof_id = self.proof.id
+        flag = Flag.objects.create(
+            content_object=self.proof, reason=FlagReason.WRONG_TYPE
+        )
+        self.assertEqual(self.proof.flags.count(), 1)
+        # delete proof
+        self.proof.delete()
+        # flag is kept (for moderation history) and closed
+        self.assertEqual(Flag.objects.count(), 1)
+        flag.refresh_from_db()
+        self.assertEqual(flag.status, FlagStatus.CLOSED)
+        self.assertEqual(flag.object_id, proof_id)
+        self.assertIsNone(flag.content_object)
 
 
 class ProofModelHistoryTest(TestCase):
