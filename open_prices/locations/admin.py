@@ -20,6 +20,19 @@ class LocationAdminForm(forms.ModelForm):
         fields = "__all__"
 
 
+class TagFilter(admin.SimpleListFilter):
+    title = "Tag"
+    parameter_name = "tag"
+
+    def lookups(self, request, model_admin):
+        return location_constants.TAG_CHOICES
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.has_tag(self.value())
+        return queryset
+
+
 @admin.register(Location)
 class LocationAdmin(SimpleHistoryAdmin):
     form = LocationAdminForm
@@ -38,7 +51,7 @@ class LocationAdmin(SimpleHistoryAdmin):
         "proof_count",
         "created",
     )
-    list_filter = ("type", "osm_type")
+    list_filter = ("type", "osm_type", TagFilter)
     search_fields = ("id", "osm_id", "website_url")
     readonly_fields = (
         *Location.TYPE_OSM_OPTIONAL_FIELDS,
