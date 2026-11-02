@@ -2330,3 +2330,35 @@ class TestSaveAnonymizedReceipt(unittest.TestCase):
                 )
                 area = new_image[y_min:y_max, x_min:x_max]
                 self.assertTrue(np.all(area == 0))
+
+
+class RunMLModelsCommandTest(TestCase):
+    def test_price_tag_jobs_skip_price_tags_created_during_the_run(self):
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        price_tag_existing = PriceTagFactory(proof=proof)
+
+        def fake_run_and_save_proof_prediction(proof, **kwargs):
+            # simulate the price tag detection creating a new price tag
+            PriceTagFactory(proof=proof)
+
+        command_module = "open_prices.proofs.management.commands.run_ml_models"
+        with (
+            unittest.mock.patch(
+                f"{command_module}.run_and_save_proof_prediction",
+                side_effect=fake_run_and_save_proof_prediction,
+            ),
+            unittest.mock.patch(
+                f"{command_module}.run_and_save_price_tag_classification_from_id"
+            ) as mock_classification,
+            unittest.mock.patch(
+                f"{command_module}.run_and_save_price_tag_extraction"
+            ) as mock_extraction,
+        ):
+            management.call_command(
+                "run_ml_models", "--apply", "--delay", "0", stdout=io.StringIO()
+            )
+        self.assertEqual(PriceTag.objects.filter(proof=proof).count(), 2)
+        # only the price tag that existed before the run is processed
+        mock_classification.assert_called_once_with(price_tag_existing.id)
+        mock_extraction.assert_called_once()
+        self.assertEqual(mock_extraction.call_args.args[0], [price_tag_existing])

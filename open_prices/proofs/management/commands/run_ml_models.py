@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
     Note: price tags created by `proof_price_tag_detection` already get their
     classification & extraction run (async) through the PriceTag post_save signal,
-    so avoid combining it with the `price_tag_*` types in the same run.
+    so the `price_tag_*` types only process price tags created before the command started.
     """
 
     help = "Run ML models on images with proof predictions, and save the predictions in DB."
@@ -99,11 +99,15 @@ class Command(BaseCommand):
             f"limit: {limit}, types: {','.join(types)}, delay: {delay} seconds, apply: {apply}"
         )
 
+        # price tags created during this run (by proof_price_tag_detection) are
+        # already processed by the PriceTag post_save signal: skip them below
+        started_at = timezone.now()
+
         if any(t in types for t in PROOF_MODELS):
             self.handle_proof_jobs(types, limit, delay, apply)
 
         if any(t in types for t in PRICE_TAG_MODELS):
-            self.handle_price_tag_jobs(types, limit, delay, apply)
+            self.handle_price_tag_jobs(types, limit, delay, apply, started_at)
 
     def handle_proof_jobs(
         self, types: list[str], limit: int, delay: int, apply: bool
@@ -158,11 +162,17 @@ class Command(BaseCommand):
                 self.stdout.write("Done.")
 
     def handle_price_tag_jobs(
-        self, types: list[str], limit: int, delay: int, apply: bool
+        self,
+        types: list[str],
+        limit: int,
+        delay: int,
+        apply: bool,
+        started_at: datetime.datetime,
     ) -> None:
         price_tags = (
             PriceTag.objects.select_related("proof")
             .filter(
+                created__lt=started_at,
                 proof__created__lt=timezone.now() - datetime.timedelta(seconds=delay),
                 proof__type=proof_constants.TYPE_PRICE_TAG,
             )
