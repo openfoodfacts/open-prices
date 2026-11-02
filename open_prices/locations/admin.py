@@ -8,9 +8,10 @@ from open_prices.locations.models import Location
 
 class LocationAdminForm(forms.ModelForm):
     # checkboxes instead of the default comma-separated text input
+    # "radiolist" class: reuse the admin CSS of radio buttons (full width labels)
     tags = forms.MultipleChoiceField(
         choices=location_constants.TAG_CHOICES,
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "radiolist"}),
         required=False,
     )
 
@@ -44,4 +45,21 @@ class LocationAdmin(SimpleHistoryAdmin):
         *Location.COUNT_FIELDS,
         "created",
         "updated",
+    )
+
+    fieldsets = (
+        (None, {"fields": ("type",)}),
+        (
+            "OpenStreetMap",
+            {
+                "fields": (
+                    *Location.TYPE_OSM_MANDATORY_FIELDS,
+                    *Location.TYPE_OSM_OPTIONAL_FIELDS,
+                )
+            },
+        ),
+        ("Online", {"fields": Location.TYPE_ONLINE_MANDATORY_FIELDS}),
+        ("Tags", {"fields": ("tags",)}),
+        ("Stats", {"fields": Location.COUNT_FIELDS}),
+        ("Metadata", {"fields": ("source", "created", "updated")}),
     )
