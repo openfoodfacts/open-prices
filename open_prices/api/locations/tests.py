@@ -129,7 +129,10 @@ class LocationListFilterApiTest(TestCase):
         cls.url = reverse("api:locations-list")
         LocationFactory(**LOCATION_OSM_NODE_652825274)
         LocationFactory(**LOCATION_OSM_NODE_6509705997)
-        LocationFactory(**LOCATION_OSM_WAY_872934393)
+        LocationFactory(
+            **LOCATION_OSM_WAY_872934393,
+            tags=[location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+        )
         LocationFactory(**LOCATION_ONLINE_DECATHLON)
 
     def test_location_list_filter_by_type(self):
@@ -182,6 +185,21 @@ class LocationListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
+
+    def test_location_list_filter_by_tags(self):
+        url = self.url + "?tags__contains=price-tag-barcode-internal"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["tags"],
+            [location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+        )
+        url = self.url + "?tags__not_contains=price-tag-barcode-internal"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        url = self.url + "?tags__contains=receipt-barcode-printed"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
 
 class LocationDetailApiTest(TestCase):
