@@ -1032,14 +1032,6 @@ class MLModelTest(TestCase):
                         "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
-                    unittest.mock.patch(
-                        "open_prices.proofs.ml.price_tags.predict_price_tag_type",
-                        return_value=[
-                            ("high-quality", 0.96),
-                            ("medium-quality", 0.03),
-                            ("invalid", 0.01),
-                        ],
-                    ) as mock_predict_price_tag_type,
                 ):
                     run_and_save_proof_prediction(
                         proof,
@@ -1047,9 +1039,6 @@ class MLModelTest(TestCase):
                     )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_called_once()
-                    self.assertEqual(
-                        mock_predict_price_tag_type.call_count, 1
-                    )  # should be called for the detected price tag
 
                 proof_type_prediction = proof.predictions.filter(
                     type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
@@ -1107,23 +1096,12 @@ class MLModelTest(TestCase):
                 self.assertAlmostEqual(objects[0]["score"], 0.98)
                 self.assertEqual(objects[0]["bounding_box"], [0.5, 0.5, 1.0, 1.0])
 
-                price_tag_type_prediction = PriceTagPrediction.objects.filter(
-                    type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE
-                ).first()
-                self.assertIsNotNone(price_tag_type_prediction)
-                self.assertEqual(
-                    price_tag_type_prediction.type,
-                    proof_constants.PRICE_TAG_CLASSIFICATION_TYPE,
-                )
-                self.assertEqual(
-                    price_tag_type_prediction.data,
-                    {
-                        "prediction": [
-                            {"label": "high-quality", "score": 0.96},
-                            {"label": "medium-quality", "score": 0.03},
-                            {"label": "invalid", "score": 0.01},
-                        ]
-                    },
+                # the detected price tag was created
+                self.assertEqual(PriceTag.objects.filter(proof=proof).count(), 1)
+                # price tag ML models are run in the PriceTag post_save signal
+                # (muted in tests)
+                self.assertFalse(
+                    PriceTagPrediction.objects.filter(price_tag__proof=proof).exists()
                 )
 
                 # prediction_count was incremented
