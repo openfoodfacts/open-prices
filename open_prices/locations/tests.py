@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.core import management
 from django.core.exceptions import ValidationError
@@ -7,6 +8,7 @@ from django.test import TestCase
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.locations.tasks import fetch_and_save_data_from_openstreetmap
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
@@ -128,6 +130,30 @@ class LocationModelSaveTest(TestCase):
             type=location_constants.TYPE_ONLINE,
             website_url=location_constants.WEBSITE_URL_OK_TUPLE_LIST[0][0],
         )
+
+
+class FetchAndSaveDataFromOpenStreetMapTest(TestCase):
+    @patch("open_prices.common.openstreetmap.get_location_dict_from_all_apis")
+    def test_fetch_does_not_overwrite_counts(self, mock_get_location_dict):
+        mock_get_location_dict.return_value = {"osm_name": "Carrefour"}
+        for save_without_historical_record in (True, False):
+            with self.subTest(
+                save_without_historical_record=save_without_historical_record
+            ):
+                location = LocationFactory()
+                # the task receives the location instance as it was at creation
+                stale_location = Location.objects.get(id=location.id)
+                # meanwhile, a proof is added (see proof_post_create_increment_counts)
+                Location.objects.filter(id=location.id).update(proof_count=1)
+
+                fetch_and_save_data_from_openstreetmap(
+                    stale_location,
+                    save_without_historical_record=save_without_historical_record,
+                )
+
+                location.refresh_from_db()
+                self.assertEqual(location.osm_name, "Carrefour")
+                self.assertEqual(location.proof_count, 1)
 
 
 class LocationModelHistoryTest(TestCase):
