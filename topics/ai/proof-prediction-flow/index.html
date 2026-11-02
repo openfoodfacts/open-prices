@@ -1502,8 +1502,8 @@
 <p>This document maps prediction-related operations for both proof and price tag creation.</p>
 <h2 id="flow-diagram">Flow Diagram</h2>
 <pre class="mermaid"><code>graph TD
-    A["Proof.save()"] --&gt;|"post_save signal"| B["proof_post_save_run_ocr&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
-    A --&gt;|"post_save signal"| C["proof_post_save_run_ml_models"]
+    A["Proof.save()"] --&gt;|"post_save signal"| B["proof_post_create_run_ocr&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
+    A --&gt;|"post_save signal"| C["proof_post_create_run_ml_models"]
 
     B --&gt; B1["fetch_and_save_ocr_data"]
 
@@ -1518,26 +1518,21 @@
     G1 --&gt; G2["ProofPrediction.create&lt;br/&gt;type=OBJECT_DETECTION"]
     G2 --&gt; G3["create_price_tags_from_proof_prediction"]
     G3 --&gt; G4["FOR EACH detection (score &gt;= threshold):&lt;br/&gt;PriceTag.create(created_by=None)"]
-    G4 --&gt; G5["run_and_save_price_tag_classification"]
-    G5 --&gt; G6["PriceTagPrediction.create&lt;br/&gt;type=PRICE_TAG_CLF"]
-    G6 --&gt; G7{"classification OK?&lt;br/&gt;(invalid ones included, temporarily)"}
-    G7 --&gt;|"Yes"| H["run_and_save_price_tag_extraction"]
-    H --&gt; H1{PRICE_TAG_EXTRACTION_ASYNC_REQUESTS?}
-    H1 --&gt;|"Yes"| H2["Gemini API batch&lt;br/&gt;&lt;b&gt;asyncio&lt;/b&gt;"]
-    H1 --&gt;|"No"| H3["Gemini API sequential"]
-    H2 --&gt; H4["PriceTagPrediction.create&lt;br/&gt;type=PRICE_TAG_EXTRACTION"]
-    H3 --&gt; H4
+    G4 --&gt; K
+    H --&gt; H1["extract_from_price_tag&lt;br/&gt;Gemini API"]
+    H1 --&gt; H2["PriceTagPrediction.create&lt;br/&gt;type=PRICE_TAG_EXTRACTION"]
 
     D --&gt; I{"proof.type == TYPE_RECEIPT and run_receipt_extraction?"}
     I --&gt;|"Yes"| J["run_and_save_receipt_extraction_prediction&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
     J --&gt; J1["extract_from_receipt&lt;br/&gt;Gemini API"]
     J1 --&gt; J2["ProofPrediction.create&lt;br/&gt;type=PROOF_PREDICTION_RECEIPT_EXTRACTION"]
 
-    K["PriceTag.save() with created_by set"] --&gt;|"post_save signal"| L["price_tag_post_save_run_ml_models&lt;br/&gt;&lt;b&gt;ASYNC TASK via django-q&lt;/b&gt;"]
+    K["PriceTag.save()&lt;br/&gt;(automatic or manual)"] --&gt;|"post_save signal"| L["price_tag_post_create_run_ml_models&lt;br/&gt;&lt;b&gt;ASYNC TASKS via django-q&lt;/b&gt;"]
     L --&gt; L1["run_and_save_price_tag_classification_from_id"]
     L --&gt; L2["run_and_save_price_tag_extraction_from_id"]
-    L1 --&gt; G5
-    L2 --&gt; H
+    L1 --&gt; G5["run_and_save_price_tag_classification"]
+    G5 --&gt; G6["PriceTagPrediction.create&lt;br/&gt;type=PRICE_TAG_CLF"]
+    L2 --&gt; H["run_and_save_price_tag_extraction"]
 
     style A stroke:#2ecc71,stroke-width:3px
     style B stroke:#e74c3c,stroke-width:3px
@@ -1555,9 +1550,8 @@
     style G5 stroke:#2ecc71,stroke-width:3px
     style G6 stroke:#2ecc71,stroke-width:3px
     style H stroke:#2ecc71,stroke-width:3px
-    style H2 stroke:#e74c3c,stroke-width:3px
-    style H3 stroke:#2ecc71,stroke-width:3px
-    style H4 stroke:#2ecc71,stroke-width:3px
+    style H1 stroke:#2ecc71,stroke-width:3px
+    style H2 stroke:#2ecc71,stroke-width:3px
     style J stroke:#e74c3c,stroke-width:3px
     style J1 stroke:#2ecc71,stroke-width:3px
     style J2 stroke:#2ecc71,stroke-width:3px
@@ -1568,14 +1562,13 @@
 <h2 id="notes">Notes</h2>
 <ul>
 <li>Green border: synchronous execution.</li>
-<li>Red border: asynchronous execution (django-q task or asyncio batch).</li>
-<li>The proof-created flow and manual price-tag-created flow share the same price tag classification and extraction functions.</li>
+<li>Red border: asynchronous execution (django-q task).</li>
+<li>Price tags created automatically (from a proof detection) and manually (by a user) go through the same <code>post_save</code> signal, which runs classification and extraction in parallel (one task per price tag).</li>
 </ul>
 <h2 id="configuration">Configuration</h2>
 <ul>
 <li><code>ENABLE_ML_PREDICTIONS</code></li>
 <li><code>ENABLE_OCR</code></li>
-<li><code>PRICE_TAG_EXTRACTION_ASYNC_REQUESTS</code></li>
 </ul>
 
 
