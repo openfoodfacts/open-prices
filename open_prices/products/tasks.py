@@ -20,7 +20,9 @@ def fetch_and_save_data_from_openfoodfacts(product: Product):
     else:
         for key, value in product_openfoodfacts_details.items():
             setattr(product, key, value)
-        product.save()
+        # only save the OFF fields: the product instance can be stale (the task
+        # is queued at creation), saving all fields would overwrite the counts
+        product.save(update_fields=[*product_openfoodfacts_details.keys(), "updated"])
 
 
 def process_update(code: str, flavor: Flavor) -> None:
