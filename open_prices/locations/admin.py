@@ -8,15 +8,29 @@ from open_prices.locations.models import Location
 
 class LocationAdminForm(forms.ModelForm):
     # checkboxes instead of the default comma-separated text input
+    # "radiolist" class: reuse the admin CSS of radio buttons (full width labels)
     tags = forms.MultipleChoiceField(
         choices=location_constants.TAG_CHOICES,
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "radiolist"}),
         required=False,
     )
 
     class Meta:
         model = Location
         fields = "__all__"
+
+
+class TagFilter(admin.SimpleListFilter):
+    title = "Tag"
+    parameter_name = "tag"
+
+    def lookups(self, request, model_admin):
+        return location_constants.TAG_CHOICES
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.has_tag(self.value())
+        return queryset
 
 
 @admin.register(Location)
@@ -37,11 +51,28 @@ class LocationAdmin(SimpleHistoryAdmin):
         "proof_count",
         "created",
     )
-    list_filter = ("type", "osm_type")
+    list_filter = ("type", "osm_type", TagFilter)
     search_fields = ("id", "osm_id", "website_url")
     readonly_fields = (
         *Location.TYPE_OSM_OPTIONAL_FIELDS,
         *Location.COUNT_FIELDS,
         "created",
         "updated",
+    )
+
+    fieldsets = (
+        (None, {"fields": ("type",)}),
+        (
+            "OpenStreetMap",
+            {
+                "fields": (
+                    *Location.TYPE_OSM_MANDATORY_FIELDS,
+                    *Location.TYPE_OSM_OPTIONAL_FIELDS,
+                )
+            },
+        ),
+        ("Online", {"fields": Location.TYPE_ONLINE_MANDATORY_FIELDS}),
+        ("Tags", {"fields": ("tags",)}),
+        ("Stats", {"fields": Location.COUNT_FIELDS}),
+        ("Metadata", {"fields": ("source", "created", "updated")}),
     )
