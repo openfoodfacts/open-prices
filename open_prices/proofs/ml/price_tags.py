@@ -1,4 +1,3 @@
-import asyncio
 import enum
 import logging
 from pathlib import Path
@@ -6,7 +5,6 @@ from typing import Literal
 
 import cv2
 import numpy as np
-from asgiref.sync import async_to_sync
 from django.conf import settings
 from google import genai
 from openfoodfacts.barcode import normalize_barcode
@@ -364,58 +362,6 @@ def extract_from_price_tag(
         )
 
 
-async def extract_from_price_tag_async(
-    client: genai.client.AsyncClient, image: np.ndarray
-) -> common_google.types.GenerateContentResponse:
-    """Asynchronous version of extract_from_price_tag.
-
-    Image preprocessing (resizing to maximum size) must be done before calling
-    this function.
-
-    :param client: the AsyncClient instance to use for the request.
-    :param image: the input image as a numpy array (uint8, in BGR format), already preprocessed.
-    :return: the Gemini response
-    """
-    response = await client.models.generate_content(
-        model=common_google.GEMINI_MODEL_VERSION,
-        contents=[
-            EXTRACT_PRICE_TAG_PROMPT,
-            genai.types.Part.from_bytes(
-                data=convert_image(image, format="webp", quality=80),
-                mime_type="image/webp",
-            ),
-        ],
-        config=common_google.get_generation_config(Label, thinking_level="minimal"),
-    )
-    return response
-
-
-async def extract_from_price_tag_batch(
-    images: list[np.ndarray],
-) -> list[common_google.types.GenerateContentResponse]:
-    """Extract price tag information from a batch of images.
-
-    This function processes multiple images in parallel using asyncio.
-
-    :param images: a list of numpy arrays (uint8, in BGR format),
-        already preprocessed (resized).
-    :return: a list of Gemini responses, one for each image
-    """
-    async with genai.Client(
-        credentials=common_google.get_google_credentials(),
-        project=settings.GOOGLE_PROJECT,
-    ).aio as aclient:
-        tasks = [extract_from_price_tag_async(aclient, image) for image in images]
-        return await asyncio.gather(*tasks)
-
-
-# We use async_to_sync to make the function synchronous for compatibility
-# with the rest of the codebase that expects synchronous functions.
-# See
-# https://docs.djangoproject.com/en/5.2/topics/async/#async-adapter-functions
-sync_extract_from_price_tag_batch = async_to_sync(extract_from_price_tag_batch)
-
-
 def detect_price_tags(
     image: np.ndarray,
     model_name: str = PRICE_TAG_DETECTOR_MODEL_NAME,
@@ -554,16 +500,7 @@ def run_and_save_price_tag_extraction(
         return None
 
     cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
-
-    # Sending requests in parallel using asyncio was responsible to network
-    # exceptions in production, so we added here a setting to control
-    # whether to use async requests or not.
-    # See https://github.com/openfoodfacts/open-prices/issues/893
-    if settings.PRICE_TAG_EXTRACTION_ASYNC_REQUESTS:
-        cropped_image = generate_image_thumbnail_cv2(cropped_image, max_size=1024)
-        response = sync_extract_from_price_tag_batch([cropped_image])[0]
-    else:
-        response = extract_from_price_tag(cropped_image)
+    response = extract_from_price_tag(cropped_image)
     if response.parsed is None:
         logger.info(
             "Failed to extract price tag for price tag id %s: %s",
