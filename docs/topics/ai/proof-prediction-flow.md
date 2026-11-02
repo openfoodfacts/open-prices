@@ -23,11 +23,8 @@ graph TD
     G2 --> G3["create_price_tags_from_proof_prediction"]
     G3 --> G4["FOR EACH detection (score >= threshold):<br/>PriceTag.create(created_by=None)"]
     G4 --> K
-    H --> H1{PRICE_TAG_EXTRACTION_ASYNC_REQUESTS?}
-    H1 -->|"Yes"| H2["Gemini API batch<br/><b>asyncio</b>"]
-    H1 -->|"No"| H3["Gemini API sequential"]
-    H2 --> H4["PriceTagPrediction.create<br/>type=PRICE_TAG_EXTRACTION"]
-    H3 --> H4
+    H --> H1["extract_from_price_tag<br/>Gemini API"]
+    H1 --> H2["PriceTagPrediction.create<br/>type=PRICE_TAG_EXTRACTION"]
 
     D --> I{"proof.type == TYPE_RECEIPT and run_receipt_extraction?"}
     I -->|"Yes"| J["run_and_save_receipt_extraction_prediction<br/><b>ASYNC TASK via django-q</b>"]
@@ -57,9 +54,8 @@ graph TD
     style G5 stroke:#2ecc71,stroke-width:3px
     style G6 stroke:#2ecc71,stroke-width:3px
     style H stroke:#2ecc71,stroke-width:3px
-    style H2 stroke:#e74c3c,stroke-width:3px
-    style H3 stroke:#2ecc71,stroke-width:3px
-    style H4 stroke:#2ecc71,stroke-width:3px
+    style H1 stroke:#2ecc71,stroke-width:3px
+    style H2 stroke:#2ecc71,stroke-width:3px
     style J stroke:#e74c3c,stroke-width:3px
     style J1 stroke:#2ecc71,stroke-width:3px
     style J2 stroke:#2ecc71,stroke-width:3px
@@ -72,11 +68,10 @@ graph TD
 ## Notes
 
 - Green border: synchronous execution.
-- Red border: asynchronous execution (django-q task or asyncio batch).
-- Price tags created automatically (from a proof detection) and manually (by a user) go through the same `post_save` signal, which runs classification and extraction in parallel.
+- Red border: asynchronous execution (django-q task).
+- Price tags created automatically (from a proof detection) and manually (by a user) go through the same `post_save` signal, which runs classification and extraction in parallel (one task per price tag).
 
 ## Configuration
 
 - `ENABLE_ML_PREDICTIONS`
 - `ENABLE_OCR`
-- `PRICE_TAG_EXTRACTION_ASYNC_REQUESTS`
