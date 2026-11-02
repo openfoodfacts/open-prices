@@ -143,6 +143,54 @@ class ProductQuerySetTest(TestCase):
         self.assertEqual(product.price_count_annotated, 1)
         self.assertEqual(product.price_count, 1)
 
+    def test_to_update_in_sync_task(self):
+        last_synced = timezone.now() - timezone.timedelta(days=1)
+        ProductFactory(
+            code="0123456789102", source=Flavor.off, source_last_synced=last_synced
+        )
+        ProductFactory(code="0123456789103", source=Flavor.obf)
+        # no source (created in Open Prices before OFF) & never synced
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code=self.product_without_price.code,
+                flavor=Flavor.off,
+                product_source_last_modified=timezone.now(),
+            ).count(),
+            1,
+        )
+        # same flavor, modified since the last sync
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code="0123456789102",
+                flavor=Flavor.off,
+                product_source_last_modified=timezone.now(),
+            ).count(),
+            1,
+        )
+        # same flavor, not modified since the last sync
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code="0123456789102",
+                flavor=Flavor.off,
+                product_source_last_modified=last_synced,
+            ).count(),
+            0,
+        )
+        # same flavor, force update (no product_source_last_modified)
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code="0123456789102", flavor=Flavor.off
+            ).count(),
+            1,
+        )
+        # other flavor
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code="0123456789103", flavor=Flavor.off
+            ).count(),
+            0,
+        )
+
 
 class ProductPropertyTest(TestCase):
     @classmethod
