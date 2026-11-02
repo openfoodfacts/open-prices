@@ -256,3 +256,48 @@ class UtilsTest(TestCase):
             url_keep_only_domain("abc.hostname.com"),
             "https://abc.hostname.com",
         )
+
+
+class TaskSchedulesTest(TestCase):
+    def test_sync_task_schedules(self):
+        from django_q.models import Schedule
+
+        # common.tasks queries the Schedule table when imported, so it cannot be
+        # imported at module level (the test database does not exist yet then)
+        from open_prices.common.tasks import CRON_SCHEDULES, sync_task_schedules
+
+        Schedule.objects.all().delete()
+        # renamed (or removed) task
+        Schedule.objects.create(
+            name="challenge_tasks",
+            func="open_prices.common.tasks.challenge_tasks",
+            schedule_type=Schedule.CRON,
+            cron="30 1 * * *",
+        )
+        # task with an outdated cron
+        Schedule.objects.create(
+            name="update_price_category_tag_task",
+            func="open_prices.common.tasks.update_price_category_tag_task",
+            schedule_type=Schedule.CRON,
+            cron="40 2 * * *",
+        )
+        # schedule not managed by common.tasks
+        Schedule.objects.create(
+            name="other_task", func="other.module.task", schedule_type=Schedule.ONCE
+        )
+
+        sync_task_schedules()
+
+        self.assertFalse(Schedule.objects.filter(name="challenge_tasks").exists())
+        self.assertTrue(Schedule.objects.filter(name="other_task").exists())
+        self.assertEqual(Schedule.objects.count(), len(CRON_SCHEDULES) + 1)
+        for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
+            task_schedule = Schedule.objects.get(name=task_name)
+            self.assertEqual(task_schedule.cron, task_cron)
+            self.assertEqual(task_schedule.kwargs, str(q_options))
+        # running it again does not change anything
+        next_runs = dict(Schedule.objects.values_list("name", "next_run"))
+        sync_task_schedules()
+        self.assertEqual(
+            dict(Schedule.objects.values_list("name", "next_run")), next_runs
+        )

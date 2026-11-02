@@ -150,13 +150,39 @@ CRON_SCHEDULES = {
     "proof_draft_cleanup_task": ("*/5 * * * *", {}),
 }
 
-for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
-    if not Schedule.objects.filter(name=task_name).exists():
-        schedule(
-            f"open_prices.common.tasks.{task_name}",
-            name=task_name,
-            schedule_type=Schedule.CRON,
-            cron=task_cron,
-            **q_options,
-        )
-        print(f"Task {task_name} scheduled with cron {task_cron}")
+TASK_FUNC_PREFIX = "open_prices.common.tasks."
+
+
+def sync_task_schedules():
+    """
+    Sync the Django Q schedules with CRON_SCHEDULES:
+    - create missing schedules
+    - update the cron & options of existing schedules
+    - delete schedules of tasks that were removed or renamed
+    """
+    for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
+        task_schedule = Schedule.objects.filter(name=task_name).first()
+        if not task_schedule:
+            schedule(
+                f"{TASK_FUNC_PREFIX}{task_name}",
+                name=task_name,
+                schedule_type=Schedule.CRON,
+                cron=task_cron,
+                **q_options,
+            )
+            print(f"Task {task_name} scheduled with cron {task_cron}")
+        elif task_schedule.cron != task_cron or task_schedule.kwargs != str(q_options):
+            task_schedule.cron = task_cron
+            task_schedule.kwargs = q_options
+            task_schedule.next_run = task_schedule.calculate_next_run()
+            task_schedule.save()
+            print(f"Task {task_name} rescheduled with cron {task_cron}")
+
+    for task_schedule in Schedule.objects.filter(
+        func__startswith=TASK_FUNC_PREFIX
+    ).exclude(name__in=CRON_SCHEDULES.keys()):
+        task_schedule.delete()
+        print(f"Task {task_schedule.name} unscheduled")
+
+
+sync_task_schedules()
