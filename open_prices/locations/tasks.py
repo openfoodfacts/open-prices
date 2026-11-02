@@ -30,10 +30,13 @@ def fetch_and_save_data_from_openstreetmap(
     if location_openstreetmap_details:
         for key, value in location_openstreetmap_details.items():
             setattr(location, key, value)
+        # only save the OSM fields: the location instance can be stale (the task
+        # is queued at creation), saving all fields would overwrite the counts
+        update_fields = [*location_openstreetmap_details.keys(), "updated"]
         if save_without_historical_record:
-            location.save_without_historical_record()
+            location.save_without_historical_record(update_fields=update_fields)
             location_utils.rewrite_creation_history_entry(
                 location, location_openstreetmap_details
             )
         else:
-            location.save()
+            location.save(update_fields=update_fields)
