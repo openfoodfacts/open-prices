@@ -14,7 +14,7 @@ from django.db.models import (
     Value,
     signals,
 )
-from django.db.models.functions import ACos, Cos, Radians, Sin
+from django.db.models.functions import ACos, Cos, Greatest, Least, Radians, Sin
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -88,10 +88,16 @@ class LocationQuerySet(models.QuerySet):
         distance_expr = ExpressionWrapper(
             Value(earth_radius_km)
             * ACos(
-                Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
-                + Cos(Value(center_lat_rad))
-                * Cos(Radians(F("osm_lat")))
-                * Cos(Radians(F("osm_lon")) - Value(center_lon_rad))
+                Least(
+                    Value(1.0),
+                    Greatest(
+                        Value(-1.0),
+                        Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
+                        + Cos(Value(center_lat_rad))
+                        * Cos(Radians(F("osm_lat")))
+                        * Cos(Radians(F("osm_lon")) - Value(center_lon_rad)),
+                    ),
+                )
             ),
             output_field=FloatField(),
         )

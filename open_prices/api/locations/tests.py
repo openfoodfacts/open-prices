@@ -532,6 +532,18 @@ class LocationNearbyApiTest(TestCase):
         self.assertAlmostEqual(response.data["items"][0]["distance_km"], 0.0, places=2)
         self.assertAlmostEqual(response.data["items"][1]["distance_km"], 1.3, delta=0.1)
 
+    def test_nearby_exact_location_coordinates(self):
+        location = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=Decimal("11.3250441"),
+            osm_lon=Decimal("-98.910362"),
+        )
+        url = f"{self.url}?lat=11.3250441&lon=-98.910362&radius_km=1"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], location.id)
+
     def test_nearby_list_pagination(self):
         url = (
             f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius_km=5&size=1"
