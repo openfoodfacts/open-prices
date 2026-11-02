@@ -484,6 +484,44 @@ def run_and_save_price_tag_classification_from_id(price_tag_id: int) -> None:
     run_and_save_price_tag_classification(cropped_image, price_tag)
 
 
+def fix_extracted_barcode(barcode: str, proof: Proof) -> str:
+    """Fix (with some custom rules) and normalize a barcode extracted by Gemini.
+
+    :param barcode: the barcode extracted from the price tag
+    :param proof: the Proof instance associated with the price tag
+    :return: the fixed & normalized barcode
+    """
+    # only fix barcodes that are not valid
+    if len(barcode) < 13 and not common_openfoodfacts.barcode_is_valid(barcode):
+        # in the USA, some barcodes are not "complete"
+        if proof.currency == "USD":
+            barcode = common_openfoodfacts.barcode_fix_short_codes_from_usa(barcode)
+    return normalize_barcode(barcode)
+
+
+def find_similar_barcodes(barcode: str) -> list[BarcodeSimilarityMatch]:
+    """Find valid barcodes of existing products that are similar to the given
+    barcode (Levenshtein distance between 1 and 3, max 10 results).
+
+    Barcode similarity search is quite costly (500~1000ms for 4M products),
+    so we only run it if the barcode doesn't exist in the database.
+
+    :param barcode: the (fixed) barcode extracted from the price tag
+    :return: the list of similar barcodes
+    """
+    if Product.objects.filter(code=barcode).exists():
+        return []
+    similar_barcodes_qs = Product.objects.fuzzy_barcode_search(
+        barcode, max_distance=3, limit=10
+    )
+    return [
+        BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
+        for p in similar_barcodes_qs
+        # Check that barcode is valid (correct check digit)
+        if common_openfoodfacts.barcode_is_valid(p.code)
+    ]
+
+
 def run_and_save_price_tag_extraction(
     price_tag: PriceTag,
 ) -> PriceTagPrediction | None:
@@ -512,34 +550,9 @@ def run_and_save_price_tag_extraction(
     # barcode post-processing
     # 1) fix barcode with some custom rules
     # 2) if the barcode is still unknown, generate similar barcodes
-    barcode = response.parsed.barcode
-    raw_barcode = barcode
-    similar_barcodes = []
-    # 1) barcode fix
-    if barcode:
-        # only fix barcodes that are not valid
-        if len(barcode) < 13 and not common_openfoodfacts.barcode_is_valid(barcode):
-            # in the USA, some barcodes are not "complete"
-            if proof.currency == "USD":
-                barcode = common_openfoodfacts.barcode_fix_short_codes_from_usa(barcode)
-        # normalize barcode
-        barcode = normalize_barcode(barcode)
-
-    # barcode similarity search is quite costly (500~1000ms for 4M
-    # products), so we only run it if the barcode doesn't exist in the
-    # database
-    if barcode and not Product.objects.filter(code=barcode).exists():
-        # Only return products with a levenshtein distance between 1 and 3
-        # Don't return too many results
-        similar_barcodes_qs = Product.objects.fuzzy_barcode_search(
-            barcode, max_distance=3, limit=10
-        )
-        similar_barcodes = [
-            BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
-            for p in similar_barcodes_qs
-            # Check that barcode is valid (correct check digit)
-            if common_openfoodfacts.barcode_is_valid(p.code)
-        ]
+    raw_barcode = response.parsed.barcode
+    barcode = fix_extracted_barcode(raw_barcode, proof) if raw_barcode else raw_barcode
+    similar_barcodes = find_similar_barcodes(barcode) if barcode else []
 
     data = LabelWithSimilarBarcodes(
         **{**dict(response.parsed), "barcode": barcode},  # merge any barcode fix
