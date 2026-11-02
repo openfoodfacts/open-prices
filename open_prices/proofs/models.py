@@ -365,6 +365,9 @@ class Proof(models.Model):
                         self.prices.values_list(field, flat=True).distinct()
                     )
                     if len(proof_prices_field_list) == 1:
+                        if proof_prices_field_list[0] is None:
+                            # the prices don't have this field either
+                            continue
                         if field == "location":
                             location = self.prices.first().location
                             self.location_osm_id = location.osm_id
