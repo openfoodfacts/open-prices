@@ -1,5 +1,4 @@
 import asyncio
-import dataclasses
 import enum
 import logging
 from pathlib import Path
@@ -46,14 +45,6 @@ PRICE_TAG_DETECTOR_IMAGE_SIZE = 960
 
 
 logger = logging.getLogger(__name__)
-
-
-@dataclasses.dataclass
-class PriceTagWithImage:
-    """A price tag with its associated cropped image, as a numpy array (uint8, in BGR format)."""
-
-    price_tag: PriceTag
-    image: np.ndarray
 
 
 # TODO: what about other origins?
@@ -548,121 +539,98 @@ def run_and_save_price_tag_classification_from_id(price_tag_id: int) -> None:
 
 
 def run_and_save_price_tag_extraction(
-    price_tags: list[PriceTag] | list[PriceTagWithImage], proof: Proof
-) -> list[PriceTagPrediction]:
-    """Extract information from price tags using the Gemini model and save the
-    predictions in the database.
+    price_tag: PriceTag,
+) -> PriceTagPrediction | None:
+    """Extract information from a price tag using the Gemini model and save the
+    prediction in the database.
 
-    :param price_tags: the list of PriceTag (or PriceTagWithImage) instances to
-        extract information from
-    :param proof: the Proof instance associated with the price tags
-    :return: the list of PriceTagPrediction instances created
+    :param price_tag: the PriceTag instance to extract information from
+    :return: the PriceTagPrediction instance created, or None if the extraction
+        failed
     """
+    proof = price_tag.proof
     if proof.file_path_full is None or not Path(proof.file_path_full).exists():
         logger.error("Proof file not found: %s", proof.file_path_full)
-        return []
+        return None
 
-    predictions = []
-    preprocessed_images = []
-    _price_tags = []
-    for price_tag in price_tags:
-        if isinstance(price_tag, PriceTagWithImage):
-            cropped_image = price_tag.image
-            _price_tags.append(price_tag.price_tag)
-        else:
-            cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
-
-        cropped_image = generate_image_thumbnail_cv2(cropped_image, max_size=1024)
-        preprocessed_images.append(cropped_image)
-
-    # Below, price_tags is expected to be a list of PriceTag, so if the input is a
-    # list of PriceTagWithImage, we extract the PriceTag instances in a separate list
-    # and use it for the rest of the function.
-    if _price_tags:
-        price_tags = _price_tags
+    cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
 
     # Sending requests in parallel using asyncio was responsible to network
     # exceptions in production, so we added here a setting to control
     # whether to use async requests or not.
     # See https://github.com/openfoodfacts/open-prices/issues/893
     if settings.PRICE_TAG_EXTRACTION_ASYNC_REQUESTS:
-        # We send requests to Gemini in parallel using asyncio
-        # to speed up the extraction process.
-        responses = sync_extract_from_price_tag_batch(preprocessed_images)
+        cropped_image = generate_image_thumbnail_cv2(cropped_image, max_size=1024)
+        response = sync_extract_from_price_tag_batch([cropped_image])[0]
     else:
-        responses = [extract_from_price_tag(image) for image in preprocessed_images]
-    for price_tag, response in zip(price_tags, responses, strict=False):
-        if response.parsed is None:
-            logger.info(
-                "Failed to extract price tag for price tag id %s: %s",
-                price_tag.id,
-                response.text,
-            )
-            continue
-
-        # barcode post-processing
-        # 1) fix barcode with some custom rules
-        # 2) if the barcode is still unknown, generate similar barcodes
-        barcode = response.parsed.barcode
-        raw_barcode = barcode
-        similar_barcodes = []
-        # 1) barcode fix
-        if barcode:
-            # only fix barcodes that are not valid
-            if len(barcode) < 13 and not common_openfoodfacts.barcode_is_valid(barcode):
-                # in the USA, some barcodes are not "complete"
-                if proof.currency == "USD":
-                    barcode = common_openfoodfacts.barcode_fix_short_codes_from_usa(
-                        barcode
-                    )
-            # normalize barcode
-            barcode = normalize_barcode(barcode)
-
-        # barcode similarity search is quite costly (500~1000ms for 4M
-        # products), so we only run it if the barcode doesn't exist in the
-        # database
-        if barcode and not Product.objects.filter(code=barcode).exists():
-            # Only return products with a levenshtein distance between 1 and 3
-            # Don't return too many results
-            similar_barcodes_qs = Product.objects.fuzzy_barcode_search(
-                barcode, max_distance=3, limit=10
-            )
-            similar_barcodes = [
-                BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
-                for p in similar_barcodes_qs
-                # Check that barcode is valid (correct check digit)
-                if common_openfoodfacts.barcode_is_valid(p.code)
-            ]
-
-        data = LabelWithSimilarBarcodes(
-            **{**dict(response.parsed), "barcode": barcode},  # merge any barcode fix
-            raw_barcode=raw_barcode,
-            similar_barcodes=similar_barcodes,
+        response = extract_from_price_tag(cropped_image)
+    if response.parsed is None:
+        logger.info(
+            "Failed to extract price tag for price tag id %s: %s",
+            price_tag.id,
+            response.text,
         )
-        # raw/unbranded products (type=CATEGORY) rarely show an organic logo
-        # clearly enough to be detected from the image alone, so if the shop
-        # itself is tagged as exclusively organic on OSM, trust that instead
-        if (
-            data.type == "CATEGORY"
-            and proof.location
-            and proof.location.has_osm_tag(location_constants.OSM_TAG_ORGANIC_ONLY)
-        ):
-            data.organic = True
-        try:
-            prediction = PriceTagPrediction.objects.create(
-                price_tag=price_tag,
-                type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-                model_name=common_google.GEMINI_MODEL_NAME,
-                model_version=common_google.GEMINI_MODEL_VERSION,
-                schema_version=LABEL_SCHEMA_VERSION,
-                data=data.model_dump(),
-                thought_tokens=common_google.extract_thought_tokens(response),
-            )
-            predictions.append(prediction)
-        except Exception as e:
-            logger.exception(e)
+        return None
 
-    return predictions
+    # barcode post-processing
+    # 1) fix barcode with some custom rules
+    # 2) if the barcode is still unknown, generate similar barcodes
+    barcode = response.parsed.barcode
+    raw_barcode = barcode
+    similar_barcodes = []
+    # 1) barcode fix
+    if barcode:
+        # only fix barcodes that are not valid
+        if len(barcode) < 13 and not common_openfoodfacts.barcode_is_valid(barcode):
+            # in the USA, some barcodes are not "complete"
+            if proof.currency == "USD":
+                barcode = common_openfoodfacts.barcode_fix_short_codes_from_usa(barcode)
+        # normalize barcode
+        barcode = normalize_barcode(barcode)
+
+    # barcode similarity search is quite costly (500~1000ms for 4M
+    # products), so we only run it if the barcode doesn't exist in the
+    # database
+    if barcode and not Product.objects.filter(code=barcode).exists():
+        # Only return products with a levenshtein distance between 1 and 3
+        # Don't return too many results
+        similar_barcodes_qs = Product.objects.fuzzy_barcode_search(
+            barcode, max_distance=3, limit=10
+        )
+        similar_barcodes = [
+            BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
+            for p in similar_barcodes_qs
+            # Check that barcode is valid (correct check digit)
+            if common_openfoodfacts.barcode_is_valid(p.code)
+        ]
+
+    data = LabelWithSimilarBarcodes(
+        **{**dict(response.parsed), "barcode": barcode},  # merge any barcode fix
+        raw_barcode=raw_barcode,
+        similar_barcodes=similar_barcodes,
+    )
+    # raw/unbranded products (type=CATEGORY) rarely show an organic logo
+    # clearly enough to be detected from the image alone, so if the shop
+    # itself is tagged as exclusively organic on OSM, trust that instead
+    if (
+        data.type == "CATEGORY"
+        and proof.location
+        and proof.location.has_osm_tag(location_constants.OSM_TAG_ORGANIC_ONLY)
+    ):
+        data.organic = True
+    try:
+        return PriceTagPrediction.objects.create(
+            price_tag=price_tag,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            model_name=common_google.GEMINI_MODEL_NAME,
+            model_version=common_google.GEMINI_MODEL_VERSION,
+            schema_version=LABEL_SCHEMA_VERSION,
+            data=data.model_dump(),
+            thought_tokens=common_google.extract_thought_tokens(response),
+        )
+    except Exception as e:
+        logger.exception(e)
+        return None
 
 
 def run_and_save_price_tag_extraction_from_id(price_tag_id: int) -> None:
@@ -680,7 +648,7 @@ def run_and_save_price_tag_extraction_from_id(price_tag_id: int) -> None:
         logger.error("Price tag with id %s not found", price_tag_id)
         return None
 
-    run_and_save_price_tag_extraction([price_tag], price_tag.proof)
+    run_and_save_price_tag_extraction(price_tag)
 
 
 def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction | None:

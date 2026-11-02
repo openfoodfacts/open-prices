@@ -56,6 +56,7 @@ from open_prices.proofs.ml.price_tags import (
     extract_from_price_tag,
     run_and_save_price_tag_classification_from_id,
     run_and_save_price_tag_detection,
+    run_and_save_price_tag_extraction,
 )
 from open_prices.proofs.ml.receipt_anonymization import AnonymizationResult
 from open_prices.proofs.ml.receipts import create_receipt_items_from_proof_prediction
@@ -1296,6 +1297,69 @@ class MLModelTest(TestCase):
                 "MINIMAL",
             )
 
+    def test_run_and_save_price_tag_extraction(self):
+        ProductFactory(code="3017620422003")
+        label = Label(
+            type="PRODUCT",
+            prices=[LabelPrice(price=2.5, currency="EUR", price_per=Unit.UNIT)],
+            origin=None,
+            organic=False,
+            barcode="3017620422003",
+            product_name="Nutella",
+        )
+        gemini_response = unittest.mock.MagicMock(parsed=label, text="", candidates=[])
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                price_tag = PriceTagFactory(
+                    proof=proof, bounding_box=[0.5, 0.5, 1.0, 1.0]
+                )
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.extract_from_price_tag",
+                    return_value=gemini_response,
+                ) as mock_extract:
+                    prediction = run_and_save_price_tag_extraction(price_tag)
+                    mock_extract.assert_called_once()
+        self.assertIsNotNone(prediction)
+        self.assertEqual(prediction.price_tag, price_tag)
+        self.assertEqual(prediction.type, proof_constants.PRICE_TAG_EXTRACTION_TYPE)
+        self.assertEqual(prediction.data["barcode"], "3017620422003")
+        self.assertEqual(prediction.data["raw_barcode"], "3017620422003")
+        # the barcode exists in DB: no similar barcodes search
+        self.assertEqual(prediction.data["similar_barcodes"], [])
+
+    def test_run_and_save_price_tag_extraction_failed(self):
+        gemini_response = unittest.mock.MagicMock(parsed=None, text="error")
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                price_tag = PriceTagFactory(proof=proof)
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.extract_from_price_tag",
+                    return_value=gemini_response,
+                ):
+                    prediction = run_and_save_price_tag_extraction(price_tag)
+        self.assertIsNone(prediction)
+        self.assertFalse(
+            PriceTagPrediction.objects.filter(
+                price_tag=price_tag, type=proof_constants.PRICE_TAG_EXTRACTION_TYPE
+            ).exists()
+        )
+
 
 class LabelSelectedPriceTest(TestCase):
     def build_label(self, type, prices):
@@ -2360,5 +2424,4 @@ class RunMLModelsCommandTest(TestCase):
         self.assertEqual(PriceTag.objects.filter(proof=proof).count(), 2)
         # only the price tag that existed before the run is processed
         mock_classification.assert_called_once_with(price_tag_existing.id)
-        mock_extraction.assert_called_once()
-        self.assertEqual(mock_extraction.call_args.args[0], [price_tag_existing])
+        mock_extraction.assert_called_once_with(price_tag_existing)

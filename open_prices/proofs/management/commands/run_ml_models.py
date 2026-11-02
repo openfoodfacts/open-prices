@@ -206,4 +206,4 @@ class Command(BaseCommand):
                     self.stdout.write(
                         f"Extracting price tag {price_tag.id} (proof {price_tag.proof_id})..."
                     )
-                    run_and_save_price_tag_extraction([price_tag], price_tag.proof)
+                    run_and_save_price_tag_extraction(price_tag)
