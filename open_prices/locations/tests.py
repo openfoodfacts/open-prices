@@ -253,6 +253,19 @@ class LocationQuerySetNearbyTest(TestCase):
         # ordered by distance
         self.assertEqual(location_nearby_qs.first().id, self.location_osm_center.id)
 
+    def test_nearby_exact_location_coordinates(self):
+        location = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=Decimal("11.3250441"),
+            osm_lon=Decimal("-98.910362"),
+        )
+        location_nearby_qs = Location.objects.nearby(
+            11.3250441, -98.910362, radius_km=1
+        )
+        self.assertEqual(location_nearby_qs.count(), 1)
+        self.assertEqual(location_nearby_qs.first().id, location.id)
+        self.assertEqual(location_nearby_qs.first().distance_km, 0)
+
 
 class LocationHasOsmTagQuerysetAndPropertyTest(TestCase):
     @classmethod
