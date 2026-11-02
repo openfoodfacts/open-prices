@@ -205,6 +205,7 @@ class LocationDetailApiTest(TestCase):
         self.assertEqual(response.data["id"], self.location.id)
         # self.assertEqual(response.data["osm_lat"], 45.1805534)
         self.assertIn("osm_brand_logo_url", response.data)
+        self.assertEqual(response.data["tags"], [])
 
     def test_location_detail_by_osm_unknown(self):
         url = reverse("api:locations-get-by-osm", args=["NODE", 999])
@@ -231,7 +232,12 @@ class LocationCreateApiTest(TestCase):
 
     def test_location_create_osm(self):
         response = self.client.post(
-            self.url, LOCATION_OSM_NODE_652825274, content_type="application/json"
+            self.url,
+            {
+                **LOCATION_OSM_NODE_652825274,
+                "tags": [location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+            },
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["osm_id"], 652825274)
@@ -240,6 +246,7 @@ class LocationCreateApiTest(TestCase):
             response.data["osm_name"], None
         )  # ignored (and post_save signal disabled)
         self.assertEqual(response.data["price_count"], 0)  # ignored
+        self.assertEqual(response.data["tags"], [])  # ignored
 
     def test_location_create_online(self):
         response = self.client.post(

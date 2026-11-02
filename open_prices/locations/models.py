@@ -37,6 +37,9 @@ class LocationQuerySet(models.QuerySet):
     def has_osm_tag(self, tag: str):
         return self.filter(osm_tags__contains=[tag])
 
+    def has_tag(self, tag: str):
+        return self.filter(tags__contains=[tag])
+
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
@@ -165,6 +168,12 @@ class Location(models.Model):
     # type ONLINE
     website_url = models.URLField(blank=True, null=True)
 
+    tags = ArrayField(
+        base_field=models.CharField(choices=location_constants.TAG_CHOICES),
+        blank=True,
+        default=list,
+    )
+
     # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)
     user_count = models.PositiveIntegerField(default=0)
@@ -278,6 +287,9 @@ class Location(models.Model):
 
     def has_osm_tag(self, tag: str) -> bool:
         return tag in self.osm_tags
+
+    def has_tag(self, tag: str) -> bool:
+        return tag in self.tags
 
     def update_price_count(self):
         self.price_count = self.prices.count()

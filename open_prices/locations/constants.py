@@ -12,6 +12,12 @@ OSM_TYPE_CHOICES = [(key, key) for key in OSM_TYPE_LIST]
 
 OSM_TAG_ORGANIC_ONLY = "organic:only"
 
+# tags set manually (not synced from OSM), used to enable location-specific features
+TAG_PRICE_TAG_BARCODE_INTERNAL = "price-tag-barcode-internal"
+TAG_RECEIPT_BARCODE_PRINTED = "receipt-barcode-printed"
+TAG_LIST = [TAG_PRICE_TAG_BARCODE_INTERNAL, TAG_RECEIPT_BARCODE_PRINTED]
+TAG_CHOICES = [(key, key) for key in TAG_LIST]
+
 
 OSM_ID_OK_LIST = [652825274, 5]
 OSM_ID_NOT_OK_LIST = [-5, 0, "test", None, "None", True, "true", False, "false"]
