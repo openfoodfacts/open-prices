@@ -6,8 +6,8 @@ This document maps prediction-related operations for both proof and price tag cr
 
 ```mermaid
 graph TD
-    A["Proof.save()"] -->|"post_save signal"| B["proof_post_save_run_ocr<br/><b>ASYNC TASK via django-q</b>"]
-    A -->|"post_save signal"| C["proof_post_save_run_ml_models"]
+    A["Proof.save()"] -->|"post_save signal"| B["proof_post_create_run_ocr<br/><b>ASYNC TASK via django-q</b>"]
+    A -->|"post_save signal"| C["proof_post_create_run_ml_models"]
 
     B --> B1["fetch_and_save_ocr_data"]
 
@@ -22,10 +22,7 @@ graph TD
     G1 --> G2["ProofPrediction.create<br/>type=OBJECT_DETECTION"]
     G2 --> G3["create_price_tags_from_proof_prediction"]
     G3 --> G4["FOR EACH detection (score >= threshold):<br/>PriceTag.create(created_by=None)"]
-    G4 --> G5["run_and_save_price_tag_classification"]
-    G5 --> G6["PriceTagPrediction.create<br/>type=PRICE_TAG_CLF"]
-    G6 --> G7{"classification OK?<br/>(invalid ones included, temporarily)"}
-    G7 -->|"Yes"| H["run_and_save_price_tag_extraction"]
+    G4 --> K
     H --> H1{PRICE_TAG_EXTRACTION_ASYNC_REQUESTS?}
     H1 -->|"Yes"| H2["Gemini API batch<br/><b>asyncio</b>"]
     H1 -->|"No"| H3["Gemini API sequential"]
@@ -37,11 +34,12 @@ graph TD
     J --> J1["extract_from_receipt<br/>Gemini API"]
     J1 --> J2["ProofPrediction.create<br/>type=PROOF_PREDICTION_RECEIPT_EXTRACTION"]
 
-    K["PriceTag.save() with created_by set"] -->|"post_save signal"| L["price_tag_post_save_run_ml_models<br/><b>ASYNC TASK via django-q</b>"]
+    K["PriceTag.save()<br/>(automatic or manual)"] -->|"post_save signal"| L["price_tag_post_create_run_ml_models<br/><b>ASYNC TASKS via django-q</b>"]
     L --> L1["run_and_save_price_tag_classification_from_id"]
     L --> L2["run_and_save_price_tag_extraction_from_id"]
-    L1 --> G5
-    L2 --> H
+    L1 --> G5["run_and_save_price_tag_classification"]
+    G5 --> G6["PriceTagPrediction.create<br/>type=PRICE_TAG_CLF"]
+    L2 --> H["run_and_save_price_tag_extraction"]
 
     style A stroke:#2ecc71,stroke-width:3px
     style B stroke:#e74c3c,stroke-width:3px
@@ -75,7 +73,7 @@ graph TD
 
 - Green border: synchronous execution.
 - Red border: asynchronous execution (django-q task or asyncio batch).
-- The proof-created flow and manual price-tag-created flow share the same price tag classification and extraction functions.
+- Price tags created automatically (from a proof detection) and manually (by a user) go through the same `post_save` signal, which runs classification and extraction in parallel.
 
 ## Configuration
 
