@@ -281,6 +281,13 @@ class TaskSchedulesTest(TestCase):
             schedule_type=Schedule.CRON,
             cron="40 2 * * *",
         )
+        # task edited in the admin (wrong func & schedule type)
+        Schedule.objects.create(
+            name="update_badge_task",
+            func="open_prices.common.tasks.update_user_counts_task",
+            schedule_type=Schedule.ONCE,
+            cron="5 2 * * *",
+        )
         # schedule not managed by common.tasks
         Schedule.objects.create(
             name="other_task", func="other.module.task", schedule_type=Schedule.ONCE
@@ -293,6 +300,10 @@ class TaskSchedulesTest(TestCase):
         self.assertEqual(Schedule.objects.count(), len(CRON_SCHEDULES) + 1)
         for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
             task_schedule = Schedule.objects.get(name=task_name)
+            self.assertEqual(
+                task_schedule.func, f"open_prices.common.tasks.{task_name}"
+            )
+            self.assertEqual(task_schedule.schedule_type, Schedule.CRON)
             self.assertEqual(task_schedule.cron, task_cron)
             self.assertEqual(task_schedule.kwargs, str(q_options))
         # running it again does not change anything

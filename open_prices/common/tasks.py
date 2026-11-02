@@ -157,21 +157,29 @@ def sync_task_schedules():
     """
     Sync the Django Q schedules with CRON_SCHEDULES:
     - create missing schedules
-    - update the cron & options of existing schedules
+    - update the func, cron & options of existing schedules
     - delete schedules of tasks that were removed or renamed
     """
     for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
+        task_func = f"{TASK_FUNC_PREFIX}{task_name}"
         task_schedule = Schedule.objects.filter(name=task_name).first()
         if not task_schedule:
             schedule(
-                f"{TASK_FUNC_PREFIX}{task_name}",
+                task_func,
                 name=task_name,
                 schedule_type=Schedule.CRON,
                 cron=task_cron,
                 **q_options,
             )
             print(f"Task {task_name} scheduled with cron {task_cron}")
-        elif task_schedule.cron != task_cron or task_schedule.kwargs != str(q_options):
+        elif (
+            task_schedule.func != task_func
+            or task_schedule.schedule_type != Schedule.CRON
+            or task_schedule.cron != task_cron
+            or task_schedule.kwargs != str(q_options)
+        ):
+            task_schedule.func = task_func
+            task_schedule.schedule_type = Schedule.CRON
             task_schedule.cron = task_cron
             task_schedule.kwargs = q_options
             task_schedule.next_run = task_schedule.calculate_next_run()
