@@ -306,6 +306,40 @@ class LocationHasOsmTagQuerysetAndPropertyTest(TestCase):
         )
 
 
+class LocationTagsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.location_with_tag = LocationFactory(
+            tags=[location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL]
+        )
+        cls.location_without_tag = LocationFactory(tags=[])
+
+    def test_tags_validation(self):
+        for TAG in location_constants.TAG_LIST:
+            with self.subTest(tag=TAG):
+                LocationFactory(tags=[TAG])
+        for TAG_NOT_OK in ["unknown-tag", "organic:only"]:
+            with self.subTest(tag=TAG_NOT_OK):
+                self.assertRaises(ValidationError, LocationFactory, tags=[TAG_NOT_OK])
+
+    def test_has_tag_queryset(self):
+        qs = Location.objects.has_tag(location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL)
+        self.assertIn(self.location_with_tag, qs)
+        self.assertNotIn(self.location_without_tag, qs)
+
+    def test_has_tag_property(self):
+        self.assertTrue(
+            self.location_with_tag.has_tag(
+                location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL
+            )
+        )
+        self.assertFalse(
+            self.location_without_tag.has_tag(
+                location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL
+            )
+        )
+
+
 class LocationPropertyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
