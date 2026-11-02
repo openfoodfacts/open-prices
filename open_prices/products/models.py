@@ -38,9 +38,7 @@ class ProductQuerySet(ApproximateCountQuerySet):
 
         Usage: open_prices/common/openfoodfacts.py:import_product_db
         """
-        queryset = self.filter(
-            self.filter(code=code).filter(Q(source=flavor) | Q(source=None))
-        )
+        queryset = self.filter(code=code).filter(Q(source=flavor) | Q(source=None))
         if product_source_last_modified:
             queryset = queryset.filter(
                 Q(source_last_synced__lt=product_source_last_modified)
