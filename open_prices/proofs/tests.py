@@ -650,6 +650,17 @@ class ProofPropertyTest(TestCase):
             self.proof_receipt.currency, self.proof_receipt.prices.first().currency
         )
 
+    def test_set_missing_fields_from_prices_without_location(self):
+        proof = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        PriceFactory(proof_id=proof.id, location_osm_id=None, location_osm_type=None)
+        proof.refresh_from_db()
+        self.assertTrue(proof.location is None)
+        proof.set_missing_fields_from_prices()  # does not crash
+        proof.refresh_from_db()
+        self.assertTrue(proof.location is None)
+        self.assertEqual(proof.date, proof.prices.first().date)
+        self.assertEqual(proof.currency, proof.prices.first().currency)
+
 
 class ProofModelUpdateTest(TestCase):
     @classmethod
