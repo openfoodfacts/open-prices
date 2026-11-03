@@ -442,6 +442,8 @@ class LocationOsmCountryCitiesListApiTest(TestCase):
         self.assertEqual(response.data[0]["price_count"], 10)
 
 
+# Note: edge cases of the nearby() logic (exact coordinates, antimeridian...)
+# are tested at the queryset level, in LocationQuerySetNearbyTest (open_prices/locations/tests.py)
 class LocationNearbyApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -531,30 +533,6 @@ class LocationNearbyApiTest(TestCase):
         # distance_km in response
         self.assertAlmostEqual(response.data["items"][0]["distance_km"], 0.0, places=2)
         self.assertAlmostEqual(response.data["items"][1]["distance_km"], 1.3, delta=0.1)
-
-    def test_nearby_exact_location_coordinates(self):
-        location = LocationFactory(
-            type=location_constants.TYPE_OSM,
-            osm_lat=Decimal("11.3250441"),
-            osm_lon=Decimal("-98.910362"),
-        )
-        url = f"{self.url}?lat=11.3250441&lon=-98.910362&radius_km=1"
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["id"], location.id)
-
-    def test_nearby_across_antimeridian(self):
-        location_west = LocationFactory(
-            type=location_constants.TYPE_OSM,
-            osm_lat=Decimal("-16.8"),
-            osm_lon=Decimal("-179.95"),
-        )
-        url = f"{self.url}?lat=-16.8&lon=179.95&radius_km=20"
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["total"], 1)
-        self.assertEqual(response.data["items"][0]["id"], location_west.id)
 
     def test_nearby_list_pagination(self):
         url = (
