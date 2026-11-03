@@ -80,6 +80,17 @@ class LocationQuerySet(models.QuerySet):
             else:
                 delta_lon = radius_km / (km_per_degree * cos_center_lat)
 
+        lon_min = center_lon - delta_lon
+        lon_max = center_lon + delta_lon
+        if delta_lon >= max_longitude_delta_degrees:
+            lon_filter = Q()
+        elif lon_min < -max_longitude_delta_degrees:
+            lon_filter = Q(osm_lon__gte=lon_min + 360) | Q(osm_lon__lte=lon_max)
+        elif lon_max > max_longitude_delta_degrees:
+            lon_filter = Q(osm_lon__gte=lon_min) | Q(osm_lon__lte=lon_max - 360)
+        else:
+            lon_filter = Q(osm_lon__gte=lon_min, osm_lon__lte=lon_max)
+
         center_lat_rad = math.radians(center_lat)
         center_lon_rad = math.radians(center_lon)
 
@@ -104,13 +115,12 @@ class LocationQuerySet(models.QuerySet):
 
         return (
             self.filter(
+                lon_filter,
                 type=location_constants.TYPE_OSM,
                 osm_lat__isnull=False,
                 osm_lon__isnull=False,
                 osm_lat__gte=center_lat - delta_lat,
                 osm_lat__lte=center_lat + delta_lat,
-                osm_lon__gte=center_lon - delta_lon,
-                osm_lon__lte=center_lon + delta_lon,
             )
             .annotate(distance_km=distance_expr)
             .filter(distance_km__lte=radius_km)

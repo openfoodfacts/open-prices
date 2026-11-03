@@ -544,6 +544,18 @@ class LocationNearbyApiTest(TestCase):
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["id"], location.id)
 
+    def test_nearby_across_antimeridian(self):
+        location_west = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=Decimal("-16.8"),
+            osm_lon=Decimal("-179.95"),
+        )
+        url = f"{self.url}?lat=-16.8&lon=179.95&radius_km=20"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["id"], location_west.id)
+
     def test_nearby_list_pagination(self):
         url = (
             f"{self.url}?lat={self.CENTER_LAT}&lon={self.CENTER_LON}&radius_km=5&size=1"
