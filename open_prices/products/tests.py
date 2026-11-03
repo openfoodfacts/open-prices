@@ -241,16 +241,29 @@ class ProductPropertyTest(TestCase):
     def test_update_task(self):
         product_without_price = ProductFactory(code="0123456789101")
         product_with_deleted_prices = ProductFactory(code="0123456789102")
-        PriceFactory(product_code=product_with_deleted_prices.code, price=3.0)
+        PriceFactory(
+            product_code=product_with_deleted_prices.code,
+            price=3.0,
+            owner=self.user.user_id,
+        )
+        Product.update_task()
+        # the price post_delete signal only decrements price_count
         product_with_deleted_prices.prices.all().delete()
+        product_with_deleted_prices.refresh_from_db()
+        self.assertEqual(product_with_deleted_prices.price_count, 0)
+        self.assertEqual(product_with_deleted_prices.user_count, 1)  # stale
         # wrong counts
-        Product.objects.update(**{field: 99 for field in Product.COUNT_FIELDS})
-        Product.objects.filter(id=product_without_price.id).update(
-            **{field: 0 for field in Product.COUNT_FIELDS}
+        Product.objects.filter(id=self.product.id).update(
+            **{field: 99 for field in Product.COUNT_FIELDS}
         )
         # update_task() should fix all counts
         updated_count = Product.update_task()
-        self.assertEqual(updated_count, 2)  # product_without_price is skipped
+        self.assertEqual(updated_count, 2)
+        self.assertFalse(  # skipped
+            Product.objects.for_update_task()
+            .filter(id=product_without_price.id)
+            .exists()
+        )
         self.product.refresh_from_db()
         self.assertEqual(
             {field: getattr(self.product, field) for field in Product.COUNT_FIELDS},

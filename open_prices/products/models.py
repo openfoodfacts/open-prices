@@ -127,16 +127,18 @@ class ProductQuerySet(ApproximateCountQuerySet):
     def for_update_task(self):
         """
         Goal: only update counts of products that have prices, to save (some) time.
-        Also include products with a denormalized price_count, to reset the counts
+        Also include products with a non-zero count, to reset the counts
         of products whose prices were all deleted.
 
         Usage: open_prices/common/tasks.py:update_product_counts_task
         """
         from open_prices.prices.models import Price
 
+        has_counts = Q()
+        for field in self.model.COUNT_FIELDS:
+            has_counts |= Q(**{f"{field}__gt": 0})
         return self.filter(
-            Q(price_count__gt=0)
-            | Q(Exists(Price.objects.filter(product_id=OuterRef("pk"))))
+            has_counts | Q(Exists(Price.objects.filter(product_id=OuterRef("pk"))))
         )
 
     def fuzzy_barcode_search(
