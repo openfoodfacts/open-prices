@@ -442,29 +442,23 @@ class LocationPropertyTest(TestCase):
             owner=self.user_2.user_id,
             draft=True,
         )
-        # expected counts: computed with the per-location methods
-        expected_counts = dict()
-        for location in Location.objects.all():
-            location.update_price_count()
-            location.update_user_count()
-            location.update_product_count()
-            location.update_proof_count()
-            expected_counts[location.id] = {
-                field: getattr(location, field) for field in Location.COUNT_FIELDS
-            }
-        self.assertEqual(
-            expected_counts[self.location_osm.id],
-            {"price_count": 3, "user_count": 1, "product_count": 2, "proof_count": 2},
-        )
         # wrong counts
         Location.objects.update(**{field: 99 for field in Location.COUNT_FIELDS})
         # update_task() should fix all counts
         self.assertEqual(Location.update_task(), 2)
-        for location in Location.objects.all():
-            self.assertEqual(
-                {field: getattr(location, field) for field in Location.COUNT_FIELDS},
-                expected_counts[location.id],
-            )
+        self.location_osm.refresh_from_db()
+        self.assertEqual(
+            {
+                field: getattr(self.location_osm, field)
+                for field in Location.COUNT_FIELDS
+            },
+            {"price_count": 3, "user_count": 1, "product_count": 2, "proof_count": 2},
+        )
+        self.location_online.refresh_from_db()
+        self.assertEqual(
+            {getattr(self.location_online, field) for field in Location.COUNT_FIELDS},
+            {0},
+        )
         # nothing to update anymore
         self.assertEqual(Location.update_task(), 0)
 
