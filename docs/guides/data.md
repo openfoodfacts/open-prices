@@ -17,6 +17,7 @@ gzipped JSONL dumps:
 * [prices](https://prices.openfoodfacts.org/data/prices.jsonl.gz)
 * [proofs](https://prices.openfoodfacts.org/data/proofs.jsonl.gz)
 * [locations](https://prices.openfoodfacts.org/data/locations.jsonl.gz)
+* [products](https://prices.openfoodfacts.org/data/products.jsonl.gz) (only products with at least one price)
 
 These files are regenerated daily by the `dump_db_task` task, see the [export script](https://github.com/openfoodfacts/open-prices/blob/main/open_prices/common/export_data.py).
 
