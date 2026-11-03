@@ -21,6 +21,7 @@ from django_q.tasks import async_task
 from simple_history.models import HistoricalRecords
 
 from open_prices.common import constants, history, utils
+from open_prices.common.counts import bulk_update_counts, group_counts
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
 from open_prices.locations import utils as location_utils
@@ -265,13 +266,31 @@ class Location(models.Model):
     @classmethod
     def update_task(cls):
         """
-        - Update location field counts
+        - Update location field counts (same as the update_*_count() methods)
+        - Counts are computed with 2 queries per batch of locations,
+        and only the locations with changed counts are updated
         """
-        for location in cls.objects.all():
-            location.update_price_count()
-            location.update_user_count()
-            location.update_product_count()
-            location.update_proof_count()
+        from open_prices.prices.models import Price
+        from open_prices.proofs.models import Proof
+
+        def get_counts(location_ids):
+            counts = group_counts(
+                Price.objects.filter(location_id__in=location_ids),
+                "location_id",
+                price_count=Count("id"),
+                product_count=Count("product_id", distinct=True),
+            )
+            proof_counts = group_counts(
+                Proof.objects.filter(location_id__in=location_ids),
+                "location_id",
+                user_count=Count("owner", distinct=True),
+                proof_count=Count("id"),
+            )
+            for location_id, location_proof_counts in proof_counts.items():
+                counts.setdefault(location_id, {}).update(location_proof_counts)
+            return counts
+
+        return bulk_update_counts(cls.objects.all(), cls.COUNT_FIELDS, get_counts)
 
     @property
     def is_type_osm(self) -> bool:
