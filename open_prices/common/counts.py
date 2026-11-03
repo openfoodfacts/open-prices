@@ -28,19 +28,14 @@ def bulk_update_counts(
     Returns the number of updated objects.
     """
     model = queryset.model
-    pk_name = model._meta.pk.name
-    queryset = queryset.only(pk_name, *count_fields).order_by(pk_name)
-    last_pk = None
+    pk_list = list(queryset.order_by("pk").values_list("pk", flat=True))
     updated_count = 0
-    while True:
-        batch_queryset = queryset
-        if last_pk is not None:
-            batch_queryset = queryset.filter(pk__gt=last_pk)
-        batch = list(batch_queryset[:batch_size])
-        if not batch:
-            break
-        last_pk = batch[-1].pk
-        counts = get_counts([obj.pk for obj in batch])
+    for i in range(0, len(pk_list), batch_size):
+        batch_pk_list = pk_list[i : i + batch_size]
+        batch = model.objects.filter(pk__in=batch_pk_list).only(
+            model._meta.pk.name, *count_fields
+        )
+        counts = get_counts(batch_pk_list)
         objs_to_update = list()
         for obj in batch:
             obj_counts = counts.get(obj.pk, {})
