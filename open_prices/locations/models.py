@@ -80,6 +80,10 @@ class LocationQuerySet(models.QuerySet):
             else:
                 delta_lon = radius_km / (km_per_degree * cos_center_lat)
 
+        # Longitude bounds of the bounding box, wrapped around the antimeridian (±180°):
+        # - delta_lon >= 180 (at the poles, or very large radius): no longitude filter
+        # - box crossing -180 or +180: 2 ranges (one on each side), joined with OR
+        # - otherwise: a single range
         lon_min = center_lon - delta_lon
         lon_max = center_lon + delta_lon
         if delta_lon >= max_longitude_delta_degrees:
