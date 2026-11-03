@@ -225,25 +225,24 @@ class ProductPropertyTest(TestCase):
             owner=cls.user.user_id,
         )
 
+    def test_with_counts(self):
+        product = Product.objects.with_counts().get(id=self.product.id)
+        self.assertEqual(product.price_count_annotated, 2)
+        self.assertEqual(product.price_currency_count_annotated, 2)
+        self.assertEqual(product.location_count_annotated, 1)  # online: no location
+        self.assertEqual(product.location_type_osm_country_count_annotated, 1)
+        self.assertEqual(product.user_count_annotated, 1)
+        self.assertEqual(product.proof_count_annotated, 1)
+        product_without_price = ProductFactory(code="0123456789101")
+        product = Product.objects.with_counts().get(id=product_without_price.id)
+        self.assertEqual(product.price_count_annotated, 0)
+        self.assertEqual(product.proof_count_annotated, 0)
+
     def test_update_task(self):
         product_without_price = ProductFactory(code="0123456789101")
         product_with_deleted_prices = ProductFactory(code="0123456789102")
         PriceFactory(product_code=product_with_deleted_prices.code, price=3.0)
         product_with_deleted_prices.prices.all().delete()
-        # expected counts: computed with the per-product methods
-        expected_counts = dict()
-        for product in Product.objects.all():
-            product.update_price_count()
-            product.update_location_count()
-            product.update_user_count()
-            product.update_proof_count()
-            expected_counts[product.id] = {
-                field: getattr(product, field) for field in Product.COUNT_FIELDS
-            }
-        self.assertEqual(expected_counts[self.product.id]["price_count"], 2)
-        self.assertEqual(
-            expected_counts[self.product.id]["location_type_osm_country_count"], 1
-        )
         # wrong counts
         Product.objects.update(**{field: 99 for field in Product.COUNT_FIELDS})
         Product.objects.filter(id=product_without_price.id).update(
@@ -252,13 +251,43 @@ class ProductPropertyTest(TestCase):
         # update_task() should fix all counts
         updated_count = Product.update_task()
         self.assertEqual(updated_count, 2)  # product_without_price is skipped
-        for product in Product.objects.all():
-            self.assertEqual(
-                {field: getattr(product, field) for field in Product.COUNT_FIELDS},
-                expected_counts[product.id],
-            )
+        self.product.refresh_from_db()
+        self.assertEqual(
+            {field: getattr(self.product, field) for field in Product.COUNT_FIELDS},
+            {
+                "price_count": 2,
+                "price_currency_count": 2,
+                "location_count": 1,
+                "location_type_osm_country_count": 1,
+                "user_count": 1,
+                "proof_count": 1,
+            },
+        )
+        product_with_deleted_prices.refresh_from_db()
+        self.assertEqual(
+            {
+                getattr(product_with_deleted_prices, field)
+                for field in Product.COUNT_FIELDS
+            },
+            {0},
+        )
         # nothing to update anymore
         self.assertEqual(Product.update_task(), 0)
+
+    def test_update_count_methods(self):
+        Product.objects.update(**{field: 99 for field in Product.COUNT_FIELDS})
+        self.product.refresh_from_db()
+        self.product.update_price_count()
+        self.product.update_location_count()
+        self.product.update_user_count()
+        self.product.update_proof_count()
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.price_count, 2)
+        self.assertEqual(self.product.price_currency_count, 2)
+        self.assertEqual(self.product.location_count, 1)
+        self.assertEqual(self.product.location_type_osm_country_count, 1)
+        self.assertEqual(self.product.user_count, 1)
+        self.assertEqual(self.product.proof_count, 1)
 
     def test_price__min(self):
         self.assertEqual(self.product.price__min(), 1.0)
