@@ -60,7 +60,7 @@ class ChallengeQuerySet(models.QuerySet):
         - Data updated? categories_full, price/proof tags, stats
         - We stop updating ("freeze") completed challenges after a delay
 
-        Usage: see open_prices/common/tasks.py:challenge_tasks
+        Usage: see open_prices/common/tasks.py:update_challenge_task
         """
         CHALLENGE_COMPLETED_FREEZE_DELAY_IN_DAYS = 7
         return self.with_status().filter(
