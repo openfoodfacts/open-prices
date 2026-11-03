@@ -292,6 +292,28 @@ class LocationQuerySetNearbyTest(TestCase):
         self.assertEqual(location_nearby_qs.first().id, location.id)
         self.assertEqual(location_nearby_qs.first().distance_km, 0)
 
+    def test_nearby_across_antimeridian(self):
+        location_east = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=Decimal("-16.8"),
+            osm_lon=Decimal("179.95"),
+        )
+        location_west = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=Decimal("-16.8"),
+            osm_lon=Decimal("-179.95"),
+        )
+        for center_lon, closest in [(179.95, location_east), (-179.95, location_west)]:
+            with self.subTest(center_lon=center_lon):
+                location_nearby_qs = Location.objects.nearby(
+                    -16.8, center_lon, radius_km=20
+                )
+                self.assertEqual(location_nearby_qs.count(), 2)
+                self.assertEqual(location_nearby_qs.first().id, closest.id)
+                self.assertAlmostEqual(
+                    location_nearby_qs.last().distance_km, 10.65, delta=0.1
+                )
+
 
 class LocationHasOsmTagQuerysetAndPropertyTest(TestCase):
     @classmethod
