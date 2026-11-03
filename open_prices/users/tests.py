@@ -253,36 +253,72 @@ class UserPropertyTest(TestCase):
             price=3.0,
             owner=self.user_2.user_id,
         )
-        count_fields = [
-            field for field in User.COUNT_FIELDS if field not in User.BADGE_COUNT_FIELDS
-        ]
-        # expected counts: computed with the per-user methods
-        expected_counts = dict()
-        for user in User.objects.all():
-            user.update_price_count()
-            user.update_location_count()
-            user.update_product_count()
-            user.update_proof_count()
-            user.update_other_count()
-            expected_counts[user.user_id] = {
-                field: getattr(user, field) for field in count_fields
-            }
-        self.assertEqual(expected_counts[self.user_1.user_id]["price_count"], 3)
-        self.assertEqual(expected_counts[self.user_2.user_id]["challenge_count"], 1)
-        self.assertEqual(
-            expected_counts[self.user_2.user_id][
-                "price_not_owned_in_proof_owned_count"
-            ],
-            1,
-        )
-        self.assertEqual(set(expected_counts[user_3.user_id].values()), {0})
         # wrong counts
         User.objects.update(**{field: 99 for field in User.COUNT_FIELDS})
         # update_task() should fix all counts (except badge_count)
-        self.assertEqual(User.update_task(), 3)
+        # 3 users updated, then their challenge_count
+        self.assertEqual(User.update_task(), 3 + 3)
+        expected_counts = {
+            self.user_1.user_id: {
+                "price_count": 3,
+                "price_type_product_count": 2,
+                "price_type_category_count": 1,
+                "price_kind_community_count": 2,
+                "price_kind_consumption_count": 1,
+                "price_in_proof_owned_count": 2,
+                "price_in_proof_not_owned_count": 1,
+                "price_not_owned_in_proof_owned_count": 1,
+                "proof_count": 2,
+                "proof_type_price_tag_count": 1,
+                "proof_type_receipt_count": 0,
+                "proof_type_gdpr_request_count": 1,
+                "proof_type_shop_import_count": 0,
+                "proof_kind_community_count": 1,
+                "proof_kind_consumption_count": 1,
+                "location_count": 1,
+                "location_type_osm_city_count": 1,
+                "location_type_osm_country_count": 1,
+                "product_count": 1,
+                "currency_count": 2,
+                "year_count": 1,
+                "challenge_count": 2,
+            },
+            self.user_2.user_id: {
+                "price_count": 2,
+                "price_type_product_count": 2,
+                "price_type_category_count": 0,
+                "price_kind_community_count": 2,
+                "price_kind_consumption_count": 0,
+                "price_in_proof_owned_count": 0,
+                "price_in_proof_not_owned_count": 2,
+                "price_not_owned_in_proof_owned_count": 1,
+                "proof_count": 2,
+                "proof_type_price_tag_count": 1,
+                "proof_type_receipt_count": 1,
+                "proof_type_gdpr_request_count": 0,
+                "proof_type_shop_import_count": 0,
+                "proof_kind_community_count": 1,
+                "proof_kind_consumption_count": 1,
+                "location_count": 1,
+                "location_type_osm_city_count": 1,
+                "location_type_osm_country_count": 1,
+                "product_count": 2,
+                "currency_count": 1,
+                "year_count": 1,
+                "challenge_count": 1,
+            },
+            user_3.user_id: {
+                field: 0
+                for field in User.COUNT_FIELDS
+                if field not in User.BADGE_COUNT_FIELDS
+            },
+        }
         for user in User.objects.all():
             self.assertEqual(
-                {field: getattr(user, field) for field in count_fields},
+                {
+                    field: getattr(user, field)
+                    for field in expected_counts[user.user_id]
+                },
                 expected_counts[user.user_id],
             )
             self.assertEqual(user.badge_count, 99)  # not included
