@@ -122,11 +122,7 @@ class ProofQuerySet(models.QuerySet):
         Return proofs that are in the given challenge, based on:
         - if the proof has prices with the challenge tag
         """
-        return (
-            self.prefetch_related("prices")
-            .filter(prices__tags__contains=[challenge.tag])
-            .distinct()
-        )
+        return self.filter(prices__tags__contains=[challenge.tag]).distinct()
 
     def duplicates(self, ref_proof):
         """

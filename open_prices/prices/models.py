@@ -43,10 +43,10 @@ class PriceQuerySet(models.QuerySet):
         return self.filter(type=price_constants.TYPE_CATEGORY)
 
     def has_kind_community(self):
-        return self.prefetch_related("proof").exclude(proof__owner_consumption=True)
+        return self.exclude(proof__owner_consumption=True)
 
     def has_kind_consumption(self):
-        return self.prefetch_related("proof").filter(
+        return self.filter(
             proof__type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST,
             proof__owner_consumption=True,
         )
@@ -115,7 +115,7 @@ class PriceQuerySet(models.QuerySet):
         - the price category tag or product categories tags (if the challenge has categories)
         - the price location (if the challenge has locations)
         """
-        queryset = self.select_related("product").filter(
+        queryset = self.filter(
             created__gte=challenge.start_date_with_time,
             created__lte=challenge.end_date_with_time,
         )
