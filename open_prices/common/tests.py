@@ -312,3 +312,38 @@ class TaskSchedulesTest(TestCase):
         self.assertEqual(
             dict(Schedule.objects.values_list("name", "next_run")), next_runs
         )
+
+
+class CountsTest(TestCase):
+    def test_bulk_update_counts(self):
+        from open_prices.common.counts import bulk_update_counts
+        from open_prices.products.factories import ProductFactory
+        from open_prices.products.models import Product
+
+        products = [ProductFactory(code=f"012345678910{i}") for i in range(3)]
+        counts = {
+            products[0].id: {"price_count": 2, "proof_count": 1},
+            products[1].id: {"price_count": 0},  # unchanged
+            # products[2]: missing, so 0 (unchanged)
+        }
+        updated_count = bulk_update_counts(
+            Product.objects.all(),
+            ["price_count", "proof_count"],
+            lambda pk_list: {pk: counts[pk] for pk in pk_list if pk in counts},
+            batch_size=1,
+        )
+        self.assertEqual(updated_count, 1)
+        products[0].refresh_from_db()
+        self.assertEqual(products[0].price_count, 2)
+        self.assertEqual(products[0].proof_count, 1)
+        # missing pk: reset to 0
+        counts = {}
+        updated_count = bulk_update_counts(
+            Product.objects.all(),
+            ["price_count", "proof_count"],
+            lambda pk_list: counts,
+            batch_size=2,
+        )
+        self.assertEqual(updated_count, 1)
+        products[0].refresh_from_db()
+        self.assertEqual(products[0].price_count, 0)

@@ -3,13 +3,14 @@ import datetime
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Count, Q, signals
+from django.db.models import Count, Exists, OuterRef, Q, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
 from openfoodfacts.barcode import normalize_barcode
 
 from open_prices.common import constants as common_constants
+from open_prices.common.counts import bulk_update_counts, group_counts
 from open_prices.common.db_func import LevenshteinLessEqual
 from open_prices.common.managers import ApproximateCountQuerySet
 from open_prices.products import constants as product_constants
@@ -49,11 +50,17 @@ class ProductQuerySet(ApproximateCountQuerySet):
     def for_update_task(self):
         """
         Goal: only update counts of products that have prices, to save (some) time.
-        We use the annotated price_count instead of the denormalized price_count field to be sure to have up-to-date information.
+        Also include products with a denormalized price_count, to reset the counts
+        of products whose prices were all deleted.
 
         Usage: open_prices/common/tasks.py:update_product_counts_task
         """
-        return self.with_stats().filter(price_count_annotated__gte=1)
+        from open_prices.prices.models import Price
+
+        return self.filter(
+            Q(price_count__gt=0)
+            | Q(Exists(Price.objects.filter(product_id=OuterRef("pk"))))
+        )
 
     def fuzzy_barcode_search(
         self,
@@ -185,14 +192,33 @@ class Product(models.Model):
     @classmethod
     def update_task(cls):
         """
-        - Update product field counts
+        - Update product field counts (same as the update_*_count() methods)
         - Some products are skipped (see queryset)
+        - Counts are computed with 1 query per batch of products,
+        and only the products with changed counts are updated
         """
-        for product in cls.objects.for_update_task():
-            product.update_price_count()
-            product.update_location_count()
-            product.update_user_count()
-            product.update_proof_count()
+        from open_prices.locations import constants as location_constants
+        from open_prices.prices.models import Price
+
+        def get_counts(product_ids):
+            return group_counts(
+                Price.objects.filter(product_id__in=product_ids),
+                "product_id",
+                price_count=Count("id"),
+                price_currency_count=Count("currency", distinct=True),
+                location_count=Count("location_id", distinct=True),
+                location_type_osm_country_count=Count(
+                    "location__osm_address_country",
+                    distinct=True,
+                    filter=Q(location__type=location_constants.TYPE_OSM),
+                ),
+                user_count=Count("owner", distinct=True),
+                proof_count=Count("proof_id", distinct=True),
+            )
+
+        return bulk_update_counts(
+            cls.objects.for_update_task(), cls.COUNT_FIELDS, get_counts
+        )
 
     def price__min(self, exclude_discounted=False):
         if exclude_discounted:

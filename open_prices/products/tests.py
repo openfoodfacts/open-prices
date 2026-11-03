@@ -225,6 +225,41 @@ class ProductPropertyTest(TestCase):
             owner=cls.user.user_id,
         )
 
+    def test_update_task(self):
+        product_without_price = ProductFactory(code="0123456789101")
+        product_with_deleted_prices = ProductFactory(code="0123456789102")
+        PriceFactory(product_code=product_with_deleted_prices.code, price=3.0)
+        product_with_deleted_prices.prices.all().delete()
+        # expected counts: computed with the per-product methods
+        expected_counts = dict()
+        for product in Product.objects.all():
+            product.update_price_count()
+            product.update_location_count()
+            product.update_user_count()
+            product.update_proof_count()
+            expected_counts[product.id] = {
+                field: getattr(product, field) for field in Product.COUNT_FIELDS
+            }
+        self.assertEqual(expected_counts[self.product.id]["price_count"], 2)
+        self.assertEqual(
+            expected_counts[self.product.id]["location_type_osm_country_count"], 1
+        )
+        # wrong counts
+        Product.objects.update(**{field: 99 for field in Product.COUNT_FIELDS})
+        Product.objects.filter(id=product_without_price.id).update(
+            **{field: 0 for field in Product.COUNT_FIELDS}
+        )
+        # update_task() should fix all counts
+        updated_count = Product.update_task()
+        self.assertEqual(updated_count, 2)  # product_without_price is skipped
+        for product in Product.objects.all():
+            self.assertEqual(
+                {field: getattr(product, field) for field in Product.COUNT_FIELDS},
+                expected_counts[product.id],
+            )
+        # nothing to update anymore
+        self.assertEqual(Product.update_task(), 0)
+
     def test_price__min(self):
         self.assertEqual(self.product.price__min(), 1.0)
         self.assertEqual(self.product.price__min(exclude_discounted=True), 2.0)
