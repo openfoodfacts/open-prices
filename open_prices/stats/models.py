@@ -186,9 +186,11 @@ class TotalStats(SingletonModel):
                 "date_year_annotated"
             )
         )
-        self.price_location_country_count = Price.objects.select_related(
-            "location"
-        ).calculate_field_distinct_count("location__osm_address_country")
+        self.price_location_country_count = (
+            Price.objects.calculate_field_distinct_count(
+                "location__osm_address_country"
+            )
+        )
         self.price_kind_community_count = Price.objects.has_kind_community().count()
         self.price_kind_consumption_count = Price.objects.has_kind_consumption().count()
         for source in constants.SOURCE_LIST:
