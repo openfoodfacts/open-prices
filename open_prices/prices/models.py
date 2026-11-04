@@ -3,7 +3,7 @@ import decimal
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, ValidationError
-from django.db import connection, models
+from django.db import connection, models, router, transaction
 from django.db.models import Avg, Case, Count, F, Max, Min, Q, Value, When, signals
 from django.db.models.functions import Cast, ExtractYear
 from django.dispatch import receiver
@@ -27,6 +27,15 @@ from open_prices.products.models import Product
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.models import Proof
 from open_prices.users.models import User
+
+
+class _DuplicateEditCache:
+    """Read reuse within one reclassification, never across saves or requests."""
+
+    def __init__(self) -> None:
+        self.products: dict[str, Product] = {}
+        self.locations: dict[tuple[int, str], Location] = {}
+        self.matches: dict[tuple[object, ...], list[Price]] = {}
 
 
 class PriceQuerySet(models.QuerySet):
@@ -136,6 +145,22 @@ class PriceQuerySet(models.QuerySet):
 
 
 class Price(models.Model):
+    DUPLICATE_FIELDS = (
+        "type",
+        "location_id",
+        "date",
+        "currency",
+        "price",
+        "price_per",
+        "price_is_discounted",
+        "price_without_discount",
+        "discount_type",
+        "product_code",
+        "category_tag",
+        "labels_tags",
+        "origins_tags",
+    )
+
     TYPE_PRODUCT_FIELDS = ["product_code"]
     TYPE_CATEGORY_FIELDS = ["category_tag", "labels_tags", "origins_tags"]
     UPDATE_FIELDS = [
@@ -319,24 +344,35 @@ class Price(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def set_product(self):
+    def set_product(self, cache: _DuplicateEditCache | None = None):
         if self.product_code:
             from open_prices.products.models import Product
 
-            product, created = Product.objects.get_or_create(code=self.product_code)
-            self.product = product
+            if cache is not None and self.product_code in cache.products:
+                self.product = cache.products[self.product_code]
+            else:
+                product, created = Product.objects.get_or_create(code=self.product_code)
+                self.product = product
+                if cache is not None:
+                    cache.products[self.product_code] = product
 
-    def set_location(self):
+    def set_location(self, cache: _DuplicateEditCache | None = None):
         if self.location_osm_id and self.location_osm_type:
             from open_prices.locations import constants as location_constants
             from open_prices.locations.models import Location
 
-            location, created = Location.objects.get_or_create(
-                type=location_constants.TYPE_OSM,
-                osm_id=self.location_osm_id,
-                osm_type=self.location_osm_type,
-            )
-            self.location = location
+            key = (self.location_osm_id, self.location_osm_type)
+            if cache is not None and key in cache.locations:
+                self.location = cache.locations[key]
+            else:
+                location, created = Location.objects.get_or_create(
+                    type=location_constants.TYPE_OSM,
+                    osm_id=self.location_osm_id,
+                    osm_type=self.location_osm_type,
+                )
+                self.location = location
+                if cache is not None:
+                    cache.locations[key] = location
 
     def save(self, *args, **kwargs):
         """
@@ -345,13 +381,72 @@ class Price(models.Model):
         - set product (create if needed)
         - set location (create if needed)
         """
+        cache = kwargs.pop("_duplicate_edit_cache", None)
         self.normalize_product_code()
         self.full_clean()
         # self.set_proof()  # should already exist
-        self.set_product()
-        self.set_location()
-        self.set_is_duplicate_of()
-        super().save(*args, **kwargs)
+        self.set_product(cache=cache)
+        self.set_location(cache=cache)
+        self.set_is_duplicate_of(cache=cache)
+        update_fields = kwargs.get("update_fields", args[3] if len(args) > 3 else None)
+        if update_fields is not None:
+            # Django accepts one-shot iterables; checking fields must not consume them.
+            update_fields = frozenset(update_fields)
+            if len(args) > 3:
+                args = (*args[:3], update_fields, *args[4:])
+            else:
+                kwargs["update_fields"] = update_fields
+        match_fields = {*self.DUPLICATE_FIELDS, "location", "created"}
+        if self._state.adding or (
+            update_fields is not None and not match_fields.intersection(update_fields)
+        ):
+            return super().save(*args, **kwargs)
+        using = (
+            kwargs.get("using")
+            or (args[2] if len(args) > 2 else None)
+            or router.db_for_write(type(self), instance=self)
+        )
+        # Keep the reference edit and derived links/history in one transaction.
+        with transaction.atomic(using=using):
+            super().save(*args, **kwargs)
+            self.reassign_invalid_duplicates(using=using)
+
+    def reassign_invalid_duplicates(self, using: str) -> None:
+        # Read persisted values: partial saves can leave unsaved values on self.
+        # Literal filters also preserve Django's NULL matching semantics.
+        matching = (
+            Price.objects.using(using)
+            .filter(pk=self.pk, duplicates__isnull=False)
+            .values(*self.DUPLICATE_FIELDS, "created")
+            .first()
+        )
+        if matching is None:
+            return
+        matching["created__gt"] = matching.pop("created")
+        matching.update(location_id__isnull=False, date__isnull=False)
+        cache = _DuplicateEditCache()
+        # These resolver results were obtained by this reference's normal save.
+        product = self._state.fields_cache.get("product")
+        if product is not None:
+            cache.products[product.code] = product
+        location = self._state.fields_cache.get("location")
+        if location is not None and location.type == location_constants.TYPE_OSM:
+            cache.locations[(location.osm_id, location.osm_type)] = location
+        for price in (
+            Price.objects.using(using)
+            .filter(duplicate_of_id=self.pk)
+            .exclude(**matching)
+            .order_by("-created")
+        ):
+            # The old target is the reference just saved in this transaction.
+            # Clear it before validation and let the matcher derive the new link.
+            price.duplicate_of = None
+            # This derived-only save cannot trigger another reassignment pass.
+            price.save(
+                using=using,
+                update_fields=["duplicate_of"],
+                _duplicate_edit_cache=cache,
+            )
 
     @classmethod
     def update_task(cls):
@@ -430,7 +525,7 @@ class Price(models.Model):
         )
         return dates_match and categories_match and locations_match
 
-    def set_is_duplicate_of(self):
+    def set_is_duplicate_of(self, cache: _DuplicateEditCache | None = None) -> None:
         """Look for duplicate prices and set the duplicate_of field
         accordingly.
 
@@ -445,32 +540,32 @@ class Price(models.Model):
         and no longer matches is not flagged as a duplicate anymore.
         """
         # Look for possible duplicates
+        values = {field: getattr(self, field) for field in self.DUPLICATE_FIELDS}
         possible_duplicates = (
             Price.objects.filter(
-                type=self.type,
-                location_id=self.location_id,
-                date=self.date,
-                currency=self.currency,
-                price=self.price,
-                price_per=self.price_per,
-                price_is_discounted=self.price_is_discounted,
-                price_without_discount=self.price_without_discount,
-                discount_type=self.discount_type,
-                product_code=self.product_code,
-                category_tag=self.category_tag,
-                labels_tags=self.labels_tags,
-                origins_tags=self.origins_tags,
+                **values,
                 # Check that at least location and date are set,
                 # otherwise it doesn't make much sense to consider these
                 # prices as duplicates
                 location_id__isnull=False,
                 date__isnull=False,
             )
-            .exclude(id=self.id)
             # oldest first
             .order_by("id")
         )
-        duplicate = possible_duplicates.first()
+        if cache is None:
+            duplicate = possible_duplicates.exclude(id=self.id).first()
+        else:
+            key = tuple(
+                tuple(value) if isinstance(value, list) else value
+                for value in values.values()
+            )
+            if key not in cache.matches:
+                # Two candidates preserve exclude(self), even with unusual timestamps.
+                cache.matches[key] = list(possible_duplicates[:2])
+            duplicate = next(
+                (price for price in cache.matches[key] if price.pk != self.pk), None
+            )
         if duplicate is not None and duplicate.created < self.created:
             # Set the duplicate_of field to the first found duplicate
             self.duplicate_of = duplicate
