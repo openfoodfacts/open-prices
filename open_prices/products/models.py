@@ -3,13 +3,18 @@ import datetime
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Count, Q, signals
+from django.db.models import Count, Exists, OuterRef, Q, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
 from openfoodfacts.barcode import normalize_barcode
 
 from open_prices.common import constants as common_constants
+from open_prices.common.counts import (
+    bulk_update_counts,
+    count_subquery,
+    update_counts,
+)
 from open_prices.common.db_func import LevenshteinLessEqual
 from open_prices.common.managers import ApproximateCountQuerySet
 from open_prices.products import constants as product_constants
@@ -24,6 +29,79 @@ class ProductQuerySet(ApproximateCountQuerySet):
 
     def with_stats(self):
         return self.annotate(price_count_annotated=Count("prices", distinct=True))
+
+    def with_price_counts(self):
+        """
+        - price_count: number of prices
+        - price_currency_count: number of distinct price currencies
+        """
+        from open_prices.prices.models import Price
+
+        return self.annotate(
+            price_count_annotated=count_subquery(Price, "product", Count("id")),
+            price_currency_count_annotated=count_subquery(
+                Price, "product", Count("currency", distinct=True)
+            ),
+        )
+
+    def with_location_counts(self):
+        """
+        - location_count: number of distinct price locations
+        - location_type_osm_country_count: number of distinct price location
+        countries (OSM locations only)
+        """
+        from open_prices.locations import constants as location_constants
+        from open_prices.prices.models import Price
+
+        return self.annotate(
+            location_count_annotated=count_subquery(
+                Price, "product", Count("location_id", distinct=True)
+            ),
+            location_type_osm_country_count_annotated=count_subquery(
+                Price,
+                "product",
+                Count(
+                    "location__osm_address_country",
+                    distinct=True,
+                    filter=Q(location__type=location_constants.TYPE_OSM),
+                ),
+            ),
+        )
+
+    def with_user_count(self):
+        """
+        - user_count: number of distinct price owners
+        """
+        from open_prices.prices.models import Price
+
+        return self.annotate(
+            user_count_annotated=count_subquery(
+                Price, "product", Count("owner", distinct=True)
+            )
+        )
+
+    def with_proof_count(self):
+        """
+        - proof_count: number of distinct price proofs
+        """
+        from open_prices.prices.models import Price
+
+        return self.annotate(
+            proof_count_annotated=count_subquery(
+                Price, "product", Count("proof_id", distinct=True)
+            )
+        )
+
+    def with_counts(self):
+        """
+        All the COUNT_FIELDS
+        """
+        return (
+            self.with_price_counts()
+            .with_location_counts()
+            .with_user_count()
+            .with_proof_count()
+        )
 
     def to_update_in_sync_task(
         self,
@@ -49,11 +127,19 @@ class ProductQuerySet(ApproximateCountQuerySet):
     def for_update_task(self):
         """
         Goal: only update counts of products that have prices, to save (some) time.
-        We use the annotated price_count instead of the denormalized price_count field to be sure to have up-to-date information.
+        Also include products with a non-zero count, to reset the counts
+        of products whose prices were all deleted.
 
         Usage: open_prices/common/tasks.py:update_product_counts_task
         """
-        return self.with_stats().filter(price_count_annotated__gte=1)
+        from open_prices.prices.models import Price
+
+        has_counts = Q()
+        for field in self.model.COUNT_FIELDS:
+            has_counts |= Q(**{f"{field}__gt": 0})
+        return self.filter(
+            has_counts | Q(Exists(Price.objects.filter(product_id=OuterRef("pk"))))
+        )
 
     def fuzzy_barcode_search(
         self,
@@ -187,12 +273,11 @@ class Product(models.Model):
         """
         - Update product field counts
         - Some products are skipped (see queryset)
+        - Only the products with changed counts are updated
         """
-        for product in cls.objects.for_update_task():
-            product.update_price_count()
-            product.update_location_count()
-            product.update_user_count()
-            product.update_proof_count()
+        return bulk_update_counts(
+            cls.objects.for_update_task().with_counts(), cls.COUNT_FIELDS
+        )
 
     def price__min(self, exclude_discounted=False):
         if exclude_discounted:
@@ -215,41 +300,24 @@ class Product(models.Model):
         return self.prices.calculate_stats()
 
     def update_price_count(self):
-        self.price_count = self.prices.count()
-        self.price_currency_count = self.prices.calculate_field_distinct_count(
-            "currency"
+        update_counts(
+            self,
+            Product.objects.with_price_counts(),
+            ["price_count", "price_currency_count"],
         )
-        self.save(update_fields=["price_count", "price_currency_count"])
 
     def update_location_count(self):
-        from open_prices.locations import constants as location_constants
-        from open_prices.prices.models import Price
-
-        self.location_count = Price.objects.filter(
-            product=self
-        ).calculate_field_distinct_count("location_id")
-        self.location_type_osm_country_count = Price.objects.filter(
-            product=self,
-            location_id__isnull=False,
-            location__type=location_constants.TYPE_OSM,
-        ).calculate_field_distinct_count("location__osm_address_country")
-        self.save(update_fields=["location_count", "location_type_osm_country_count"])
+        update_counts(
+            self,
+            Product.objects.with_location_counts(),
+            ["location_count", "location_type_osm_country_count"],
+        )
 
     def update_user_count(self):
-        from open_prices.prices.models import Price
-
-        self.user_count = Price.objects.filter(
-            product=self
-        ).calculate_field_distinct_count("owner")
-        self.save(update_fields=["user_count"])
+        update_counts(self, Product.objects.with_user_count(), ["user_count"])
 
     def update_proof_count(self):
-        from open_prices.prices.models import Price
-
-        self.proof_count = Price.objects.filter(
-            product=self
-        ).calculate_field_distinct_count("proof_id")
-        self.save(update_fields=["proof_count"])
+        update_counts(self, Product.objects.with_proof_count(), ["proof_count"])
 
 
 @receiver(signals.post_save, sender=Product)

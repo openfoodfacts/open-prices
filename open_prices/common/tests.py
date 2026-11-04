@@ -312,3 +312,22 @@ class TaskSchedulesTest(TestCase):
         self.assertEqual(
             dict(Schedule.objects.values_list("name", "next_run")), next_runs
         )
+
+
+class CountsTest(TestCase):
+    def test_bulk_update_counts(self):
+        from django.db.models import Value
+
+        from open_prices.common.counts import bulk_update_counts
+        from open_prices.products.factories import ProductFactory
+        from open_prices.products.models import Product
+
+        products = [ProductFactory(code=f"012345678910{i}") for i in range(3)]
+        Product.objects.filter(id=products[0].id).update(price_count=5)
+        queryset = Product.objects.annotate(price_count_annotated=Value(0))
+        # batch_size=1: one batch per product
+        self.assertEqual(bulk_update_counts(queryset, ["price_count"], batch_size=1), 1)
+        products[0].refresh_from_db()
+        self.assertEqual(products[0].price_count, 0)
+        # nothing changed
+        self.assertEqual(bulk_update_counts(queryset, ["price_count"], batch_size=2), 0)
