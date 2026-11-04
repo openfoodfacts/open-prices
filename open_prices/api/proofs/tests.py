@@ -4,6 +4,7 @@ import tempfile
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 
 import cv2
 import numpy as np
@@ -582,6 +583,130 @@ class ProofUploadApiTest(TestCase):
             headers={"Authorization": f"Bearer {self.user_session.token}"},
         )
         self.assertEqual(response.status_code, 201)
+
+    def test_proof_create_duplicate_different_online_locations(self) -> None:
+        locations = [
+            cast(Location, LocationFactory(type=location_constants.TYPE_ONLINE)),
+            cast(Location, LocationFactory(type=location_constants.TYPE_ONLINE)),
+        ]
+        data = self.data.copy()
+        data.pop("location_osm_id")
+        data.pop("location_osm_type")
+        proof_ids = []
+        for location in locations:
+            response = self.client.post(
+                self.url,
+                {**data, "file": create_fake_image(), "location_id": location.id},
+                headers={"Authorization": f"Bearer {self.user_session.token}"},
+            )
+            self.assertEqual(response.status_code, 201)
+            self.assertEqual(response.data["location"]["id"], location.id)
+            proof_ids.append(response.data["id"])
+        self.assertNotEqual(proof_ids[0], proof_ids[1])
+
+        # Re-uploading at the same online location must still reuse its proof.
+        response = self.client.post(
+            self.url,
+            {**data, "file": create_fake_image(), "location_id": locations[1].id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], proof_ids[1])
+        self.assertEqual(response.data["detail"], "duplicate")
+
+    def test_proof_create_duplicate_online_and_missing_location(self) -> None:
+        location = cast(Location, LocationFactory(type=location_constants.TYPE_ONLINE))
+        data = self.data.copy()
+        data.pop("location_osm_id")
+        data.pop("location_osm_type")
+        for color, location_ids in [
+            ("red", [None, location.id]),
+            ("blue", [location.id, None]),
+        ]:
+            with self.subTest(location_ids=location_ids):
+                proof_ids = []
+                for location_id in location_ids:
+                    upload_data = {**data, "file": create_fake_image(color=color)}
+                    if location_id is not None:
+                        upload_data["location_id"] = location_id
+                    response = self.client.post(
+                        self.url,
+                        upload_data,
+                        headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    )
+                    self.assertEqual(response.status_code, 201)
+                    self.assertEqual(response.data["location_id"], location_id)
+                    proof_ids.append(response.data["id"])
+                self.assertNotEqual(proof_ids[0], proof_ids[1])
+
+    def test_proof_create_duplicate_without_location(self) -> None:
+        data = self.data.copy()
+        data.pop("location_osm_id")
+        data.pop("location_osm_type")
+        proof_ids = []
+        for expected_status in [201, 200]:
+            response = self.client.post(
+                self.url,
+                {**data, "file": create_fake_image()},
+                headers={"Authorization": f"Bearer {self.user_session.token}"},
+            )
+            self.assertEqual(response.status_code, expected_status)
+            self.assertIsNone(response.data["location_id"])
+            proof_ids.append(response.data["id"])
+        self.assertEqual(proof_ids[0], proof_ids[1])
+
+    def test_proof_create_duplicate_osm_with_optional_location_id(self) -> None:
+        location = cast(Location, LocationFactory(**LOCATION_OSM_NODE_652825274))
+        proof_ids = []
+        for location_data, expected_status in [
+            ({}, 201),
+            ({"location_id": location.id}, 200),
+            ({}, 200),
+        ]:
+            response = self.client.post(
+                self.url,
+                {**self.data, **location_data, "file": create_fake_image()},
+                headers={"Authorization": f"Bearer {self.user_session.token}"},
+            )
+            self.assertEqual(response.status_code, expected_status)
+            self.assertEqual(response.data["location_id"], location.id)
+            proof_ids.append(response.data["id"])
+        self.assertEqual(len(set(proof_ids)), 1)
+
+    def test_proof_create_duplicate_online_identity_boundaries(self) -> None:
+        location = cast(Location, LocationFactory(type=location_constants.TYPE_ONLINE))
+        other_session = SessionFactory.create()
+        data = {**self.data, "location_id": location.id}
+        data.pop("location_osm_id")
+        data.pop("location_osm_type")
+        headers = {"Authorization": f"Bearer {self.user_session.token}"}
+        response = self.client.post(
+            self.url, {**data, "file": create_fake_image()}, headers=headers
+        )
+        self.assertEqual(response.status_code, 201)
+        original_id = response.data["id"]
+        price_tag_data = {**data, "type": proof_constants.TYPE_PRICE_TAG}
+        for field in [
+            "receipt_price_count",
+            "receipt_price_total",
+            "owner_consumption",
+        ]:
+            price_tag_data.pop(field)
+        for changed_data, changed_headers, color in [
+            (data, {"Authorization": f"Bearer {other_session.token}"}, "black"),
+            ({**data, "date": "2024-01-02"}, headers, "black"),
+            (price_tag_data, headers, "black"),
+            (data, headers, "green"),
+        ]:
+            with self.subTest(data=changed_data, color=color):
+                response = self.client.post(
+                    self.url,
+                    {**changed_data, "file": create_fake_image(color=color)},
+                    headers=changed_headers,
+                )
+                self.assertEqual(response.status_code, 201)
+                self.assertNotEqual(response.data["id"], original_id)
+                self.assertEqual(response.data["location_id"], location.id)
 
     def test_proof_create_history(self):
         response = self.client.post(

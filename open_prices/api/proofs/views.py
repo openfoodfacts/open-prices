@@ -112,7 +112,7 @@ def base_upload(request: Request, draft: bool = False) -> Response:
     # We check if a proof with the same MD5 hash already exists,
     # uploaded by the same user, with the same type, location and date.
     # If yes, we return it instead of creating a new one
-    duplicate_proof = Proof.objects.filter(
+    duplicate_proofs = Proof.objects.filter(
         image_md5_hash=image_md5_hash,
         owner=owner,
         type=serializer.validated_data.get("type"),
@@ -120,7 +120,13 @@ def base_upload(request: Request, draft: bool = False) -> Response:
         location_osm_id=serializer.validated_data.get("location_osm_id"),
         location_osm_type=serializer.validated_data.get("location_osm_type"),
         date=serializer.validated_data.get("date"),
-    ).first()
+    )
+    if not serializer.validated_data.get("location_osm_id"):
+        # Online locations share null OSM fields; compare the location itself.
+        duplicate_proofs = duplicate_proofs.filter(
+            location=serializer.validated_data.get("location")
+        )
+    duplicate_proof = duplicate_proofs.first()
     if duplicate_proof:
         # We remove the uploaded file as it's a duplicate
         (settings.IMAGES_DIR / file_path).unlink(missing_ok=True)
