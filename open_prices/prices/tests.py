@@ -623,6 +623,10 @@ class PriceModelSaveTest(TransactionTestCase):
             PriceFactory(date=DATE_OK)
         for DATE_NOT_OK in ["3000-01-01", "01-01-2000"]:
             self.assertRaises(ValidationError, PriceFactory, date=DATE_NOT_OK)
+        with freeze_time("2025-01-01"):
+            PriceFactory(date="2025-01-01")
+            PriceFactory(date="2025-01-02")
+            self.assertRaises(ValidationError, PriceFactory, date="2025-01-03")
 
     def test_price_location_validation(self):
         location_osm = LocationFactory()
