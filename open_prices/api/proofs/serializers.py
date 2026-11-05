@@ -131,6 +131,17 @@ class ProofUpdateSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class ProofDraftFinalizeSerializer(serializers.ModelSerializer):
+    # online locations have no OSM id/type, only a location_id (as on upload)
+    location_id = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), source="location", required=False
+    )
+
+    class Meta:
+        model = Proof
+        fields = Proof.CREATE_FIELDS
+
+
 class ProofProcessWithGeminiSerializer(serializers.Serializer):
     files = serializers.ListField(
         child=serializers.FileField(required=True, use_url=False)
