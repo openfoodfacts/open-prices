@@ -1,7 +1,9 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
@@ -1242,24 +1244,127 @@ class PriceStatsApiTest(TestCase):
             price=2,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
+        # prices with a location country, a proof and a recent date
+        cls.today = timezone.now().date()
+        cls.location_fr = LocationFactory(osm_address_country_code="FR")
+        cls.location_it = LocationFactory(osm_address_country_code="IT")
+        cls.proof_1 = ProofFactory()
+        cls.proof_2 = ProofFactory()
+        PriceFactory(
+            price=10,
+            location_osm_id=cls.location_fr.osm_id,
+            location_osm_type=cls.location_fr.osm_type,
+            proof_id=cls.proof_1.id,
+            date=cls.today - timedelta(days=30),  # last day of the 30-day window
+        )
+        PriceFactory(
+            price=20,
+            location_osm_id=cls.location_fr.osm_id,
+            location_osm_type=cls.location_fr.osm_type,
+            proof_id=cls.proof_1.id,  # same proof
+            date=cls.today - timedelta(days=31),  # outside the 30-day window
+        )
+        PriceFactory(
+            price=30,
+            location_osm_id=cls.location_fr.osm_id,
+            location_osm_type=cls.location_fr.osm_type,
+            proof_id=cls.proof_2.id,
+            date=cls.today,
+        )
+        PriceFactory(
+            price=50,
+            location_osm_id=cls.location_it.osm_id,
+            location_osm_type=cls.location_it.osm_type,
+            proof_id=cls.proof_2.id,
+            date=cls.today - timedelta(days=1),
+        )
 
     def test_price_stats(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["price__count"], 4)
+        self.assertEqual(response.data["price__count"], 8)
         self.assertEqual(response.data["price__min"], 2)
-        self.assertEqual(response.data["price__max"], 30)
-        self.assertEqual(response.data["price__avg"], 18)
+        self.assertEqual(response.data["price__max"], 50)
+        self.assertEqual(response.data["price__avg"], Decimal("22.75"))
+        self.assertEqual(response.data["proof__count"], 2)  # distinct
+        self.assertEqual(
+            response.data["last_30_days"],
+            {
+                "price__count": 3,
+                "price__min": 10,
+                "price__max": 50,
+                "price__avg": 30,
+                "proof__count": 2,
+            },
+        )
         url = self.url + "?price_is_discounted=False"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["price__count"], 3)
-        self.assertEqual(response.data["price__avg"], 19)
+        self.assertEqual(response.data["price__count"], 7)
+        self.assertEqual(response.data["price__avg"], Decimal("23.86"))
         url = self.url + f"?price_is_discounted=false&product_code={self.product.code}"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["price__count"], 2)
         self.assertEqual(response.data["price__avg"], Decimal(27.5))
+        self.assertEqual(response.data["proof__count"], 0)
+        self.assertEqual(response.data["last_30_days"]["price__count"], 0)
+
+    def test_price_stats_filter_by_country(self):
+        # FR: 3 prices, 2 distinct proofs, 2 prices in the last 30 days
+        url = self.url + "?location__osm_address_country_code=FR"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price__count"], 3)
+        self.assertEqual(response.data["price__min"], 10)
+        self.assertEqual(response.data["price__max"], 30)
+        self.assertEqual(response.data["price__avg"], 20)
+        self.assertEqual(response.data["proof__count"], 2)
+        self.assertEqual(
+            response.data["last_30_days"],
+            {
+                "price__count": 2,
+                "price__min": 10,
+                "price__max": 30,
+                "price__avg": 20,
+                "proof__count": 2,
+            },
+        )
+        # IT: 1 price
+        url = self.url + "?location__osm_address_country_code=IT"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price__count"], 1)
+        self.assertEqual(response.data["price__avg"], 50)
+        self.assertEqual(response.data["proof__count"], 1)
+        self.assertEqual(response.data["last_30_days"]["price__count"], 1)
+        # combined with other filters
+        url = self.url + "?location__osm_address_country_code=FR&price__gte=20"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["price__count"], 2)
+        self.assertEqual(response.data["last_30_days"]["price__count"], 1)
+        # unknown country: empty result
+        url = self.url + "?location__osm_address_country_code=XX"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data,
+            {
+                "price__count": 0,
+                "price__min": None,
+                "price__max": None,
+                "price__avg": None,
+                "proof__count": 0,
+                "last_30_days": {
+                    "price__count": 0,
+                    "price__min": None,
+                    "price__max": None,
+                    "price__avg": None,
+                    "proof__count": 0,
+                },
+            },
+        )
 
 
 class PriceHistoryApiTest(TestCase):

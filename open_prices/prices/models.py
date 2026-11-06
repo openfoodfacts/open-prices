@@ -95,6 +95,7 @@ class PriceQuerySet(models.QuerySet):
                 Avg("price"),
                 output_field=models.DecimalField(max_digits=10, decimal_places=2),
             ),
+            proof__count=Count("proof_id", distinct=True),
         )
 
     def calculate_field_distinct_count(self, field_name: str):
