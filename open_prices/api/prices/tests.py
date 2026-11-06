@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 from django.urls import reverse
+from freezegun import freeze_time
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
@@ -877,6 +878,24 @@ class PriceCreateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
+
+    def test_price_create_with_proof_dated_tomorrow(self):
+        with freeze_time("2025-01-01"):
+            proof = ProofFactory(
+                type=proof_constants.TYPE_PRICE_TAG,
+                owner=self.user_session.user.user_id,
+                location_osm_id=self.location_osm.osm_id,
+                location_osm_type=self.location_osm.osm_type,
+                currency="EUR",
+                date="2025-01-02",
+            )
+            response = self.client.post(
+                self.url,
+                {**self.data, "proof_id": proof.id, "date": "2025-01-02"},
+                headers={"Authorization": f"Bearer {self.user_session.token}"},
+            )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["date"], "2025-01-02")
 
     def test_price_create_with_location_id(self):
         # with location_id, location_osm_id & location_osm_type: OK
