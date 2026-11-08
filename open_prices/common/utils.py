@@ -1,6 +1,11 @@
+import datetime
 import json
 from decimal import Decimal
 from urllib.parse import urlparse
+
+from django.utils import timezone
+
+from open_prices.common import constants
 
 
 def is_float(string):
@@ -62,6 +67,17 @@ def merge_validation_errors(dict1, *args):
         for key, value in dict2.items():
             dict1 = add_validation_error(dict1, key, value)
     return dict1
+
+
+def is_date_in_future(date: datetime.date) -> bool:
+    """
+    Return True if the date is after today (UTC),
+    with a leniency of DATE_FUTURE_LENIENCY_DAYS for time zones ahead of UTC
+    """
+    max_date = timezone.now().date() + datetime.timedelta(
+        days=constants.DATE_FUTURE_LENIENCY_DAYS
+    )
+    return date > max_date
 
 
 def url_add_missing_https(url):

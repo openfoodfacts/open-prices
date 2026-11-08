@@ -8,6 +8,8 @@ KIND_CHOICES = [(key, key) for key in KIND_LIST]
 CURRENCY_LIST = sorted(list_currencies())
 CURRENCY_CHOICES = [(key, key) for key in CURRENCY_LIST]
 
+DATE_FUTURE_LENIENCY_DAYS = 1
+
 SOURCE_WEB = "WEB"  # Open Prices Web App
 SOURCE_MOBILE = "MOBILE"  # Smoothie - OpenFoodFacts
 SOURCE_API = "API"  # API
