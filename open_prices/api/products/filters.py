@@ -5,6 +5,7 @@ from open_prices.products.models import Product
 
 
 class ProductFilter(django_filters.FilterSet):
+    code__in = django_filters.BaseInFilter(field_name="code", lookup_expr="in")
     product_name__like = django_filters.CharFilter(
         field_name="product_name", lookup_expr="icontains"
     )
