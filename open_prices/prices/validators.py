@@ -173,7 +173,7 @@ def validate_price_price_rules(instance):
 def validate_price_date_rules(instance):
     """
     - date should have the right format
-    - date should not be in the future (1 day leniency for time zones ahead of UTC)
+    - date should not be in the future (we accept 1 day leniency for users in future time zones)  # noqa
     """
     errors = dict()
     if instance.date:
