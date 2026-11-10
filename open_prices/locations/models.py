@@ -14,7 +14,7 @@ from django.db.models import (
     Value,
     signals,
 )
-from django.db.models.functions import ACos, Cos, Radians, Sin
+from django.db.models.functions import ACos, Cos, Greatest, Least, Radians, Sin
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -36,6 +36,9 @@ class LocationQuerySet(models.QuerySet):
 
     def has_osm_tag(self, tag: str):
         return self.filter(osm_tags__contains=[tag])
+
+    def has_tag(self, tag: str):
+        return self.filter(tags__contains=[tag])
 
     def has_prices(self):
         return self.filter(price_count__gt=0)
@@ -77,6 +80,21 @@ class LocationQuerySet(models.QuerySet):
             else:
                 delta_lon = radius_km / (km_per_degree * cos_center_lat)
 
+        # Longitude bounds of the bounding box, wrapped around the antimeridian (±180°):
+        # - delta_lon >= 180 (at the poles, or very large radius): no longitude filter
+        # - box crossing -180 or +180: 2 ranges (one on each side), joined with OR
+        # - otherwise: a single range
+        lon_min = center_lon - delta_lon
+        lon_max = center_lon + delta_lon
+        if delta_lon >= max_longitude_delta_degrees:
+            lon_filter = Q()
+        elif lon_min < -max_longitude_delta_degrees:
+            lon_filter = Q(osm_lon__gte=lon_min + 360) | Q(osm_lon__lte=lon_max)
+        elif lon_max > max_longitude_delta_degrees:
+            lon_filter = Q(osm_lon__gte=lon_min) | Q(osm_lon__lte=lon_max - 360)
+        else:
+            lon_filter = Q(osm_lon__gte=lon_min, osm_lon__lte=lon_max)
+
         center_lat_rad = math.radians(center_lat)
         center_lon_rad = math.radians(center_lon)
 
@@ -85,23 +103,28 @@ class LocationQuerySet(models.QuerySet):
         distance_expr = ExpressionWrapper(
             Value(earth_radius_km)
             * ACos(
-                Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
-                + Cos(Value(center_lat_rad))
-                * Cos(Radians(F("osm_lat")))
-                * Cos(Radians(F("osm_lon")) - Value(center_lon_rad))
+                Least(
+                    Value(1.0),
+                    Greatest(
+                        Value(-1.0),
+                        Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
+                        + Cos(Value(center_lat_rad))
+                        * Cos(Radians(F("osm_lat")))
+                        * Cos(Radians(F("osm_lon")) - Value(center_lon_rad)),
+                    ),
+                )
             ),
             output_field=FloatField(),
         )
 
         return (
             self.filter(
+                lon_filter,
                 type=location_constants.TYPE_OSM,
                 osm_lat__isnull=False,
                 osm_lon__isnull=False,
                 osm_lat__gte=center_lat - delta_lat,
                 osm_lat__lte=center_lat + delta_lat,
-                osm_lon__gte=center_lon - delta_lon,
-                osm_lon__lte=center_lon + delta_lon,
             )
             .annotate(distance_km=distance_expr)
             .filter(distance_km__lte=radius_km)
@@ -164,6 +187,12 @@ class Location(models.Model):
 
     # type ONLINE
     website_url = models.URLField(blank=True, null=True)
+
+    tags = ArrayField(
+        base_field=models.CharField(choices=location_constants.TAG_CHOICES),
+        blank=True,
+        default=list,
+    )
 
     # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)
@@ -278,6 +307,9 @@ class Location(models.Model):
 
     def has_osm_tag(self, tag: str) -> bool:
         return tag in self.osm_tags
+
+    def has_tag(self, tag: str) -> bool:
+        return tag in self.tags
 
     def update_price_count(self):
         self.price_count = self.prices.count()

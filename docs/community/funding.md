@@ -24,7 +24,7 @@ NLnet is a non-profit organization that supports open source projects and initia
 Thanks to this funding, we worked on 3 main areas:
 
 * Better machine learning tools to extract prices and barcodes from store shelf images (see [AI](../topics/ai/README.md))
-* Moderation tools (see [Moderation & Historisation](../topics/moderation-historisation.md))
+* Moderation tools (see [Moderation](../topics/moderation.md))
 * Gamification (see [Gamification](../topics/gamification.md))
 
 More info:

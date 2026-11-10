@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.core import management
 from django.core.exceptions import ValidationError
@@ -7,6 +8,7 @@ from django.test import TestCase
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
+from open_prices.locations.tasks import fetch_and_save_data_from_openstreetmap
 from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.proofs import constants as proof_constants
@@ -128,6 +130,30 @@ class LocationModelSaveTest(TestCase):
             type=location_constants.TYPE_ONLINE,
             website_url=location_constants.WEBSITE_URL_OK_TUPLE_LIST[0][0],
         )
+
+
+class FetchAndSaveDataFromOpenStreetMapTest(TestCase):
+    @patch("open_prices.common.openstreetmap.get_location_dict_from_all_apis")
+    def test_fetch_does_not_overwrite_counts(self, mock_get_location_dict):
+        mock_get_location_dict.return_value = {"osm_name": "Carrefour"}
+        for save_without_historical_record in (True, False):
+            with self.subTest(
+                save_without_historical_record=save_without_historical_record
+            ):
+                location = LocationFactory()
+                # the task receives the location instance as it was at creation
+                stale_location = Location.objects.get(id=location.id)
+                # meanwhile, a proof is added (see proof_post_create_increment_counts)
+                Location.objects.filter(id=location.id).update(proof_count=1)
+
+                fetch_and_save_data_from_openstreetmap(
+                    stale_location,
+                    save_without_historical_record=save_without_historical_record,
+                )
+
+                location.refresh_from_db()
+                self.assertEqual(location.osm_name, "Carrefour")
+                self.assertEqual(location.proof_count, 1)
 
 
 class LocationModelHistoryTest(TestCase):
@@ -253,6 +279,41 @@ class LocationQuerySetNearbyTest(TestCase):
         # ordered by distance
         self.assertEqual(location_nearby_qs.first().id, self.location_osm_center.id)
 
+    def test_nearby_exact_location_coordinates(self):
+        location = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=Decimal("11.3250441"),
+            osm_lon=Decimal("-98.910362"),
+        )
+        location_nearby_qs = Location.objects.nearby(
+            11.3250441, -98.910362, radius_km=1
+        )
+        self.assertEqual(location_nearby_qs.count(), 1)
+        self.assertEqual(location_nearby_qs.first().id, location.id)
+        self.assertEqual(location_nearby_qs.first().distance_km, 0)
+
+    def test_nearby_across_antimeridian(self):
+        location_east = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=Decimal("-16.8"),
+            osm_lon=Decimal("179.95"),
+        )
+        location_west = LocationFactory(
+            type=location_constants.TYPE_OSM,
+            osm_lat=Decimal("-16.8"),
+            osm_lon=Decimal("-179.95"),
+        )
+        for center_lon, closest in [(179.95, location_east), (-179.95, location_west)]:
+            with self.subTest(center_lon=center_lon):
+                location_nearby_qs = Location.objects.nearby(
+                    -16.8, center_lon, radius_km=20
+                )
+                self.assertEqual(location_nearby_qs.count(), 2)
+                self.assertEqual(location_nearby_qs.first().id, closest.id)
+                self.assertAlmostEqual(
+                    location_nearby_qs.last().distance_km, 10.65, delta=0.1
+                )
+
 
 class LocationHasOsmTagQuerysetAndPropertyTest(TestCase):
     @classmethod
@@ -276,6 +337,40 @@ class LocationHasOsmTagQuerysetAndPropertyTest(TestCase):
         self.assertFalse(
             self.location_without_tag.has_osm_tag(
                 location_constants.OSM_TAG_ORGANIC_ONLY
+            )
+        )
+
+
+class LocationTagsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.location_with_tag = LocationFactory(
+            tags=[location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL]
+        )
+        cls.location_without_tag = LocationFactory(tags=[])
+
+    def test_tags_validation(self):
+        for TAG in location_constants.TAG_LIST:
+            with self.subTest(tag=TAG):
+                LocationFactory(tags=[TAG])
+        for TAG_NOT_OK in ["unknown-tag", "organic:only"]:
+            with self.subTest(tag=TAG_NOT_OK):
+                self.assertRaises(ValidationError, LocationFactory, tags=[TAG_NOT_OK])
+
+    def test_has_tag_queryset(self):
+        qs = Location.objects.has_tag(location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL)
+        self.assertIn(self.location_with_tag, qs)
+        self.assertNotIn(self.location_without_tag, qs)
+
+    def test_has_tag_property(self):
+        self.assertTrue(
+            self.location_with_tag.has_tag(
+                location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL
+            )
+        )
+        self.assertFalse(
+            self.location_without_tag.has_tag(
+                location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL
             )
         )
 

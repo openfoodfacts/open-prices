@@ -45,13 +45,18 @@ from open_prices.proofs.ml.classification import (
     proof_classification_model_config,
     run_and_save_proof_type_prediction,
 )
+from open_prices.proofs.ml.common import DiscountType, Unit
 from open_prices.proofs.ml.ocr import fetch_and_save_ocr_data
 from open_prices.proofs.ml.price_tags import (
     PRICE_TAG_DETECTOR_MODEL_NAME,
     PRICE_TAG_DETECTOR_MODEL_VERSION,
+    Label,
+    LabelPrice,
     create_price_tags_from_proof_prediction,
     extract_from_price_tag,
+    run_and_save_price_tag_classification_from_id,
     run_and_save_price_tag_detection,
+    run_and_save_price_tag_extraction,
 )
 from open_prices.proofs.ml.receipt_anonymization import AnonymizationResult
 from open_prices.proofs.ml.receipts import create_receipt_items_from_proof_prediction
@@ -645,6 +650,17 @@ class ProofPropertyTest(TestCase):
             self.proof_receipt.currency, self.proof_receipt.prices.first().currency
         )
 
+    def test_set_missing_fields_from_prices_without_location(self):
+        proof = ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        PriceFactory(proof_id=proof.id, location_osm_id=None, location_osm_type=None)
+        proof.refresh_from_db()
+        self.assertTrue(proof.location is None)
+        proof.set_missing_fields_from_prices()  # does not crash
+        proof.refresh_from_db()
+        self.assertTrue(proof.location is None)
+        self.assertEqual(proof.date, proof.prices.first().date)
+        self.assertEqual(proof.currency, proof.prices.first().currency)
+
 
 class ProofModelUpdateTest(TestCase):
     @classmethod
@@ -899,9 +915,7 @@ class MLModelTest(TestCase):
             "open_prices.proofs.ml.price_tags.detect_price_tags",
             return_value=detect_price_tags_response,
         ):
-            result = run_and_save_price_tag_detection(
-                self.image, deleted_proof, run_extraction=False
-            )
+            result = run_and_save_price_tag_detection(self.image, deleted_proof)
             self.assertIsNone(result)
 
     def test_run_and_save_proof_prediction_for_receipt_proof(self):
@@ -939,8 +953,6 @@ class MLModelTest(TestCase):
                 ):
                     run_and_save_proof_prediction(
                         proof,
-                        run_price_tag_classification=False,
-                        run_price_tag_extraction=False,
                         run_receipt_extraction=False,
                     )
                     mock_predict_proof_type.assert_called_once()
@@ -1032,26 +1044,13 @@ class MLModelTest(TestCase):
                         "open_prices.proofs.ml.price_tags.detect_price_tags",
                         return_value=detect_price_tags_response,
                     ) as mock_detect_price_tags,
-                    unittest.mock.patch(
-                        "open_prices.proofs.ml.price_tags.predict_price_tag_type",
-                        return_value=[
-                            ("high-quality", 0.96),
-                            ("medium-quality", 0.03),
-                            ("invalid", 0.01),
-                        ],
-                    ) as mock_predict_price_tag_type,
                 ):
                     run_and_save_proof_prediction(
                         proof,
-                        run_price_tag_classification=True,
-                        run_price_tag_extraction=False,
                         run_receipt_extraction=False,
                     )
                     mock_predict_proof_type.assert_called_once()
                     mock_detect_price_tags.assert_called_once()
-                    self.assertEqual(
-                        mock_predict_price_tag_type.call_count, 1
-                    )  # should be called for the detected price tag
 
                 proof_type_prediction = proof.predictions.filter(
                     type=proof_constants.PROOF_PREDICTION_CLASSIFICATION_TYPE
@@ -1109,23 +1108,12 @@ class MLModelTest(TestCase):
                 self.assertAlmostEqual(objects[0]["score"], 0.98)
                 self.assertEqual(objects[0]["bounding_box"], [0.5, 0.5, 1.0, 1.0])
 
-                price_tag_type_prediction = PriceTagPrediction.objects.filter(
-                    type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE
-                ).first()
-                self.assertIsNotNone(price_tag_type_prediction)
-                self.assertEqual(
-                    price_tag_type_prediction.type,
-                    proof_constants.PRICE_TAG_CLASSIFICATION_TYPE,
-                )
-                self.assertEqual(
-                    price_tag_type_prediction.data,
-                    {
-                        "prediction": [
-                            {"label": "high-quality", "score": 0.96},
-                            {"label": "medium-quality", "score": 0.03},
-                            {"label": "invalid", "score": 0.01},
-                        ]
-                    },
+                # the detected price tag was created
+                self.assertEqual(PriceTag.objects.filter(proof=proof).count(), 1)
+                # price tag ML models are run in the PriceTag post_save signal
+                # (muted in tests)
+                self.assertFalse(
+                    PriceTagPrediction.objects.filter(price_tag__proof=proof).exists()
                 )
 
                 # prediction_count was incremented
@@ -1180,24 +1168,15 @@ class MLModelTest(TestCase):
                     },
                 )
 
-                with unittest.mock.patch(
-                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
-                    return_value=[
-                        ("invalid", 0.96),
-                        ("medium-quality", 0.03),
-                        ("high-quality", 0.01),
-                    ],
-                ):
-                    result = run_and_save_price_tag_detection(
-                        self.image, proof, run_extraction=False
-                    )
+                result = run_and_save_price_tag_detection(self.image, proof)
         self.assertIsNone(result)
         price_tags = PriceTag.objects.filter(proof=proof).all()
         self.assertEqual(len(price_tags), 2)
         self.assertEqual(price_tags[0].bounding_box, [0.5, 0.5, 1.0, 1.0])
-        self.assertEqual(price_tags[0].tags, ["invalid"])
         self.assertEqual(price_tags[1].bounding_box, [0.1, 0.1, 0.2, 0.2])
-        self.assertEqual(price_tags[1].tags, ["invalid"])
+        # classification is run in the PriceTag post_save signal (muted in tests)
+        self.assertEqual(price_tags[0].tags, [])
+        self.assertEqual(price_tags[1].tags, [])
 
     def test_create_price_tags_from_proof_prediction(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -1237,17 +1216,9 @@ class MLModelTest(TestCase):
                 )
                 before = timezone.now()
 
-                with unittest.mock.patch(
-                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
-                    return_value=[
-                        ("high-quality", 0.96),
-                        ("medium-quality", 0.03),
-                        ("invalid", 0.01),
-                    ],
-                ):
-                    results = create_price_tags_from_proof_prediction(
-                        proof, proof_prediction, threshold=0.41, run_extraction=False
-                    )
+                results = create_price_tags_from_proof_prediction(
+                    proof, proof_prediction, threshold=0.41
+                )
         after = timezone.now()
         self.assertEqual(len(results), 2)
         price_tags = PriceTag.objects.filter(proof=proof).all()
@@ -1262,7 +1233,40 @@ class MLModelTest(TestCase):
         self.assertEqual(price_tag.status, None)
         self.assertEqual(price_tag.created_by, None)
         self.assertEqual(price_tag.updated_by, None)
+        # classification is run in the PriceTag post_save signal (muted in tests)
+        self.assertEqual(price_tag.tags, [])
+
+    def test_run_and_save_price_tag_classification_from_id(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                price_tag = PriceTagFactory(
+                    proof=proof, bounding_box=[0.5, 0.5, 1.0, 1.0]
+                )
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.predict_price_tag_type",
+                    return_value=[
+                        ("high-quality", 0.96),
+                        ("medium-quality", 0.03),
+                        ("invalid", 0.01),
+                    ],
+                ):
+                    run_and_save_price_tag_classification_from_id(price_tag.id)
+        price_tag.refresh_from_db()
         self.assertEqual(price_tag.tags, ["high-quality"])
+        self.assertTrue(
+            PriceTagPrediction.objects.filter(
+                price_tag=price_tag,
+                type=proof_constants.PRICE_TAG_CLASSIFICATION_TYPE,
+            ).exists()
+        )
 
     def test_extract_from_price_tag(self):
         with unittest.mock.patch(
@@ -1303,6 +1307,121 @@ class MLModelTest(TestCase):
                 generate_content_kwargs["config"].thinking_config.thinking_level.name,
                 "MINIMAL",
             )
+
+    def test_run_and_save_price_tag_extraction(self):
+        ProductFactory(code="3017620422003")
+        label = Label(
+            type="PRODUCT",
+            prices=[LabelPrice(price=2.5, currency="EUR", price_per=Unit.UNIT)],
+            origin=None,
+            organic=False,
+            barcode="3017620422003",
+            product_name="Nutella",
+        )
+        gemini_response = unittest.mock.MagicMock(parsed=label, text="", candidates=[])
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                price_tag = PriceTagFactory(
+                    proof=proof, bounding_box=[0.5, 0.5, 1.0, 1.0]
+                )
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.extract_from_price_tag",
+                    return_value=gemini_response,
+                ) as mock_extract:
+                    prediction = run_and_save_price_tag_extraction(price_tag)
+                    mock_extract.assert_called_once()
+        self.assertIsNotNone(prediction)
+        self.assertEqual(prediction.price_tag, price_tag)
+        self.assertEqual(prediction.type, proof_constants.PRICE_TAG_EXTRACTION_TYPE)
+        self.assertEqual(prediction.data["barcode"], "3017620422003")
+        self.assertEqual(prediction.data["raw_barcode"], "3017620422003")
+        # the barcode exists in DB: no similar barcodes search
+        self.assertEqual(prediction.data["similar_barcodes"], [])
+
+    def test_run_and_save_price_tag_extraction_failed(self):
+        gemini_response = unittest.mock.MagicMock(parsed=None, text="error")
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            NEW_IMAGE_DIR = Path(tmpdirname)
+            file_path = NEW_IMAGE_DIR / "1.jpg"
+            cv2.imwrite(file_path.as_posix(), self.image)
+
+            # change temporarily settings.IMAGE_DIR
+            with self.settings(IMAGE_DIR=NEW_IMAGE_DIR):
+                proof = ProofFactory(
+                    file_path=file_path, type=proof_constants.TYPE_PRICE_TAG
+                )
+                price_tag = PriceTagFactory(proof=proof)
+                with unittest.mock.patch(
+                    "open_prices.proofs.ml.price_tags.extract_from_price_tag",
+                    return_value=gemini_response,
+                ):
+                    prediction = run_and_save_price_tag_extraction(price_tag)
+        self.assertIsNone(prediction)
+        self.assertFalse(
+            PriceTagPrediction.objects.filter(
+                price_tag=price_tag, type=proof_constants.PRICE_TAG_EXTRACTION_TYPE
+            ).exists()
+        )
+
+
+class LabelSelectedPriceTest(TestCase):
+    def build_label(self, type, prices):
+        return Label(
+            type=type,
+            prices=[
+                LabelPrice(price=price, currency="EUR", price_per=price_per)
+                for (price, price_per) in prices
+            ],
+            origin=None,
+            organic=False,
+            barcode="",
+            product_name="",
+        )
+
+    def test_selected_price_category(self):
+        for prices, expected in [
+            # price per KILOGRAM first
+            ([(3, Unit.UNIT), (2, Unit.KILOGRAM)], (2, Unit.KILOGRAM)),
+            ([(10, Unit.LITER), (2, Unit.KILOGRAM)], (2, Unit.KILOGRAM)),
+            # then price per LITER (no longer converted to KILOGRAM)
+            ([(10, Unit.LITER)], (10, Unit.LITER)),
+            ([(5, Unit.UNIT), (10, Unit.LITER)], (10, Unit.LITER)),
+            # then price per UNIT
+            ([(3, Unit.UNIT)], (3, Unit.UNIT)),
+        ]:
+            with self.subTest(prices=prices):
+                selected_price = self.build_label("CATEGORY", prices).selected_price
+                self.assertEqual(selected_price.price, expected[0])
+                self.assertEqual(selected_price.price_per, expected[1])
+
+    def test_selected_price_category_discounted_per_liter(self):
+        label = self.build_label("CATEGORY", [(10, Unit.LITER), (8, Unit.LITER)])
+        label.prices[1].price_is_discounted = True
+        label.prices[1].discount_type = DiscountType.SALE
+        selected_price = label.selected_price
+        self.assertEqual(selected_price.price, 8)
+        self.assertEqual(selected_price.price_per, Unit.LITER)
+        self.assertTrue(selected_price.price_is_discounted)
+        self.assertEqual(selected_price.price_without_discount, 10)
+
+    def test_selected_price_product(self):
+        # only the price per UNIT is considered
+        selected_price = self.build_label(
+            "PRODUCT", [(15, Unit.LITER), (3, Unit.UNIT)]
+        ).selected_price
+        self.assertEqual(selected_price.price, 3)
+        self.assertEqual(selected_price.price_per, Unit.UNIT)
+        self.assertIsNone(
+            self.build_label("PRODUCT", [(15, Unit.LITER)]).selected_price
+        )
 
 
 class TestSelectProofImageDir(TestCase):
@@ -2286,3 +2405,34 @@ class TestSaveAnonymizedReceipt(unittest.TestCase):
                 )
                 area = new_image[y_min:y_max, x_min:x_max]
                 self.assertTrue(np.all(area == 0))
+
+
+class RunMLModelsCommandTest(TestCase):
+    def test_price_tag_jobs_skip_price_tags_created_during_the_run(self):
+        proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        price_tag_existing = PriceTagFactory(proof=proof)
+
+        def fake_run_and_save_proof_prediction(proof, **kwargs):
+            # simulate the price tag detection creating a new price tag
+            PriceTagFactory(proof=proof)
+
+        command_module = "open_prices.proofs.management.commands.run_ml_models"
+        with (
+            unittest.mock.patch(
+                f"{command_module}.run_and_save_proof_prediction",
+                side_effect=fake_run_and_save_proof_prediction,
+            ),
+            unittest.mock.patch(
+                f"{command_module}.run_and_save_price_tag_classification_from_id"
+            ) as mock_classification,
+            unittest.mock.patch(
+                f"{command_module}.run_and_save_price_tag_extraction"
+            ) as mock_extraction,
+        ):
+            management.call_command(
+                "run_ml_models", "--apply", "--delay", "0", stdout=io.StringIO()
+            )
+        self.assertEqual(PriceTag.objects.filter(proof=proof).count(), 2)
+        # only the price tag that existed before the run is processed
+        mock_classification.assert_called_once_with(price_tag_existing.id)
+        mock_extraction.assert_called_once_with(price_tag_existing)

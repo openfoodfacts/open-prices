@@ -43,10 +43,10 @@ class PriceQuerySet(models.QuerySet):
         return self.filter(type=price_constants.TYPE_CATEGORY)
 
     def has_kind_community(self):
-        return self.prefetch_related("proof").exclude(proof__owner_consumption=True)
+        return self.exclude(proof__owner_consumption=True)
 
     def has_kind_consumption(self):
-        return self.prefetch_related("proof").filter(
+        return self.filter(
             proof__type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST,
             proof__owner_consumption=True,
         )
@@ -115,7 +115,7 @@ class PriceQuerySet(models.QuerySet):
         - the price category tag or product categories tags (if the challenge has categories)
         - the price location (if the challenge has locations)
         """
-        queryset = self.select_related("product").filter(
+        queryset = self.filter(
             created__gte=challenge.start_date_with_time,
             created__lte=challenge.end_date_with_time,
         )
@@ -440,6 +440,9 @@ class Price(models.Model):
           without discount), product code/category tag, labels tags, and
           origins tags
         - it was created later than the other price (we keep the first one)
+
+        Otherwise duplicate_of is reset, so that a price that was edited
+        and no longer matches is not flagged as a duplicate anymore.
         """
         # Look for possible duplicates
         possible_duplicates = (
@@ -471,6 +474,8 @@ class Price(models.Model):
         if duplicate is not None and duplicate.created < self.created:
             # Set the duplicate_of field to the first found duplicate
             self.duplicate_of = duplicate
+        else:
+            self.duplicate_of = None
 
     def get_history_list(self):
         return history.build_instance_history_list(self)

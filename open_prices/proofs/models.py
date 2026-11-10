@@ -122,11 +122,7 @@ class ProofQuerySet(models.QuerySet):
         Return proofs that are in the given challenge, based on:
         - if the proof has prices with the challenge tag
         """
-        return (
-            self.prefetch_related("prices")
-            .filter(prices__tags__contains=[challenge.tag])
-            .distinct()
-        )
+        return self.filter(prices__tags__contains=[challenge.tag]).distinct()
 
     def duplicates(self, ref_proof):
         """
@@ -365,6 +361,9 @@ class Proof(models.Model):
                         self.prices.values_list(field, flat=True).distinct()
                     )
                     if len(proof_prices_field_list) == 1:
+                        if proof_prices_field_list[0] is None:
+                            # the prices don't have this field either
+                            continue
                         if field == "location":
                             location = self.prices.first().location
                             self.location_osm_id = location.osm_id
@@ -420,7 +419,7 @@ def proof_post_create_increment_counts(sender, instance, created, **kwargs):
 
 
 @receiver(signals.post_save, sender=Proof)
-def proof_post_save_run_ocr(sender, instance, created, **kwargs):
+def proof_post_create_run_ocr(sender, instance, created, **kwargs):
     if not settings.TESTING and settings.ENABLE_OCR:
         if created:
             async_task(
@@ -431,7 +430,7 @@ def proof_post_save_run_ocr(sender, instance, created, **kwargs):
 
 
 @receiver(signals.post_save, sender=Proof)
-def proof_post_save_run_ml_models(sender, instance, created, **kwargs):
+def proof_post_create_run_ml_models(sender, instance, created, **kwargs):
     """
     After saving a proof in DB, run ML models on it.
     - type prediction
@@ -452,10 +451,12 @@ def proof_post_save_update_prices(sender, instance, created, **kwargs):
             from open_prices.prices.models import Price
 
             for price in instance.prices.all():
+                # online locations have no osm fields to resolve the location from
+                price.location = instance.location
                 for field in Price.DUPLICATE_PROOF_FIELDS:
                     setattr(price, field, getattr(instance, field))
-                    price._change_reason = "Proof.update_location() method"
-                    price.save()
+                price._change_reason = "Proof.update_location() method"
+                price.save()
 
 
 @receiver(signals.post_delete, sender=Proof)
@@ -782,19 +783,26 @@ def price_tag_post_save_generate_image(sender, instance, created, **kwargs):
 
 
 @receiver(signals.post_save, sender=PriceTag)
-def price_tag_post_save_run_ml_models(sender, instance, created, **kwargs):
+def price_tag_post_create_run_ml_models(sender, instance, created, **kwargs):
     """
-    Run price tag ML models
-    - only if created manually by a user
-    - if created automatically from a proof prediction, the models will be run (in batch) in run_and_save_proof_prediction
+    Run price tag ML models (classification & extraction)
+    - for all price tags: created manually by a user,
+    or automatically from a proof prediction (detection)
     """
     if not settings.TESTING:
-        if created and instance.created_by:
+        if created:
             async_task(
                 "open_prices.proofs.ml.price_tags.run_and_save_price_tag_classification_from_id",
                 instance.id,
                 group=constants.TASK_GROUP_PRICE_TAG_ML,
             )
+            # Price tag type prediction can have three possible values: "invalid",
+            # "medium-quality" and "high-quality".
+            # We used to only run the extraction model
+            # on price tags that are not predicted as "invalid" as there is nothing
+            # to extract on these image crops: either the price tag is too blurry or
+            # the crop is not actually a price tag.
+            # Now it is done in parallel.
             async_task(
                 "open_prices.proofs.ml.price_tags.run_and_save_price_tag_extraction_from_id",
                 instance.id,

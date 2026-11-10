@@ -11,20 +11,20 @@ Having location data directly in Open Prices allows for a better contributor exp
 ### Backend
 
 - Location table
-    - when a new OSM ID is added by a contributor, we store it
-    - we keep only a subset of fields (name, type, brand, lat, lng, version...)
+  - when a new OSM ID is added by a contributor, we store it
+  - we keep only a subset of fields (name, type, brand, lat, lng, version...)
 
 see `open_prices/common/openstreetmap.py`
 
 ### Frontend
 
 - Location search
-    - we use a combination of Komoot Photon & Nominatim
+  - we use a combination of Komoot Photon & Nominatim
 - Brand data
-    - we regularly contribute to [nsi.guide](https://nsi.guide) to add missing brands
-    - we display brand logos thanks to [openfoodfacts/brand-images](https://github.com/openfoodfacts/brand-images)
+  - we regularly contribute to [nsi.guide](https://nsi.guide) to add missing brands
+  - we display brand logos thanks to [openfoodfacts/brand-images](https://github.com/openfoodfacts/brand-images)
 - Contributing back
-    - not yet... but discussed regularly :)
+  - not yet... but discussed regularly :)
 
 ## Data sync
 

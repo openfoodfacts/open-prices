@@ -1,5 +1,3 @@
-import asyncio
-import dataclasses
 import enum
 import logging
 from pathlib import Path
@@ -7,7 +5,6 @@ from typing import Literal
 
 import cv2
 import numpy as np
-from asgiref.sync import async_to_sync
 from django.conf import settings
 from google import genai
 from openfoodfacts.barcode import normalize_barcode
@@ -46,14 +43,6 @@ PRICE_TAG_DETECTOR_IMAGE_SIZE = 960
 
 
 logger = logging.getLogger(__name__)
-
-
-@dataclasses.dataclass
-class PriceTagWithImage:
-    """A price tag with its associated cropped image, as a numpy array (uint8, in BGR format)."""
-
-    price_tag: PriceTag
-    image: np.ndarray
 
 
 # TODO: what about other origins?
@@ -233,16 +222,12 @@ class Label(BaseModel):
 
         price_grouped_by_per: dict[Unit, list[LabelPrice]] = {unit: [] for unit in Unit}
         for price in sorted_prices:
-            # Convert price_per to Unit.KILOGRAM if it is LITER
-            price_per = (
-                price.price_per if price.price_per != Unit.LITER else Unit.KILOGRAM
-            )
-            price_grouped_by_per[price_per].append(price)
+            price_grouped_by_per[price.price_per].append(price)
 
         if self.type == "CATEGORY":
-            # We first consider the price per KILOGRAM for raw products then
-            # per UNIT
-            selected_units = [Unit.KILOGRAM, Unit.UNIT]
+            # We first consider the price per KILOGRAM for raw products, then
+            # per LITER, then per UNIT
+            selected_units = [Unit.KILOGRAM, Unit.LITER, Unit.UNIT]
         else:
             # We only consider the price per UNIT for packaged products.
             selected_units = [Unit.UNIT]
@@ -377,58 +362,6 @@ def extract_from_price_tag(
         )
 
 
-async def extract_from_price_tag_async(
-    client: genai.client.AsyncClient, image: np.ndarray
-) -> common_google.types.GenerateContentResponse:
-    """Asynchronous version of extract_from_price_tag.
-
-    Image preprocessing (resizing to maximum size) must be done before calling
-    this function.
-
-    :param client: the AsyncClient instance to use for the request.
-    :param image: the input image as a numpy array (uint8, in BGR format), already preprocessed.
-    :return: the Gemini response
-    """
-    response = await client.models.generate_content(
-        model=common_google.GEMINI_MODEL_VERSION,
-        contents=[
-            EXTRACT_PRICE_TAG_PROMPT,
-            genai.types.Part.from_bytes(
-                data=convert_image(image, format="webp", quality=80),
-                mime_type="image/webp",
-            ),
-        ],
-        config=common_google.get_generation_config(Label, thinking_level="minimal"),
-    )
-    return response
-
-
-async def extract_from_price_tag_batch(
-    images: list[np.ndarray],
-) -> list[common_google.types.GenerateContentResponse]:
-    """Extract price tag information from a batch of images.
-
-    This function processes multiple images in parallel using asyncio.
-
-    :param images: a list of numpy arrays (uint8, in BGR format),
-        already preprocessed (resized).
-    :return: a list of Gemini responses, one for each image
-    """
-    async with genai.Client(
-        credentials=common_google.get_google_credentials(),
-        project=settings.GOOGLE_PROJECT,
-    ).aio as aclient:
-        tasks = [extract_from_price_tag_async(aclient, image) for image in images]
-        return await asyncio.gather(*tasks)
-
-
-# We use async_to_sync to make the function synchronous for compatibility
-# with the rest of the codebase that expects synchronous functions.
-# See
-# https://docs.djangoproject.com/en/5.2/topics/async/#async-adapter-functions
-sync_extract_from_price_tag_batch = async_to_sync(extract_from_price_tag_batch)
-
-
 def detect_price_tags(
     image: np.ndarray,
     model_name: str = PRICE_TAG_DETECTOR_MODEL_NAME,
@@ -551,122 +484,103 @@ def run_and_save_price_tag_classification_from_id(price_tag_id: int) -> None:
     run_and_save_price_tag_classification(cropped_image, price_tag)
 
 
-def run_and_save_price_tag_extraction(
-    price_tags: list[PriceTag] | list[PriceTagWithImage], proof: Proof
-) -> list[PriceTagPrediction]:
-    """Extract information from price tags using the Gemini model and save the
-    predictions in the database.
+def fix_extracted_barcode(barcode: str, proof: Proof) -> str:
+    """Fix (with some custom rules) and normalize a barcode extracted by Gemini.
 
-    :param price_tags: the list of PriceTag (or PriceTagWithImage) instances to
-        extract information from
-    :param proof: the Proof instance associated with the price tags
-    :return: the list of PriceTagPrediction instances created
+    :param barcode: the barcode extracted from the price tag
+    :param proof: the Proof instance associated with the price tag
+    :return: the fixed & normalized barcode
     """
+    # only fix barcodes that are not valid
+    if len(barcode) < 13 and not common_openfoodfacts.barcode_is_valid(barcode):
+        # in the USA, some barcodes are not "complete"
+        if proof.currency == "USD":
+            barcode = common_openfoodfacts.barcode_fix_short_codes_from_usa(barcode)
+    return normalize_barcode(barcode)
+
+
+def find_similar_barcodes(barcode: str) -> list[BarcodeSimilarityMatch]:
+    """Find valid barcodes of existing products that are similar to the given
+    barcode (Levenshtein distance between 1 and 3, max 10 results).
+
+    Barcode similarity search is quite costly (500~1000ms for 4M products),
+    so we only run it if the barcode doesn't exist in the database.
+
+    :param barcode: the (fixed) barcode extracted from the price tag
+    :return: the list of similar barcodes
+    """
+    if Product.objects.filter(code=barcode).exists():
+        return []
+    similar_barcodes_qs = Product.objects.fuzzy_barcode_search(
+        barcode, max_distance=3, limit=10
+    )
+    return [
+        BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
+        for p in similar_barcodes_qs
+        # Check that barcode is valid (correct check digit)
+        if common_openfoodfacts.barcode_is_valid(p.code)
+    ]
+
+
+def run_and_save_price_tag_extraction(
+    price_tag: PriceTag,
+) -> PriceTagPrediction | None:
+    """Extract information from a price tag using the Gemini model and save the
+    prediction in the database.
+
+    :param price_tag: the PriceTag instance to extract information from
+    :return: the PriceTagPrediction instance created, or None if the extraction
+        failed
+    """
+    proof = price_tag.proof
     if proof.file_path_full is None or not Path(proof.file_path_full).exists():
         logger.error("Proof file not found: %s", proof.file_path_full)
-        return []
+        return None
 
-    predictions = []
-    preprocessed_images = []
-    _price_tags = []
-    for price_tag in price_tags:
-        if isinstance(price_tag, PriceTagWithImage):
-            cropped_image = price_tag.image
-            _price_tags.append(price_tag.price_tag)
-        else:
-            cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
-
-        cropped_image = generate_image_thumbnail_cv2(cropped_image, max_size=1024)
-        preprocessed_images.append(cropped_image)
-
-    # Below, price_tags is expected to be a list of PriceTag, so if the input is a
-    # list of PriceTagWithImage, we extract the PriceTag instances in a separate list
-    # and use it for the rest of the function.
-    if _price_tags:
-        price_tags = _price_tags
-
-    # Sending requests in parallel using asyncio was responsible to network
-    # exceptions in production, so we added here a setting to control
-    # whether to use async requests or not.
-    # See https://github.com/openfoodfacts/open-prices/issues/893
-    if settings.PRICE_TAG_EXTRACTION_ASYNC_REQUESTS:
-        # We send requests to Gemini in parallel using asyncio
-        # to speed up the extraction process.
-        responses = sync_extract_from_price_tag_batch(preprocessed_images)
-    else:
-        responses = [extract_from_price_tag(image) for image in preprocessed_images]
-    for price_tag, response in zip(price_tags, responses, strict=False):
-        if response.parsed is None:
-            logger.info(
-                "Failed to extract price tag for price tag id %s: %s",
-                price_tag.id,
-                response.text,
-            )
-            continue
-
-        # barcode post-processing
-        # 1) fix barcode with some custom rules
-        # 2) if the barcode is still unknown, generate similar barcodes
-        barcode = response.parsed.barcode
-        raw_barcode = barcode
-        similar_barcodes = []
-        # 1) barcode fix
-        if barcode:
-            # only fix barcodes that are not valid
-            if len(barcode) < 13 and not common_openfoodfacts.barcode_is_valid(barcode):
-                # in the USA, some barcodes are not "complete"
-                if proof.currency == "USD":
-                    barcode = common_openfoodfacts.barcode_fix_short_codes_from_usa(
-                        barcode
-                    )
-            # normalize barcode
-            barcode = normalize_barcode(barcode)
-
-        # barcode similarity search is quite costly (500~1000ms for 4M
-        # products), so we only run it if the barcode doesn't exist in the
-        # database
-        if barcode and not Product.objects.filter(code=barcode).exists():
-            # Only return products with a levenshtein distance between 1 and 3
-            # Don't return too many results
-            similar_barcodes_qs = Product.objects.fuzzy_barcode_search(
-                barcode, max_distance=3, limit=10
-            )
-            similar_barcodes = [
-                BarcodeSimilarityMatch(barcode=p.code, distance=p.distance)
-                for p in similar_barcodes_qs
-                # Check that barcode is valid (correct check digit)
-                if common_openfoodfacts.barcode_is_valid(p.code)
-            ]
-
-        data = LabelWithSimilarBarcodes(
-            **{**dict(response.parsed), "barcode": barcode},  # merge any barcode fix
-            raw_barcode=raw_barcode,
-            similar_barcodes=similar_barcodes,
+    cropped_image = crop_image(proof.file_path_full, price_tag.bounding_box)
+    response = extract_from_price_tag(cropped_image)
+    if response.parsed is None:
+        logger.info(
+            "Failed to extract price tag for price tag id %s: %s",
+            price_tag.id,
+            response.text,
         )
-        # raw/unbranded products (type=CATEGORY) rarely show an organic logo
-        # clearly enough to be detected from the image alone, so if the shop
-        # itself is tagged as exclusively organic on OSM, trust that instead
-        if (
-            data.type == "CATEGORY"
-            and proof.location
-            and proof.location.has_osm_tag(location_constants.OSM_TAG_ORGANIC_ONLY)
-        ):
-            data.organic = True
-        try:
-            prediction = PriceTagPrediction.objects.create(
-                price_tag=price_tag,
-                type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
-                model_name=common_google.GEMINI_MODEL_NAME,
-                model_version=common_google.GEMINI_MODEL_VERSION,
-                schema_version=LABEL_SCHEMA_VERSION,
-                data=data.model_dump(),
-                thought_tokens=common_google.extract_thought_tokens(response),
-            )
-            predictions.append(prediction)
-        except Exception as e:
-            logger.exception(e)
+        return None
 
-    return predictions
+    # barcode post-processing
+    # 1) fix barcode with some custom rules
+    # 2) if the barcode is still unknown, generate similar barcodes
+    raw_barcode = response.parsed.barcode
+    barcode = fix_extracted_barcode(raw_barcode, proof) if raw_barcode else raw_barcode
+    similar_barcodes = find_similar_barcodes(barcode) if barcode else []
+
+    data = LabelWithSimilarBarcodes(
+        **{**dict(response.parsed), "barcode": barcode},  # merge any barcode fix
+        raw_barcode=raw_barcode,
+        similar_barcodes=similar_barcodes,
+    )
+    # raw/unbranded products (type=CATEGORY) rarely show an organic logo
+    # clearly enough to be detected from the image alone, so if the shop
+    # itself is tagged as exclusively organic on OSM, trust that instead
+    if (
+        data.type == "CATEGORY"
+        and proof.location
+        and proof.location.has_osm_tag(location_constants.OSM_TAG_ORGANIC_ONLY)
+    ):
+        data.organic = True
+    try:
+        return PriceTagPrediction.objects.create(
+            price_tag=price_tag,
+            type=proof_constants.PRICE_TAG_EXTRACTION_TYPE,
+            model_name=common_google.GEMINI_MODEL_NAME,
+            model_version=common_google.GEMINI_MODEL_VERSION,
+            schema_version=LABEL_SCHEMA_VERSION,
+            data=data.model_dump(),
+            thought_tokens=common_google.extract_thought_tokens(response),
+        )
+    except Exception as e:
+        logger.exception(e)
+        return None
 
 
 def run_and_save_price_tag_extraction_from_id(price_tag_id: int) -> None:
@@ -684,7 +598,7 @@ def run_and_save_price_tag_extraction_from_id(price_tag_id: int) -> None:
         logger.error("Price tag with id %s not found", price_tag_id)
         return None
 
-    run_and_save_price_tag_extraction([price_tag], price_tag.proof)
+    run_and_save_price_tag_extraction(price_tag)
 
 
 def update_price_tag_extraction(price_tag_id: int) -> PriceTagPrediction | None:
@@ -732,26 +646,18 @@ def create_price_tags_from_proof_prediction(
     proof: Proof,
     proof_prediction: ProofPrediction,
     threshold: float = 0.5,
-    run_classification: bool = True,
-    run_extraction: bool = True,
 ) -> list[PriceTag]:
     """Create price tags from a proof prediction containing price tag object
-    detections. The following steps are performed:
+    detections.
 
-    1. Create PriceTag instances from the price tag detections
-    2. Run the price tag type prediction model on each price tag
-    3. Run the price tag extraction model on each price tag, only on price tags
-       with predicted type 'medium-quality' or 'high-quality'.
+    The price tag ML models (classification & extraction) are then run
+    in the PriceTag post_save signal.
 
     :param proof: the Proof instance to associate the PriceTag instances with
     :param proof_prediction: the ProofPrediction instance containing the
         price tag detections
     :param threshold: the minimum confidence threshold for a detection to be
         considered valid, defaults to 0.5
-    :param run_classification: whether to run the price tag classification model on the
-        detected price tags, defaults to True
-    :param run_extraction: whether to run the price tag extraction model on the
-        detected price tags, defaults to True
     :return: the list of PriceTag instances created
     """
     if proof_prediction.model_name != PRICE_TAG_DETECTOR_MODEL_NAME:
@@ -762,14 +668,10 @@ def create_price_tags_from_proof_prediction(
         return []
 
     created_price_tags: list[PriceTag] = []
-    to_process: list[PriceTagWithImage] = []
     for detected_object in proof_prediction.data["objects"]:
         if detected_object["score"] < threshold:
             continue
-        # To speed up preprocessing, we only crop the image once here, for both model
-        # (price tag classification and extraction)
         bounding_box = detected_object["bounding_box"]
-        cropped_image = crop_image(proof.file_path_full, bounding_box)
         price_tag = PriceTag.objects.create(
             proof=proof,
             proof_prediction=proof_prediction,
@@ -780,32 +682,6 @@ def create_price_tags_from_proof_prediction(
             tags=[],
         )
         created_price_tags.append(price_tag)
-        price_tag_with_image = PriceTagWithImage(price_tag, cropped_image)
-
-        if run_classification:
-            classification = run_and_save_price_tag_classification(
-                cropped_image,
-                price_tag,
-            )
-            if not classification:
-                continue
-            classification.data.get("prediction", [{}])[0].get("label")
-
-            # Price tag type prediction can have three possible values: "invalid",
-            # "medium-quality" and "high-quality". We only run the extraction model
-            # on price tags that are not predicted as "invalid" as there is nothing
-            # to extract on these image crops: either the price tag is too blurry or
-            # the crop is not actually a price tag.
-            # 2026-06-18: temporarily always run price tag extractions, even on price
-            # tags that are predicted as "invalid"
-            # if predicted_price_tag_type != "invalid":
-            to_process.append(price_tag_with_image)
-        else:
-            # If we don't run classification, we run extraction on all detected price tags
-            to_process.append(price_tag_with_image)
-
-    if run_extraction:
-        run_and_save_price_tag_extraction(to_process, proof)
 
     return created_price_tags
 
@@ -814,8 +690,6 @@ def run_and_save_price_tag_detection(
     image: np.ndarray | None,
     proof: Proof,
     overwrite: bool = False,
-    run_classification: bool = True,
-    run_extraction: bool = True,
 ) -> ProofPrediction | None:
     """Run the price tag object detection model and save the prediction
     in ProofPrediction table.
@@ -825,10 +699,6 @@ def run_and_save_price_tag_detection(
     :param proof: the Proof instance to associate the ProofPrediction with
     :param overwrite: whether to overwrite existing prediction, defaults to
         False
-    :param run_classification: whether to run the price tag classification model on the
-        detected price tags, defaults to True
-    :param run_extraction: whether to run the price tag extraction model on the
-        detected price tags, defaults to True
     :return: the ProofPrediction instance created, or None if the prediction
         already exists and overwrite is False
     """
@@ -857,12 +727,7 @@ def run_and_save_price_tag_detection(
                     "Creating price tags from existing prediction for proof %s",
                     proof.id,
                 )
-                create_price_tags_from_proof_prediction(
-                    proof,
-                    proof_prediction,
-                    run_classification=run_classification,
-                    run_extraction=run_extraction,
-                )
+                create_price_tags_from_proof_prediction(proof, proof_prediction)
             return None
 
     if image is None:
@@ -884,12 +749,7 @@ def run_and_save_price_tag_detection(
             value=None,
             max_confidence=max_confidence,
         )
-        create_price_tags_from_proof_prediction(
-            proof,
-            proof_prediction,
-            run_classification=run_classification,
-            run_extraction=run_extraction,
-        )
+        create_price_tags_from_proof_prediction(proof, proof_prediction)
         return proof_prediction
     except Exception as e:
         logger.exception(e)

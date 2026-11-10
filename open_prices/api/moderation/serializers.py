@@ -5,7 +5,7 @@ from open_prices.moderation.models import Flag
 
 class FlagCreateSerializer(serializers.ModelSerializer):
     # the content_object will be set in the view (from the url pk)
-    content_object = serializers.PrimaryKeyRelatedField(read_only=True)
+    content_object = serializers.IntegerField(source="object_id", read_only=True)
 
     class Meta:
         model = Flag
@@ -25,5 +25,5 @@ class FlagSerializer(serializers.ModelSerializer):
         model = Flag
         fields = "__all__"
 
-    def get_content_type(self, obj):
+    def get_content_type(self, obj) -> str:
         return obj.content_type_display

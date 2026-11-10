@@ -159,7 +159,6 @@ jobs:
           echo "GOOGLE_GENAI_USE_VERTEXAI=true" >> .env
           echo "GOOGLE_CLOUD_LOCATION=global" >> .env
           echo "GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}" >> .env
-          echo "PRICE_TAG_EXTRACTION_ASYNC_REQUESTS=True" >> .env
           echo "TRITON_URI=${{ env.TRITON_URI }}" >> .env
           echo "PADDLEX_API_URL=${{ env.PADDLEX_API_URL }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env

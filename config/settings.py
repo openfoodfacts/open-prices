@@ -331,12 +331,6 @@ GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")
 # The project to use on Google Cloud
 GOOGLE_PROJECT = os.getenv("GOOGLE_PROJECT", "robotoff")
 
-# If True, requests to the Vertex AI (or Gemini) API will be made
-# asynchronously using asyncio.
-PRICE_TAG_EXTRACTION_ASYNC_REQUESTS = (
-    os.getenv("PRICE_TAG_EXTRACTION_ASYNC_REQUESTS") == "True"
-)
-
 # Triton Inference Server (ML)
 # ------------------------------------------------------------------------------
 

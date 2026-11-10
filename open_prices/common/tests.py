@@ -1,8 +1,10 @@
+import datetime
 from decimal import Decimal
 
 from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
+from freezegun import freeze_time
 from rest_framework.test import APIRequestFactory
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
@@ -12,6 +14,7 @@ from open_prices.common.authentication import (
     has_token_from_cookie_or_header,
 )
 from open_prices.common.utils import (
+    is_date_in_future,
     is_float,
     match_decimal_with_float,
     truncate_decimal,
@@ -225,6 +228,13 @@ class UtilsTest(TestCase):
         self.assertTrue(match_decimal_with_float(Decimal("1.0"), 1.0))
         self.assertTrue(match_decimal_with_float(Decimal("1.0"), 1.00))
 
+    def test_is_date_in_future(self):
+        with freeze_time("2025-01-01 23:59:59"):  # just before midnight UTC
+            self.assertFalse(is_date_in_future(datetime.date(2024, 12, 31)))
+            self.assertFalse(is_date_in_future(datetime.date(2025, 1, 1)))
+            self.assertFalse(is_date_in_future(datetime.date(2025, 1, 2)))
+            self.assertTrue(is_date_in_future(datetime.date(2025, 1, 3)))
+
     def url_add_missing_https(self):
         self.assertEqual(
             url_add_missing_https("http://abc.hostname.com/somethings/anything/"),
@@ -255,4 +265,60 @@ class UtilsTest(TestCase):
         self.assertEqual(
             url_keep_only_domain("abc.hostname.com"),
             "https://abc.hostname.com",
+        )
+
+
+class TaskSchedulesTest(TestCase):
+    def test_sync_task_schedules(self):
+        from django_q.models import Schedule
+
+        # common.tasks queries the Schedule table when imported, so it cannot be
+        # imported at module level (the test database does not exist yet then)
+        from open_prices.common.tasks import CRON_SCHEDULES, sync_task_schedules
+
+        Schedule.objects.all().delete()
+        # renamed (or removed) task
+        Schedule.objects.create(
+            name="challenge_tasks",
+            func="open_prices.common.tasks.challenge_tasks",
+            schedule_type=Schedule.CRON,
+            cron="30 1 * * *",
+        )
+        # task with an outdated cron
+        Schedule.objects.create(
+            name="update_price_category_tag_task",
+            func="open_prices.common.tasks.update_price_category_tag_task",
+            schedule_type=Schedule.CRON,
+            cron="40 2 * * *",
+        )
+        # task edited in the admin (wrong func & schedule type)
+        Schedule.objects.create(
+            name="update_badge_task",
+            func="open_prices.common.tasks.update_user_counts_task",
+            schedule_type=Schedule.ONCE,
+            cron="5 2 * * *",
+        )
+        # schedule not managed by common.tasks
+        Schedule.objects.create(
+            name="other_task", func="other.module.task", schedule_type=Schedule.ONCE
+        )
+
+        sync_task_schedules()
+
+        self.assertFalse(Schedule.objects.filter(name="challenge_tasks").exists())
+        self.assertTrue(Schedule.objects.filter(name="other_task").exists())
+        self.assertEqual(Schedule.objects.count(), len(CRON_SCHEDULES) + 1)
+        for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
+            task_schedule = Schedule.objects.get(name=task_name)
+            self.assertEqual(
+                task_schedule.func, f"open_prices.common.tasks.{task_name}"
+            )
+            self.assertEqual(task_schedule.schedule_type, Schedule.CRON)
+            self.assertEqual(task_schedule.cron, task_cron)
+            self.assertEqual(task_schedule.kwargs, str(q_options))
+        # running it again does not change anything
+        next_runs = dict(Schedule.objects.values_list("name", "next_run"))
+        sync_task_schedules()
+        self.assertEqual(
+            dict(Schedule.objects.values_list("name", "next_run")), next_runs
         )

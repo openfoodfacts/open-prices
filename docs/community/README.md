@@ -23,7 +23,7 @@ see [Weekly meetings](weekly-meetings.md)
 - [Contributing](CONTRIBUTING.md)
 - [Install](INSTALL.md)
 - [UX & UI](ux-ui.md)
-- [Moderation](../topics/moderation-historisation.md)
+- [Moderation](../topics/moderation.md)
 - [Project management](project-management.md)
 
 ## Reuses
