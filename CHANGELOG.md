@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.117.0](https://github.com/openfoodfacts/open-prices/compare/v1.116.0...v1.117.0) (2026-11-10)
+
+
+### Features
+
+* **Products:** API: add code__in filter to the products list ([#1542](https://github.com/openfoodfacts/open-prices/issues/1542)) ([a5926d6](https://github.com/openfoodfacts/open-prices/commit/a5926d6ac4676ca1d1671383a889944dd6cb11ef))
+
+
+### Bug Fixes
+
+* **Prices:** accept a date of tomorrow (1 day leniency, like proofs) ([#1537](https://github.com/openfoodfacts/open-prices/issues/1537)) ([81f5411](https://github.com/openfoodfacts/open-prices/commit/81f5411de1b0c09026af8c44c9b1d3e59a634420))
+* **Proofs:** API: keep an online location when finalizing a draft proof ([#1473](https://github.com/openfoodfacts/open-prices/issues/1473)) ([7a2a56c](https://github.com/openfoodfacts/open-prices/commit/7a2a56cb3dd163753b0d94275fe08a213434372f))
+
+
+### Technical
+
+* **deps:** upgrade dependencies flagged by pip-audit ([#1544](https://github.com/openfoodfacts/open-prices/issues/1544)) ([ee54961](https://github.com/openfoodfacts/open-prices/commit/ee54961bf1aded834a3d36a62a769207b1588cee))
+
 ## [1.116.0](https://github.com/openfoodfacts/open-prices/compare/v1.115.0...v1.116.0) (2026-11-03)
 
 
