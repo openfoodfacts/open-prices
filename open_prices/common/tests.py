@@ -1,8 +1,10 @@
+import datetime
 from decimal import Decimal
 
 from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
+from freezegun import freeze_time
 from rest_framework.test import APIRequestFactory
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
@@ -12,6 +14,7 @@ from open_prices.common.authentication import (
     has_token_from_cookie_or_header,
 )
 from open_prices.common.utils import (
+    is_date_in_future,
     is_float,
     match_decimal_with_float,
     truncate_decimal,
@@ -224,6 +227,13 @@ class UtilsTest(TestCase):
         self.assertTrue(match_decimal_with_float(Decimal("1.0"), 1))
         self.assertTrue(match_decimal_with_float(Decimal("1.0"), 1.0))
         self.assertTrue(match_decimal_with_float(Decimal("1.0"), 1.00))
+
+    def test_is_date_in_future(self):
+        with freeze_time("2025-01-01 23:59:59"):  # just before midnight UTC
+            self.assertFalse(is_date_in_future(datetime.date(2024, 12, 31)))
+            self.assertFalse(is_date_in_future(datetime.date(2025, 1, 1)))
+            self.assertFalse(is_date_in_future(datetime.date(2025, 1, 2)))
+            self.assertTrue(is_date_in_future(datetime.date(2025, 1, 3)))
 
     def url_add_missing_https(self):
         self.assertEqual(

@@ -1,5 +1,3 @@
-from django.utils import timezone
-
 from open_prices.common import openfoodfacts, utils
 from open_prices.locations import constants as location_constants
 from open_prices.prices import constants as price_constants
@@ -175,7 +173,7 @@ def validate_price_price_rules(instance):
 def validate_price_date_rules(instance):
     """
     - date should have the right format
-    - date should not be in the future
+    - date should not be in the future (we accept 1 day leniency for users in future time zones)  # noqa
     """
     errors = dict()
     if instance.date:
@@ -185,7 +183,7 @@ def validate_price_date_rules(instance):
                 "date",
                 "Parsing error. Expected format: YYYY-MM-DD",
             )
-        elif instance.date > timezone.now().date():
+        elif utils.is_date_in_future(instance.date):
             utils.add_validation_error(
                 errors,
                 "date",
