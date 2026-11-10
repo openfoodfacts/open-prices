@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="https://static.openfoodfacts.org/images/logos/off-logo-favicon-light.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -27,10 +27,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -1802,14 +1802,14 @@ uv<span class="w"> </span>run<span class="w"> </span>pip-audit<span class="w"> <
 </code></pre></div>
 <h2 id="how-to-launch-ocr-on-previously-uploaded-images">How to launch OCR on previously uploaded images</h2>
 <p>OCR (through Google Cloud Vision) is launched on every new proof image. However, if you want to launch OCR on previously uploaded images, you can do so by running the following command:</p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>cli<span class="w"> </span><span class="nv">args</span><span class="o">=</span><span class="s1">&#39;run_ocr&#39;</span>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>cli<span class="w"> </span><span class="nv">args</span><span class="o">=</span><span class="s1">'run_ocr'</span>
 </code></pre></div>
 <p>To override existing OCR results, add the <code>--override</code> flag:</p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>cli<span class="w"> </span><span class="nv">args</span><span class="o">=</span><span class="s1">&#39;run_ocr --override&#39;</span>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>cli<span class="w"> </span><span class="nv">args</span><span class="o">=</span><span class="s1">'run_ocr --override'</span>
 </code></pre></div>
 <h2 id="how-to-run-ml-models">How to run ML models</h2>
 <p>Sometimes, due to Triton or Gemini API being unavailable (or any other issue), ML models may fail to run. If you want to retry running the ML models, you can do so by running the following command:</p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>cli<span class="w"> </span><span class="nv">args</span><span class="o">=</span><span class="s1">&#39;run_ml_models&#39;</span>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>cli<span class="w"> </span><span class="nv">args</span><span class="o">=</span><span class="s1">'run_ml_models'</span>
 </code></pre></div>
 <p>This run the following models:</p>
 <ul>
@@ -1819,7 +1819,7 @@ uv<span class="w"> </span>run<span class="w"> </span>pip-audit<span class="w"> <
 <li><code>price_tag_extraction</code> (Gemini extraction of price tags, if the proof is a price tag)</li>
 </ul>
 <p>If you want to run only a specific model, you can do so by passing the model name with <code>--types</code> flag. You can pass multiple model names separated by commas. For example, to run only the <code>proof_classification</code> and <code>price_tag_detection</code> models, you can run:</p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>cli<span class="w"> </span><span class="nv">args</span><span class="o">=</span><span class="s1">&#39;run_ml_models --types proof_classification,price_tag_detection&#39;</span>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>cli<span class="w"> </span><span class="nv">args</span><span class="o">=</span><span class="s1">'run_ml_models --types proof_classification,price_tag_detection'</span>
 </code></pre></div>
 
 
@@ -1870,10 +1870,10 @@ uv<span class="w"> </span>run<span class="w"> </span>pip-audit<span class="w"> <
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.action.edit"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>

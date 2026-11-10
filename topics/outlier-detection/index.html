@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="https://static.openfoodfacts.org/images/logos/off-logo-favicon-light.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -27,10 +27,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -1471,12 +1471,12 @@
 <p>We create a materialized view that stores statistics about each price group, for all prices in the last 5 years:</p>
 <div class="highlight"><pre><span></span><code><span class="k">CREATE</span><span class="w"> </span><span class="n">MATERIALIZED</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">price_statistics_5y</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
 <span class="w">  </span><span class="k">SELECT</span>
-<span class="w">    </span><span class="n">t2</span><span class="p">.</span><span class="n">osm_address_country_code</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;_&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">product_code</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;_&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">price_per</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;_&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">currency</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t2</span><span class="p">.</span><span class="n">osm_address_country_code</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'_'</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">product_code</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'_'</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">price_per</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'_'</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">currency</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">id</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t2</span><span class="p">.</span><span class="n">osm_address_country_code</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="n">product_code</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">code</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="n">price_per</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="n">currency</span><span class="p">,</span>
-<span class="w">    </span><span class="s1">&#39;PRODUCT&#39;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">type</span><span class="p">,</span>
+<span class="w">    </span><span class="s1">'PRODUCT'</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">type</span><span class="p">,</span>
 <span class="w">    </span><span class="k">AVG</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">mean</span><span class="p">,</span>
 <span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">count</span><span class="p">,</span>
 <span class="w">    </span><span class="n">STDDEV</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">stddev</span><span class="p">,</span>
@@ -1490,8 +1490,8 @@
 <span class="w">    </span><span class="n">prices</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">t1</span>
 <span class="w">    </span><span class="k">JOIN</span><span class="w"> </span><span class="n">locations</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">t2</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">location_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t2</span><span class="p">.</span><span class="n">id</span>
 <span class="w">  </span><span class="k">WHERE</span>
-<span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;PRODUCT&#39;</span>
-<span class="w">    </span><span class="k">AND</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="nb">date</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="k">CURRENT_DATE</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="nb">interval</span><span class="w"> </span><span class="s1">&#39;5 years&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'PRODUCT'</span>
+<span class="w">    </span><span class="k">AND</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="nb">date</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="k">CURRENT_DATE</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="nb">interval</span><span class="w"> </span><span class="s1">'5 years'</span><span class="p">)</span>
 <span class="w">  </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span>
 <span class="w">    </span><span class="n">t2</span><span class="p">.</span><span class="n">osm_address_country_code</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="n">product_code</span><span class="p">,</span>
@@ -1501,12 +1501,12 @@
 <span class="k">UNION</span>
 <span class="p">(</span>
 <span class="w">  </span><span class="k">SELECT</span>
-<span class="w">    </span><span class="n">t2</span><span class="p">.</span><span class="n">osm_address_country_code</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;_&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">category_tag</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;_&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">price_per</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;_&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">currency</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">id</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t2</span><span class="p">.</span><span class="n">osm_address_country_code</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'_'</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">category_tag</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'_'</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">price_per</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'_'</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">currency</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">id</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t2</span><span class="p">.</span><span class="n">osm_address_country_code</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="n">category_tag</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">code</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="n">price_per</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="n">currency</span><span class="p">,</span>
-<span class="w">    </span><span class="s1">&#39;CATEGORY&#39;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">type</span><span class="p">,</span>
+<span class="w">    </span><span class="s1">'CATEGORY'</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">type</span><span class="p">,</span>
 <span class="w">    </span><span class="k">AVG</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">mean</span><span class="p">,</span>
 <span class="w">    </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">count</span><span class="p">,</span>
 <span class="w">    </span><span class="n">STDDEV</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">stddev</span><span class="p">,</span>
@@ -1520,8 +1520,8 @@
 <span class="w">    </span><span class="n">prices</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">t1</span>
 <span class="w">    </span><span class="k">JOIN</span><span class="w"> </span><span class="n">locations</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">t2</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">location_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t2</span><span class="p">.</span><span class="n">id</span>
 <span class="w">  </span><span class="k">WHERE</span>
-<span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;CATEGORY&#39;</span>
-<span class="w">    </span><span class="k">AND</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="nb">date</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="k">CURRENT_DATE</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="nb">interval</span><span class="w"> </span><span class="s1">&#39;5 years&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'CATEGORY'</span>
+<span class="w">    </span><span class="k">AND</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="nb">date</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="k">CURRENT_DATE</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="nb">interval</span><span class="w"> </span><span class="s1">'5 years'</span><span class="p">)</span>
 <span class="w">  </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span>
 <span class="w">    </span><span class="n">t2</span><span class="p">.</span><span class="n">osm_address_country_code</span><span class="p">,</span>
 <span class="w">    </span><span class="n">t1</span><span class="p">.</span><span class="n">category_tag</span><span class="p">,</span>
@@ -1581,10 +1581,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.action.edit"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>

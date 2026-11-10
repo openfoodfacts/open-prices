@@ -15,7 +15,7 @@
       
       
       <link rel="icon" href="https://static.openfoodfacts.org/images/logos/off-logo-favicon-light.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -1410,8 +1410,8 @@ Run the import before starting the application or its background workers.</p>
 <p>The public files are listed in the <a href="../data/">data guide</a>. Download all three:</p>
 <div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>/tmp/open-prices-exports
 <span class="k">for</span><span class="w"> </span>name<span class="w"> </span><span class="k">in</span><span class="w"> </span>locations<span class="w"> </span>proofs<span class="w"> </span>prices<span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<span class="w">  </span>curl<span class="w"> </span>--fail<span class="w"> </span>--location<span class="w"> </span><span class="s2">&quot;https://prices.openfoodfacts.org/data/</span><span class="si">${</span><span class="nv">name</span><span class="si">}</span><span class="s2">.jsonl.gz&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output<span class="w"> </span><span class="s2">&quot;/tmp/open-prices-exports/</span><span class="si">${</span><span class="nv">name</span><span class="si">}</span><span class="s2">.jsonl.gz&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">  </span>curl<span class="w"> </span>--fail<span class="w"> </span>--location<span class="w"> </span><span class="s2">"https://prices.openfoodfacts.org/data/</span><span class="si">${</span><span class="nv">name</span><span class="si">}</span><span class="s2">.jsonl.gz"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span><span class="s2">"/tmp/open-prices-exports/</span><span class="si">${</span><span class="nv">name</span><span class="si">}</span><span class="s2">.jsonl.gz"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
 <span class="k">done</span>
 </code></pre></div>
 <h2 id="validate-and-import">Validate and import</h2>
@@ -1487,10 +1487,10 @@ for validation, transaction and performance details:</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.action.edit"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>
