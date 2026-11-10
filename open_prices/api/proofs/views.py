@@ -27,7 +27,6 @@ from open_prices.api.proofs.serializers import (
     PriceTagFullSerializer,
     PriceTagUpdateSerializer,
     ProofCreateSerializer,
-    ProofDraftFinalizeSerializer,
     ProofDraftUploadSerializer,
     ProofFullSerializer,
     ProofHalfFullSerializer,
@@ -347,14 +346,12 @@ class ProofDraftViewSet(
 
         return Response(ProofFullSerializer(proof).data, status=status.HTTP_200_OK)
 
-    @extend_schema(request=ProofDraftFinalizeSerializer, responses=ProofFullSerializer)
+    @extend_schema(request=ProofUpdateSerializer, responses=ProofFullSerializer)
     def partial_update(self, request: Request, pk=None) -> Response:
         """Finalize a draft proof - set draft=False and add full metadata."""
         proof = self.get_object()
         # Validate required fields
-        serializer = ProofDraftFinalizeSerializer(
-            proof, data=request.data, partial=True
-        )
+        serializer = ProofUpdateSerializer(proof, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         # Update fields
