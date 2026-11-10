@@ -4,8 +4,12 @@ from open_prices.api.utils import ArrayFieldElementContainsFilter
 from open_prices.products.models import Product
 
 
+class CharInFilter(django_filters.BaseInFilter, django_filters.CharFilter):
+    pass
+
+
 class ProductFilter(django_filters.FilterSet):
-    code__in = django_filters.BaseInFilter(field_name="code", lookup_expr="in")
+    code__in = CharInFilter(field_name="code", lookup_expr="in")
     product_name__like = django_filters.CharFilter(
         field_name="product_name", lookup_expr="icontains"
     )
