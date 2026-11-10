@@ -90,6 +90,19 @@ class ProductListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["code"], "8001505005707")
+        # code__in
+        url = self.url + "?code__in=8001505005707,8000215204219"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?code__in=8001505005707,0000000000000"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?code__in=8001505005707,%208000215204219"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?code__in=8001505005707,%00"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
 
     def test_product_list_filter_by_product_name(self):
         url = self.url + "?product_name__like=rice"
