@@ -57,22 +57,6 @@ class FlagModelSaveTest(TestCase):
         self.assertEqual(flag.owner, "tester")
         self.assertEqual(flag.source, "unit-test")
         self.assertEqual(self.price.flags.count(), 1)
-        # Using price.flags.create()
-        flag = self.price.flags.create(
-            reason=FlagReason.OTHER,
-            comment="This price is weird",
-            owner="tester",
-            source="unit-test",
-        )
-        self.assertEqual(Flag.objects.count(), 2)
-        self.assertEqual(flag.content_type, ContentType.objects.get_for_model(Price))
-        self.assertEqual(flag.object_id, self.price.id)
-        self.assertEqual(flag.reason, FlagReason.OTHER)
-        self.assertEqual(flag.comment, "This price is weird")
-        self.assertEqual(flag.status, FlagStatus.OPEN)  # default
-        self.assertEqual(flag.owner, "tester")
-        self.assertEqual(flag.source, "unit-test")
-        self.assertEqual(self.price.flags.count(), 2)
 
     def test_create_flag_proof(self):
         # Using Flag.objects.create()
@@ -93,22 +77,6 @@ class FlagModelSaveTest(TestCase):
         self.assertEqual(flag.owner, "tester")
         self.assertEqual(flag.source, "unit-test")
         self.assertEqual(self.proof.flags.count(), 1)
-        # Using proof.flags.create()
-        flag = self.proof.flags.create(
-            reason=FlagReason.OTHER,
-            comment="This proof is weird",
-            owner="tester",
-            source="unit-test",
-        )
-        self.assertEqual(Flag.objects.count(), 2)
-        self.assertEqual(flag.content_type, ContentType.objects.get_for_model(Proof))
-        self.assertEqual(flag.object_id, self.proof.id)
-        self.assertEqual(flag.reason, FlagReason.OTHER)
-        self.assertEqual(flag.comment, "This proof is weird")
-        self.assertEqual(flag.status, FlagStatus.OPEN)  # default
-        self.assertEqual(flag.owner, "tester")
-        self.assertEqual(flag.source, "unit-test")
-        self.assertEqual(self.proof.flags.count(), 2)
 
     def test_restrict_flag_to_some_models(self):
         # Using Flag.objects.create() on unsupported model
@@ -120,14 +88,8 @@ class FlagModelSaveTest(TestCase):
                 owner="tester",
                 source="unit-test",
             )
-        # Using model.flags.create() on unsupported model
-        with self.assertRaises(AttributeError):
-            self.product.flags.create(
-                reason=FlagReason.OTHER,
-                comment="This product is weird",
-                owner="tester",
-                source="unit-test",
-            )
+        # Using model.flags on unsupported model
+        self.assertFalse(hasattr(self.product, "flags"))
 
 
 class FlagModelQuerySetTest(TestCase):
@@ -151,6 +113,14 @@ class FlagModelQuerySetTest(TestCase):
             owner="tester",
             source="unit-test",
         )
+
+    def test_filter_by_content_object(self):
+        flag_price_qs = Flag.objects.filter_by_content_object(self.price)
+        self.assertEqual(flag_price_qs.count(), 1)
+        self.assertEqual(flag_price_qs.first(), self.flag_price)
+        flag_proof_qs = Flag.objects.filter_by_content_object(self.proof)
+        self.assertEqual(flag_proof_qs.count(), 1)
+        self.assertEqual(flag_proof_qs.first(), self.flag_proof)
 
     def test_filter_by_content_type_model(self):
         flag_price_qs = Flag.objects.filter_by_content_type_model("PRICE")
