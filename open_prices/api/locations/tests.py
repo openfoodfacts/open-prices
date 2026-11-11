@@ -129,7 +129,10 @@ class LocationListFilterApiTest(TestCase):
         cls.url = reverse("api:locations-list")
         LocationFactory(**LOCATION_OSM_NODE_652825274)
         LocationFactory(**LOCATION_OSM_NODE_6509705997)
-        LocationFactory(**LOCATION_OSM_WAY_872934393)
+        LocationFactory(
+            **LOCATION_OSM_WAY_872934393,
+            tags=[location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+        )
         LocationFactory(**LOCATION_ONLINE_DECATHLON)
 
     def test_location_list_filter_by_type(self):
@@ -183,6 +186,21 @@ class LocationListFilterApiTest(TestCase):
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
 
+    def test_location_list_filter_by_tags(self):
+        url = self.url + "?tags__contains=price-tag-barcode-internal"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["tags"],
+            [location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+        )
+        url = self.url + "?tags__not_contains=price-tag-barcode-internal"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        url = self.url + "?tags__contains=receipt-barcode-printed"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
+
 
 class LocationDetailApiTest(TestCase):
     @classmethod
@@ -205,6 +223,7 @@ class LocationDetailApiTest(TestCase):
         self.assertEqual(response.data["id"], self.location.id)
         # self.assertEqual(response.data["osm_lat"], 45.1805534)
         self.assertIn("osm_brand_logo_url", response.data)
+        self.assertEqual(response.data["tags"], [])
 
     def test_location_detail_by_osm_unknown(self):
         url = reverse("api:locations-get-by-osm", args=["NODE", 999])
@@ -231,7 +250,12 @@ class LocationCreateApiTest(TestCase):
 
     def test_location_create_osm(self):
         response = self.client.post(
-            self.url, LOCATION_OSM_NODE_652825274, content_type="application/json"
+            self.url,
+            {
+                **LOCATION_OSM_NODE_652825274,
+                "tags": [location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+            },
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["osm_id"], 652825274)
@@ -240,6 +264,7 @@ class LocationCreateApiTest(TestCase):
             response.data["osm_name"], None
         )  # ignored (and post_save signal disabled)
         self.assertEqual(response.data["price_count"], 0)  # ignored
+        self.assertEqual(response.data["tags"], [])  # ignored
 
     def test_location_create_online(self):
         response = self.client.post(
@@ -417,6 +442,8 @@ class LocationOsmCountryCitiesListApiTest(TestCase):
         self.assertEqual(response.data[0]["price_count"], 10)
 
 
+# Note: edge cases of the nearby() logic (exact coordinates, antimeridian...)
+# are tested at the queryset level, in LocationQuerySetNearbyTest (open_prices/locations/tests.py)
 class LocationNearbyApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):

@@ -1,0 +1,7 @@
+# CodeRabbit configuration
+# See https://docs.coderabbit.ai/getting-started/configure-coderabbit
+reviews:
+  auto_review:
+    # skip release PRs opened by release-please (e.g. "chore(main): release 1.114.2")
+    ignore_title_keywords:
+      - "chore(main): release"

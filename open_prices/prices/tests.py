@@ -540,6 +540,12 @@ class PriceModelSaveTest(TransactionTestCase):
             price=3,
             price_per=price_constants.PRICE_PER_KILOGRAM,
         )
+        PriceFactory(
+            type=price_constants.TYPE_CATEGORY,
+            category_tag="en:olive-oils",
+            price=12,
+            price_per=price_constants.PRICE_PER_LITER,
+        )
         self.assertRaises(
             ValidationError,
             PriceFactory,
@@ -619,6 +625,10 @@ class PriceModelSaveTest(TransactionTestCase):
             PriceFactory(date=DATE_OK)
         for DATE_NOT_OK in ["3000-01-01", "01-01-2000"]:
             self.assertRaises(ValidationError, PriceFactory, date=DATE_NOT_OK)
+        with freeze_time("2025-01-01"):
+            PriceFactory(date="2025-01-01")
+            PriceFactory(date="2025-01-02")
+            self.assertRaises(ValidationError, PriceFactory, date="2025-01-03")
 
     def test_price_location_validation(self):
         location_osm = LocationFactory()
@@ -1035,6 +1045,40 @@ class PriceModelSaveTest(TransactionTestCase):
             )
             # Delete the price so that we only compare to ref
             new_price.delete()
+
+    def test_price_set_is_duplicate_of_on_update(self):
+        user_session_1 = SessionFactory()
+        user_session_2 = SessionFactory()
+        proof_1 = ProofFactory(owner=user_session_1.user.user_id)
+        proof_2 = ProofFactory(owner=user_session_2.user.user_id)
+        location = LocationFactory()
+        product = ProductFactory()
+        price_kwargs = {
+            "type": "PRODUCT",
+            "location_osm_id": location.osm_id,
+            "location_osm_type": location.osm_type,
+            "product_code": product.code,
+            "date": "2025-01-01",
+            "currency": "EUR",
+            "price": Decimal("1.99"),
+        }
+        ref_price = PriceFactory(
+            **price_kwargs, proof_id=proof_1.id, owner=user_session_1.user.user_id
+        )
+        new_price = PriceFactory(
+            **price_kwargs, proof_id=proof_2.id, owner=user_session_2.user.user_id
+        )
+        self.assertEqual(new_price.duplicate_of_id, ref_price.id)
+        # edit the price so that it doesn't match anymore: no longer a duplicate
+        new_price.price = Decimal("2.49")
+        new_price.save()
+        new_price.refresh_from_db()
+        self.assertIsNone(new_price.duplicate_of_id)
+        # edit it back: duplicate again
+        new_price.price = Decimal("1.99")
+        new_price.save()
+        new_price.refresh_from_db()
+        self.assertEqual(new_price.duplicate_of_id, ref_price.id)
 
 
 class PriceModelUpdateTest(TestCase):

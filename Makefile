@@ -111,7 +111,11 @@ docs:
 	@echo "🥫 Generating doc…"
 	${DOCKER_COMPOSE} run --rm --no-deps api ./build_mkdocs.sh
 
-checks: toml-check mypy docs
+api-schema-check:
+	@echo "🥫 Checking OpenAPI schema …"
+	${DOCKER_COMPOSE_TEST} run --rm --no-deps api python3 manage.py spectacular --api-version api --validate --fail-on-warn --file /dev/null
+
+checks: toml-check mypy docs api-schema-check
 
 tests: django-tests
 

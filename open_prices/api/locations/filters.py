@@ -1,6 +1,7 @@
 import django_filters
 from django import forms
 
+from open_prices.api.utils import ArrayFieldElementContainsFilter
 from open_prices.locations.models import Location
 
 OSM_TAG_PARAMETER_NAMES = ("osm_tag_key", "osm_tag_value")
@@ -41,6 +42,10 @@ class LocationFilter(django_filters.FilterSet):
     )
     price_count__lte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="lte"
+    )
+    tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
+    tags__not_contains = ArrayFieldElementContainsFilter(
+        field_name="tags", exclude=True
     )
 
     class Meta:

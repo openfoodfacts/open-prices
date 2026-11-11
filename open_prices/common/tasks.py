@@ -128,41 +128,69 @@ def create_flags_from_price_outliers_and_update_view():
 
 
 CRON_SCHEDULES = {
-    "import_obf_db_task": ("0 15 * * *", {}),  # daily at 15:00
-    "import_opff_db_task": ("10 15 * * *", {}),  # daily at 15:10
-    "import_opf_db_task": ("20 15 * * *", {}),  # daily at 15:20
-    "import_off_db_task": ("30 15 * * *", {}),  # daily at 15:30
-    "dump_db_task": ("0 23 * * *", {}),  # daily at 23:00
-    "create_flags_from_price_outliers_and_update_view": (  # daily at 00:30
-        "30 0 * * *",
-        {},
-    ),
-    "fix_proof_fields_task": ("0 1 * * *", {}),  # daily at 01:00
-    "moderation_tasks": ("10 1 * * *", {}),  # daily at 01:10
-    "history_cleanup_task": ("20 1 * * *", {}),  # daily at 01:20
-    "update_challenge_task": ("30 1 * * *", {}),  # daily at 01:30
-    "update_user_counts_task": ("0 2 * * *", {}),  # daily at 02:00
-    "update_badge_task": ("5 2 * * *", {}),  # daily at 02:05
-    "update_total_stats_task": ("10 2 * * *", {}),  # daily at 02:10
-    "update_price_category_tag_task": ("40 2 * * *", {}),  # daily at 02:40
-    "update_location_counts_task": (
-        "20 2 * * 1",  # every start of the week (at 02:20)
-        {},
-    ),
-    "update_product_counts_task": (
-        "30 2 * * 1",  # every start of the week (at 02:30)
-        {"timeout": 10 * 60 * 60},  # 10 hours
-    ),
-    "proof_draft_cleanup_task": ("*/5 * * * *", {}),  # every 5 minutes
+    # daily
+    "import_obf_db_task": ("0 15 * * *", {}),
+    "import_opff_db_task": ("10 15 * * *", {}),
+    "import_opf_db_task": ("20 15 * * *", {}),
+    "import_off_db_task": ("30 15 * * *", {}),
+    "dump_db_task": ("0 23 * * *", {}),
+    "create_flags_from_price_outliers_and_update_view": ("30 0 * * *", {}),
+    "fix_proof_fields_task": ("0 1 * * *", {}),
+    "moderation_tasks": ("10 1 * * *", {}),
+    "history_cleanup_task": ("20 1 * * *", {}),
+    "update_challenge_task": ("30 1 * * *", {}),
+    "update_user_counts_task": ("0 2 * * *", {}),
+    "update_badge_task": ("5 2 * * *", {}),
+    "update_total_stats_task": ("10 2 * * *", {}),
+    # every start of the week
+    "update_price_category_tag_task": ("15 2 * * 1", {}),
+    "update_location_counts_task": ("20 2 * * 1", {}),
+    "update_product_counts_task": ("30 2 * * 1", {"timeout": 10 * 60 * 60}),
+    # every 5 minutes
+    "proof_draft_cleanup_task": ("*/5 * * * *", {}),
 }
 
-for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
-    if not Schedule.objects.filter(name=task_name).exists():
-        schedule(
-            f"open_prices.common.tasks.{task_name}",
-            name=task_name,
-            schedule_type=Schedule.CRON,
-            cron=task_cron,
-            **q_options,
-        )
-        print(f"Task {task_name} scheduled with cron {task_cron}")
+TASK_FUNC_PREFIX = "open_prices.common.tasks."
+
+
+def sync_task_schedules():
+    """
+    Sync the Django Q schedules with CRON_SCHEDULES:
+    - create missing schedules
+    - update the func, cron & options of existing schedules
+    - delete schedules of tasks that were removed or renamed
+    """
+    for task_name, (task_cron, q_options) in CRON_SCHEDULES.items():
+        task_func = f"{TASK_FUNC_PREFIX}{task_name}"
+        task_schedule = Schedule.objects.filter(name=task_name).first()
+        if not task_schedule:
+            schedule(
+                task_func,
+                name=task_name,
+                schedule_type=Schedule.CRON,
+                cron=task_cron,
+                **q_options,
+            )
+            print(f"Task {task_name} scheduled with cron {task_cron}")
+        elif (
+            task_schedule.func != task_func
+            or task_schedule.schedule_type != Schedule.CRON
+            or task_schedule.cron != task_cron
+            or task_schedule.kwargs != str(q_options)
+        ):
+            task_schedule.func = task_func
+            task_schedule.schedule_type = Schedule.CRON
+            task_schedule.cron = task_cron
+            task_schedule.kwargs = q_options
+            task_schedule.next_run = task_schedule.calculate_next_run()
+            task_schedule.save()
+            print(f"Task {task_name} rescheduled with cron {task_cron}")
+
+    for task_schedule in Schedule.objects.filter(
+        func__startswith=TASK_FUNC_PREFIX
+    ).exclude(name__in=CRON_SCHEDULES.keys()):
+        task_schedule.delete()
+        print(f"Task {task_schedule.name} unscheduled")
+
+
+sync_task_schedules()

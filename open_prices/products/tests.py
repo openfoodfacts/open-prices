@@ -13,7 +13,10 @@ from open_prices.prices.factories import PriceFactory
 from open_prices.products import constants as product_constants
 from open_prices.products.factories import ProductFactory
 from open_prices.products.models import Product
-from open_prices.products.tasks import process_update
+from open_prices.products.tasks import (
+    fetch_and_save_data_from_openfoodfacts,
+    process_update,
+)
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
 
@@ -139,6 +142,54 @@ class ProductQuerySetTest(TestCase):
         product = Product.objects.with_stats().get(id=self.product_with_price.id)
         self.assertEqual(product.price_count_annotated, 1)
         self.assertEqual(product.price_count, 1)
+
+    def test_to_update_in_sync_task(self):
+        last_synced = timezone.now() - timezone.timedelta(days=1)
+        ProductFactory(
+            code="0123456789102", source=Flavor.off, source_last_synced=last_synced
+        )
+        ProductFactory(code="0123456789103", source=Flavor.obf)
+        # no source (created in Open Prices before OFF) & never synced
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code=self.product_without_price.code,
+                flavor=Flavor.off,
+                product_source_last_modified=timezone.now(),
+            ).count(),
+            1,
+        )
+        # same flavor, modified since the last sync
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code="0123456789102",
+                flavor=Flavor.off,
+                product_source_last_modified=timezone.now(),
+            ).count(),
+            1,
+        )
+        # same flavor, not modified since the last sync
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code="0123456789102",
+                flavor=Flavor.off,
+                product_source_last_modified=last_synced,
+            ).count(),
+            0,
+        )
+        # same flavor, force update (no product_source_last_modified)
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code="0123456789102", flavor=Flavor.off
+            ).count(),
+            1,
+        )
+        # other flavor
+        self.assertEqual(
+            Product.objects.to_update_in_sync_task(
+                code="0123456789103", flavor=Flavor.off
+            ).count(),
+            0,
+        )
 
 
 class ProductPropertyTest(TestCase):
@@ -325,6 +376,27 @@ class TestProcessUpdate(TestCase):
         self.assertEqual(create_product.source, Flavor.opff)
         self.assertGreater(create_product.source_last_synced, before)
         self.assertLess(create_product.source_last_synced, after)
+
+
+class FetchAndSaveDataFromOpenFoodFactsTest(TestCase):
+    @patch("open_prices.common.openfoodfacts.get_product")
+    def test_fetch_does_not_overwrite_counts(self, mock_get_product):
+        product = ProductFactory(code="0123456789100")
+        # the task receives the product instance as it was at creation
+        stale_product = Product.objects.get(id=product.id)
+        # meanwhile, a price is added (see price_post_create_increment_counts)
+        Product.objects.filter(id=product.id).update(price_count=1)
+        mock_get_product.return_value = {
+            "code": product.code,
+            "product_name": "Test Product",
+        }
+
+        fetch_and_save_data_from_openfoodfacts(stale_product)
+
+        product.refresh_from_db()
+        self.assertEqual(product.product_name, "Test Product")
+        self.assertEqual(product.source, Flavor.off)
+        self.assertEqual(product.price_count, 1)
 
 
 class TestProductModel(TestCase):

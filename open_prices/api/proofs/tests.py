@@ -11,6 +11,7 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
+from freezegun import freeze_time
 from PIL import Image
 
 from open_prices.locations import constants as location_constants
@@ -684,6 +685,64 @@ class ProofUpdateApiTest(TestCase):
         self.assertEqual(response.data["receipt_price_count"], 4)
         self.assertEqual(Proof.objects.get(id=self.proof.id).price_count, 15)  # ignored
 
+    def test_proof_update_date_tomorrow_with_prices(self):
+        proof = ProofFactory(**PROOF_RECEIPT, owner=self.user_session_1.user.user_id)
+        price = PriceFactory(
+            proof_id=proof.id,
+            location_osm_id=proof.location_osm_id,
+            location_osm_type=proof.location_osm_type,
+            date=proof.date,
+            currency=proof.currency,
+            owner=proof.owner,
+        )
+        with freeze_time("2025-01-01"):
+            response = self.client.patch(
+                reverse("api:proofs-detail", args=[proof.id]),
+                {"date": "2025-01-02"},
+                headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+                content_type="application/json",
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["date"], "2025-01-02")
+        price.refresh_from_db()
+        self.assertEqual(str(price.date), "2025-01-02")
+
+    def test_proof_update_location_id_online(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        proof = ProofFactory(**PROOF_RECEIPT, owner=self.user_session_1.user.user_id)
+        price = PriceFactory(
+            proof_id=proof.id,
+            location_osm_id=proof.location_osm_id,
+            location_osm_type=proof.location_osm_type,
+            date=proof.date,
+            currency=proof.currency,
+            owner=proof.owner,
+        )
+        response = self.client.patch(
+            reverse("api:proofs-detail", args=[proof.id]),
+            {"location_id": location_online.id},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["location_id"], location_online.id)
+        self.assertIsNone(response.data["location_osm_id"])
+        self.assertIsNone(response.data["location_osm_type"])
+        proof.refresh_from_db()
+        self.assertEqual(proof.location, location_online)
+        price.refresh_from_db()
+        self.assertEqual(price.location, location_online)
+        self.assertIsNone(price.location_osm_id)
+
+    def test_proof_update_location_id_unknown(self):
+        response = self.client.patch(
+            self.url,
+            {"location_id": 999999},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_proof_update_history(self):
         response = self.client.patch(
             self.url,
@@ -835,7 +894,7 @@ class ProofFlagApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_proof_flag_ok_if_authenticated(self):
+    def test_proof_flag_ok_if_owner(self):
         response = self.client.post(
             self.url,
             {
@@ -851,6 +910,36 @@ class ProofFlagApiTest(TestCase):
         self.assertEqual(response.data["comment"], "This proof is spam")
         self.assertEqual(response.data["status"], FlagStatus.OPEN)
         self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
+
+    def test_proof_flag_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This proof is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.proof.id)
+        self.assertEqual(response.data["owner"], self.user_session_2.user.user_id)
+
+    def test_proof_flag_ok_if_not_owner_nor_moderator(self):
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This proof is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.proof.id)
+        self.assertEqual(response.data["owner"], self.user_session_2.user.user_id)
 
 
 class ProofDraftListApiTest(TestCase):
@@ -1053,6 +1142,52 @@ class ProofDraftPartialUpdateApiTest(TestCase):
         self.assertEqual(response.data["receipt_price_count"], 10)
         self.user_1_draft_proof.refresh_from_db()
         self.assertEqual(self.user_1_draft_proof.draft, False)
+
+    def test_proof_draft_partial_update_online_location(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        data = {
+            "location_id": location_online.id,
+            "type": proof_constants.TYPE_RECEIPT,
+            "currency": "EUR",
+            "date": "2024-07-15",
+        }
+        response = self.client.patch(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["location"]["id"], location_online.id)
+        self.user_1_draft_proof.refresh_from_db()
+        self.assertEqual(self.user_1_draft_proof.location, location_online)
+        self.assertIsNone(self.user_1_draft_proof.location_osm_id)
+
+    def test_proof_draft_partial_update_osm_to_online_location(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        draft_proof = ProofFactory(
+            draft=True,
+            owner=self.user_1_session.user.user_id,
+            location_osm_id=LOCATION_OSM_NODE_652825274["osm_id"],
+            location_osm_type=LOCATION_OSM_NODE_652825274["osm_type"],
+        )
+        url = reverse("api:proofs-drafts-detail", args=[draft_proof.id])
+        data = {
+            "location_id": location_online.id,
+            "currency": "EUR",
+            "date": "2024-07-15",
+        }
+        response = self.client.patch(
+            url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        draft_proof.refresh_from_db()
+        self.assertEqual(draft_proof.location, location_online)
+        self.assertIsNone(draft_proof.location_osm_id)
+        self.assertIsNone(draft_proof.location_osm_type)
 
 
 class ProofDraftDeleteApiTest(TestCase):

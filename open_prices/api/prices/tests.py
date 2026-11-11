@@ -5,6 +5,7 @@ from typing import cast
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone  # type: ignore[import-untyped]
+from freezegun import freeze_time
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
@@ -882,6 +883,24 @@ class PriceCreateApiTest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["owner"], self.user_session.user.user_id)
 
+    def test_price_create_with_proof_dated_tomorrow(self):
+        with freeze_time("2025-01-01"):
+            proof = ProofFactory(
+                type=proof_constants.TYPE_PRICE_TAG,
+                owner=self.user_session.user.user_id,
+                location_osm_id=self.location_osm.osm_id,
+                location_osm_type=self.location_osm.osm_type,
+                currency="EUR",
+                date="2025-01-02",
+            )
+            response = self.client.post(
+                self.url,
+                {**self.data, "proof_id": proof.id, "date": "2025-01-02"},
+                headers={"Authorization": f"Bearer {self.user_session.token}"},
+            )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["date"], "2025-01-02")
+
     def test_price_create_with_location_id(self):
         # with location_id, location_osm_id & location_osm_type: OK
         response = self.client.post(
@@ -1373,7 +1392,7 @@ class PriceFlagApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_price_flag_ok_if_authenticated(self):
+    def test_price_flag_ok_if_owner(self):
         response = self.client.post(
             self.url,
             {
@@ -1389,3 +1408,33 @@ class PriceFlagApiTest(TestCase):
         self.assertEqual(response.data["comment"], "This price is spam")
         self.assertEqual(response.data["status"], FlagStatus.OPEN)
         self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
+
+    def test_price_flag_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This price is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.price.id)
+        self.assertEqual(response.data["owner"], self.user_session_2.user.user_id)
+
+    def test_price_flag_ok_if_not_owner_nor_moderator(self):
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This price is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.price.id)
+        self.assertEqual(response.data["owner"], self.user_session_2.user.user_id)
