@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
@@ -86,7 +89,11 @@ class PriceViewSet(
     @action(detail=False, methods=["GET"])
     def stats(self, request: Request) -> Response:
         qs = self.filter_queryset(self.get_queryset())
-        return Response(qs.calculate_stats(), status=200)
+        stats = qs.calculate_stats()
+        stats["last_30_days"] = qs.filter(
+            date__gte=timezone.now().date() - timedelta(days=30)
+        ).calculate_stats()
+        return Response(stats, status=200)
 
     @extend_schema(responses=PriceHistorySerializer(many=True))
     @action(detail=True, methods=["GET"])
