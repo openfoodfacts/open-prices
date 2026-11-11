@@ -59,16 +59,22 @@ class LocationViewSet(
             response_status_code = status.HTTP_201_CREATED
         # avoid duplicates: return existing location instead
         except ValidationError as e:
-            if any(
+            if not any(
                 constraint_name in e.messages[0]
                 for constraint_name in location_constants.UNIQUE_CONSTRAINT_NAME_LIST
             ):
-                location = Location.objects.get(**serializer.validated_data)
-                response_data = {
-                    **self.serializer_class(location).data,
-                    "detail": "duplicate",
-                }
-                response_status_code = status.HTTP_200_OK
+                raise
+            lookup = dict(serializer.validated_data)
+            if lookup.get("website_url"):
+                lookup["website_url"] = utils.url_keep_only_domain(
+                    lookup["website_url"]
+                )
+            location = Location.objects.get(**lookup)
+            response_data = {
+                **self.serializer_class(location).data,
+                "detail": "duplicate",
+            }
+            response_status_code = status.HTTP_200_OK
         return Response(response_data, status=response_status_code)
 
     @extend_schema(
