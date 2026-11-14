@@ -457,6 +457,33 @@ class LocationPropertyTest(TestCase):
         self.location_osm.update_product_count()
         self.assertEqual(self.location_osm.product_count, 2)
 
+    def test_update_task(self):
+        ProofFactory(  # drafts are not counted
+            location_osm_id=self.location_osm.osm_id,
+            location_osm_type=self.location_osm.osm_type,
+            owner=self.user_2.user_id,
+            draft=True,
+        )
+        # wrong counts
+        Location.objects.update(**{field: 99 for field in Location.COUNT_FIELDS})
+        # update_task() should fix all counts
+        self.assertEqual(Location.update_task(), 2)
+        self.location_osm.refresh_from_db()
+        self.assertEqual(
+            {
+                field: getattr(self.location_osm, field)
+                for field in Location.COUNT_FIELDS
+            },
+            {"price_count": 3, "user_count": 1, "product_count": 2, "proof_count": 2},
+        )
+        self.location_online.refresh_from_db()
+        self.assertEqual(
+            {getattr(self.location_online, field) for field in Location.COUNT_FIELDS},
+            {0},
+        )
+        # nothing to update anymore
+        self.assertEqual(Location.update_task(), 0)
+
     def test_update_proof_count(self):
         self.location_osm.refresh_from_db()
         self.assertEqual(self.location_osm.proof_count, 2)  # proof post_save

@@ -21,6 +21,11 @@ from django_q.tasks import async_task
 from simple_history.models import HistoricalRecords
 
 from open_prices.common import constants, history, utils
+from open_prices.common.counts import (
+    bulk_update_counts,
+    count_subquery,
+    update_counts,
+)
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
 from open_prices.locations import utils as location_utils
@@ -30,6 +35,61 @@ from open_prices.locations import validators as location_validators
 class LocationQuerySet(models.QuerySet):
     def has_type_osm(self):
         return self.filter(type=location_constants.TYPE_OSM)
+
+    def with_price_count(self):
+        """
+        - price_count: number of prices
+        """
+        from open_prices.prices.models import Price
+
+        return self.annotate(
+            price_count_annotated=count_subquery(Price, "location", Count("id"))
+        )
+
+    def with_user_count(self):
+        """
+        - user_count: number of distinct proof owners
+        """
+        from open_prices.proofs.models import Proof
+
+        return self.annotate(
+            user_count_annotated=count_subquery(
+                Proof, "location", Count("owner", distinct=True)
+            )
+        )
+
+    def with_product_count(self):
+        """
+        - product_count: number of distinct price products
+        """
+        from open_prices.prices.models import Price
+
+        return self.annotate(
+            product_count_annotated=count_subquery(
+                Price, "location", Count("product_id", distinct=True)
+            )
+        )
+
+    def with_proof_count(self):
+        """
+        - proof_count: number of proofs (drafts excluded)
+        """
+        from open_prices.proofs.models import Proof
+
+        return self.annotate(
+            proof_count_annotated=count_subquery(Proof, "location", Count("id"))
+        )
+
+    def with_counts(self):
+        """
+        All the COUNT_FIELDS
+        """
+        return (
+            self.with_price_count()
+            .with_user_count()
+            .with_product_count()
+            .with_proof_count()
+        )
 
     def has_type_online(self):
         return self.filter(type=location_constants.TYPE_ONLINE)
@@ -280,12 +340,9 @@ class Location(models.Model):
     def update_task(cls):
         """
         - Update location field counts
+        - Only the locations with changed counts are updated
         """
-        for location in cls.objects.all():
-            location.update_price_count()
-            location.update_user_count()
-            location.update_product_count()
-            location.update_proof_count()
+        return bulk_update_counts(cls.objects.with_counts(), cls.COUNT_FIELDS)
 
     @property
     def is_type_osm(self) -> bool:
@@ -312,28 +369,16 @@ class Location(models.Model):
         return tag in self.tags
 
     def update_price_count(self):
-        self.price_count = self.prices.count()
-        self.save(update_fields=["price_count"])
+        update_counts(self, Location.objects.with_price_count(), ["price_count"])
 
     def update_user_count(self):
-        from open_prices.proofs.models import Proof
-
-        self.user_count = Proof.objects.filter(
-            location=self
-        ).calculate_field_distinct_count("owner")
-        self.save(update_fields=["user_count"])
+        update_counts(self, Location.objects.with_user_count(), ["user_count"])
 
     def update_product_count(self):
-        from open_prices.prices.models import Price
-
-        self.product_count = Price.objects.filter(
-            location=self
-        ).calculate_field_distinct_count("product_id")
-        self.save(update_fields=["product_count"])
+        update_counts(self, Location.objects.with_product_count(), ["product_count"])
 
     def update_proof_count(self):
-        self.proof_count = self.proofs.count()
-        self.save(update_fields=["proof_count"])
+        update_counts(self, Location.objects.with_proof_count(), ["proof_count"])
 
 
 @receiver(signals.post_save, sender=Location)
