@@ -219,6 +219,112 @@ class UserPropertyTest(TestCase):
         self.assertEqual(self.user_1.year_count, 1)
         self.assertEqual(self.user_1.challenge_count, 2)
 
+    def test_update_task(self):
+        user_3 = UserFactory()  # no prices & proofs
+        ProofFactory(
+            type=proof_constants.TYPE_RECEIPT,
+            owner_consumption=True,
+            owner=self.user_2.user_id,
+        )
+        proof_3 = ProofFactory(
+            type=proof_constants.TYPE_PRICE_TAG,
+            location_osm_id=self.location_1.osm_id,
+            location_osm_type=self.location_1.osm_type,
+            currency="EUR",
+            date="2025-01-01",
+            owner=self.user_2.user_id,
+            tags=["challenge-3"],
+        )
+        ProofFactory(owner=self.user_2.user_id, draft=True)  # not counted
+        PriceFactory(  # user_1 price in a proof owned by user_2
+            product_code="0123456789100",
+            location_osm_id=self.location_1.osm_id,
+            location_osm_type=self.location_1.osm_type,
+            proof_id=proof_3.id,
+            price=1.5,
+            currency=proof_3.currency,
+            date=proof_3.date,
+            owner=self.user_1.user_id,
+        )
+        PriceFactory(  # price without proof
+            product_code="0123456789102",
+            location_osm_id=self.location_1.osm_id,
+            location_osm_type=self.location_1.osm_type,
+            price=3.0,
+            owner=self.user_2.user_id,
+        )
+        # wrong counts
+        User.objects.update(**{field: 99 for field in User.COUNT_FIELDS})
+        # update_task() should fix all counts (except badge_count)
+        # 3 users updated, then their challenge_count
+        self.assertEqual(User.update_task(), 3 + 3)
+        expected_counts = {
+            self.user_1.user_id: {
+                "price_count": 3,
+                "price_type_product_count": 2,
+                "price_type_category_count": 1,
+                "price_kind_community_count": 2,
+                "price_kind_consumption_count": 1,
+                "price_in_proof_owned_count": 2,
+                "price_in_proof_not_owned_count": 1,
+                "price_not_owned_in_proof_owned_count": 1,
+                "proof_count": 2,
+                "proof_type_price_tag_count": 1,
+                "proof_type_receipt_count": 0,
+                "proof_type_gdpr_request_count": 1,
+                "proof_type_shop_import_count": 0,
+                "proof_kind_community_count": 1,
+                "proof_kind_consumption_count": 1,
+                "location_count": 1,
+                "location_type_osm_city_count": 1,
+                "location_type_osm_country_count": 1,
+                "product_count": 1,
+                "currency_count": 2,
+                "year_count": 1,
+                "challenge_count": 2,
+            },
+            self.user_2.user_id: {
+                "price_count": 2,
+                "price_type_product_count": 2,
+                "price_type_category_count": 0,
+                "price_kind_community_count": 2,
+                "price_kind_consumption_count": 0,
+                "price_in_proof_owned_count": 0,
+                "price_in_proof_not_owned_count": 2,
+                "price_not_owned_in_proof_owned_count": 1,
+                "proof_count": 2,
+                "proof_type_price_tag_count": 1,
+                "proof_type_receipt_count": 1,
+                "proof_type_gdpr_request_count": 0,
+                "proof_type_shop_import_count": 0,
+                "proof_kind_community_count": 1,
+                "proof_kind_consumption_count": 1,
+                "location_count": 1,
+                "location_type_osm_city_count": 1,
+                "location_type_osm_country_count": 1,
+                "product_count": 2,
+                "currency_count": 1,
+                "year_count": 1,
+                "challenge_count": 1,
+            },
+            user_3.user_id: {
+                field: 0
+                for field in User.COUNT_FIELDS
+                if field not in User.BADGE_COUNT_FIELDS
+            },
+        }
+        for user in User.objects.all():
+            self.assertEqual(
+                {
+                    field: getattr(user, field)
+                    for field in expected_counts[user.user_id]
+                },
+                expected_counts[user.user_id],
+            )
+            self.assertEqual(user.badge_count, 99)  # not included
+        # nothing to update anymore
+        self.assertEqual(User.update_task(), 0)
+
     def test_update_task_classmethod(self):
         self.user_1.refresh_from_db()
         self.assertEqual(self.user_1.price_count, 2)  # price signals
