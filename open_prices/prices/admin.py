@@ -42,7 +42,7 @@ class PriceAdmin(SimpleHistoryAdmin):
 
     def proof_with_link(self, price):
         if price.proof:
-            url = reverse("admin:proofs_proof_change", args=[price.id])
-            return format_html(f'<a href="{url}">{price}</a>')
+            url = reverse("admin:proofs_proof_change", args=[price.proof_id])
+            return format_html(f'<a href="{url}">{price.proof}</a>')
 
     proof_with_link.short_description = Price._meta.get_field("proof").verbose_name

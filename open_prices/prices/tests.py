@@ -1480,3 +1480,30 @@ class TestOutlierDetection(TestCase):
             find_outliers(target_date=datetime.date.fromisoformat("2026-07-06"))
         )
         self.assertEqual(len(outliers), 0)
+
+
+class PriceAdminTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.price = PriceFactory()
+
+    def test_price_admin_links(self):
+        from django.contrib.admin.sites import AdminSite
+
+        from open_prices.prices.admin import PriceAdmin
+
+        price_admin = PriceAdmin(Price, AdminSite())
+        product_link = price_admin.product_with_link(self.price)
+        self.assertIn(
+            f"/admin/products/product/{self.price.product_id}/change/", product_link
+        )
+        location_link = price_admin.location_with_link(self.price)
+        self.assertIn(
+            f"/admin/locations/location/{self.price.location_id}/change/", location_link
+        )
+        proof_link = price_admin.proof_with_link(self.price)
+        self.assertIn(
+            f"/admin/proofs/proof/{self.price.proof_id}/change/", proof_link
+        )
+        self.assertIn(str(self.price.proof), proof_link)
+
