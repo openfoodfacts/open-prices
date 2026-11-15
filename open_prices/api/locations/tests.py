@@ -431,15 +431,17 @@ class LocationOsmCountryCitiesListApiTest(TestCase):
         )
 
     def test_location_osm_country_cities(self):
-        response = self.client.get(self.url)
+        for country_arg in ["FR", "fr"]:
+            url = reverse("api:locations-list-osm-country-cities", args=[country_arg])
+            response = self.client.get(url)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(response.data, list))
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["osm_name"], "Grenoble")  # ordered by name
-        self.assertEqual(response.data[0]["country_code_2"], "FR")
-        self.assertEqual(response.data[0]["location_count"], 2)
-        self.assertEqual(response.data[0]["price_count"], 10)
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(isinstance(response.data, list))
+            self.assertEqual(len(response.data), 2)
+            self.assertEqual(response.data[0]["osm_name"], "Grenoble")  # ordered by name
+            self.assertEqual(response.data[0]["country_code_2"], "FR")
+            self.assertEqual(response.data[0]["location_count"], 2)
+            self.assertEqual(response.data[0]["price_count"], 10)
 
 
 # Note: edge cases of the nearby() logic (exact coordinates, antimeridian...)
