@@ -411,6 +411,13 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + f"?location__type={location_constants.TYPE_ONLINE}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # location__osm_name
+        url = self.url + "?location__osm_name__contains=monop"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?location__osm_name__like=monop"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
 
     def test_price_list_filter_by_proof(self):
         self.assertEqual(Price.objects.count(), 5)

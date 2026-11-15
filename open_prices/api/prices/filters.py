@@ -86,8 +86,11 @@ class PriceFilter(django_filters.FilterSet):
         choices=proof_constants.TYPE_CHOICES,
     )
     tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
-    location__osm_name__contains = ArrayFieldElementContainsFilter(
-        field_name="location__osm_name"
+    location__osm_name__contains = django_filters.CharFilter(
+        field_name="location__osm_name", lookup_expr="icontains"
+    )
+    location__osm_name__like = django_filters.CharFilter(
+        field_name="location__osm_name", lookup_expr="icontains"
     )
 
     def filter_kind(self, queryset, name, value):
