@@ -42,8 +42,15 @@ There is an ongoing discussion on managing location updates, see [this issue](ht
 
 ## Known limitations
 
-- **a shop recently added to OSM can't be found by name**: the Photon (Komoot) database is only synced with OSM once a week, on Tuesdays (see [komoot/photon#614](https://github.com/komoot/photon/issues/614)), so a new shop can be missing for up to a week. Workaround: search by its OSM ID (e.g. `N14365327207`), which goes through Nominatim and is usually up to date within minutes
+### Frontend (location search)
+
+- **a shop recently added to OSM can't be found by name**: name search uses Photon (Komoot), whose database is only synced with OSM once a week, on Tuesdays (see [komoot/photon#614](https://github.com/komoot/photon/issues/614)), so a new shop can be missing for up to a week. Workaround: search by its OSM ID (e.g. `N14365327207`), which goes through Nominatim and is usually up to date within minutes
+- **name search is not very precise**: adding the city or street name helps (e.g. `Carrefour 75013 Paris`)
+
+### Backend (stored location data)
+
+The backend doesn't use Photon: it fetches the OSM data directly from Nominatim & the OSM API, so a new location gets up-to-date data on creation.
+
 - **a shop in OSM is "missing" from the Open Prices API**: expected, it will be created when the first price is added (see [Backend](#backend))
 - **a shop that changed on OSM (new brand, moved...) keeps its old data in Open Prices**: see [Data sync](#data-sync)
 - **a price linked to the wrong shop**: contributors can flag the price (`WRONG_LOCATION`), but not the location itself (see [Moderation](moderation.md) & [this issue](https://github.com/openfoodfacts/open-prices/issues/1136))
-- **name search is not very precise**: adding the city or street name helps (e.g. `Carrefour 75013 Paris`)
