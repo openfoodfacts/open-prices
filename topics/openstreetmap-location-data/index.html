@@ -1560,16 +1560,21 @@
 <h3 id="backend">Backend</h3>
 <ul>
 <li>Location table<ul>
-<li>when a new OSM ID is added by a contributor, we store it</li>
-<li>we keep only a subset of fields (name, type, brand, lat, lng, version...)</li>
+<li>a <code>Location</code> is created only when a contributor adds the first price (or proof) for a new OSM ID</li>
+<li>on creation, we fetch the OSM data directly from Nominatim &amp; the OSM API (not Photon, see <a href="#frontend">Frontend</a>), and keep only a subset of fields (name, type, brand, address, lat, lng, version, a few tags...)</li>
 </ul>
 </li>
 </ul>
 <p>see <code>open_prices/common/openstreetmap.py</code></p>
+<p>Limitations:</p>
+<ul>
+<li><strong>a shop in OSM is "missing" from the Open Prices API</strong> (<code>GET /api/v1/locations/osm/{osm_type}/{osm_id}</code> returns a 404): expected, it will be created when the first price is added</li>
+</ul>
 <h3 id="frontend">Frontend</h3>
 <ul>
 <li>Location search<ul>
-<li>we use a combination of Komoot Photon &amp; Nominatim</li>
+<li>by name: we use Komoot Photon (restricted to <code>shop</code>, <code>amenity</code>, <code>tourism</code> &amp; <code>leisure</code> places)</li>
+<li>by OSM ID (e.g. <code>N14365327207</code> or <code>14365327207</code>): we use a Nominatim lookup</li>
 </ul>
 </li>
 <li>Brand data<ul>
@@ -1582,9 +1587,25 @@
 </ul>
 </li>
 </ul>
+<p>Limitations:</p>
+<ul>
+<li><strong>a shop recently added to OSM can't be found by name</strong>: the Photon (Komoot) database is only synced with OSM once a week, on Tuesdays (see <a href="https://github.com/komoot/photon/issues/614">komoot/photon#614</a>), so a new shop can be missing for up to a week. Workaround: search by its OSM ID (e.g. <code>N14365327207</code>), which goes through Nominatim and is usually up to date within minutes</li>
+<li><strong>name search is not very precise</strong>: adding the city or street name helps (e.g. <code>Carrefour 75013 Paris</code>)</li>
+</ul>
 <h2 id="data-sync">Data sync</h2>
-<p>Currently, we fetch &amp; store location data on creation only.</p>
-<p>There is an ongoing discussion on managing location updates (e.g. a shop changes brand), see <a href="https://github.com/openfoodfacts/open-prices/issues/1018">this issue</a>.</p>
+<p>Location data is fetched &amp; stored on creation, and not kept in sync automatically.</p>
+<p>The <code>detect_location_osm_version_change</code> command (run manually) compares each location's stored OSM version (locations without one are skipped) with the current one:</p>
+<ul>
+<li>minor changes (e.g. new tags) are fetched &amp; the location is updated</li>
+<li>major changes (name, brand, type or a move of more than 100 m for nodes, e.g. a shop that changed brand) are only reported, for manual review</li>
+<li>deleted OSM elements are only reported</li>
+</ul>
+<p>There is an ongoing discussion on managing location updates, see <a href="https://github.com/openfoodfacts/open-prices/issues/1018">this issue</a>.</p>
+<p>Limitations:</p>
+<ul>
+<li><strong>a shop that changed on OSM (new brand, moved...) keeps its old data in Open Prices</strong>, until the command is run and the change reviewed</li>
+<li><strong>a price linked to the wrong shop</strong>: contributors can flag the price (<code>WRONG_LOCATION</code>), but not the location itself (see <a href="../moderation/">Moderation</a> &amp; <a href="https://github.com/openfoodfacts/open-prices/issues/1136">this issue</a>)</li>
+</ul>
 
 
 
