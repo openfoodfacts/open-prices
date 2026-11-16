@@ -5,3 +5,6 @@ reviews:
     # skip release PRs opened by release-please (e.g. "chore(main): release 1.114.2")
     ignore_title_keywords:
       - "chore(main): release"
+    # also review stacked PRs (their base is the previous PR's branch, not main)
+    base_branches:
+      - ".*"
