@@ -418,14 +418,6 @@ class PriceTagViewSet(
             return super().get_authenticators()
         return [CustomAuthentication()]
 
-    def get_queryset(self):
-        if self.action in ["create", "update"]:
-            # We need to prefetch the price object if it exists to validate the
-            # price_id field, and the proof object to validate the proof_id
-            # field
-            return PriceTag.objects.select_related("proof", "price").all()
-        return super().get_queryset()
-
     def get_serializer_class(self):
         if self.request.method == "POST":
             return PriceTagCreateSerializer
@@ -441,7 +433,11 @@ class PriceTagViewSet(
         saving a stale price tag would undo the link done by create_price).
         """
         price_tag = self.get_object()  # 404 if not found
-        return PriceTag.objects.select_for_update().get(id=price_tag.id)
+        return (
+            PriceTag.objects.select_related("proof")
+            .select_for_update(of=("self",))
+            .get(id=price_tag.id)
+        )
 
     def destroy(self, request: Request, *args, **kwargs) -> Response:
         with transaction.atomic():
