@@ -433,10 +433,8 @@ class PriceTagViewSet(
         saving a stale price tag would undo the link done by create_price).
         """
         price_tag = self.get_object()  # 404 if not found
-        # We also fetch the proof & price objects: they are needed by the
-        # price tag validation (on save)
         return (
-            PriceTag.objects.select_related("proof", "price")
+            PriceTag.objects.select_related("proof")
             .select_for_update(of=("self",))
             .get(id=price_tag.id)
         )
