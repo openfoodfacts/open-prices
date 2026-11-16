@@ -40,10 +40,10 @@ Limitations:
 
 Location data is fetched & stored on creation, and not kept in sync automatically.
 
-The `detect_location_osm_version_change` command (run manually) compares each location's OSM version with the current one:
+The `detect_location_osm_version_change` command (run manually) compares each location's stored OSM version (locations without one are skipped) with the current one:
 
 - minor changes (e.g. new tags) are fetched & the location is updated
-- major changes (name, brand, type or a move of more than 100 m, e.g. a shop that changed brand) are only reported, for manual review
+- major changes (name, brand, type or a move of more than 100 m for nodes, e.g. a shop that changed brand) are only reported, for manual review
 - deleted OSM elements are only reported
 
 There is an ongoing discussion on managing location updates, see [this issue](https://github.com/openfoodfacts/open-prices/issues/1018).
