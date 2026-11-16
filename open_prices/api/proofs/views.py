@@ -433,15 +433,26 @@ class PriceTagViewSet(
             return PriceTagUpdateSerializer
         return self.serializer_class
 
+    def get_object_locked(self) -> PriceTag:
+        """
+        Get the price tag, locked until the end of the current transaction.
+        To be used by all the actions writing to a price tag, to avoid
+        concurrent requests overwriting each other's changes (ex: a PATCH
+        saving a stale price tag would undo the link done by create_price).
+        """
+        price_tag = self.get_object()  # 404 if not found
+        return PriceTag.objects.select_for_update().get(id=price_tag.id)
+
     def destroy(self, request: Request, *args, **kwargs) -> Response:
-        price_tag = self.get_object()
-        if price_tag.price_id is not None:
-            return Response(
-                {"detail": "Cannot delete price tag with associated prices."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        price_tag.status = proof_constants.PriceTagStatus.deleted
-        price_tag.save()
+        with transaction.atomic():
+            price_tag = self.get_object_locked()
+            if price_tag.price_id is not None:
+                return Response(
+                    {"detail": "Cannot delete price tag with associated prices."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            price_tag.status = proof_constants.PriceTagStatus.deleted
+            price_tag.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def create(self, request: Request, *args, **kwargs):
@@ -459,15 +470,16 @@ class PriceTagViewSet(
         )
 
     def update(self, request: Request, *args, **kwargs):
-        # validate
-        previous_price_tag: PriceTag = self.get_object()
-        previous_bounding_box = previous_price_tag.bounding_box
-        serializer = self.get_serializer(
-            previous_price_tag, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        # save
-        price_tag = serializer.save(updated_by=self.request.user.user_id)
+        with transaction.atomic():
+            # validate
+            previous_price_tag: PriceTag = self.get_object_locked()
+            previous_bounding_box = previous_price_tag.bounding_box
+            serializer = self.get_serializer(
+                previous_price_tag, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            # save
+            price_tag = serializer.save(updated_by=self.request.user.user_id)
         if (
             not settings.TESTING
             # Only run the extraction if the bounding box has changed
@@ -491,7 +503,6 @@ class PriceTagViewSet(
         to avoid duplicate prices when the same price tag is validated twice
         (by 2 users at the same time, or after a failed link).
         """
-        price_tag = self.get_object()
         # validate
         serializer = PriceCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -505,7 +516,7 @@ class PriceTagViewSet(
         source = get_source_from_request(self.request)
         with transaction.atomic():
             # lock the price tag until the end of the transaction
-            price_tag = PriceTag.objects.select_for_update().get(id=price_tag.id)
+            price_tag = self.get_object_locked()
             if price_tag.status is not None or price_tag.price_id is not None:
                 return Response(
                     {"detail": "Price tag already handled."},
