@@ -300,6 +300,36 @@ class LocationCreateApiTest(TestCase):
                 )  # unchanged
                 self.assertEqual(response.data["detail"], "duplicate")
 
+    def test_location_create_duplicate_online_with_non_normalized_url(self):
+        location = LocationFactory(**LOCATION_ONLINE_DECATHLON)
+        for website_url in [
+            "https://www.decathlon.fr/",
+            "https://www.decathlon.fr/fr/",
+        ]:
+            with self.subTest(website_url=website_url):
+                response = self.client.post(
+                    self.url,
+                    {
+                        "type": location_constants.TYPE_ONLINE,
+                        "website_url": website_url,
+                    },
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data["id"], location.id)
+                self.assertEqual(response.data["detail"], "duplicate")
+        self.assertEqual(Location.objects.count(), 1)
+
+    def test_location_create_invalid(self):
+        response = self.client.post(
+            self.url,
+            {"type": location_constants.TYPE_OSM},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("osm_id", response.data)
+        self.assertIn("osm_type", response.data)
+
     def test_location_create_with_app_name(self):
         for index, (params, result) in enumerate(
             [
