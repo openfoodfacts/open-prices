@@ -77,7 +77,8 @@ proof_id=$(
             if .currency == $currency and .location_osm_type == $osm_type
                 and .location_osm_id == $osm_id
             then .id
-            else error("Uploaded proof has a different currency or shop")
+            else error("Uploaded proof has a different currency or shop: "
+                + "ID \(.id), currency \(.currency), OSM \(.location_osm_type) \(.location_osm_id)")
             end'
 )
 ```
