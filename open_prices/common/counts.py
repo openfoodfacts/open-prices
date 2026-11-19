@@ -21,15 +21,21 @@ def count_subquery(model: type[Model], field: str, aggregate):
     )
 
 
-def update_counts(obj: Model, queryset: QuerySet, count_fields: list):
+def update_counts(
+    obj: Model,
+    queryset: QuerySet,
+    count_fields: list,
+    extra_update_fields: list | None = None,
+):
     """
     Update the count fields of a single object, from a queryset annotated
     with the "<count field>_annotated" values (see the with_*_count() methods)
+    - extra_update_fields: other fields (already set on obj) to save as well
     """
     obj_annotated = queryset.get(pk=obj.pk)
     for field in count_fields:
         setattr(obj, field, getattr(obj_annotated, f"{field}_annotated"))
-    obj.save(update_fields=count_fields)
+    obj.save(update_fields=count_fields + (extra_update_fields or []))
 
 
 def bulk_update_counts(
