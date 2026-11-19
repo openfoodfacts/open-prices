@@ -72,19 +72,25 @@ proof_id=$(
         --form "location_osm_type=$osm_type" \
         --form "location_osm_id=$osm_id" \
         "$base_url/proofs/upload" |
-        jq -er '.id'
+        jq -er --arg currency "$currency" --arg osm_type "$osm_type" \
+            --argjson osm_id "$osm_id" '
+            if .currency == $currency and .location_osm_type == $osm_type
+                and .location_osm_id == $osm_id
+            then .id
+            else error("Uploaded proof has a different currency or shop")
+            end'
 )
 ```
 
-Save the returned ID. Uploading an identical photo with the same owner, proof type, location and date can return the existing proof. You can use its ID in the next step.
+Continue only once you have a verified proof ID. Uploading an identical photo with the same owner, proof type, date, and OSM fields can return an existing proof. The duplicate check ignores currency and the internal `location_id`. For an online shop, compare the returned currency and `location_id` with your observation before using its ID. If they differ, check the existing proof against the photo before correcting it or selecting another proof.
 
-Enabled server jobs can extract text or detect price tags asynchronously. To make a shelf photo available in the price-tag validation workflow, send `ready_for_price_tag_validation=true` as an additional form field on a `PRICE_TAG` proof. That flag defaults to false and does not turn predictions into verified prices. See the [proof prediction flow](../topics/ai/proof-prediction-flow.md) for which jobs may run.
+Enabled server jobs can extract text or detect price tags asynchronously. To make a shelf photo available in the price-tag validation workflow, send `ready_for_price_tag_validation=true` as an additional form field on a `PRICE_TAG` proof. The flag defaults to false and does not turn predictions into verified prices. A duplicate upload returns the existing flag. If you own that proof and want to enable validation, check the returned flag and update the proof directly with `PATCH /api/v1/proofs/{id}` when needed. See the [proof prediction flow](../topics/ai/proof-prediction-flow.md) for which jobs may run.
 
 ### 3. Add a price linked to that proof
 
 Send the returned proof ID as `proof_id` and include `price` and a product identifier. For a packaged product, send its barcode **as a string** in `product_code`. For a bulk product without a barcode, send `type: "CATEGORY"`, a language-prefixed `category_tag` such as `en:apples`, and a `price_per` of `UNIT`, `KILOGRAM`, or `LITER` in place of the barcode.
 
-Repeat the proof's date, currency, and location information. The API validates these fields against a shelf-tag or receipt proof when they are present on the proof. The API does not copy these fields from the proof. A mismatch returns a validation error. For an online shop, send the same `location_id` instead of the OSM pair.
+Repeat the proof's date, currency, and location information. When you create a price, the API checks its date, currency, and OSM fields against the corresponding values on a shelf-tag or receipt proof when those values are set. It does not copy these fields from the proof. For an online shop, send the proof's `location_id` instead of the OSM pair and check that the IDs match yourself. The API's proof-to-price check does not compare that field.
 
 ```bash
 jq -n \
