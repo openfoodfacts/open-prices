@@ -94,19 +94,21 @@ Send the returned proof ID as `proof_id` and include `price` and a product ident
 Repeat the proof's date, currency, and location information. When you create a price, the API checks its date, currency, and OSM fields against the corresponding values on a shelf-tag or receipt proof when those values are set. It does not copy these fields from the proof. For an online shop, send the proof's `location_id` instead of the OSM pair and check that the IDs match yourself. The API's proof-to-price check does not compare that field.
 
 ```bash
-jq -n \
-    --argjson proof_id "$proof_id" \
-    --arg product_code '8001505005707' \
-    --argjson price 2.49 \
-    --arg date "$observation_date" \
-    --arg currency "$currency" \
-    --argjson location_osm_id "$osm_id" \
-    --arg location_osm_type "$osm_type" \
-    '$ARGS.named' |
+price_payload=$(
+    jq -n \
+        --argjson proof_id "$proof_id" \
+        --arg product_code '8001505005707' \
+        --argjson price 2.49 \
+        --arg date "$observation_date" \
+        --arg currency "$currency" \
+        --argjson location_osm_id "$osm_id" \
+        --arg location_osm_type "$osm_type" \
+        '$ARGS.named'
+) &&
     curl --fail-with-body --silent --show-error \
         --header "Authorization: Bearer $token" \
         --header 'Content-Type: application/json' \
-        --data-binary @- \
+        --data-binary "$price_payload" \
         "$base_url/prices"
 ```
 
