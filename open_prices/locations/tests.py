@@ -221,6 +221,39 @@ class LocationQuerySetTest(TestCase):
         self.assertEqual(Location.objects.count(), 2)
         self.assertEqual(Location.objects.has_prices().count(), 1)
 
+    def test_get_existing(self):
+        for data, result in [
+            (
+                {
+                    "type": location_constants.TYPE_OSM,
+                    "osm_id": 652825274,
+                    "osm_type": location_constants.OSM_TYPE_NODE,
+                    "website_url": "",
+                },
+                self.location_osm_with_price,
+            ),
+            (
+                {
+                    "type": location_constants.TYPE_ONLINE,
+                    "website_url": "https://www.decathlon.fr",
+                    "osm_type": "",
+                },
+                self.location_online_without_price,
+            ),
+            (
+                {
+                    "type": location_constants.TYPE_OSM,
+                    "osm_id": 652825274,
+                    "osm_type": location_constants.OSM_TYPE_WAY,
+                },
+                None,
+            ),
+            ({"type": location_constants.TYPE_OSM}, None),
+            ({"type": location_constants.TYPE_ONLINE}, None),
+        ]:
+            with self.subTest(data=data):
+                self.assertEqual(Location.objects.get_existing(data), result)
+
     def test_with_stats(self):
         location = Location.objects.with_stats().get(
             id=self.location_online_without_price.id

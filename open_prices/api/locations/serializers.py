@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from open_prices.common import utils
 from open_prices.locations.models import Location
 
 
@@ -28,6 +29,10 @@ class LocationCreateSerializer(serializers.ModelSerializer):
         ):
             self.fields[field].required = False
             self.fields[field].validators = []
+
+    def validate_website_url(self, value):
+        # same normalization as Location.cleanup_url(), to find duplicates
+        return utils.url_keep_only_domain(value) if value else value
 
 
 class CountrySerializer(serializers.Serializer):

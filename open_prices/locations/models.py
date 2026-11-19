@@ -43,6 +43,21 @@ class LocationQuerySet(models.QuerySet):
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
+    def get_existing(self, data: dict):
+        """
+        Return the Location matching the unique constraint fields of `data`
+        (OSM: osm_id & osm_type, ONLINE: website_url), or None
+        """
+        if data.get("type") == location_constants.TYPE_OSM:
+            lookup = {"osm_id": data.get("osm_id"), "osm_type": data.get("osm_type")}
+        elif data.get("type") == location_constants.TYPE_ONLINE:
+            lookup = {"website_url": data.get("website_url")}
+        else:
+            return None
+        if not all(lookup.values()):
+            return None
+        return self.filter(type=data["type"], **lookup).first()
+
     def with_stats(self):
         return self.prefetch_related("prices").annotate(
             price_count_annotated=Count("prices", distinct=True)
