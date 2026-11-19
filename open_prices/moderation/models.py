@@ -24,6 +24,11 @@ class FlagStatus(models.TextChoices):
 
 
 class FlagQuerySet(models.QuerySet):
+    def filter_by_content_object(self, obj):
+        return self.filter(
+            content_type=ContentType.objects.get_for_model(obj), object_id=obj.id
+        )
+
     def filter_by_content_type_model(self, model_name):
         return self.filter(content_type__model=model_name.lower())
 
