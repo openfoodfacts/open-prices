@@ -34,6 +34,12 @@ class LocationCreateSerializer(serializers.ModelSerializer):
         # same normalization as Location.cleanup_url(), to find duplicates
         return utils.url_keep_only_domain(value) if value else value
 
+    def validate(self, attrs):
+        # run the model validations (except the unique constraints, the view
+        # returns the existing location instead), before the duplicate lookup
+        Location(**attrs).full_clean(validate_unique=False, validate_constraints=False)
+        return attrs
+
 
 class CountrySerializer(serializers.Serializer):
     id = serializers.IntegerField()

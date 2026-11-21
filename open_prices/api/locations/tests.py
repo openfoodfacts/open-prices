@@ -330,6 +330,20 @@ class LocationCreateApiTest(TestCase):
         self.assertIn("osm_id", response.data)
         self.assertIn("osm_type", response.data)
 
+    def test_location_create_duplicate_invalid(self):
+        LocationFactory(**LOCATION_ONLINE_DECATHLON)
+        response = self.client.post(
+            self.url,
+            {
+                **LOCATION_ONLINE_DECATHLON,
+                "osm_type": location_constants.OSM_TYPE_NODE,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("osm_type", response.data)
+        self.assertEqual(Location.objects.count(), 1)
+
     def test_location_create_with_app_name(self):
         for index, (params, result) in enumerate(
             [
