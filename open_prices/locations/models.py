@@ -278,16 +278,26 @@ class Location(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
+    def normalize_fields(self):
         """
         - OSM: cleanup lat/lon fields
         - ONLINE: cleanup URL fields
-        - run validations
         """
         if self.type == location_constants.TYPE_OSM:
             self.truncate_lat_lon()
         elif self.type == location_constants.TYPE_ONLINE:
             self.cleanup_url()
+
+    def clean_fields(self, *args, **kwargs):
+        # normalize first, so that the field validations & the unique constraint
+        # checks (also run by the admin form) apply to the values that will be saved
+        self.normalize_fields()
+        super().clean_fields(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        """
+        - run validations (normalize fields first, see clean_fields)
+        """
         self.full_clean()
         super().save(*args, **kwargs)
 
