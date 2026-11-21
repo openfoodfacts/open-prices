@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 from django.core.cache import cache
-from django.core.validators import ValidationError
 from django.db.models import Count, F, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
@@ -50,32 +49,18 @@ class LocationViewSet(
         # validate
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # get source
-        source = get_source_from_request(self.request)
+        # avoid duplicates: return the existing location instead
+        location = Location.objects.get_existing(serializer.validated_data)
+        if location:
+            return Response(
+                {**self.serializer_class(location).data, "detail": "duplicate"},
+                status=status.HTTP_200_OK,
+            )
         # save
-        try:
-            location = serializer.save(source=source)
-            response_data = self.serializer_class(location).data
-            response_status_code = status.HTTP_201_CREATED
-        # avoid duplicates: return existing location instead
-        except ValidationError as e:
-            if not any(
-                constraint_name in e.messages[0]
-                for constraint_name in location_constants.UNIQUE_CONSTRAINT_NAME_LIST
-            ):
-                raise
-            lookup = dict(serializer.validated_data)
-            if lookup.get("website_url"):
-                lookup["website_url"] = utils.url_keep_only_domain(
-                    lookup["website_url"]
-                )
-            location = Location.objects.get(**lookup)
-            response_data = {
-                **self.serializer_class(location).data,
-                "detail": "duplicate",
-            }
-            response_status_code = status.HTTP_200_OK
-        return Response(response_data, status=response_status_code)
+        location = serializer.save(source=get_source_from_request(self.request))
+        return Response(
+            self.serializer_class(location).data, status=status.HTTP_201_CREATED
+        )
 
     @extend_schema(
         parameters=[
