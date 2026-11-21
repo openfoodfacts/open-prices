@@ -52,7 +52,7 @@ Check that authentication succeeded before moving on. For an integration already
 
 ### 2. Upload the photo as a proof
 
-A proof is the source photo for one or more price records. For a receipt, use `RECEIPT`; for a shelf-label image, use `PRICE_TAG`. The multipart endpoint requires `file` and `type`. Include the date, currency, and shop to make the proof usable for verification. Remove personal information such as loyalty or payment details from receipts before uploading.
+A proof is the source photo for one or more price records. For a receipt, use `RECEIPT`; for a shelf-label image, use `PRICE_TAG`. The [proof upload endpoint (`POST /api/v1/proofs/upload`)](https://prices.openfoodfacts.org/api/redoc#tag/proofs/operation/proofs_upload_create) accepts multipart data and requires `file` and `type`. Include the date, currency, and shop to make the proof usable for verification. Remove personal information such as loyalty or payment details from receipts before uploading.
 
 For a physical shop, supply its OpenStreetMap element ID and type (`NODE`, `WAY`, or `RELATION`). You can upload directly without calling the Locations API first. Open Prices resolves the OSM pair and creates the location if needed. For an existing online shop, use its Open Prices `location_id` instead and leave both OSM fields out. See [OpenStreetMap location data](../topics/openstreetmap-location-data.md).
 
@@ -83,15 +83,15 @@ proof_id=$(
 )
 ```
 
-Continue only once you have a verified proof ID. Uploading an identical photo with the same owner, proof type, date, and OSM fields can return an existing proof. The duplicate check ignores currency and the internal `location_id`. For an online shop, compare the returned currency and `location_id` with your observation before using its ID. If they differ, check the existing proof against the photo before correcting it or selecting another proof.
+Continue only once you have a verified proof ID. The example’s metadata check fails when the returned proof has a different currency or OSM location. An identical photo uploaded by the same owner with the same proof type, date, and OSM fields can return the existing proof with `detail: "duplicate"`. The duplicate check ignores currency and the internal `location_id`. For an online shop, compare the returned currency and `location_id` with your observation before using its ID. If they differ, check the existing proof against the photo before correcting it or selecting another proof.
 
 Enabled server jobs can extract text or detect price tags asynchronously. To make a shelf photo available in the price-tag validation workflow, send `ready_for_price_tag_validation=true` as an additional form field on a `PRICE_TAG` proof. The flag defaults to false and does not turn predictions into verified prices. A duplicate upload returns the existing flag. If you own that proof and want to enable validation, check the returned flag and update the proof directly with `PATCH /api/v1/proofs/{id}` when needed. See the [proof prediction flow](../topics/ai/proof-prediction-flow.md) for which jobs may run.
 
 ### 3. Add a price linked to that proof
 
-Send the returned proof ID as `proof_id` and include `price` and a product identifier. For a packaged product, send its barcode **as a string** in `product_code`. For a bulk product without a barcode, send `type: "CATEGORY"`, a language-prefixed `category_tag` such as `en:apples`, and a `price_per` of `UNIT`, `KILOGRAM`, or `LITER` in place of the barcode.
+Call the [price creation endpoint (`POST /api/v1/prices`)](https://prices.openfoodfacts.org/api/redoc#tag/prices/operation/prices_create) with the returned proof ID as `proof_id`, the `price` and a product identifier. For a packaged product, send its barcode **as a string** in `product_code`. For a bulk product without a barcode, send `type: "CATEGORY"`, a language-prefixed `category_tag` such as `en:apples`, and a `price_per` of `UNIT`, `KILOGRAM`, or `LITER` in place of the barcode.
 
-Repeat the proof's date, currency, and location information. When you create a price, the API checks its date, currency, and OSM fields against the corresponding values on a shelf-tag or receipt proof when those values are set. It does not copy these fields from the proof. For an online shop, send the proof's `location_id` instead of the OSM pair and check that the IDs match yourself. The API's proof-to-price check does not compare that field.
+Repeat the proof's date, currency, and location information. When you create a price, the API checks its date, currency, and OSM fields against the corresponding values on a shelf-tag or receipt proof when those values are set. It does not copy these fields from the proof. Omitting a required field or sending a value that does not match the proof can result in a 400 validation response. For an online shop, send the proof's `location_id` instead of the OSM pair and check that the IDs match yourself. The API's proof-to-price check does not compare that field.
 
 ```bash
 price_payload=$(
