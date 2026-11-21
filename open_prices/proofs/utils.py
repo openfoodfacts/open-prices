@@ -168,6 +168,7 @@ def save_anonymized_receipt(
     :param root_dir: the root directory that the image paths are relative to, defaults to
         settings.IMAGES_DIR
     :return: the relative paths to the new image and thumbnail files
+    :raises OSError: if either anonymized output cannot be saved
     """
     if not bounding_boxes:
         raise ValueError("bounding_boxes must not be empty")
@@ -203,9 +204,11 @@ def save_anonymized_receipt(
         image_to_remove_paths.append(image_thumb_full_path)
         image_thumb_full_path = image_thumb_full_path.with_suffix(".webp")
 
-    cv2.imwrite(str(image_full_path), image)
+    if not cv2.imwrite(str(image_full_path), image):
+        raise OSError("Failed to save anonymized receipt image")
     thumb_image = generate_image_thumbnail_cv2(image)
-    cv2.imwrite(str(image_thumb_full_path), thumb_image)
+    if not cv2.imwrite(str(image_thumb_full_path), thumb_image):
+        raise OSError("Failed to save anonymized receipt thumbnail")
 
     for path in image_to_remove_paths:
         # Remove the original image if it was converted to webp
