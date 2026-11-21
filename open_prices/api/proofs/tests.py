@@ -4,13 +4,12 @@ import tempfile
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
-from typing import Any, cast
 
 import cv2
 import numpy as np
 from django.conf import settings
-from django.core.exceptions import ValidationError  # type: ignore[import-untyped]
-from django.db.models import signals  # type: ignore[import-untyped]
+from django.core.exceptions import ValidationError
+from django.db.models import signals
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -30,7 +29,6 @@ from open_prices.proofs.factories import (
 )
 from open_prices.proofs.models import PriceTag, Proof
 from open_prices.users.factories import SessionFactory
-from open_prices.users.models import Session
 
 LOCATION_OSM_NODE_652825274 = {
     "type": location_constants.TYPE_OSM,
@@ -706,37 +704,31 @@ class ProofUpdateApiTest(TestCase):
         )
 
 
-class ProofUpdateAtomicityApiTest(TestCase):  # type: ignore[misc]
-    def setUp(self) -> None:
-        self.owner = cast(Session, SessionFactory())
-        self.other = cast(Session, SessionFactory())
+class ProofUpdateAtomicityApiTest(TestCase):
+    def setUp(self):
+        self.owner = SessionFactory()
+        self.other = SessionFactory()
 
-    def make_proof(self, mixed_owners: bool = False) -> tuple[Proof, list[Price]]:
-        location = cast(Location, LocationFactory())
+    def make_proof(self, mixed_owners=False):
+        location = LocationFactory()
         fields = {
             "date": "2025-01-01",
             "currency": "EUR",
             "location_osm_id": location.osm_id,
             "location_osm_type": location.osm_type,
         }
-        proof = cast(
-            Proof,
-            ProofFactory(type="PRICE_TAG", owner=self.owner.user.user_id, **fields),
-        )
+        proof = ProofFactory(type="PRICE_TAG", owner=self.owner.user.user_id, **fields)
         prices = [
-            cast(
-                Price,
-                PriceFactory(
-                    proof_id=proof.pk,
-                    owner=session.user.user_id,
-                    **fields,
-                ),
+            PriceFactory(
+                proof_id=proof.pk,
+                owner=session.user.user_id,
+                **fields,
             )
             for session in [self.owner, self.other if mixed_owners else self.owner]
         ]
         return proof, prices
 
-    def patch_proof(self, proof: Proof, payload: dict[str, str]) -> Any:
+    def patch_proof(self, proof, payload):
         return self.client.patch(
             reverse("api:proofs-detail", args=[proof.pk]),
             payload,
@@ -744,7 +736,7 @@ class ProofUpdateAtomicityApiTest(TestCase):  # type: ignore[misc]
             content_type="application/json",
         )
 
-    def test_rejected_type_edit_rolls_back_proof_and_history(self) -> None:
+    def test_rejected_type_edit_rolls_back_proof_and_history(self):
         proof, prices = self.make_proof(mixed_owners=True)
         response = self.patch_proof(proof, {"type": "RECEIPT"})
         self.assertEqual(response.status_code, 400)
@@ -757,11 +749,11 @@ class ProofUpdateAtomicityApiTest(TestCase):  # type: ignore[misc]
             self.assertEqual(price.history.count(), 1)
             price.full_clean()
 
-    def check_late_failure(self, use_api: bool) -> None:
+    def check_late_failure(self, use_api):
         proof, prices = self.make_proof()
-        seen: set[int] = set()
+        seen = set()
 
-        def fail_second(sender: object, instance: Price, **kwargs: Any) -> None:
+        def fail_second(sender, instance, **kwargs):
             if instance.proof_id == proof.pk:
                 seen.add(instance.pk)
                 if len(seen) == 2:
@@ -787,13 +779,13 @@ class ProofUpdateAtomicityApiTest(TestCase):  # type: ignore[misc]
             self.assertEqual(price.currency, "EUR")
             self.assertEqual(price.history.count(), 1)
 
-    def test_late_signal_failure_rolls_back_api_update(self) -> None:
+    def test_late_signal_failure_rolls_back_api_update(self):
         self.check_late_failure(use_api=True)
 
-    def test_late_signal_failure_rolls_back_positional_partial_model_save(self) -> None:
+    def test_late_signal_failure_rolls_back_positional_partial_model_save(self):
         self.check_late_failure(use_api=False)
 
-    def test_successful_type_edit_keeps_propagation_and_history(self) -> None:
+    def test_successful_type_edit_keeps_propagation_and_history(self):
         proof, prices = self.make_proof()
         response = self.patch_proof(proof, {"type": "RECEIPT", "currency": "USD"})
         self.assertEqual(response.status_code, 200)
