@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.119.0](https://github.com/openfoodfacts/open-prices/compare/v1.118.0...v1.119.0) (2026-11-22)
+
+
+### Features
+
+* **Prices:** API: new filter by location country code ([#1570](https://github.com/openfoodfacts/open-prices/issues/1570)) ([1a1f5c3](https://github.com/openfoodfacts/open-prices/commit/1a1f5c354717fcde9e880d938b9328f6b73e335d))
+* **Proofs:** API: new filter by location country code ([#1571](https://github.com/openfoodfacts/open-prices/issues/1571)) ([c23199d](https://github.com/openfoodfacts/open-prices/commit/c23199d2b69c7d3cd485f2295f31a1bcec468ab8))
+
+
+### Bug Fixes
+
+* **API:** custom_exception_handler: return a 400 instead of a 500 on a ValidationError without field names ([#1574](https://github.com/openfoodfacts/open-prices/issues/1574)) ([9bfc5e9](https://github.com/openfoodfacts/open-prices/commit/9bfc5e9136b89ce2f6cfdeae6e642cfe253a8572))
+* **Locations:** API: case-insensitive country code in list_osm_country_cities ([#1566](https://github.com/openfoodfacts/open-prices/issues/1566)) ([488ceb5](https://github.com/openfoodfacts/open-prices/commit/488ceb5890102a5db4a9fb544f5a96fb0f6f7bd6))
+* **Locations:** API: compare: return a 400 instead of a 500 on an invalid date ([#1569](https://github.com/openfoodfacts/open-prices/issues/1569)) ([d4399f8](https://github.com/openfoodfacts/open-prices/commit/d4399f8e4f47339bf1ec216570c7dbdd383e8bf0))
+* **Prices:** API: location name filter: replace the broken __contains with __like ([#1564](https://github.com/openfoodfacts/open-prices/issues/1564)) ([ae32d5d](https://github.com/openfoodfacts/open-prices/commit/ae32d5d2c0a27f91c59fcfd6911edd17ab7e04a8))
+* **Products:** normalize product_language_code before sending it to OFF ([#1567](https://github.com/openfoodfacts/open-prices/issues/1567)) ([5790014](https://github.com/openfoodfacts/open-prices/commit/57900144568497e3e5f2107ba9e653e4d07070c9))
+
+
+### Documentation
+
+* **AGENTS:** PR conventions (title with a scope, small PRs, follow the PR template) ([#1575](https://github.com/openfoodfacts/open-prices/issues/1575)) ([e869d48](https://github.com/openfoodfacts/open-prices/commit/e869d4858399c735a3852bafa5807bf22784fe4f))
+
+
+### Technical
+
+* **Products:** validate the OFF actions payload with serializers ([#1580](https://github.com/openfoodfacts/open-prices/issues/1580)) ([6be2836](https://github.com/openfoodfacts/open-prices/commit/6be2836bcb2b60cd4d1d1f9c49e851d37ea61806))
+* **Proofs:** API: price tag filters: use Meta.fields for the standard lookups ([#1577](https://github.com/openfoodfacts/open-prices/issues/1577)) ([6bba5bb](https://github.com/openfoodfacts/open-prices/commit/6bba5bb1ca82a0c351b41a53c230902ae558573a))
+* **Proofs:** API: receipt item filters: use Meta.fields for the standard lookups ([#1578](https://github.com/openfoodfacts/open-prices/issues/1578)) ([58ff051](https://github.com/openfoodfacts/open-prices/commit/58ff05198ec51a0dd2bfc3d7f9d3228a273aa06f))
+
 ## [1.118.0](https://github.com/openfoodfacts/open-prices/compare/v1.117.0...v1.118.0) (2026-11-21)
 
 
