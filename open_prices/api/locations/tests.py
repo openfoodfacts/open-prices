@@ -678,20 +678,19 @@ class LocationCompareApiTest(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
-        for date_param in [
-            "date__gte=invalid",
-            "date__gte=2024-13-01",
-            "date__lte=2024-02-30",
+        # date & boolean parameters must be valid
+        for param, value in [
+            ("date__gte", "invalid"),
+            ("date__gte", "2024-13-01"),
+            ("date__lte", "2024-02-30"),
+            ("price_is_discounted", "invalid"),
         ]:
-            with self.subTest(date_param=date_param):
-                url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}&{date_param}"
+            with self.subTest(param=param, value=value):
+                url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}&{param}={value}"
                 response = self.client.get(url)
 
                 self.assertEqual(response.status_code, 400)
-                self.assertEqual(
-                    response.data["detail"],
-                    "date__gte and date__lte must be valid dates (YYYY-MM-DD)",
-                )
+                self.assertIn(param, response.data)
 
     def test_compare_same_location(self):
         url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_a.id}"
