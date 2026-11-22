@@ -1,3 +1,4 @@
+from openfoodfacts import Flavor
 from rest_framework import serializers
 
 from open_prices.common.openfoodfacts import normalize_language_code
@@ -13,6 +14,9 @@ class ProductFullSerializer(serializers.ModelSerializer):
 class ProductOffRequestSerializer(serializers.Serializer):
     """Payload of the OFF actions (off-update & off-upload-image)."""
 
+    flavor = serializers.ChoiceField(
+        choices=[flavor.value for flavor in Flavor], default=Flavor.off.value
+    )
     product_language_code = serializers.CharField(default="en")
 
     def validate_product_language_code(self, value):
@@ -20,3 +24,11 @@ class ProductOffRequestSerializer(serializers.Serializer):
         if not language_code:
             raise serializers.ValidationError("Invalid language code")
         return language_code
+
+
+class ProductOffUpdateRequestSerializer(ProductOffRequestSerializer):
+    update_params = serializers.DictField(default=dict)
+
+
+class ProductOffUploadImageRequestSerializer(ProductOffRequestSerializer):
+    image_data_base64 = serializers.CharField()
