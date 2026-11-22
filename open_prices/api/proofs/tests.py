@@ -260,6 +260,13 @@ class ProofListFilterApiTest(TestCase):
         url = self.url + f"?location__type={location_constants.TYPE_ONLINE}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # location__osm_address_country_code
+        url = self.url + "?location__osm_address_country_code=FR"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?location__osm_address_country_code=CH"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
     def test_proof_list_filter_by_date(self):
         self.assertEqual(Proof.objects.count(), 3)
