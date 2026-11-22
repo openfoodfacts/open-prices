@@ -73,7 +73,7 @@ class PriceViewSet(viewsets.ModelViewSet):
   - `docs: [description]` for documentation changes (does **not** trigger a version bump).
 - **PR Title**: Same convention as commits, with a scope (e.g. `fix(Prices): API: …`): it becomes the commit message on `main`.
 - **PR Scope**: One topic per PR, keep it small.
-- **PR Description**: Use `.github/pull_request_template.md`, keeping all its sections and checkboxes as is (with `gh pr create`, fill in a copy and pass it with `--body-file`: `--body` and `--fill` skip the template).
+- **PR Description**: Use `.github/pull_request_template.md`, keeping all its sections and checkbox items (don't remove or reword them) and ticking only the ones that apply (with `gh pr create`, fill in a copy and pass it with `--body-file`: `--body` and `--fill` skip the template).
 - **Linting**: The project uses `pre-commit` hooks (Ruff only). Ensure your code passes Ruff formatting (`uv run ruff check . --fix && uv run ruff format .`). mypy is **not** part of pre-commit and must be run separately: `uv run mypy .`.
 
 ## 7. Common Commands (uv / Make)
