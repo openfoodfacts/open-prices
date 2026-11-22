@@ -1,5 +1,4 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from openfoodfacts import Flavor
 from openfoodfacts.barcode import normalize_barcode
 from rest_framework import filters, mixins, viewsets
 from rest_framework.decorators import action
@@ -10,7 +9,8 @@ from rest_framework.response import Response
 from open_prices.api.products.filters import ProductFilter
 from open_prices.api.products.serializers import (
     ProductFullSerializer,
-    ProductOffRequestSerializer,
+    ProductOffUpdateRequestSerializer,
+    ProductOffUploadImageRequestSerializer,
 )
 from open_prices.api.utils import get_object_or_drf_404
 from open_prices.common.authentication import CustomAuthentication
@@ -53,15 +53,14 @@ class ProductViewSet(
         url_path=r"code/(?P<code>\d+)/off-update",
     )
     def create_or_update_in_off(self, request: Request, code):
-        serializer = ProductOffRequestSerializer(data=request.data)
+        serializer = ProductOffUpdateRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        product_language_code = serializer.validated_data["product_language_code"]
         result = create_or_update_product_in_off(
             code,
-            flavor=request.data.get("flavor", Flavor.off),
-            country_code=product_language_code,
+            flavor=serializer.validated_data["flavor"],
+            country_code=serializer.validated_data["product_language_code"],
             owner=self.request.user.user_id,
-            update_params=request.data.get("update_params", {}),
+            update_params=serializer.validated_data["update_params"],
         )
         if result:
             return Response(result, status=200)
@@ -73,14 +72,14 @@ class ProductViewSet(
         url_path=r"code/(?P<code>\d+)/off-upload-image",
     )
     def upload_image_in_off(self, request: Request, code):
-        serializer = ProductOffRequestSerializer(data=request.data)
+        serializer = ProductOffUploadImageRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         product_language_code = serializer.validated_data["product_language_code"]
         result = upload_product_image_in_off(
             code,
-            flavor=request.data.get("flavor", Flavor.off),
+            flavor=serializer.validated_data["flavor"],
             country_code=product_language_code,
-            image_data_base64=request.data.get("image_data_base64"),
+            image_data_base64=serializer.validated_data["image_data_base64"],
             selected={"front": {product_language_code: {}}},
         )
         if result:
