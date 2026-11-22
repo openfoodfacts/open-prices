@@ -1473,6 +1473,18 @@ class PriceTagListApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
 
+    def test_price_tag_list_filter_by_created(self):
+        for created in ["2024-01-01", "2024-01-01T00:00:00Z"]:
+            with self.subTest(created=created):
+                # created__gte
+                url = self.url + f"?created__gte={created}"
+                response = self.client.get(url)
+                self.assertEqual(response.data["total"], 3)
+                # created__lte
+                url = self.url + f"?created__lte={created}"
+                response = self.client.get(url)
+                self.assertEqual(response.data["total"], 0)
+
 
 class PriceTagDetailApiTest(TestCase):
     @classmethod
