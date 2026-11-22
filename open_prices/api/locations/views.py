@@ -139,7 +139,7 @@ class LocationViewSet(
         location_qs = (
             Location.objects.filter(
                 type=location_constants.TYPE_OSM,
-                osm_address_country_code=country_code,
+                osm_address_country_code__iexact=country_code,
                 osm_address_city__isnull=False,
             )
             .values("osm_address_city")
