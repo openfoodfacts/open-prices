@@ -41,6 +41,7 @@ LOCATION_OSM_NODE_652825274 = {
     "osm_type": location_constants.OSM_TYPE_NODE,
     "osm_name": "Monoprix",
     "osm_address_country": "France",
+    "osm_address_country_code": "FR",
     "osm_lat": "45.1805534",
     "osm_lon": "5.7153387",
 }
@@ -411,6 +412,13 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + f"?location__type={location_constants.TYPE_ONLINE}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # location__osm_address_country_code
+        url = self.url + "?location__osm_address_country_code=FR"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?location__osm_address_country_code=CH"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
     def test_price_list_filter_by_proof(self):
         self.assertEqual(Price.objects.count(), 5)

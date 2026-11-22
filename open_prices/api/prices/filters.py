@@ -132,6 +132,7 @@ class PriceFilter(django_filters.FilterSet):
             "location_osm_id": ["exact"],
             "location_osm_type": ["exact"],
             "location_id": ["exact", "in", "isnull"],
+            "location__osm_address_country_code": ["exact"],
             "price": ["exact", "gt", "gte", "lt", "lte"],
             "price_is_discounted": ["exact"],
             "discount_type": ["exact"],
