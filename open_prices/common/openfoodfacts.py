@@ -417,6 +417,21 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
     return barcode
 
 
+def normalize_language_code(language_code: str | None) -> str | None:
+    """
+    OFF expects 2-letter language codes
+    e.g. "fr" -> "fr", "nl_BE" -> "nl", "pt-BR" -> "pt"
+
+    :return: the 2-letter language code, or None if invalid
+    """
+    if not language_code:
+        return None
+    language_code = re.split(r"[_-]", language_code.strip().lower())[0]
+    if re.fullmatch(r"[a-z]{2}", language_code):
+        return language_code
+    return None
+
+
 def country_code_to_Country(country_code: str) -> Country:
     try:
         return Country[country_code]
