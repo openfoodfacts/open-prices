@@ -4,7 +4,7 @@ from django.core.cache import cache
 from django.db.models import Count, F, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
-from rest_framework import filters, mixins, status, viewsets
+from rest_framework import filters, mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -262,6 +262,18 @@ class LocationViewSet(
         except ValueError:
             return Response(
                 {"detail": "location_id_a and location_id_b must be integers"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            date_field = serializers.DateField()
+            if date__gte:
+                date__gte = date_field.to_internal_value(date__gte)
+            if date__lte:
+                date__lte = date_field.to_internal_value(date__lte)
+        except serializers.ValidationError:
+            return Response(
+                {"detail": "date__gte and date__lte must be valid dates (YYYY-MM-DD)"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
