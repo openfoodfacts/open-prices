@@ -288,13 +288,16 @@ class ProductOffCreateOrUpdateApiTest(TestCase):
         # self.assertEqual(response.status_code, 200)
 
     def test_product_off_create_or_update_invalid_language_code(self):
-        response = self.client.patch(
-            self.url,
-            {"product_language_code": "ach"},
-            headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 400)
+        for language_code in ["ach", "", True]:
+            with self.subTest(language_code=language_code):
+                response = self.client.patch(
+                    self.url,
+                    {"product_language_code": language_code},
+                    headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("product_language_code", response.data)
 
 
 class ProductOffUploadImageApiTest(TestCase):
@@ -318,10 +321,13 @@ class ProductOffUploadImageApiTest(TestCase):
         # self.assertEqual(response.status_code, 200)
 
     def test_product_off_upload_image_invalid_language_code(self):
-        response = self.client.patch(
-            self.url,
-            {"product_language_code": "ach"},
-            headers={"Authorization": f"Bearer {self.user_session.token}"},
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 400)
+        for language_code in ["ach", "", True]:
+            with self.subTest(language_code=language_code):
+                response = self.client.patch(
+                    self.url,
+                    {"product_language_code": language_code},
+                    headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("product_language_code", response.data)
