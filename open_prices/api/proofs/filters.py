@@ -24,6 +24,9 @@ class ProofFilter(django_filters.FilterSet):
         field_name="location__type",
         choices=location_constants.TYPE_CHOICES,
     )
+    location__osm_address_country_code = django_filters.CharFilter(
+        field_name="location__osm_address_country_code", lookup_expr="iexact"
+    )
     tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
     tags__not_contains = ArrayFieldElementContainsFilter(
         field_name="tags", exclude=True
@@ -43,7 +46,6 @@ class ProofFilter(django_filters.FilterSet):
             "location_osm_id": ["exact"],
             "location_osm_type": ["exact"],
             "location_id": ["exact", "in", "isnull"],
-            "location__osm_address_country_code": ["exact"],
             "date": ["exact", "gt", "gte", "lt", "lte", "year", "month"],
             "currency": ["exact"],
             "ready_for_price_tag_validation": ["exact"],
@@ -55,6 +57,9 @@ class ProofFilter(django_filters.FilterSet):
 
 
 class PriceTagFilter(django_filters.FilterSet):
+    proof__location__osm_address_country_code = django_filters.CharFilter(
+        field_name="proof__location__osm_address_country_code", lookup_expr="iexact"
+    )
     status__isnull = django_filters.BooleanFilter(
         field_name="status", lookup_expr="isnull"
     )
@@ -79,7 +84,6 @@ class PriceTagFilter(django_filters.FilterSet):
         model = PriceTag
         fields = [
             "proof_id",
-            "proof__location__osm_address_country_code",
             "proof__owner",
             "proof__ready_for_price_tag_validation",
             "price_id",

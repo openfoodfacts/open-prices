@@ -413,9 +413,10 @@ class PriceListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         # location__osm_address_country_code
-        url = self.url + "?location__osm_address_country_code=FR"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
+        for country_code in ["FR", "fr"]:
+            url = self.url + f"?location__osm_address_country_code={country_code}"
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 1)
         url = self.url + "?location__osm_address_country_code=CH"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)

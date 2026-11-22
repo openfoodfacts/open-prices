@@ -136,11 +136,10 @@ class LocationViewSet(
         url_path="osm/countries/(?P<country_code>\\w{2})/cities",
     )
     def list_osm_country_cities(self, request, country_code):
-        country_code = country_code.upper()
         location_qs = (
             Location.objects.filter(
                 type=location_constants.TYPE_OSM,
-                osm_address_country_code=country_code,
+                osm_address_country_code__iexact=country_code,
                 osm_address_city__isnull=False,
             )
             .values("osm_address_city")

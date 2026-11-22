@@ -482,7 +482,9 @@ class LocationOsmCountryCitiesListApiTest(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertTrue(isinstance(response.data, list))
             self.assertEqual(len(response.data), 2)
-            self.assertEqual(response.data[0]["osm_name"], "Grenoble")  # ordered by name
+            self.assertEqual(
+                response.data[0]["osm_name"], "Grenoble"
+            )  # ordered by name
             self.assertEqual(response.data[0]["country_code_2"], "FR")
             self.assertEqual(response.data[0]["location_count"], 2)
             self.assertEqual(response.data[0]["price_count"], 10)

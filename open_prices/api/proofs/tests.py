@@ -261,9 +261,10 @@ class ProofListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         # location__osm_address_country_code
-        url = self.url + "?location__osm_address_country_code=FR"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 1)
+        for country_code in ["FR", "fr"]:
+            url = self.url + f"?location__osm_address_country_code={country_code}"
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 1)
         url = self.url + "?location__osm_address_country_code=CH"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)
@@ -1404,9 +1405,12 @@ class PriceTagListApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         # proof__location__osm_address_country_code
-        url = self.url + "?proof__location__osm_address_country_code=FR"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        for country_code in ["FR", "fr"]:
+            url = (
+                self.url + f"?proof__location__osm_address_country_code={country_code}"
+            )
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 2)
         # proof__owner
         url = self.url + f"?proof__owner={self.user_session.user.user_id}"
         response = self.client.get(url)
