@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from freezegun import freeze_time
@@ -13,6 +14,7 @@ from open_prices.common.authentication import (
     get_token_from_header,
     has_token_from_cookie_or_header,
 )
+from open_prices.common.middleware import custom_exception_handler
 from open_prices.common.utils import (
     is_date_in_future,
     is_float,
@@ -196,6 +198,22 @@ class OpenFoodFactsTest(TestCase):
         ]:
             result = common_openfoodfacts.is_smoothie_app_version_leq_4_20(source)
             self.assertEqual(result, expected_result)
+
+
+class CustomExceptionHandlerTest(TestCase):
+    def test_django_validation_error(self):
+        for exc, data in [
+            (ValidationError({"type": ["invalid"]}), {"type": ["invalid"]}),
+            (ValidationError("invalid"), {"detail": ["invalid"]}),
+            (
+                ValidationError(["invalid 1", "invalid 2"]),
+                {"detail": ["invalid 1", "invalid 2"]},
+            ),
+        ]:
+            with self.subTest(exc=exc):
+                response = custom_exception_handler(exc, {})
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.data, data)
 
 
 class UtilsTest(TestCase):
