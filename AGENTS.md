@@ -17,7 +17,7 @@ Welcome to the `open-prices` backend repository! As an AI coding assistant, plea
 - **Package Manager**: [uv](https://github.com/astral-sh/uv)
 - **Task Queue**: Django Q2 (for async ML jobs)
 - **Linting & Formatting**: Ruff, mypy
-- **Testing**: Django's native test runner (`manage.py test`) / pytest
+- **Testing**: Django's native test runner (`manage.py test`)
 
 ## 3. Strict Boundary Rules ("Never Touch")
 
@@ -71,6 +71,9 @@ class PriceViewSet(viewsets.ModelViewSet):
   - `fix: [description]` for bug fixes (triggers Patch release).
   - `chore: [description]` for dependency updates or routine tasks.
   - `docs: [description]` for documentation changes (does **not** trigger a version bump).
+- **PR Title**: Same convention as commits, with a scope (e.g. `fix(Prices): API: …`): it becomes the commit message on `main`.
+- **PR Scope**: One topic per PR, keep it small.
+- **PR Description**: Use `.github/pull_request_template.md`, keeping all its sections and checkboxes as is (with `gh pr create`, fill in a copy and pass it with `--body-file`: `--body` and `--fill` skip the template).
 - **Linting**: The project uses `pre-commit` hooks (Ruff only). Ensure your code passes Ruff formatting (`uv run ruff check . --fix && uv run ruff format .`). mypy is **not** part of pre-commit and must be run separately: `uv run mypy .`.
 
 ## 7. Common Commands (uv / Make)
