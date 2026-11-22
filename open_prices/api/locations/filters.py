@@ -37,6 +37,9 @@ class LocationFilter(django_filters.FilterSet):
     osm_address_country__like = django_filters.CharFilter(
         field_name="osm_address_country", lookup_expr="icontains"
     )
+    osm_address_country_code = django_filters.CharFilter(
+        field_name="osm_address_country_code", lookup_expr="iexact"
+    )
     price_count__gte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="gte"
     )
