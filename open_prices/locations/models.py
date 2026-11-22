@@ -43,6 +43,21 @@ class LocationQuerySet(models.QuerySet):
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
+    def get_existing(self, data: dict):
+        """
+        Return the Location matching the unique constraint fields of `data`
+        (OSM: osm_id & osm_type, ONLINE: website_url), or None
+        """
+        if data.get("type") == location_constants.TYPE_OSM:
+            lookup = {"osm_id": data.get("osm_id"), "osm_type": data.get("osm_type")}
+        elif data.get("type") == location_constants.TYPE_ONLINE:
+            lookup = {"website_url": data.get("website_url")}
+        else:
+            return None
+        if not all(lookup.values()):
+            return None
+        return self.filter(type=data["type"], **lookup).first()
+
     def with_stats(self):
         return self.prefetch_related("prices").annotate(
             price_count_annotated=Count("prices", distinct=True)
@@ -263,16 +278,26 @@ class Location(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
+    def normalize_fields(self):
         """
         - OSM: cleanup lat/lon fields
         - ONLINE: cleanup URL fields
-        - run validations
         """
         if self.type == location_constants.TYPE_OSM:
             self.truncate_lat_lon()
         elif self.type == location_constants.TYPE_ONLINE:
             self.cleanup_url()
+
+    def clean_fields(self, *args, **kwargs):
+        # normalize first, so that the field validations & the unique constraint
+        # checks (also run by the admin form) apply to the values that will be saved
+        self.normalize_fields()
+        super().clean_fields(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        """
+        - run validations (normalize fields first, see clean_fields)
+        """
         self.full_clean()
         super().save(*args, **kwargs)
 

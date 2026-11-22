@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.118.0](https://github.com/openfoodfacts/open-prices/compare/v1.117.0...v1.118.0) (2026-11-21)
+
+
+### Features
+
+* **Price tags:** API: new endpoint to create a price and link the price tag atomically ([#1547](https://github.com/openfoodfacts/open-prices/issues/1547)) ([756b9b0](https://github.com/openfoodfacts/open-prices/commit/756b9b029c34c4bfb7a795ebd714926c03f42950))
+
+
+### Bug Fixes
+
+* **Locations:** API: return the existing location on duplicate create instead of a 500 ([#1546](https://github.com/openfoodfacts/open-prices/issues/1546)) ([d63074d](https://github.com/openfoodfacts/open-prices/commit/d63074d722f9a47a2eaf1346071a640cb2f33ff0))
+* **Locations:** normalize fields before validation, so the admin shows a form error instead of a 500 on a duplicate URL ([#1562](https://github.com/openfoodfacts/open-prices/issues/1562)) ([4709f70](https://github.com/openfoodfacts/open-prices/commit/4709f7039722ecf9898ccffc18867f37684ce3df))
+* **Price tags:** API: also lock the price tag on update & delete ([#1552](https://github.com/openfoodfacts/open-prices/issues/1552)) ([4e13afb](https://github.com/openfoodfacts/open-prices/commit/4e13afbd8bd868897d0a09bc1250672ad1b2d467))
+* **Price tags:** API: fetch the proof with the locked price tag (the get_queryset branch never applied) ([#1553](https://github.com/openfoodfacts/open-prices/issues/1553)) ([cf78298](https://github.com/openfoodfacts/open-prices/commit/cf78298fd08ed0f6853f0f09900eacadedd6807c))
+
+
+### Documentation
+
+* **GitHub:** add a PR template (includes LLM usage disclosure) ([#1550](https://github.com/openfoodfacts/open-prices/issues/1550)) ([faadf10](https://github.com/openfoodfacts/open-prices/commit/faadf10cb3226e94d8520746bf21692c89580258))
+* **Topics:** OSM: update location creation, search & sync sections, with their limitations ([#1558](https://github.com/openfoodfacts/open-prices/issues/1558)) ([00e1126](https://github.com/openfoodfacts/open-prices/commit/00e1126b2a8a8d081b77acae02a5993647e6f5c3))
+
+
+### Technical
+
+* **CodeRabbit:** also review stacked PRs (any base branch) ([#1555](https://github.com/openfoodfacts/open-prices/issues/1555)) ([70ac281](https://github.com/openfoodfacts/open-prices/commit/70ac281de1d2bab9b74875179f1199ba72537405))
+* **Locations:** API: look up the existing location before create, instead of catching the unique constraint error ([#1561](https://github.com/openfoodfacts/open-prices/issues/1561)) ([ae51a6e](https://github.com/openfoodfacts/open-prices/commit/ae51a6e2ca413b11c9bf00917714b4921c7b1877))
+
 ## [1.117.0](https://github.com/openfoodfacts/open-prices/compare/v1.116.0...v1.117.0) (2026-11-10)
 
 

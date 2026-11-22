@@ -81,6 +81,9 @@ class PriceFilter(django_filters.FilterSet):
         field_name="location__type",
         choices=location_constants.TYPE_CHOICES,
     )
+    location__osm_address_country_code = django_filters.CharFilter(
+        field_name="location__osm_address_country_code", lookup_expr="iexact"
+    )
     proof__type = django_filters.MultipleChoiceFilter(
         field_name="proof__type",
         choices=proof_constants.TYPE_CHOICES,
