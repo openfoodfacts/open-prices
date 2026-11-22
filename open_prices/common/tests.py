@@ -136,6 +136,22 @@ class OpenFoodFactsTest(TestCase):
                     BARCODE_TUPLE[1],
                 )
 
+    def test_normalize_language_code(self):
+        for language_code, expected_result in [
+            ("fr", "fr"),
+            ("FR", "fr"),
+            ("nl_BE", "nl"),
+            ("pt-BR", "pt"),
+            ("ach", None),
+            ("", None),
+            (None, None),
+        ]:
+            with self.subTest(language_code=language_code):
+                self.assertEqual(
+                    common_openfoodfacts.normalize_language_code(language_code),
+                    expected_result,
+                )
+
     def test_get_smoothie_app_version(self):
         for source, expected_result in [
             (None, (None, None)),

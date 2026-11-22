@@ -287,6 +287,15 @@ class ProductOffCreateOrUpdateApiTest(TestCase):
         # )
         # self.assertEqual(response.status_code, 200)
 
+    def test_product_off_create_or_update_invalid_language_code(self):
+        response = self.client.patch(
+            self.url,
+            {"product_language_code": "ach"},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
 
 class ProductOffUploadImageApiTest(TestCase):
     @classmethod
@@ -307,3 +316,12 @@ class ProductOffUploadImageApiTest(TestCase):
         #     content_type="application/json",
         # )
         # self.assertEqual(response.status_code, 200)
+
+    def test_product_off_upload_image_invalid_language_code(self):
+        response = self.client.patch(
+            self.url,
+            {"product_language_code": "ach"},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
