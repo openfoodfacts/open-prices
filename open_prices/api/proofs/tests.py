@@ -26,6 +26,7 @@ from open_prices.proofs.factories import (
     PriceTagFactory,
     ProofFactory,
     ProofPredictionFactory,
+    ReceiptItemFactory,
 )
 from open_prices.proofs.models import PriceTag, Proof
 from open_prices.users.factories import SessionFactory
@@ -1474,6 +1475,62 @@ class PriceTagListApiTest(TestCase):
         self.assertEqual(response.data["total"], 2)
 
     def test_price_tag_list_filter_by_created(self):
+        for created in ["2024-01-01", "2024-01-01T00:00:00Z"]:
+            with self.subTest(created=created):
+                # created__gte
+                url = self.url + f"?created__gte={created}"
+                response = self.client.get(url)
+                self.assertEqual(response.data["total"], 3)
+                # created__lte
+                url = self.url + f"?created__lte={created}"
+                response = self.client.get(url)
+                self.assertEqual(response.data["total"], 0)
+
+
+class ReceiptItemListApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:receipt-items-list")
+        cls.user_session = SessionFactory()
+        cls.proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
+        )
+        cls.receipt_item_1 = ReceiptItemFactory(
+            proof=cls.proof,
+            status=proof_constants.ReceiptItemStatus.linked_to_price.value,
+        )
+        cls.receipt_item_2 = ReceiptItemFactory(proof=cls.proof)
+        cls.receipt_item_3 = ReceiptItemFactory(
+            proof=ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        )
+
+    def test_receipt_item_list_filter_by_proof(self):
+        # proof_id
+        url = self.url + f"?proof_id={self.proof.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # proof__owner
+        url = self.url + f"?proof__owner={self.user_session.user.user_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+
+    def test_receipt_item_list_filter_by_status(self):
+        # status
+        url = (
+            self.url
+            + f"?status={proof_constants.ReceiptItemStatus.linked_to_price.value}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # status__isnull
+        url = self.url + "?status__isnull=True"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?status__isnull=False"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_receipt_item_list_filter_by_created(self):
         for created in ["2024-01-01", "2024-01-01T00:00:00Z"]:
             with self.subTest(created=created):
                 # created__gte
