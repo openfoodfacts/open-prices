@@ -67,6 +67,16 @@ class LocationNearbyParamsSerializer(serializers.Serializer):
     radius_km = serializers.FloatField(min_value=0, required=True)
 
 
+class LocationCompareParamsSerializer(serializers.Serializer):
+    location_id_a = serializers.IntegerField(required=True)
+    location_id_b = serializers.IntegerField(required=True)
+    date__gte = serializers.DateField(required=False)
+    date__lte = serializers.DateField(required=False)
+    price_is_discounted = serializers.BooleanField(
+        required=False, allow_null=True, default=None
+    )
+
+
 class LocationCompareSerializer(serializers.Serializer):
     location_a = LocationSerializer()
     location_b = LocationSerializer()
