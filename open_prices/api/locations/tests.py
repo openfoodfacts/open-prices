@@ -300,6 +300,50 @@ class LocationCreateApiTest(TestCase):
                 )  # unchanged
                 self.assertEqual(response.data["detail"], "duplicate")
 
+    def test_location_create_duplicate_online_with_non_normalized_url(self):
+        location = LocationFactory(**LOCATION_ONLINE_DECATHLON)
+        for website_url in [
+            "https://www.decathlon.fr/",
+            "https://www.decathlon.fr/fr/",
+        ]:
+            with self.subTest(website_url=website_url):
+                response = self.client.post(
+                    self.url,
+                    {
+                        "type": location_constants.TYPE_ONLINE,
+                        "website_url": website_url,
+                    },
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data["id"], location.id)
+                self.assertEqual(response.data["detail"], "duplicate")
+        self.assertEqual(Location.objects.count(), 1)
+
+    def test_location_create_invalid(self):
+        response = self.client.post(
+            self.url,
+            {"type": location_constants.TYPE_OSM},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("osm_id", response.data)
+        self.assertIn("osm_type", response.data)
+
+    def test_location_create_duplicate_invalid(self):
+        LocationFactory(**LOCATION_ONLINE_DECATHLON)
+        response = self.client.post(
+            self.url,
+            {
+                **LOCATION_ONLINE_DECATHLON,
+                "osm_type": location_constants.OSM_TYPE_NODE,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("osm_type", response.data)
+        self.assertEqual(Location.objects.count(), 1)
+
     def test_location_create_with_app_name(self):
         for index, (params, result) in enumerate(
             [
@@ -635,6 +679,20 @@ class LocationCompareApiTest(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 400)
+
+        # date & boolean parameters must be valid
+        for param, value in [
+            ("date__gte", "invalid"),
+            ("date__gte", "2024-13-01"),
+            ("date__lte", "2024-02-30"),
+            ("price_is_discounted", "invalid"),
+        ]:
+            with self.subTest(param=param, value=value):
+                url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}&{param}={value}"
+                response = self.client.get(url)
+
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(param, response.data)
 
     def test_compare_same_location(self):
         url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_a.id}"
