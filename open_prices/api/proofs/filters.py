@@ -43,6 +43,7 @@ class ProofFilter(django_filters.FilterSet):
             "location_osm_id": ["exact"],
             "location_osm_type": ["exact"],
             "location_id": ["exact", "in", "isnull"],
+            "location__osm_address_country_code": ["exact"],
             "date": ["exact", "gt", "gte", "lt", "lte", "year", "month"],
             "currency": ["exact"],
             "ready_for_price_tag_validation": ["exact"],
