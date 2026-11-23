@@ -231,6 +231,12 @@ class LocationQuerySetTest(TestCase):
         self.assertEqual(location.price_count_annotated, 1)
         self.assertEqual(location.price_count, 1)
 
+    def test_with_counts_fields(self):
+        self.assertEqual(
+            set(Location.objects.with_counts().query.annotations),
+            {f"{field}_annotated" for field in Location.COUNT_FIELDS},
+        )
+
 
 class LocationQuerySetNearbyTest(TestCase):
     @classmethod
