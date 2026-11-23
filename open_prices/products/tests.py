@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -6,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from openfoodfacts import Flavor
+from openfoodfacts.redis import ProductUpdateEvent
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.locations import constants as location_constants
@@ -13,6 +15,9 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
 from open_prices.products import constants as product_constants
 from open_prices.products.factories import ProductFactory
+from open_prices.products.management.commands.run_update_listener import (
+    UpdateListener,
+)
 from open_prices.products.models import Product
 from open_prices.products.tasks import (
     fetch_and_save_data_from_openfoodfacts,
@@ -20,6 +25,8 @@ from open_prices.products.tasks import (
 )
 from open_prices.proofs.factories import ProofFactory
 from open_prices.users.factories import UserFactory
+
+UPDATE_LISTENER_MODULE = "open_prices.products.management.commands.run_update_listener"
 
 PRODUCT_OFF = {
     "code": "3017620425035",
@@ -476,6 +483,49 @@ class FetchAndSaveDataFromOpenFoodFactsTest(TestCase):
         self.assertEqual(product.product_name, "Test Product")
         self.assertEqual(product.source, Flavor.off)
         self.assertEqual(product.price_count, 1)
+
+
+class UpdateListenerTest(TestCase):
+    def setUp(self):
+        self.listener = UpdateListener(
+            redis_client=None,
+            redis_latest_id_key="test",
+            product_updates_stream_name="product_updates",
+        )
+
+    def build_event(self, action: str) -> ProductUpdateEvent:
+        return ProductUpdateEvent(
+            id="1700000000000-0",
+            stream="product_updates",
+            # old event: no 2s wait before processing
+            timestamp=datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC),
+            code="0123456789100",
+            flavor="off",
+            user_id="test",
+            action=action,
+            comment="",
+            product_type="beauty",
+        )
+
+    @patch(f"{UPDATE_LISTENER_MODULE}.process_delete")
+    @patch(f"{UPDATE_LISTENER_MODULE}.process_update")
+    def test_process_redis_update(self, mock_process_update, mock_process_delete):
+        for action in ["created", "updated"]:
+            with self.subTest(action=action):
+                mock_process_update.reset_mock()
+                self.listener.process_redis_update(self.build_event(action))
+                mock_process_update.assert_called_once_with("0123456789100", Flavor.obf)
+                mock_process_delete.assert_not_called()
+        with self.subTest(action="deleted"):
+            mock_process_update.reset_mock()
+            self.listener.process_redis_update(self.build_event("deleted"))
+            mock_process_delete.assert_called_once_with("0123456789100", Flavor.obf)
+            mock_process_update.assert_not_called()
+        with self.subTest(action="archived"):
+            mock_process_delete.reset_mock()
+            self.listener.process_redis_update(self.build_event("archived"))
+            mock_process_update.assert_not_called()
+            mock_process_delete.assert_not_called()
 
 
 class GetProductTest(TestCase):
