@@ -11,6 +11,10 @@ A collection of step-by-step guides to help you get started with Open Prices, wh
 
 TODO
 
+## API
+
+- [API: add prices using the API (tutorial)](api-add-prices-tutorial.md)
+
 ## Data
 
 see [Data](data.md) (API, exports...)

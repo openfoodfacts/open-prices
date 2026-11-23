@@ -41,6 +41,7 @@ nav:
     - Home: guides/README.md
     - "Web: add multiple prices (from shelf images)": guides/web-add-multiple-prices-shelf.md
     - "Web: add multiple prices (from a receipt)": guides/web-add-multiple-prices-receipt.md
+    - "API: add prices tutorial": guides/api-add-prices-tutorial.md
     - Data: guides/data.md
     - API: guides/API.md
   - Topics:

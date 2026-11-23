@@ -21,6 +21,10 @@ We have two environments:
   - when switching from pre-production to production, the account stays the same, but you will need to generate a new token
 - Authentication method: Bearer token in the `Authorization` header
 
+### Tutorial
+
+- [How to add prices using the API (step-by-step tutorial)](docs/guides/api-add-prices-tutorial.md)
+
 ## License
 
 Make sure you comply with the OdBL licence, mentioning the source of your data, and ensuring to avoid combining non free data you can't release legally as open data. Another requirement is contributing back any product you add using this SDK.
