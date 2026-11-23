@@ -4,13 +4,13 @@ from django.db.models.functions import Coalesce, ExtractYear
 from django.utils import timezone
 
 from open_prices.common.counts import (
+    CountsQuerySetMixin,
     bulk_update_counts,
-    count_subquery,
     update_counts,
 )
 
 
-class UserQuerySet(models.QuerySet):
+class UserQuerySet(CountsQuerySetMixin, models.QuerySet):
     def has_prices(self):
         return self.filter(price_count__gt=0)
 
@@ -28,173 +28,101 @@ class UserQuerySet(models.QuerySet):
             badge_count_annotated=Coalesce(Subquery(badge_count_subquery), 0)
         )
 
-    def with_price_counts(self):
+    def with_counts(self):
         """
-        - price_count: number of prices
-        - price_type_product_count / price_type_category_count: per price type
-        - price_kind_community_count: prices not in an owner consumption proof
-        - price_kind_consumption_count: prices in an owner consumption proof
-        - price_in_proof_owned_count: prices in a proof owned by the user
-        - price_in_proof_not_owned_count: the other prices of the user
-        - price_not_owned_in_proof_owned_count: prices of other users (or without
-        owner) in a proof owned by the user
+        All the COUNT_FIELDS, annotated as "<count field>_annotated"
+        (except badge_count & challenge_count)
         """
+        from open_prices.locations import constants as location_constants
         from open_prices.prices import constants as price_constants
         from open_prices.prices.models import Price
         from open_prices.proofs import constants as proof_constants
+        from open_prices.proofs.models import Proof
 
         in_proof_owned = Q(proof__owner=F("owner"))
-        return self.annotate(
-            price_count_annotated=count_subquery(Price, "owner", Count("id")),
-            price_type_product_count_annotated=count_subquery(
-                Price, "owner", Count("id", filter=Q(type=price_constants.TYPE_PRODUCT))
-            ),
-            price_type_category_count_annotated=count_subquery(
-                Price,
-                "owner",
-                Count("id", filter=Q(type=price_constants.TYPE_CATEGORY)),
-            ),
-            price_kind_community_count_annotated=count_subquery(
-                Price,
-                "owner",
-                Count("id") - Count("id", filter=Q(proof__owner_consumption=True)),
-            ),
-            price_kind_consumption_count_annotated=count_subquery(
-                Price,
-                "owner",
-                Count(
-                    "id",
-                    filter=Q(
-                        proof__type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST,
-                        proof__owner_consumption=True,
-                    ),
-                ),
-            ),
-            price_in_proof_owned_count_annotated=count_subquery(
-                Price, "owner", Count("id", filter=in_proof_owned)
-            ),
-            price_in_proof_not_owned_count_annotated=count_subquery(
-                Price, "owner", Count("id") - Count("id", filter=in_proof_owned)
-            ),
-            price_not_owned_in_proof_owned_count_annotated=count_subquery(
-                Price, "proof__owner", Count("id") - Count("id", filter=in_proof_owned)
-            ),
-        )
-
-    def with_location_counts(self):
-        """
-        - location_count: number of distinct proof locations
-        - location_type_osm_city_count / location_type_osm_country_count:
-        number of distinct proof location cities / countries (OSM locations only)
-        """
-        from open_prices.locations import constants as location_constants
-        from open_prices.proofs.models import Proof
-
-        is_type_osm = Q(location__type=location_constants.TYPE_OSM)
-        return self.annotate(
-            location_count_annotated=count_subquery(
-                Proof, "owner", Count("location_id", distinct=True)
-            ),
-            location_type_osm_city_count_annotated=count_subquery(
-                Proof,
-                "owner",
-                Count("location__osm_address_city", distinct=True, filter=is_type_osm),
-            ),
-            location_type_osm_country_count_annotated=count_subquery(
-                Proof,
-                "owner",
-                Count(
-                    "location__osm_address_country", distinct=True, filter=is_type_osm
-                ),
-            ),
-        )
-
-    def with_product_count(self):
-        """
-        - product_count: number of distinct price products
-        """
-        from open_prices.prices.models import Price
-
-        return self.annotate(
-            product_count_annotated=count_subquery(
-                Price, "owner", Count("product_id", distinct=True)
-            )
-        )
-
-    def with_proof_counts(self):
-        """
-        - proof_count: number of proofs (drafts excluded)
-        - proof_type_*_count: per proof type
-        - proof_kind_community_count: proofs not flagged as owner consumption
-        - proof_kind_consumption_count: owner consumption proofs
-        """
-        from open_prices.proofs import constants as proof_constants
-        from open_prices.proofs.models import Proof
-
-        def proof_type_count(proof_type):
-            return count_subquery(
-                Proof, "owner", Count("id", filter=Q(type=proof_type))
-            )
-
-        return self.annotate(
-            proof_count_annotated=count_subquery(Proof, "owner", Count("id")),
-            proof_type_price_tag_count_annotated=proof_type_count(
-                proof_constants.TYPE_PRICE_TAG
-            ),
-            proof_type_receipt_count_annotated=proof_type_count(
-                proof_constants.TYPE_RECEIPT
-            ),
-            proof_type_gdpr_request_count_annotated=proof_type_count(
-                proof_constants.TYPE_GDPR_REQUEST
-            ),
-            proof_type_shop_import_count_annotated=proof_type_count(
-                proof_constants.TYPE_SHOP_IMPORT
-            ),
-            proof_kind_community_count_annotated=count_subquery(
-                Proof,
-                "owner",
-                Count("id") - Count("id", filter=Q(owner_consumption=True)),
-            ),
-            proof_kind_consumption_count_annotated=count_subquery(
-                Proof,
-                "owner",
-                Count(
-                    "id",
-                    filter=Q(
-                        type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST,
-                        owner_consumption=True,
-                    ),
-                ),
-            ),
-        )
-
-    def with_other_counts(self):
-        """
-        - currency_count: number of distinct proof currencies
-        - year_count: number of distinct proof years
-        (challenge_count: see User.calculate_challenge_count())
-        """
-        from open_prices.proofs.models import Proof
-
-        return self.annotate(
-            currency_count_annotated=count_subquery(
-                Proof, "owner", Count("currency", distinct=True)
-            ),
-            year_count_annotated=count_subquery(
-                Proof, "owner", Count(ExtractYear("date"), distinct=True)
-            ),
-        )
-
-    def with_counts(self):
-        """
-        All the COUNT_FIELDS, except badge_count & challenge_count
-        """
+        is_location_type_osm = Q(location__type=location_constants.TYPE_OSM)
         return (
-            self.with_price_counts()
-            .with_location_counts()
-            .with_product_count()
-            .with_proof_counts()
-            .with_other_counts()
+            self.annotate_counts(
+                Price,
+                "owner",
+                {
+                    "price_count": Count("id"),
+                    "price_type_product_count": Count(
+                        "id", filter=Q(type=price_constants.TYPE_PRODUCT)
+                    ),
+                    "price_type_category_count": Count(
+                        "id", filter=Q(type=price_constants.TYPE_CATEGORY)
+                    ),
+                    "price_kind_community_count": Count(
+                        "id", filter=~Q(proof__owner_consumption=True)
+                    ),
+                    "price_kind_consumption_count": Count(
+                        "id",
+                        filter=Q(
+                            proof__type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST,
+                            proof__owner_consumption=True,
+                        ),
+                    ),
+                    "price_in_proof_owned_count": Count("id", filter=in_proof_owned),
+                    "price_in_proof_not_owned_count": Count(
+                        "id", filter=~in_proof_owned
+                    ),
+                    "product_count": Count("product_id", distinct=True),
+                },
+            )
+            .annotate_counts(
+                Price,
+                "proof__owner",  # prices in the proofs of the user
+                {
+                    "price_not_owned_in_proof_owned_count": Count(
+                        "id", filter=~in_proof_owned
+                    ),
+                },
+            )
+            .annotate_counts(
+                Proof,  # drafts excluded
+                "owner",
+                {
+                    "proof_count": Count("id"),
+                    "proof_type_price_tag_count": Count(
+                        "id", filter=Q(type=proof_constants.TYPE_PRICE_TAG)
+                    ),
+                    "proof_type_receipt_count": Count(
+                        "id", filter=Q(type=proof_constants.TYPE_RECEIPT)
+                    ),
+                    "proof_type_gdpr_request_count": Count(
+                        "id", filter=Q(type=proof_constants.TYPE_GDPR_REQUEST)
+                    ),
+                    "proof_type_shop_import_count": Count(
+                        "id", filter=Q(type=proof_constants.TYPE_SHOP_IMPORT)
+                    ),
+                    "proof_kind_community_count": Count(
+                        "id", filter=~Q(owner_consumption=True)
+                    ),
+                    "proof_kind_consumption_count": Count(
+                        "id",
+                        filter=Q(
+                            type__in=proof_constants.TYPE_GROUP_CONSUMPTION_LIST,
+                            owner_consumption=True,
+                        ),
+                    ),
+                    "location_count": Count("location_id", distinct=True),
+                    # NOTE: we could count by distinct city+country in the future
+                    "location_type_osm_city_count": Count(
+                        "location__osm_address_city",
+                        distinct=True,
+                        filter=is_location_type_osm,
+                    ),
+                    "location_type_osm_country_count": Count(
+                        "location__osm_address_country",
+                        distinct=True,
+                        filter=is_location_type_osm,
+                    ),
+                    # should we filter on proofs with prices only?
+                    "currency_count": Count("currency", distinct=True),
+                    "year_count": Count(ExtractYear("date"), distinct=True),
+                },
+            )
         )
 
     def with_challenge_tags(self):
@@ -269,6 +197,14 @@ class User(models.Model):
         + BADGE_COUNT_FIELDS
         + OTHER_COUNT_FIELDS
     )
+    # the counts annotated by with_counts()
+    ANNOTATED_COUNT_FIELDS = (
+        PRICE_COUNT_FIELDS
+        + PROOF_COUNT_FIELDS
+        + LOCATION_COUNT_FIELDS
+        + PRODUCT_COUNT_FIELDS
+        + ["currency_count", "year_count"]
+    )
     SERIALIZED_FIELDS = [
         "user_id",
     ] + COUNT_FIELDS
@@ -317,17 +253,16 @@ class User(models.Model):
         """
         - Update user field counts (except badge_count)
         - Only the users with changed counts are updated
-
-        Returns the number of updates (a user can be updated twice: counts,
-        then challenge_count)
         """
-        count_fields = [
-            field
-            for field in cls.COUNT_FIELDS
-            if field not in cls.BADGE_COUNT_FIELDS + ["challenge_count"]
-        ]
-        updated_count = bulk_update_counts(cls.objects.with_counts(), count_fields)
-        # challenge_count: can't be computed in a subquery (unnest of the tags)
+        bulk_update_counts(cls.objects.with_counts(), cls.ANNOTATED_COUNT_FIELDS)
+        cls.bulk_update_challenge_count()
+
+    @classmethod
+    def bulk_update_challenge_count(cls):
+        """
+        challenge_count can't be annotated (unnest of the tags):
+        computed user by user, for the users with challenge tags (or a stale count)
+        """
         users_to_update = list()
         for user in cls.objects.filter(
             Q(challenge_count__gt=0) | Q(pk__in=cls.objects.with_challenge_tags())
@@ -337,7 +272,6 @@ class User(models.Model):
                 user.challenge_count = challenge_count
                 users_to_update.append(user)
         cls.objects.bulk_update(users_to_update, ["challenge_count"], batch_size=1000)
-        return updated_count + len(users_to_update)
 
     @classmethod
     def update_badge_count_task(cls):
@@ -349,21 +283,13 @@ class User(models.Model):
     def is_authenticated(self):
         return True
 
-    def update_price_count(self):
-        update_counts(self, User.objects.with_price_counts(), self.PRICE_COUNT_FIELDS)
-
-    def update_location_count(self):
-        update_counts(
-            self, User.objects.with_location_counts(), self.LOCATION_COUNT_FIELDS
-        )
-
-    def update_product_count(self):
-        update_counts(
-            self, User.objects.with_product_count(), self.PRODUCT_COUNT_FIELDS
-        )
-
-    def update_proof_count(self):
-        update_counts(self, User.objects.with_proof_counts(), self.PROOF_COUNT_FIELDS)
+    def update_counts(self):
+        """
+        Update all the count fields (except badge_count)
+        """
+        update_counts(self, self.ANNOTATED_COUNT_FIELDS)
+        self.challenge_count = self.calculate_challenge_count()
+        self.save(update_fields=["challenge_count"])
 
     def update_badge_count(self):
         from open_prices.badges.models import UserBadge
@@ -401,15 +327,6 @@ class User(models.Model):
             .distinct()
         )
         return len(set(proof_in_challenge_tag_list) | set(price_in_challenge_tag_list))
-
-    def update_other_count(self):
-        self.challenge_count = self.calculate_challenge_count()
-        update_counts(
-            self,
-            User.objects.with_other_counts(),
-            ["currency_count", "year_count"],
-            extra_update_fields=["challenge_count"],
-        )
 
 
 class Session(models.Model):

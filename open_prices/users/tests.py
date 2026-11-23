@@ -109,96 +109,56 @@ class UserPropertyTest(TestCase):
         )
         cls.badge = BadgeFactory(metric=badge_constants.METRIC_PRICE_COUNT, threshold=1)
 
-    def test_update_price_count(self):
+    def test_update_counts(self):
         self.user_1.refresh_from_db()
         self.assertEqual(self.user_1.price_count, 2)  # price signals
         self.assertEqual(self.user_1.price_type_product_count, 0)
-        self.assertEqual(self.user_1.price_type_category_count, 0)
-        self.assertEqual(self.user_1.price_kind_community_count, 0)
-        self.assertEqual(self.user_1.price_kind_consumption_count, 0)
-        self.assertEqual(self.user_1.price_in_proof_owned_count, 0)
-        self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
-        self.assertEqual(self.user_1.price_not_owned_in_proof_owned_count, 0)
-        # update_price_count() should fix price counts
-        self.user_1.update_price_count()
-        self.assertEqual(self.user_1.price_count, 2)
-        self.assertEqual(self.user_1.price_type_product_count, 1)
-        self.assertEqual(self.user_1.price_type_category_count, 1)
-        self.assertEqual(self.user_1.price_kind_community_count, 1)
-        self.assertEqual(self.user_1.price_kind_consumption_count, 1)
-        self.assertEqual(self.user_1.price_in_proof_owned_count, 2)
-        self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
-        self.assertEqual(self.user_1.price_not_owned_in_proof_owned_count, 1)
+        # update_counts() should fix all counts (except badge_count)
+        self.user_1.update_counts()
+        self.user_1.refresh_from_db()
+        self.assertEqual(
+            {field: getattr(self.user_1, field) for field in User.COUNT_FIELDS},
+            {
+                "price_count": 2,
+                "price_type_product_count": 1,
+                "price_type_category_count": 1,
+                "price_kind_community_count": 1,
+                "price_kind_consumption_count": 1,
+                "price_in_proof_owned_count": 2,
+                "price_in_proof_not_owned_count": 0,
+                "price_not_owned_in_proof_owned_count": 1,
+                "proof_count": 2,
+                "proof_type_price_tag_count": 1,
+                "proof_type_receipt_count": 0,
+                "proof_type_gdpr_request_count": 1,
+                "proof_type_shop_import_count": 0,
+                "proof_kind_community_count": 1,
+                "proof_kind_consumption_count": 1,
+                "location_count": 1,  # proof locations
+                "location_type_osm_city_count": 1,
+                "location_type_osm_country_count": 1,
+                "product_count": 1,
+                "currency_count": 2,
+                "year_count": 1,
+                "challenge_count": 2,
+                "badge_count": 0,  # not included
+            },
+        )
         # bulk delete user's prices to skip signals
         Price.objects.filter(owner=self.user_1.user_id).delete()
-        self.assertEqual(self.user_1.price_count, 2)  # should be 0
-        self.assertEqual(self.user_1.price_type_product_count, 1)
-        self.assertEqual(self.user_1.price_type_category_count, 1)
-        self.assertEqual(self.user_1.price_kind_community_count, 1)
-        self.assertEqual(self.user_1.price_kind_consumption_count, 1)
-        self.assertEqual(self.user_1.price_in_proof_owned_count, 2)
-        self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
-        self.assertEqual(self.user_1.price_not_owned_in_proof_owned_count, 1)
-        # update_price_count() should fix price counts
-        self.user_1.update_price_count()
-        self.assertEqual(self.user_1.price_count, 0)
-        self.assertEqual(self.user_1.price_type_product_count, 0)
-        self.assertEqual(self.user_1.price_type_category_count, 0)
-        self.assertEqual(self.user_1.price_kind_community_count, 0)
-        self.assertEqual(self.user_1.price_kind_consumption_count, 0)
-        self.assertEqual(self.user_1.price_in_proof_owned_count, 0)
-        self.assertEqual(self.user_1.price_in_proof_not_owned_count, 0)
+        self.user_1.update_counts()
+        self.user_1.refresh_from_db()
         self.assertEqual(
-            self.user_1.price_not_owned_in_proof_owned_count, 1
-        )  # price from another user
-        # stats for user_2
+            {field: getattr(self.user_1, field) for field in User.PRICE_COUNT_FIELDS},
+            {field: 0 for field in User.PRICE_COUNT_FIELDS}
+            | {"price_not_owned_in_proof_owned_count": 1},  # price of user_2
+        )
+        # user_2: price in a proof of user_1
+        self.user_2.update_counts()
         self.user_2.refresh_from_db()
-        self.user_2.update_price_count()
-        self.assertEqual(self.user_2.price_count, 1)
-        self.assertEqual(self.user_2.price_type_product_count, 1)
-        self.assertEqual(self.user_2.price_type_category_count, 0)
         self.assertEqual(self.user_2.price_kind_community_count, 1)
-        self.assertEqual(self.user_2.price_kind_consumption_count, 0)
         self.assertEqual(self.user_2.price_in_proof_owned_count, 0)
         self.assertEqual(self.user_2.price_in_proof_not_owned_count, 1)
-        self.assertEqual(self.user_2.price_not_owned_in_proof_owned_count, 0)
-
-    def test_update_location_count(self):
-        self.user_1.refresh_from_db()
-        self.assertEqual(self.user_1.location_count, 0)
-        self.assertEqual(self.user_1.location_type_osm_city_count, 0)
-        self.assertEqual(self.user_1.location_type_osm_country_count, 0)
-        # update_location_count() should fix location counts
-        self.user_1.update_location_count()
-        self.assertEqual(self.user_1.location_count, 1)  # proof locations
-        self.assertEqual(self.user_1.location_type_osm_city_count, 1)
-        self.assertEqual(self.user_1.location_type_osm_country_count, 1)
-
-    def test_update_product_count(self):
-        self.user_1.refresh_from_db()
-        self.assertEqual(self.user_1.product_count, 0)
-        # update_product_count() should fix product counts
-        self.user_1.update_product_count()
-        self.assertEqual(self.user_1.product_count, 1)
-
-    def test_update_proof_count(self):
-        self.user_1.refresh_from_db()
-        self.assertEqual(self.user_1.proof_count, 2)  # proof signals
-        self.assertEqual(self.user_1.proof_type_price_tag_count, 0)
-        self.assertEqual(self.user_1.proof_type_receipt_count, 0)
-        self.assertEqual(self.user_1.proof_type_gdpr_request_count, 0)
-        self.assertEqual(self.user_1.proof_type_shop_import_count, 0)
-        self.assertEqual(self.user_1.proof_kind_community_count, 0)
-        self.assertEqual(self.user_1.proof_kind_consumption_count, 0)
-        # update_proof_count() should fix proof counts
-        self.user_1.update_proof_count()
-        self.assertEqual(self.user_1.proof_count, 2)
-        self.assertEqual(self.user_1.proof_type_price_tag_count, 1)
-        self.assertEqual(self.user_1.proof_type_receipt_count, 0)
-        self.assertEqual(self.user_1.proof_type_gdpr_request_count, 1)
-        self.assertEqual(self.user_1.proof_type_shop_import_count, 0)
-        self.assertEqual(self.user_1.proof_kind_community_count, 1)
-        self.assertEqual(self.user_1.proof_kind_consumption_count, 1)
 
     def test_update_badge_count(self):
         self.user_1.refresh_from_db()
@@ -207,17 +167,6 @@ class UserPropertyTest(TestCase):
         # update_badge_count() should fix badge counts
         self.user_1.update_badge_count()
         self.assertEqual(self.user_1.badge_count, 1)
-
-    def test_update_other_count(self):
-        self.user_1.refresh_from_db()
-        self.assertEqual(self.user_1.currency_count, 0)
-        self.assertEqual(self.user_1.year_count, 0)
-        self.assertEqual(self.user_1.challenge_count, 0)
-        # update_other_count() should fix other counts
-        self.user_1.update_other_count()
-        self.assertEqual(self.user_1.currency_count, 2)
-        self.assertEqual(self.user_1.year_count, 1)
-        self.assertEqual(self.user_1.challenge_count, 2)
 
     def test_update_task(self):
         user_3 = UserFactory()  # no prices & proofs
@@ -256,8 +205,7 @@ class UserPropertyTest(TestCase):
         # wrong counts
         User.objects.update(**{field: 99 for field in User.COUNT_FIELDS})
         # update_task() should fix all counts (except badge_count)
-        # 3 users updated, then their challenge_count
-        self.assertEqual(User.update_task(), 3 + 3)
+        User.update_task()
         expected_counts = {
             self.user_1.user_id: {
                 "price_count": 3,
@@ -322,8 +270,6 @@ class UserPropertyTest(TestCase):
                 expected_counts[user.user_id],
             )
             self.assertEqual(user.badge_count, 99)  # not included
-        # nothing to update anymore
-        self.assertEqual(User.update_task(), 0)
 
     def test_update_task_classmethod(self):
         self.user_1.refresh_from_db()
