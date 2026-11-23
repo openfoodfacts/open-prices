@@ -26,9 +26,13 @@ def count_subquery(model: type[Model], field: str, aggregate):
 class CountsQuerySetMixin:
     def annotate_counts(self, model: type[Model], field: str, counts: dict):
         """
-        Annotate each count as "<count field>_annotated", aggregated over
-        the model rows related to the outer row through field.
-        Example: annotate_counts(Price, "product", {"price_count": Count("id")})
+        Annotate each count as "<count field>_annotated" on the queryset rows,
+        aggregated over the related model rows (model.field = the row).
+        Example: Product.objects.annotate_counts(
+            Price, "product", {"price_count": Count("id")}
+        )
+        = each product annotated with price_count_annotated
+          (the number of prices with price.product = the product)
         """
         return self.annotate(
             **{
