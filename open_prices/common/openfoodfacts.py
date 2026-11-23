@@ -199,7 +199,8 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
         version=APIVersion.v2,
         environment=Environment[settings.ENVIRONMENT],
     )
-    return client.product.get(code)
+    # only request the fields we store (the full product is ~30x bigger)
+    return client.product.get(code, fields=OFF_CREATE_FIELDS)
 
 
 def get_product_dict(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:

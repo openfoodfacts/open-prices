@@ -7,6 +7,7 @@ from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from openfoodfacts import Flavor
 
+from open_prices.common import openfoodfacts as common_openfoodfacts
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.prices.factories import PriceFactory
@@ -451,6 +452,16 @@ class FetchAndSaveDataFromOpenFoodFactsTest(TestCase):
         self.assertEqual(product.product_name, "Test Product")
         self.assertEqual(product.source, Flavor.off)
         self.assertEqual(product.price_count, 1)
+
+
+class GetProductTest(TestCase):
+    @patch("open_prices.common.openfoodfacts.API")
+    def test_get_product_only_requests_needed_fields(self, mock_api):
+        common_openfoodfacts.get_product("0123456789100", Flavor.obf)
+
+        mock_api.return_value.product.get.assert_called_once_with(
+            "0123456789100", fields=common_openfoodfacts.OFF_CREATE_FIELDS
+        )
 
 
 class TestProductModel(TestCase):
