@@ -760,6 +760,14 @@ class ProofModelDeleteTest(TestCase):
         self.assertEqual(flag.object_id, proof_id)
         self.assertIsNone(flag.content_object)
 
+    def test_flags_are_kept_and_closed_on_queryset_delete(self):
+        flag = Flag.objects.create(
+            content_object=self.proof, reason=FlagReason.WRONG_TYPE
+        )
+        Proof.objects.filter(id=self.proof.id).delete()
+        flag.refresh_from_db()
+        self.assertEqual(flag.status, FlagStatus.CLOSED)
+
 
 class ProofModelHistoryTest(TestCase):
     @classmethod
