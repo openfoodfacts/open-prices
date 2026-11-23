@@ -4,17 +4,17 @@ from django.db.models.functions import Coalesce
 ANNOTATED_SUFFIX = "_annotated"
 
 
-def count_subquery(model: type[Model], field: str, aggregate):
+def count_subquery(related_model: type[Model], related_field: str, aggregate):
     """
-    Aggregate over the model rows related to the outer row (0 if none).
+    Aggregate over the related model rows of the outer row (0 if none).
     Example: count_subquery(Price, "product", Count("id"))
     = the number of prices of each product
     """
     return Coalesce(
         Subquery(
-            model.objects.filter(**{field: OuterRef("pk")})
+            related_model.objects.filter(**{related_field: OuterRef("pk")})
             .order_by()
-            .values(field)
+            .values(related_field)
             .annotate(value=aggregate)
             .values("value")
         ),
@@ -24,12 +24,17 @@ def count_subquery(model: type[Model], field: str, aggregate):
 
 
 class CountsQuerySetMixin:
-    def annotate_counts(self, model: type[Model], field: str, counts: dict):
+    def annotate_counts(
+        self, related_model: type[Model], related_field: str, counts: dict
+    ):
         """
         Annotate each count as "<count field>_annotated" on the queryset rows,
-        aggregated over the related model rows (model.field = the row).
+        aggregated over the related model rows
+        (related_model.related_field = the row).
         Example: Product.objects.annotate_counts(
-            Price, "product", {"price_count": Count("id")}
+            related_model=Price,
+            related_field="product",
+            counts={"price_count": Count("id")},
         )
         = each product annotated with price_count_annotated
           (the number of prices with price.product = the product)
@@ -37,7 +42,7 @@ class CountsQuerySetMixin:
         return self.annotate(
             **{
                 f"{count_field}{ANNOTATED_SUFFIX}": count_subquery(
-                    model, field, aggregate
+                    related_model, related_field, aggregate
                 )
                 for count_field, aggregate in counts.items()
             }

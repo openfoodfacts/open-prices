@@ -38,9 +38,9 @@ class ProductQuerySet(CountsQuerySetMixin, ApproximateCountQuerySet):
         from open_prices.prices.models import Price
 
         return self.annotate_counts(
-            Price,
-            "product",
-            {
+            related_model=Price,
+            related_field="product",
+            counts={
                 "price_count": Count("id"),
                 "price_currency_count": Count("currency", distinct=True),
                 "location_count": Count("location_id", distinct=True),
