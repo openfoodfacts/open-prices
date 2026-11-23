@@ -1,6 +1,8 @@
 from django.db.models import IntegerField, Model, OuterRef, QuerySet, Subquery
 from django.db.models.functions import Coalesce
 
+ANNOTATED_SUFFIX = "_annotated"
+
 
 def count_subquery(model: type[Model], field: str, aggregate):
     """
@@ -21,14 +23,43 @@ def count_subquery(model: type[Model], field: str, aggregate):
     )
 
 
-def update_counts(obj: Model, queryset: QuerySet, count_fields: list):
+class CountsQuerySetMixin:
+    def annotate_counts(self, model: type[Model], field: str, counts: dict):
+        """
+        Annotate each count as "<count field>_annotated", aggregated over
+        the model rows related to the outer row through field.
+        Example: annotate_counts(Price, "product", {"price_count": Count("id")})
+        """
+        return self.annotate(
+            **{
+                f"{count_field}{ANNOTATED_SUFFIX}": count_subquery(
+                    model, field, aggregate
+                )
+                for count_field, aggregate in counts.items()
+            }
+        )
+
+
+def set_counts(obj: Model, obj_annotated: Model, count_fields: list) -> bool:
     """
-    Update the count fields of a single object, from a queryset annotated
-    with the "<count field>_annotated" values (see the with_*_count() methods)
+    Copy the "<count field>_annotated" values of obj_annotated to obj.
+    Returns True if a count changed.
     """
-    obj_annotated = queryset.get(pk=obj.pk)
+    changed = False
     for field in count_fields:
-        setattr(obj, field, getattr(obj_annotated, f"{field}_annotated"))
+        value = getattr(obj_annotated, f"{field}{ANNOTATED_SUFFIX}")
+        if getattr(obj, field) != value:
+            setattr(obj, field, value)
+            changed = True
+    return changed
+
+
+def update_counts(obj: Model, count_fields: list):
+    """
+    Update the count fields of a single object (see the with_counts() methods)
+    """
+    obj_annotated = type(obj).objects.with_counts().get(pk=obj.pk)
+    set_counts(obj, obj_annotated, count_fields)
     obj.save(update_fields=count_fields)
 
 
@@ -36,8 +67,8 @@ def bulk_update_counts(
     queryset: QuerySet, count_fields: list, batch_size: int = 1000
 ) -> int:
     """
-    Update the count fields of the queryset objects, in batches, from the
-    "<count field>_annotated" values (see the with_*_count() methods)
+    Update the count fields of the queryset objects, in batches
+    (see the with_counts() methods)
     - only the objects with changed counts are saved (with bulk_update,
       so without calling save() or sending signals)
 
@@ -50,15 +81,7 @@ def bulk_update_counts(
         batch = queryset.filter(pk__in=pk_list[i : i + batch_size]).only(
             model._meta.pk.name, *count_fields
         )
-        objs_to_update = list()
-        for obj in batch:
-            new_counts = {
-                field: getattr(obj, f"{field}_annotated") for field in count_fields
-            }
-            if any(getattr(obj, field) != new_counts[field] for field in count_fields):
-                for field, value in new_counts.items():
-                    setattr(obj, field, value)
-                objs_to_update.append(obj)
+        objs_to_update = [obj for obj in batch if set_counts(obj, obj, count_fields)]
         if objs_to_update:
             model.objects.bulk_update(objs_to_update, count_fields)
             updated_count += len(objs_to_update)
