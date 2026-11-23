@@ -31,6 +31,6 @@ see `open_prices/common/openfoodfacts.py`
 
 ## Data sync
 
-With Redis, Open Prices gets instant product changes.
-
-There is also a daily batch sync to be sure we don't miss anything.
+- Live, with Redis: Open Prices listens to the Product Opener `product_updates` stream (all 4 flavors). On each `created` / `updated` event, the product is re-fetched from the API of its flavor (`deleted` removes it). See `open_prices/products/management/commands/run_update_listener.py`
+- On product creation in Open Prices (e.g. a price for an unknown barcode), the product data is fetched from the Open Food Facts API
+- The daily batch imports of the OxF dumps (`import_product_db`) are disabled in production, but can be re-enabled with the `ENABLE_IMPORT_*_DB_TASK` env variables (e.g. for a full resync)
