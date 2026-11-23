@@ -1263,6 +1263,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#list-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1622,6 +1633,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#list-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1755,6 +1777,19 @@
 <div class="highlight"><pre><span></span><code>uv run --env-file .env python manage.py test
 </code></pre></div>
 <h2 id="other-useful-commands">Other useful commands</h2>
+<h3 id="docker">Docker</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># logs</span>
+docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>api
+docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>scheduler
+docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>update-listener
+
+<span class="c1"># Django shell &amp; database</span>
+docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>api<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>shell_plus
+docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>postgres
+
+<span class="c1"># restart</span>
+docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>nginx
+</code></pre></div>
 <h3 id="list-packages">List packages</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># list of packages installed</span>
 uv<span class="w"> </span>run<span class="w"> </span>pip<span class="w"> </span>list

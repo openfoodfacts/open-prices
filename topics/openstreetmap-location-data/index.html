@@ -712,6 +712,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#example-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example queries
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1511,6 +1522,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#example-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example queries
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1591,6 +1613,14 @@
 <ul>
 <li><strong>a shop recently added to OSM can't be found by name</strong>: the Photon (Komoot) database is only synced with OSM once a week, on Tuesdays (see <a href="https://github.com/komoot/photon/issues/614">komoot/photon#614</a>), so a new shop can be missing for up to a week. Workaround: search by its OSM ID (e.g. <code>N14365327207</code>), which goes through Nominatim and is usually up to date within minutes</li>
 <li><strong>name search is not very precise</strong>: adding the city or street name helps (e.g. <code>Carrefour 75013 Paris</code>)</li>
+</ul>
+<h3 id="example-queries">Example queries</h3>
+<ul>
+<li>search by name (Photon): <code>https://photon.komoot.io/api/?q=monoprix grenoble</code></li>
+<li>search by name (Nominatim): <code>https://nominatim.openstreetmap.org/search?q=monoprix grenoble&amp;addressdetails=1&amp;format=json</code></li>
+<li>lookup by OSM ID (Nominatim, as done by the backend with <a href="https://github.com/mocnik-science/osm-python-tools">OSMPythonTools</a>): <code>https://nominatim.openstreetmap.org/lookup?osm_ids=N4825695211&amp;format=json</code></li>
+<li>lookup by OSM ID (Overpass): <code>https://overpass-api.de/api/interpreter?data=[out:json];node(id:652825274);out;</code></li>
+<li>the same location in Open Prices: <code>https://prices.openfoodfacts.org/api/v1/locations/osm/NODE/652825274</code></li>
 </ul>
 <h2 id="data-sync">Data sync</h2>
 <p>Location data is fetched &amp; stored on creation, and not kept in sync automatically.</p>
