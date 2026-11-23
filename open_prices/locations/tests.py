@@ -421,19 +421,25 @@ class LocationPropertyTest(TestCase):
         self.location_osm.update_price_count()
         self.assertEqual(self.location_osm.price_count, 0)  # all deleted
 
-    def test_update_user_count(self):
+    def test_update_counts(self):
         self.location_osm.refresh_from_db()
         self.assertEqual(self.location_osm.user_count, 0)
-        # update_user_count() should fix user_count
-        self.location_osm.update_user_count()
-        self.assertEqual(self.location_osm.user_count, 1)  # proof owners
-
-    def test_update_product_count(self):
-        self.location_osm.refresh_from_db()
         self.assertEqual(self.location_osm.product_count, 0)
-        # update_product_count() should fix product_count
-        self.location_osm.update_product_count()
-        self.assertEqual(self.location_osm.product_count, 2)
+        # update_counts() should fix all counts
+        self.location_osm.update_counts()
+        self.location_osm.refresh_from_db()
+        self.assertEqual(
+            {
+                field: getattr(self.location_osm, field)
+                for field in Location.COUNT_FIELDS
+            },
+            {"price_count": 3, "user_count": 1, "product_count": 2, "proof_count": 2},
+        )
+        # bulk delete proofs to skip signals
+        self.location_osm.proofs.all().delete()
+        self.location_osm.update_counts()
+        self.location_osm.refresh_from_db()
+        self.assertEqual(self.location_osm.proof_count, 0)  # all deleted
 
     def test_update_task(self):
         ProofFactory(  # drafts are not counted
@@ -461,13 +467,3 @@ class LocationPropertyTest(TestCase):
         )
         # nothing to update anymore
         self.assertEqual(Location.update_task(), 0)
-
-    def test_update_proof_count(self):
-        self.location_osm.refresh_from_db()
-        self.assertEqual(self.location_osm.proof_count, 2)  # proof post_save
-        # bulk delete proofs to skip signals
-        self.location_osm.proofs.all().delete()
-        self.assertEqual(self.location_osm.proof_count, 2)  # should be 0
-        # update_proof_count() should fix location_count
-        self.location_osm.update_proof_count()
-        self.assertEqual(self.location_osm.proof_count, 0)  # all deleted

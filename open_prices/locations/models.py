@@ -22,8 +22,8 @@ from simple_history.models import HistoricalRecords
 
 from open_prices.common import constants, history, utils
 from open_prices.common.counts import (
+    CountsQuerySetMixin,
     bulk_update_counts,
-    count_subquery,
     update_counts,
 )
 from open_prices.common.utils import truncate_decimal
@@ -32,63 +32,31 @@ from open_prices.locations import utils as location_utils
 from open_prices.locations import validators as location_validators
 
 
-class LocationQuerySet(models.QuerySet):
+class LocationQuerySet(CountsQuerySetMixin, models.QuerySet):
     def has_type_osm(self):
         return self.filter(type=location_constants.TYPE_OSM)
 
-    def with_price_count(self):
-        """
-        - price_count: number of prices
-        """
-        from open_prices.prices.models import Price
-
-        return self.annotate(
-            price_count_annotated=count_subquery(Price, "location", Count("id"))
-        )
-
-    def with_user_count(self):
-        """
-        - user_count: number of distinct proof owners
-        """
-        from open_prices.proofs.models import Proof
-
-        return self.annotate(
-            user_count_annotated=count_subquery(
-                Proof, "location", Count("owner", distinct=True)
-            )
-        )
-
-    def with_product_count(self):
-        """
-        - product_count: number of distinct price products
-        """
-        from open_prices.prices.models import Price
-
-        return self.annotate(
-            product_count_annotated=count_subquery(
-                Price, "location", Count("product_id", distinct=True)
-            )
-        )
-
-    def with_proof_count(self):
-        """
-        - proof_count: number of proofs (drafts excluded)
-        """
-        from open_prices.proofs.models import Proof
-
-        return self.annotate(
-            proof_count_annotated=count_subquery(Proof, "location", Count("id"))
-        )
-
     def with_counts(self):
         """
-        All the COUNT_FIELDS
+        All the COUNT_FIELDS, annotated as "<count field>_annotated"
         """
-        return (
-            self.with_price_count()
-            .with_user_count()
-            .with_product_count()
-            .with_proof_count()
+        from open_prices.prices.models import Price
+        from open_prices.proofs.models import Proof
+
+        return self.annotate_counts(
+            Price,
+            "location",
+            {
+                "price_count": Count("id"),
+                "product_count": Count("product_id", distinct=True),
+            },
+        ).annotate_counts(
+            Proof,  # drafts excluded
+            "location",
+            {
+                "user_count": Count("owner", distinct=True),
+                "proof_count": Count("id"),
+            },
         )
 
     def has_type_online(self):
@@ -355,16 +323,11 @@ class Location(models.Model):
         return tag in self.tags
 
     def update_price_count(self):
-        update_counts(self, Location.objects.with_price_count(), ["price_count"])
+        self.price_count = self.prices.count()
+        self.save(update_fields=["price_count"])
 
-    def update_user_count(self):
-        update_counts(self, Location.objects.with_user_count(), ["user_count"])
-
-    def update_product_count(self):
-        update_counts(self, Location.objects.with_product_count(), ["product_count"])
-
-    def update_proof_count(self):
-        update_counts(self, Location.objects.with_proof_count(), ["proof_count"])
+    def update_counts(self):
+        update_counts(self, self.COUNT_FIELDS)
 
 
 @receiver(signals.post_save, sender=Location)
