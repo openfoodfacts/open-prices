@@ -32,7 +32,7 @@ class UpdateListener(BaseUpdateListener):
         if redis_update.action == "deleted":
             logger.info("Product %s has been deleted", redis_update.code)
             process_delete(redis_update.code, flavor)
-        elif redis_update.action == "updated":
+        elif redis_update.action in ("created", "updated"):
             now = datetime.datetime.now(datetime.UTC)
             # Often, we receive information through Redis before the info is
             # available through the Product Opener API. We wait 2s to avoid
