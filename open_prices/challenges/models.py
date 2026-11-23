@@ -60,7 +60,7 @@ class ChallengeQuerySet(models.QuerySet):
         - Data updated? categories_full, price/proof tags, stats
         - We stop updating ("freeze") completed challenges after a delay
 
-        Usage: see open_prices/common/tasks.py:challenge_tasks
+        Usage: see open_prices/common/tasks.py:update_challenge_task
         """
         CHALLENGE_COMPLETED_FREEZE_DELAY_IN_DAYS = 7
         return self.with_status().filter(
@@ -274,7 +274,6 @@ class Challenge(models.Model):
         user_price_from_proof_count_ranking = list(
             Price.objects.has_tag(self.tag)
             .filter(proof__owner__isnull=False)
-            .select_related("proof")
             .values("proof__owner")
             .annotate(owner=F("proof__owner"), count=Count("id"))
             .values("owner", "count")
@@ -282,7 +281,6 @@ class Challenge(models.Model):
         )
         location_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
-            .select_related("location")
             .filter(location_id__isnull=False)
             .values("location_id")
             .annotate(
@@ -309,7 +307,6 @@ class Challenge(models.Model):
         )
         location_city_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
-            .select_related("location")
             .filter(
                 location_id__isnull=False,
                 location__osm_address_city__isnull=False,
@@ -334,7 +331,6 @@ class Challenge(models.Model):
         )
         location_country_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
-            .select_related("location")
             .filter(
                 location_id__isnull=False, location__osm_address_country__isnull=False
             )
@@ -350,7 +346,6 @@ class Challenge(models.Model):
         )
         product_price_count_ranking = list(
             Price.objects.has_tag(self.tag)
-            .select_related("product")
             .has_type_product()
             .values("product_id")
             .annotate(

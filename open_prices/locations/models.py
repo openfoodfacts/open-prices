@@ -14,22 +14,50 @@ from django.db.models import (
     Value,
     signals,
 )
-from django.db.models.functions import ACos, Cos, Radians, Sin
+from django.db.models.functions import ACos, Cos, Greatest, Least, Radians, Sin
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
 from simple_history.models import HistoricalRecords
 
 from open_prices.common import constants, history, utils
+from open_prices.common.counts import (
+    CountsQuerySetMixin,
+    bulk_update_counts,
+    update_counts,
+)
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
 from open_prices.locations import utils as location_utils
 from open_prices.locations import validators as location_validators
 
 
-class LocationQuerySet(models.QuerySet):
+class LocationQuerySet(CountsQuerySetMixin, models.QuerySet):
     def has_type_osm(self):
         return self.filter(type=location_constants.TYPE_OSM)
+
+    def with_counts(self):
+        """
+        All the COUNT_FIELDS, annotated as "<count field>_annotated"
+        """
+        from open_prices.prices.models import Price
+        from open_prices.proofs.models import Proof
+
+        return self.annotate_counts(
+            related_model=Price,
+            related_field="location",
+            counts={
+                "price_count": Count("id"),
+                "product_count": Count("product_id", distinct=True),
+            },
+        ).annotate_counts(
+            related_model=Proof,  # drafts excluded
+            related_field="location",
+            counts={
+                "user_count": Count("owner", distinct=True),
+                "proof_count": Count("id"),
+            },
+        )
 
     def has_type_online(self):
         return self.filter(type=location_constants.TYPE_ONLINE)
@@ -37,8 +65,26 @@ class LocationQuerySet(models.QuerySet):
     def has_osm_tag(self, tag: str):
         return self.filter(osm_tags__contains=[tag])
 
+    def has_tag(self, tag: str):
+        return self.filter(tags__contains=[tag])
+
     def has_prices(self):
         return self.filter(price_count__gt=0)
+
+    def get_existing(self, data: dict):
+        """
+        Return the Location matching the unique constraint fields of `data`
+        (OSM: osm_id & osm_type, ONLINE: website_url), or None
+        """
+        if data.get("type") == location_constants.TYPE_OSM:
+            lookup = {"osm_id": data.get("osm_id"), "osm_type": data.get("osm_type")}
+        elif data.get("type") == location_constants.TYPE_ONLINE:
+            lookup = {"website_url": data.get("website_url")}
+        else:
+            return None
+        if not all(lookup.values()):
+            return None
+        return self.filter(type=data["type"], **lookup).first()
 
     def with_stats(self):
         return self.prefetch_related("prices").annotate(
@@ -77,6 +123,21 @@ class LocationQuerySet(models.QuerySet):
             else:
                 delta_lon = radius_km / (km_per_degree * cos_center_lat)
 
+        # Longitude bounds of the bounding box, wrapped around the antimeridian (±180°):
+        # - delta_lon >= 180 (at the poles, or very large radius): no longitude filter
+        # - box crossing -180 or +180: 2 ranges (one on each side), joined with OR
+        # - otherwise: a single range
+        lon_min = center_lon - delta_lon
+        lon_max = center_lon + delta_lon
+        if delta_lon >= max_longitude_delta_degrees:
+            lon_filter = Q()
+        elif lon_min < -max_longitude_delta_degrees:
+            lon_filter = Q(osm_lon__gte=lon_min + 360) | Q(osm_lon__lte=lon_max)
+        elif lon_max > max_longitude_delta_degrees:
+            lon_filter = Q(osm_lon__gte=lon_min) | Q(osm_lon__lte=lon_max - 360)
+        else:
+            lon_filter = Q(osm_lon__gte=lon_min, osm_lon__lte=lon_max)
+
         center_lat_rad = math.radians(center_lat)
         center_lon_rad = math.radians(center_lon)
 
@@ -85,23 +146,28 @@ class LocationQuerySet(models.QuerySet):
         distance_expr = ExpressionWrapper(
             Value(earth_radius_km)
             * ACos(
-                Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
-                + Cos(Value(center_lat_rad))
-                * Cos(Radians(F("osm_lat")))
-                * Cos(Radians(F("osm_lon")) - Value(center_lon_rad))
+                Least(
+                    Value(1.0),
+                    Greatest(
+                        Value(-1.0),
+                        Sin(Value(center_lat_rad)) * Sin(Radians(F("osm_lat")))
+                        + Cos(Value(center_lat_rad))
+                        * Cos(Radians(F("osm_lat")))
+                        * Cos(Radians(F("osm_lon")) - Value(center_lon_rad)),
+                    ),
+                )
             ),
             output_field=FloatField(),
         )
 
         return (
             self.filter(
+                lon_filter,
                 type=location_constants.TYPE_OSM,
                 osm_lat__isnull=False,
                 osm_lon__isnull=False,
                 osm_lat__gte=center_lat - delta_lat,
                 osm_lat__lte=center_lat + delta_lat,
-                osm_lon__gte=center_lon - delta_lon,
-                osm_lon__lte=center_lon + delta_lon,
             )
             .annotate(distance_km=distance_expr)
             .filter(distance_km__lte=radius_km)
@@ -164,6 +230,12 @@ class Location(models.Model):
 
     # type ONLINE
     website_url = models.URLField(blank=True, null=True)
+
+    tags = ArrayField(
+        base_field=models.CharField(choices=location_constants.TAG_CHOICES),
+        blank=True,
+        default=list,
+    )
 
     # denormalized counts (updated with signals and/or cronjobs)
     price_count = models.PositiveIntegerField(default=0)
@@ -234,16 +306,26 @@ class Location(models.Model):
             raise ValidationError(validation_errors)
         super().clean(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
+    def normalize_fields(self):
         """
         - OSM: cleanup lat/lon fields
         - ONLINE: cleanup URL fields
-        - run validations
         """
         if self.type == location_constants.TYPE_OSM:
             self.truncate_lat_lon()
         elif self.type == location_constants.TYPE_ONLINE:
             self.cleanup_url()
+
+    def clean_fields(self, *args, **kwargs):
+        # normalize first, so that the field validations & the unique constraint
+        # checks (also run by the admin form) apply to the values that will be saved
+        self.normalize_fields()
+        super().clean_fields(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        """
+        - run validations (normalize fields first, see clean_fields)
+        """
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -251,12 +333,9 @@ class Location(models.Model):
     def update_task(cls):
         """
         - Update location field counts
+        - Only the locations with changed counts are updated
         """
-        for location in cls.objects.all():
-            location.update_price_count()
-            location.update_user_count()
-            location.update_product_count()
-            location.update_proof_count()
+        return bulk_update_counts(cls.objects.with_counts(), cls.COUNT_FIELDS)
 
     @property
     def is_type_osm(self) -> bool:
@@ -279,29 +358,15 @@ class Location(models.Model):
     def has_osm_tag(self, tag: str) -> bool:
         return tag in self.osm_tags
 
+    def has_tag(self, tag: str) -> bool:
+        return tag in self.tags
+
     def update_price_count(self):
         self.price_count = self.prices.count()
         self.save(update_fields=["price_count"])
 
-    def update_user_count(self):
-        from open_prices.proofs.models import Proof
-
-        self.user_count = Proof.objects.filter(
-            location=self
-        ).calculate_field_distinct_count("owner")
-        self.save(update_fields=["user_count"])
-
-    def update_product_count(self):
-        from open_prices.prices.models import Price
-
-        self.product_count = Price.objects.filter(
-            location=self
-        ).calculate_field_distinct_count("product_id")
-        self.save(update_fields=["product_count"])
-
-    def update_proof_count(self):
-        self.proof_count = self.proofs.count()
-        self.save(update_fields=["proof_count"])
+    def update_counts(self):
+        update_counts(self, self.COUNT_FIELDS)
 
 
 @receiver(signals.post_save, sender=Location)

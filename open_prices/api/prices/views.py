@@ -2,7 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -97,7 +97,7 @@ class PriceViewSet(
     @extend_schema(
         request=FlagCreateSerializer, responses=FlagSerializer, tags=["moderation"]
     )
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=["POST"], permission_classes=[IsAuthenticated])
     def flag(self, request: Request, pk=None) -> Response:
         price = self.get_object()
         serializer = FlagCreateSerializer(data=request.data)

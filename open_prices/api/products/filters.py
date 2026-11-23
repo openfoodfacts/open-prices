@@ -19,24 +19,18 @@ class ProductFilter(django_filters.FilterSet):
     unique_scans_n__gte = django_filters.NumberFilter(
         field_name="unique_scans_n", lookup_expr="gte"
     )
-    price_count__gte = django_filters.NumberFilter(
-        field_name="price_count", lookup_expr="gte"
-    )
-    price_count__lte = django_filters.NumberFilter(
-        field_name="price_count", lookup_expr="lte"
-    )
     source__isnull = django_filters.BooleanFilter(
         field_name="source", lookup_expr="isnull"
     )
 
     class Meta:
         model = Product
-        fields = [
-            "code",
-            "source",
-            "nutriscore_grade",
-            "ecoscore_grade",
-            "nova_group",
-            "creator",
-            "price_count",
-        ]
+        fields = {
+            "code": ["exact", "in"],
+            "source": ["exact"],
+            "nutriscore_grade": ["exact"],
+            "ecoscore_grade": ["exact"],
+            "nova_group": ["exact"],
+            "creator": ["exact"],
+            "price_count": ["exact", "gte", "lte"],
+        }

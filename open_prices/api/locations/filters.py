@@ -1,6 +1,7 @@
 import django_filters
 from django import forms
 
+from open_prices.api.utils import ArrayFieldElementContainsFilter
 from open_prices.locations.models import Location
 
 OSM_TAG_PARAMETER_NAMES = ("osm_tag_key", "osm_tag_value")
@@ -36,11 +37,18 @@ class LocationFilter(django_filters.FilterSet):
     osm_address_country__like = django_filters.CharFilter(
         field_name="osm_address_country", lookup_expr="icontains"
     )
+    osm_address_country_code = django_filters.CharFilter(
+        field_name="osm_address_country_code", lookup_expr="iexact"
+    )
     price_count__gte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="gte"
     )
     price_count__lte = django_filters.NumberFilter(
         field_name="price_count", lookup_expr="lte"
+    )
+    tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
+    tags__not_contains = ArrayFieldElementContainsFilter(
+        field_name="tags", exclude=True
     )
 
     class Meta:

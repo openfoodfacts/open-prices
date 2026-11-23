@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 from django.core.cache import cache
-from django.core.validators import ValidationError
 from django.db.models import Count, F, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
@@ -14,6 +13,7 @@ from open_prices.api.locations.filters import LocationFilter
 from open_prices.api.locations.serializers import (
     CountryCitySerializer,
     CountrySerializer,
+    LocationCompareParamsSerializer,
     LocationCompareSerializer,
     LocationCreateSerializer,
     LocationNearbyParamsSerializer,
@@ -50,26 +50,18 @@ class LocationViewSet(
         # validate
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # get source
-        source = get_source_from_request(self.request)
+        # avoid duplicates: return the existing location instead
+        location = Location.objects.get_existing(serializer.validated_data)
+        if location:
+            return Response(
+                {**self.serializer_class(location).data, "detail": "duplicate"},
+                status=status.HTTP_200_OK,
+            )
         # save
-        try:
-            location = serializer.save(source=source)
-            response_data = self.serializer_class(location).data
-            response_status_code = status.HTTP_201_CREATED
-        # avoid duplicates: return existing location instead
-        except ValidationError as e:
-            if any(
-                constraint_name in e.messages[0]
-                for constraint_name in location_constants.UNIQUE_CONSTRAINT_NAME_LIST
-            ):
-                location = Location.objects.get(**serializer.validated_data)
-                response_data = {
-                    **self.serializer_class(location).data,
-                    "detail": "duplicate",
-                }
-                response_status_code = status.HTTP_200_OK
-        return Response(response_data, status=response_status_code)
+        location = serializer.save(source=get_source_from_request(self.request))
+        return Response(
+            self.serializer_class(location).data, status=status.HTTP_201_CREATED
+        )
 
     @extend_schema(
         parameters=[
@@ -147,7 +139,7 @@ class LocationViewSet(
         location_qs = (
             Location.objects.filter(
                 type=location_constants.TYPE_OSM,
-                osm_address_country_code=country_code,
+                osm_address_country_code__iexact=country_code,
                 osm_address_city__isnull=False,
             )
             .values("osm_address_city")
@@ -250,29 +242,13 @@ class LocationViewSet(
         Returns shared product prices with the latest price per location,
         the date of that price, and the total sum.
         """
-        location_id_a = request.query_params.get("location_id_a")
-        location_id_b = request.query_params.get("location_id_b")
-        date__gte = request.query_params.get("date__gte")
-        date__lte = request.query_params.get("date__lte")
-        price_is_discounted = request.query_params.get("price_is_discounted")
-
-        # Validate parameters
-        if not location_id_a or not location_id_b:
-            return Response(
-                {
-                    "detail": "location_id_a and location_id_b query parameters are required"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            location_id_a = int(location_id_a)
-            location_id_b = int(location_id_b)
-        except ValueError:
-            return Response(
-                {"detail": "location_id_a and location_id_b must be integers"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        params_serializer = LocationCompareParamsSerializer(data=request.query_params)
+        params_serializer.is_valid(raise_exception=True)
+        location_id_a = params_serializer.validated_data["location_id_a"]
+        location_id_b = params_serializer.validated_data["location_id_b"]
+        date__gte = params_serializer.validated_data.get("date__gte")
+        date__lte = params_serializer.validated_data.get("date__lte")
+        price_is_discounted = params_serializer.validated_data["price_is_discounted"]
 
         # Verify both locations exist
         location_a = get_object_or_drf_404(Location, id=location_id_a)
@@ -302,9 +278,7 @@ class LocationViewSet(
         if date__lte:
             price_filters &= Q(date__lte=date__lte)
         if price_is_discounted is not None:
-            price_filters &= Q(
-                price_is_discounted=price_is_discounted.lower() == "true"
-            )
+            price_filters &= Q(price_is_discounted=price_is_discounted)
 
         prices_qs = (
             Price.objects.select_related("product")

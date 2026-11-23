@@ -12,10 +12,11 @@ from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
+from open_prices.products.factories import ProductFactory
 from open_prices.proofs.factories import ProofFactory
 from open_prices.proofs.models import Proof
 
-EXPORT_NAMES = ("locations", "proofs", "prices")
+EXPORT_NAMES = ("locations", "proofs", "prices", "products")
 
 
 def read_jsonl_gz(path: Path) -> list[dict]:
@@ -36,6 +37,7 @@ class ExportPublicDataTest(TestCase):
             location_osm_id=cls.location.osm_id,
             location_osm_type=cls.location.osm_type,
         )
+        cls.product_without_price = ProductFactory()
 
     def setUp(self):
         cache.clear()
@@ -55,6 +57,7 @@ class ExportPublicDataTest(TestCase):
             ("locations", {self.location.pk}),
             ("proofs", {self.proof.pk}),
             ("prices", {price.pk for price in self.prices}),
+            ("products", {price.product_id for price in self.prices}),
         ):
             rows = read_jsonl_gz(self.data_dir / f"{name}.jsonl.gz")
             self.assertEqual({row["id"] for row in rows}, expected_ids)

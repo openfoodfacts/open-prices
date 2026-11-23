@@ -61,6 +61,14 @@ uv run mkdocs serve -a 127.0.0.1:8765
 
 Open http://127.0.0.1:8765/ in your browser.
 
+### Check the OpenAPI schema
+
+Fails on any schema generation warning or error (also run in the CI):
+
+```
+uv run --env-file .env python manage.py spectacular --api-version api --validate --fail-on-warn --file /dev/null
+```
+
 ### Generate the SQL schema image
 
 ```

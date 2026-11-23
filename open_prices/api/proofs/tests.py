@@ -11,12 +11,14 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
+from freezegun import freeze_time
 from PIL import Image
 
 from open_prices.locations import constants as location_constants
 from open_prices.locations.factories import LocationFactory
 from open_prices.locations.models import Location
 from open_prices.moderation.models import FlagReason, FlagStatus
+from open_prices.prices import constants as price_constants
 from open_prices.prices.factories import PriceFactory
 from open_prices.prices.models import Price
 from open_prices.proofs import constants as proof_constants
@@ -24,6 +26,7 @@ from open_prices.proofs.factories import (
     PriceTagFactory,
     ProofFactory,
     ProofPredictionFactory,
+    ReceiptItemFactory,
 )
 from open_prices.proofs.models import PriceTag, Proof
 from open_prices.users.factories import SessionFactory
@@ -258,6 +261,14 @@ class ProofListFilterApiTest(TestCase):
         url = self.url + f"?location__type={location_constants.TYPE_ONLINE}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # location__osm_address_country_code
+        for country_code in ["FR", "fr"]:
+            url = self.url + f"?location__osm_address_country_code={country_code}"
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 1)
+        url = self.url + "?location__osm_address_country_code=CH"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
     def test_proof_list_filter_by_date(self):
         self.assertEqual(Proof.objects.count(), 3)
@@ -684,6 +695,64 @@ class ProofUpdateApiTest(TestCase):
         self.assertEqual(response.data["receipt_price_count"], 4)
         self.assertEqual(Proof.objects.get(id=self.proof.id).price_count, 15)  # ignored
 
+    def test_proof_update_date_tomorrow_with_prices(self):
+        proof = ProofFactory(**PROOF_RECEIPT, owner=self.user_session_1.user.user_id)
+        price = PriceFactory(
+            proof_id=proof.id,
+            location_osm_id=proof.location_osm_id,
+            location_osm_type=proof.location_osm_type,
+            date=proof.date,
+            currency=proof.currency,
+            owner=proof.owner,
+        )
+        with freeze_time("2025-01-01"):
+            response = self.client.patch(
+                reverse("api:proofs-detail", args=[proof.id]),
+                {"date": "2025-01-02"},
+                headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+                content_type="application/json",
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["date"], "2025-01-02")
+        price.refresh_from_db()
+        self.assertEqual(str(price.date), "2025-01-02")
+
+    def test_proof_update_location_id_online(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        proof = ProofFactory(**PROOF_RECEIPT, owner=self.user_session_1.user.user_id)
+        price = PriceFactory(
+            proof_id=proof.id,
+            location_osm_id=proof.location_osm_id,
+            location_osm_type=proof.location_osm_type,
+            date=proof.date,
+            currency=proof.currency,
+            owner=proof.owner,
+        )
+        response = self.client.patch(
+            reverse("api:proofs-detail", args=[proof.id]),
+            {"location_id": location_online.id},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["location_id"], location_online.id)
+        self.assertIsNone(response.data["location_osm_id"])
+        self.assertIsNone(response.data["location_osm_type"])
+        proof.refresh_from_db()
+        self.assertEqual(proof.location, location_online)
+        price.refresh_from_db()
+        self.assertEqual(price.location, location_online)
+        self.assertIsNone(price.location_osm_id)
+
+    def test_proof_update_location_id_unknown(self):
+        response = self.client.patch(
+            self.url,
+            {"location_id": 999999},
+            headers={"Authorization": f"Bearer {self.user_session_1.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_proof_update_history(self):
         response = self.client.patch(
             self.url,
@@ -835,7 +904,7 @@ class ProofFlagApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_proof_flag_ok_if_authenticated(self):
+    def test_proof_flag_ok_if_owner(self):
         response = self.client.post(
             self.url,
             {
@@ -851,6 +920,36 @@ class ProofFlagApiTest(TestCase):
         self.assertEqual(response.data["comment"], "This proof is spam")
         self.assertEqual(response.data["status"], FlagStatus.OPEN)
         self.assertEqual(response.data["owner"], self.user_session_1.user.user_id)
+
+    def test_proof_flag_ok_if_moderator(self):
+        # set user as moderator
+        self.user_session_2.user.is_moderator = True
+        self.user_session_2.user.save()
+        # authenticated as moderator
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This proof is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.proof.id)
+        self.assertEqual(response.data["owner"], self.user_session_2.user.user_id)
+
+    def test_proof_flag_ok_if_not_owner_nor_moderator(self):
+        response = self.client.post(
+            self.url,
+            {
+                "reason": FlagReason.OTHER,
+                "comment": "This proof is spam",
+            },
+            headers={"Authorization": f"Bearer {self.user_session_2.token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["object_id"], self.proof.id)
+        self.assertEqual(response.data["owner"], self.user_session_2.user.user_id)
 
 
 class ProofDraftListApiTest(TestCase):
@@ -1053,6 +1152,52 @@ class ProofDraftPartialUpdateApiTest(TestCase):
         self.assertEqual(response.data["receipt_price_count"], 10)
         self.user_1_draft_proof.refresh_from_db()
         self.assertEqual(self.user_1_draft_proof.draft, False)
+
+    def test_proof_draft_partial_update_online_location(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        data = {
+            "location_id": location_online.id,
+            "type": proof_constants.TYPE_RECEIPT,
+            "currency": "EUR",
+            "date": "2024-07-15",
+        }
+        response = self.client.patch(
+            self.url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["location"]["id"], location_online.id)
+        self.user_1_draft_proof.refresh_from_db()
+        self.assertEqual(self.user_1_draft_proof.location, location_online)
+        self.assertIsNone(self.user_1_draft_proof.location_osm_id)
+
+    def test_proof_draft_partial_update_osm_to_online_location(self):
+        location_online = LocationFactory(type=location_constants.TYPE_ONLINE)
+        draft_proof = ProofFactory(
+            draft=True,
+            owner=self.user_1_session.user.user_id,
+            location_osm_id=LOCATION_OSM_NODE_652825274["osm_id"],
+            location_osm_type=LOCATION_OSM_NODE_652825274["osm_type"],
+        )
+        url = reverse("api:proofs-drafts-detail", args=[draft_proof.id])
+        data = {
+            "location_id": location_online.id,
+            "currency": "EUR",
+            "date": "2024-07-15",
+        }
+        response = self.client.patch(
+            url,
+            data,
+            headers={"Authorization": f"Bearer {self.user_1_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        draft_proof.refresh_from_db()
+        self.assertEqual(draft_proof.location, location_online)
+        self.assertIsNone(draft_proof.location_osm_id)
+        self.assertIsNone(draft_proof.location_osm_type)
 
 
 class ProofDraftDeleteApiTest(TestCase):
@@ -1261,9 +1406,12 @@ class PriceTagListApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
         # proof__location__osm_address_country_code
-        url = self.url + "?proof__location__osm_address_country_code=FR"
-        response = self.client.get(url)
-        self.assertEqual(response.data["total"], 2)
+        for country_code in ["FR", "fr"]:
+            url = (
+                self.url + f"?proof__location__osm_address_country_code={country_code}"
+            )
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 2)
         # proof__owner
         url = self.url + f"?proof__owner={self.user_session.user.user_id}"
         response = self.client.get(url)
@@ -1325,6 +1473,74 @@ class PriceTagListApiTest(TestCase):
         url = self.url + "?tags__not_contains=invalid"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 2)
+
+    def test_price_tag_list_filter_by_created(self):
+        for created in ["2024-01-01", "2024-01-01T00:00:00Z"]:
+            with self.subTest(created=created):
+                # created__gte
+                url = self.url + f"?created__gte={created}"
+                response = self.client.get(url)
+                self.assertEqual(response.data["total"], 3)
+                # created__lte
+                url = self.url + f"?created__lte={created}"
+                response = self.client.get(url)
+                self.assertEqual(response.data["total"], 0)
+
+
+class ReceiptItemListApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse("api:receipt-items-list")
+        cls.user_session = SessionFactory()
+        cls.proof = ProofFactory(
+            type=proof_constants.TYPE_RECEIPT, owner=cls.user_session.user.user_id
+        )
+        cls.receipt_item_1 = ReceiptItemFactory(
+            proof=cls.proof,
+            status=proof_constants.ReceiptItemStatus.linked_to_price.value,
+        )
+        cls.receipt_item_2 = ReceiptItemFactory(proof=cls.proof)
+        cls.receipt_item_3 = ReceiptItemFactory(
+            proof=ProofFactory(type=proof_constants.TYPE_RECEIPT)
+        )
+
+    def test_receipt_item_list_filter_by_proof(self):
+        # proof_id
+        url = self.url + f"?proof_id={self.proof.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        # proof__owner
+        url = self.url + f"?proof__owner={self.user_session.user.user_id}"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+
+    def test_receipt_item_list_filter_by_status(self):
+        # status
+        url = (
+            self.url
+            + f"?status={proof_constants.ReceiptItemStatus.linked_to_price.value}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        # status__isnull
+        url = self.url + "?status__isnull=True"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?status__isnull=False"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+
+    def test_receipt_item_list_filter_by_created(self):
+        for created in ["2024-01-01", "2024-01-01T00:00:00Z"]:
+            with self.subTest(created=created):
+                # created__gte
+                url = self.url + f"?created__gte={created}"
+                response = self.client.get(url)
+                self.assertEqual(response.data["total"], 3)
+                # created__lte
+                url = self.url + f"?created__lte={created}"
+                response = self.client.get(url)
+                self.assertEqual(response.data["total"], 0)
 
 
 class PriceTagDetailApiTest(TestCase):
@@ -1552,6 +1768,134 @@ class PriceTagUpdateApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {"bounding_box": ["Should have 4 values."]})
+
+
+class PriceTagCreatePriceApiTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_session = SessionFactory()
+        cls.location = LocationFactory(**LOCATION_OSM_NODE_652825274)
+        cls.proof = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.proof_2 = ProofFactory(type=proof_constants.TYPE_PRICE_TAG)
+        cls.data = {
+            "product_code": "8001505005707",
+            "price": 15,
+            "currency": "EUR",
+            "date": "2024-01-01",
+            "location_osm_id": cls.location.osm_id,
+            "location_osm_type": cls.location.osm_type,
+            "proof_id": cls.proof.id,
+        }
+        cls.price_tag = PriceTagFactory(proof=cls.proof)
+        cls.url = reverse("api:price-tags-create-price", args=[cls.price_tag.id])
+
+    def test_price_tag_create_price_unauthenticated_not_allowed(self):
+        response = self.client.post(
+            self.url, data=self.data, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(Price.objects.count(), 0)
+
+    def test_price_tag_create_price_price_tag_not_found(self):
+        response = self.client.post(
+            reverse("api:price-tags-create-price", args=[999999]),
+            data=self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(Price.objects.count(), 0)
+
+    def test_price_tag_create_price_invalid_data(self):
+        data = self.data.copy()
+        del data["price"]
+        response = self.client.post(
+            self.url,
+            data=data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("price", response.data)
+        self.assertEqual(Price.objects.count(), 0)
+        self.price_tag.refresh_from_db()
+        self.assertIsNone(self.price_tag.status)
+        self.assertIsNone(self.price_tag.price_id)
+
+    def test_price_tag_create_price_proof_mismatch(self):
+        response = self.client.post(
+            self.url,
+            # proof of another price tag
+            data={**self.data, "proof_id": self.proof_2.id},
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {"price": ["Should belong to the same proof."]})
+        # the price creation was rolled back
+        self.assertEqual(Price.objects.count(), 0)
+        self.price_tag.refresh_from_db()
+        self.assertIsNone(self.price_tag.status)
+        self.assertIsNone(self.price_tag.price_id)
+
+    def test_price_tag_create_price(self):
+        response = self.client.post(
+            self.url,
+            data=self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Price.objects.count(), 1)
+        price = Price.objects.get()
+        self.assertEqual(response.data["id"], price.id)
+        self.assertEqual(response.data["proof"]["id"], self.proof.id)
+        self.assertEqual(price.type, price_constants.TYPE_PRODUCT)
+        self.assertEqual(price.owner, self.user_session.user.user_id)
+        # the price tag is linked to the new price
+        self.price_tag.refresh_from_db()
+        self.assertEqual(self.price_tag.price_id, price.id)
+        self.assertEqual(
+            self.price_tag.status, proof_constants.PriceTagStatus.linked_to_price
+        )
+        self.assertEqual(self.price_tag.updated_by, self.user_session.user.user_id)
+
+    def test_price_tag_create_price_already_linked(self):
+        response = self.client.post(
+            self.url,
+            data=self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        # validating the same price tag a second time: no duplicate price
+        response = self.client.post(
+            self.url,
+            data=self.data,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.data, {"detail": "Price tag already handled."})
+        self.assertEqual(Price.objects.count(), 1)
+
+    def test_price_tag_create_price_status_already_set(self):
+        for price_tag_status in [
+            proof_constants.PriceTagStatus.deleted,
+            proof_constants.PriceTagStatus.not_readable,
+        ]:
+            with self.subTest(status=price_tag_status):
+                PriceTag.objects.filter(id=self.price_tag.id).update(
+                    status=price_tag_status
+                )
+                response = self.client.post(
+                    self.url,
+                    data=self.data,
+                    headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 409)
+                self.assertEqual(Price.objects.count(), 0)
 
 
 class PriceTagDeleteApiTest(TestCase):

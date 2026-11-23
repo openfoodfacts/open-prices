@@ -127,9 +127,13 @@ class LocationListFilterApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.url = reverse("api:locations-list")
-        LocationFactory(**LOCATION_OSM_NODE_652825274)
-        LocationFactory(**LOCATION_OSM_NODE_6509705997)
-        LocationFactory(**LOCATION_OSM_WAY_872934393)
+        LocationFactory(**LOCATION_OSM_NODE_652825274, osm_address_country_code="FR")
+        LocationFactory(**LOCATION_OSM_NODE_6509705997, osm_address_country_code="FR")
+        LocationFactory(
+            **LOCATION_OSM_WAY_872934393,
+            osm_address_country_code="CH",
+            tags=[location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+        )
         LocationFactory(**LOCATION_ONLINE_DECATHLON)
 
     def test_location_list_filter_by_type(self):
@@ -167,6 +171,19 @@ class LocationListFilterApiTest(TestCase):
         self.assertEqual(response.data["items"][0]["osm_tag_key"], "shop")
         self.assertEqual(response.data["items"][0]["osm_tag_value"], "supermarket")
 
+    def test_location_list_filter_by_osm_address_country_code(self):
+        url = self.url + "?osm_address_country_code=FR"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        self.assertEqual(response.data["items"][0]["osm_address_country_code"], "FR")
+        # case-insensitive
+        url = self.url + "?osm_address_country_code=ch"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?osm_address_country_code=BE"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
+
     def test_location_list_filter_by_price_count(self):
         # exact price_count
         url = self.url + "?price_count=15"
@@ -182,6 +199,21 @@ class LocationListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 3)
         self.assertEqual(response.data["items"][0]["price_count"], 15)
+
+    def test_location_list_filter_by_tags(self):
+        url = self.url + "?tags__contains=price-tag-barcode-internal"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(
+            response.data["items"][0]["tags"],
+            [location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+        )
+        url = self.url + "?tags__not_contains=price-tag-barcode-internal"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 3)
+        url = self.url + "?tags__contains=receipt-barcode-printed"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
 
 class LocationDetailApiTest(TestCase):
@@ -205,6 +237,7 @@ class LocationDetailApiTest(TestCase):
         self.assertEqual(response.data["id"], self.location.id)
         # self.assertEqual(response.data["osm_lat"], 45.1805534)
         self.assertIn("osm_brand_logo_url", response.data)
+        self.assertEqual(response.data["tags"], [])
 
     def test_location_detail_by_osm_unknown(self):
         url = reverse("api:locations-get-by-osm", args=["NODE", 999])
@@ -231,7 +264,12 @@ class LocationCreateApiTest(TestCase):
 
     def test_location_create_osm(self):
         response = self.client.post(
-            self.url, LOCATION_OSM_NODE_652825274, content_type="application/json"
+            self.url,
+            {
+                **LOCATION_OSM_NODE_652825274,
+                "tags": [location_constants.TAG_PRICE_TAG_BARCODE_INTERNAL],
+            },
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["osm_id"], 652825274)
@@ -240,6 +278,7 @@ class LocationCreateApiTest(TestCase):
             response.data["osm_name"], None
         )  # ignored (and post_save signal disabled)
         self.assertEqual(response.data["price_count"], 0)  # ignored
+        self.assertEqual(response.data["tags"], [])  # ignored
 
     def test_location_create_online(self):
         response = self.client.post(
@@ -274,6 +313,50 @@ class LocationCreateApiTest(TestCase):
                     response.data["price_count"], location["price_count"]
                 )  # unchanged
                 self.assertEqual(response.data["detail"], "duplicate")
+
+    def test_location_create_duplicate_online_with_non_normalized_url(self):
+        location = LocationFactory(**LOCATION_ONLINE_DECATHLON)
+        for website_url in [
+            "https://www.decathlon.fr/",
+            "https://www.decathlon.fr/fr/",
+        ]:
+            with self.subTest(website_url=website_url):
+                response = self.client.post(
+                    self.url,
+                    {
+                        "type": location_constants.TYPE_ONLINE,
+                        "website_url": website_url,
+                    },
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data["id"], location.id)
+                self.assertEqual(response.data["detail"], "duplicate")
+        self.assertEqual(Location.objects.count(), 1)
+
+    def test_location_create_invalid(self):
+        response = self.client.post(
+            self.url,
+            {"type": location_constants.TYPE_OSM},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("osm_id", response.data)
+        self.assertIn("osm_type", response.data)
+
+    def test_location_create_duplicate_invalid(self):
+        LocationFactory(**LOCATION_ONLINE_DECATHLON)
+        response = self.client.post(
+            self.url,
+            {
+                **LOCATION_ONLINE_DECATHLON,
+                "osm_type": location_constants.OSM_TYPE_NODE,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("osm_type", response.data)
+        self.assertEqual(Location.objects.count(), 1)
 
     def test_location_create_with_app_name(self):
         for index, (params, result) in enumerate(
@@ -406,17 +489,23 @@ class LocationOsmCountryCitiesListApiTest(TestCase):
         )
 
     def test_location_osm_country_cities(self):
-        response = self.client.get(self.url)
+        for country_arg in ["FR", "fr"]:
+            url = reverse("api:locations-list-osm-country-cities", args=[country_arg])
+            response = self.client.get(url)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(response.data, list))
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["osm_name"], "Grenoble")  # ordered by name
-        self.assertEqual(response.data[0]["country_code_2"], "FR")
-        self.assertEqual(response.data[0]["location_count"], 2)
-        self.assertEqual(response.data[0]["price_count"], 10)
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(isinstance(response.data, list))
+            self.assertEqual(len(response.data), 2)
+            self.assertEqual(
+                response.data[0]["osm_name"], "Grenoble"
+            )  # ordered by name
+            self.assertEqual(response.data[0]["country_code_2"], "FR")
+            self.assertEqual(response.data[0]["location_count"], 2)
+            self.assertEqual(response.data[0]["price_count"], 10)
 
 
+# Note: edge cases of the nearby() logic (exact coordinates, antimeridian...)
+# are tested at the queryset level, in LocationQuerySetNearbyTest (open_prices/locations/tests.py)
 class LocationNearbyApiTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -606,6 +695,20 @@ class LocationCompareApiTest(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 400)
+
+        # date & boolean parameters must be valid
+        for param, value in [
+            ("date__gte", "invalid"),
+            ("date__gte", "2024-13-01"),
+            ("date__lte", "2024-02-30"),
+            ("price_is_discounted", "invalid"),
+        ]:
+            with self.subTest(param=param, value=value):
+                url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_b.id}&{param}={value}"
+                response = self.client.get(url)
+
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(param, response.data)
 
     def test_compare_same_location(self):
         url = f"{self.url}?location_id_a={self.location_a.id}&location_id_b={self.location_a.id}"

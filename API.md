@@ -18,7 +18,7 @@ We have two environments:
 
 - Some endpoints require authentication
 - You will need to create an account on [Open Food Facts](https://world.openfoodfacts.org). Then generate a `token` through the dedicated Open Prices endpoint.
-    - when switching from pre-production to production, the account stays the same, but you will need to generate a new token
+  - when switching from pre-production to production, the account stays the same, but you will need to generate a new token
 - Authentication method: Bearer token in the `Authorization` header
 
 ## License

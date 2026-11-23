@@ -90,6 +90,19 @@ class ProductListFilterApiTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
         self.assertEqual(response.data["items"][0]["code"], "8001505005707")
+        # code__in
+        url = self.url + "?code__in=8001505005707,8000215204219"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?code__in=8001505005707,0000000000000"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        url = self.url + "?code__in=8001505005707,%208000215204219"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 2)
+        url = self.url + "?code__in=8001505005707,%00"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
 
     def test_product_list_filter_by_product_name(self):
         url = self.url + "?product_name__like=rice"
@@ -274,6 +287,33 @@ class ProductOffCreateOrUpdateApiTest(TestCase):
         # )
         # self.assertEqual(response.status_code, 200)
 
+    def test_product_off_create_or_update_invalid_language_code(self):
+        for language_code in ["ach", "", True]:
+            with self.subTest(language_code=language_code):
+                response = self.client.patch(
+                    self.url,
+                    {"product_language_code": language_code},
+                    headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("product_language_code", response.data)
+
+    def test_product_off_create_or_update_invalid_payload(self):
+        for data, field in [
+            ({"flavor": "unknown"}, "flavor"),
+            ({"update_params": "unknown"}, "update_params"),
+        ]:
+            with self.subTest(data=data):
+                response = self.client.patch(
+                    self.url,
+                    data,
+                    headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(field, response.data)
+
 
 class ProductOffUploadImageApiTest(TestCase):
     @classmethod
@@ -294,3 +334,30 @@ class ProductOffUploadImageApiTest(TestCase):
         #     content_type="application/json",
         # )
         # self.assertEqual(response.status_code, 200)
+
+    def test_product_off_upload_image_invalid_language_code(self):
+        for language_code in ["ach", "", True]:
+            with self.subTest(language_code=language_code):
+                response = self.client.patch(
+                    self.url,
+                    {"product_language_code": language_code},
+                    headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("product_language_code", response.data)
+
+    def test_product_off_upload_image_invalid_payload(self):
+        for data, field in [
+            ({"flavor": "unknown", "image_data_base64": "data"}, "flavor"),
+            ({}, "image_data_base64"),
+        ]:
+            with self.subTest(data=data):
+                response = self.client.patch(
+                    self.url,
+                    data,
+                    headers={"Authorization": f"Bearer {self.user_session.token}"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(field, response.data)

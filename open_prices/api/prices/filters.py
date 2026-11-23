@@ -81,13 +81,16 @@ class PriceFilter(django_filters.FilterSet):
         field_name="location__type",
         choices=location_constants.TYPE_CHOICES,
     )
+    location__osm_address_country_code = django_filters.CharFilter(
+        field_name="location__osm_address_country_code", lookup_expr="iexact"
+    )
     proof__type = django_filters.MultipleChoiceFilter(
         field_name="proof__type",
         choices=proof_constants.TYPE_CHOICES,
     )
     tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
-    location__osm_name__contains = ArrayFieldElementContainsFilter(
-        field_name="location__osm_name"
+    location__osm_name__like = django_filters.CharFilter(
+        field_name="location__osm_name", lookup_expr="icontains"
     )
 
     def filter_kind(self, queryset, name, value):

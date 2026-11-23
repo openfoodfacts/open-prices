@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from open_prices.common import utils
 from open_prices.locations.models import Location
 
 
@@ -29,6 +30,16 @@ class LocationCreateSerializer(serializers.ModelSerializer):
             self.fields[field].required = False
             self.fields[field].validators = []
 
+    def validate_website_url(self, value):
+        # same normalization as Location.cleanup_url(), to find duplicates
+        return utils.url_keep_only_domain(value) if value else value
+
+    def validate(self, attrs):
+        # run the model validations (except the unique constraints, the view
+        # returns the existing location instead), before the duplicate lookup
+        Location(**attrs).full_clean(validate_unique=False, validate_constraints=False)
+        return attrs
+
 
 class CountrySerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -54,6 +65,16 @@ class LocationNearbyParamsSerializer(serializers.Serializer):
     lat = serializers.FloatField(min_value=-90, max_value=90, required=True)
     lon = serializers.FloatField(min_value=-180, max_value=180, required=True)
     radius_km = serializers.FloatField(min_value=0, required=True)
+
+
+class LocationCompareParamsSerializer(serializers.Serializer):
+    location_id_a = serializers.IntegerField(required=True)
+    location_id_b = serializers.IntegerField(required=True)
+    date__gte = serializers.DateField(required=False)
+    date__lte = serializers.DateField(required=False)
+    price_is_discounted = serializers.BooleanField(
+        required=False, allow_null=True, default=None
+    )
 
 
 class LocationCompareSerializer(serializers.Serializer):

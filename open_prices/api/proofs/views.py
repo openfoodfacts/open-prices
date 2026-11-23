@@ -2,6 +2,7 @@ from pathlib import Path
 
 import PIL.Image
 from django.conf import settings
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from django_q.tasks import async_task
 from drf_spectacular.utils import extend_schema
@@ -16,6 +17,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from open_prices.api.moderation.serializers import FlagCreateSerializer, FlagSerializer
+from open_prices.api.prices.serializers import (
+    PriceCreateSerializer,
+    PriceFullSerializer,
+)
 from open_prices.api.proofs.filters import (
     PriceTagFilter,
     ProofFilter,
@@ -47,6 +52,7 @@ from open_prices.common.permission import (
     OnlyObjectOwnerIsAllowedReadWrite,
     OnlyObjectOwnerOrModeratorIsAllowedWrite,
 )
+from open_prices.prices import constants as price_constants
 from open_prices.proofs import constants as proof_constants
 from open_prices.proofs.constants import TYPE_RECEIPT
 from open_prices.proofs.ml.price_tags import extract_from_price_tag
@@ -234,7 +240,7 @@ class ProofViewSet(
     @extend_schema(
         request=FlagCreateSerializer, responses=FlagSerializer, tags=["moderation"]
     )
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=["POST"], permission_classes=[IsAuthenticated])
     def flag(self, request: Request, pk=None) -> Response:
         proof = self.get_object()
         serializer = FlagCreateSerializer(data=request.data)
@@ -351,13 +357,20 @@ class ProofDraftViewSet(
         """Finalize a draft proof - set draft=False and add full metadata."""
         proof = self.get_object()
         # Validate required fields
-        serializer = self.get_serializer(proof, data=request.data, partial=True)
+        serializer = ProofUpdateSerializer(proof, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         # Update fields
         for field in Proof.UPDATE_FIELDS:
             if field in serializer.validated_data:
                 setattr(proof, field, serializer.validated_data[field])
+        if "location" in serializer.validated_data:
+            # keep the OSM fields in line with the chosen location, otherwise
+            # Proof.save() would set the location back from stale OSM fields
+            location = serializer.validated_data["location"]
+            proof.location = location
+            proof.location_osm_id = location.osm_id
+            proof.location_osm_type = location.osm_type
 
         # Check required fields for finalization
         missing_fields = []
@@ -405,14 +418,6 @@ class PriceTagViewSet(
             return super().get_authenticators()
         return [CustomAuthentication()]
 
-    def get_queryset(self):
-        if self.action in ["create", "update"]:
-            # We need to prefetch the price object if it exists to validate the
-            # price_id field, and the proof object to validate the proof_id
-            # field
-            return PriceTag.objects.select_related("proof", "price").all()
-        return super().get_queryset()
-
     def get_serializer_class(self):
         if self.request.method == "POST":
             return PriceTagCreateSerializer
@@ -420,15 +425,30 @@ class PriceTagViewSet(
             return PriceTagUpdateSerializer
         return self.serializer_class
 
+    def get_object_locked(self) -> PriceTag:
+        """
+        Get the price tag, locked until the end of the current transaction.
+        To be used by all the actions writing to a price tag, to avoid
+        concurrent requests overwriting each other's changes (ex: a PATCH
+        saving a stale price tag would undo the link done by create_price).
+        """
+        price_tag = self.get_object()  # 404 if not found
+        return (
+            PriceTag.objects.select_related("proof")
+            .select_for_update(of=("self",))
+            .get(id=price_tag.id)
+        )
+
     def destroy(self, request: Request, *args, **kwargs) -> Response:
-        price_tag = self.get_object()
-        if price_tag.price_id is not None:
-            return Response(
-                {"detail": "Cannot delete price tag with associated prices."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        price_tag.status = proof_constants.PriceTagStatus.deleted
-        price_tag.save()
+        with transaction.atomic():
+            price_tag = self.get_object_locked()
+            if price_tag.price_id is not None:
+                return Response(
+                    {"detail": "Cannot delete price tag with associated prices."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            price_tag.status = proof_constants.PriceTagStatus.deleted
+            price_tag.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def create(self, request: Request, *args, **kwargs):
@@ -446,15 +466,16 @@ class PriceTagViewSet(
         )
 
     def update(self, request: Request, *args, **kwargs):
-        # validate
-        previous_price_tag: PriceTag = self.get_object()
-        previous_bounding_box = previous_price_tag.bounding_box
-        serializer = self.get_serializer(
-            previous_price_tag, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        # save
-        price_tag = serializer.save(updated_by=self.request.user.user_id)
+        with transaction.atomic():
+            # validate
+            previous_price_tag: PriceTag = self.get_object_locked()
+            previous_bounding_box = previous_price_tag.bounding_box
+            serializer = self.get_serializer(
+                previous_price_tag, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            # save
+            price_tag = serializer.save(updated_by=self.request.user.user_id)
         if (
             not settings.TESTING
             # Only run the extraction if the bounding box has changed
@@ -468,6 +489,45 @@ class PriceTagViewSet(
 
         # return full price tag
         return Response(self.serializer_class(price_tag).data)
+
+    @extend_schema(exclude=True)  # used by the frontend price validation assistant
+    @action(detail=True, methods=["POST"], url_path="price")
+    def create_price(self, request: Request, pk=None) -> Response:
+        """
+        Create a price from a price tag, and link the price tag to it.
+        Both are done in the same transaction, with the price tag locked,
+        to avoid duplicate prices when the same price tag is validated twice
+        (by 2 users at the same time, or after a failed link).
+        """
+        # validate
+        serializer = PriceCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # get type (same as PriceViewSet.create)
+        type = serializer.validated_data.get("type") or (
+            price_constants.TYPE_PRODUCT
+            if serializer.validated_data.get("product_code")
+            else price_constants.TYPE_CATEGORY
+        )
+        user_id = self.request.user.user_id
+        source = get_source_from_request(self.request)
+        with transaction.atomic():
+            # lock the price tag until the end of the transaction
+            price_tag = self.get_object_locked()
+            if price_tag.status is not None or price_tag.price_id is not None:
+                return Response(
+                    {"detail": "Price tag already handled."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            # save the price, then link the price tag
+            # (if the price's proof is not the price tag's one, the price tag
+            # validation fails, and the price creation is rolled back)
+            price = serializer.save(type=type, owner=user_id, source=source)
+            price_tag.price = price
+            price_tag.status = proof_constants.PriceTagStatus.linked_to_price
+            price_tag.updated_by = user_id
+            price_tag.save()
+        # return full price
+        return Response(PriceFullSerializer(price).data, status=status.HTTP_201_CREATED)
 
 
 class ReceiptItemViewSet(
