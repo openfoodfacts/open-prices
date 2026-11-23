@@ -43,9 +43,9 @@ class UserQuerySet(CountsQuerySetMixin, models.QuerySet):
         is_location_type_osm = Q(location__type=location_constants.TYPE_OSM)
         return (
             self.annotate_counts(
-                Price,
-                "owner",
-                {
+                related_model=Price,
+                related_field="owner",
+                counts={
                     "price_count": Count("id"),
                     "price_type_product_count": Count(
                         "id", filter=Q(type=price_constants.TYPE_PRODUCT)
@@ -71,18 +71,18 @@ class UserQuerySet(CountsQuerySetMixin, models.QuerySet):
                 },
             )
             .annotate_counts(
-                Price,
-                "proof__owner",  # prices in the proofs of the user
-                {
+                related_model=Price,
+                related_field="proof__owner",  # prices in the proofs of the user
+                counts={
                     "price_not_owned_in_proof_owned_count": Count(
                         "id", filter=~in_proof_owned
                     ),
                 },
             )
             .annotate_counts(
-                Proof,  # drafts excluded
-                "owner",
-                {
+                related_model=Proof,  # drafts excluded
+                related_field="owner",
+                counts={
                     "proof_count": Count("id"),
                     "proof_type_price_tag_count": Count(
                         "id", filter=Q(type=proof_constants.TYPE_PRICE_TAG)
