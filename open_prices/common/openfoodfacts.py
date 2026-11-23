@@ -133,15 +133,21 @@ def authenticate(username, password):
 
 
 def build_product_dict(product: JSONType, flavor) -> JSONType:
+    from open_prices.products.models import Product
+
     # Step 1: init
     product_dict = dict()
     product_dict["source"] = flavor
     product_dict["source_last_synced"] = timezone.now()
 
     # Step 2: build the product dict
+    # fields missing from the product are reset to their default value,
+    # to avoid keeping stale values (e.g. food scores after a move to OBF)
     for off_field in OFF_CREATE_FIELDS:
         if off_field in product:
             product_dict[off_field] = product[off_field]
+        else:
+            product_dict[off_field] = Product._meta.get_field(off_field).get_default()
 
     # Step 3: cleanup
     # fix product_quantity

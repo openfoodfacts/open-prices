@@ -432,6 +432,30 @@ class TestProcessUpdate(TestCase):
         self.assertGreater(create_product.source_last_synced, before)
         self.assertLess(create_product.source_last_synced, after)
 
+    @patch("open_prices.common.openfoodfacts.get_product")
+    def test_process_update_resets_missing_fields(self, mock_get_product):
+        # e.g. a food product moved to OBF: the food fields are gone
+        code = "1234567891012"
+        ProductFactory(
+            code=code,
+            source=Flavor.off,
+            categories_tags=["en:apples"],
+            nutriscore_grade="a",
+            nova_group=1,
+            unique_scans_n=42,
+        )
+        mock_get_product.return_value = {"code": code, "product_name": "Shampoo"}
+
+        process_update(code, Flavor.obf)
+
+        product = Product.objects.get(code=code)
+        self.assertEqual(product.product_name, "Shampoo")
+        self.assertEqual(product.source, Flavor.obf)
+        self.assertEqual(product.categories_tags, [])
+        self.assertIsNone(product.nutriscore_grade)
+        self.assertIsNone(product.nova_group)
+        self.assertEqual(product.unique_scans_n, 0)
+
 
 class FetchAndSaveDataFromOpenFoodFactsTest(TestCase):
     @patch("open_prices.common.openfoodfacts.get_product")
