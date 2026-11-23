@@ -225,6 +225,100 @@ class ProductPropertyTest(TestCase):
             owner=cls.user.user_id,
         )
 
+    def test_with_counts_fields(self):
+        self.assertEqual(
+            set(Product.objects.with_counts().query.annotations),
+            {f"{field}_annotated" for field in Product.COUNT_FIELDS},
+        )
+
+    def test_with_counts(self):
+        product = Product.objects.with_counts().get(id=self.product.id)
+        self.assertEqual(product.price_count_annotated, 2)
+        self.assertEqual(product.price_currency_count_annotated, 2)
+        self.assertEqual(product.location_count_annotated, 1)  # online: no location
+        self.assertEqual(product.location_type_osm_country_count_annotated, 1)
+        self.assertEqual(product.user_count_annotated, 1)
+        self.assertEqual(product.proof_count_annotated, 1)
+        product_without_price = ProductFactory(code="0123456789101")
+        product = Product.objects.with_counts().get(id=product_without_price.id)
+        self.assertEqual(product.price_count_annotated, 0)
+        self.assertEqual(product.proof_count_annotated, 0)
+
+    def test_update_task(self):
+        product_without_price = ProductFactory(code="0123456789101")
+        product_with_deleted_prices = ProductFactory(code="0123456789102")
+        PriceFactory(
+            product_code=product_with_deleted_prices.code,
+            price=3.0,
+            owner=self.user.user_id,
+        )
+        Product.update_task()
+        # the price post_delete signal only decrements price_count
+        product_with_deleted_prices.prices.all().delete()
+        product_with_deleted_prices.refresh_from_db()
+        self.assertEqual(product_with_deleted_prices.price_count, 0)
+        self.assertEqual(product_with_deleted_prices.user_count, 1)  # stale
+        # wrong counts
+        Product.objects.filter(id=self.product.id).update(
+            **{field: 99 for field in Product.COUNT_FIELDS}
+        )
+        # update_task() should fix all counts
+        updated_count = Product.update_task()
+        self.assertEqual(updated_count, 2)
+        self.assertFalse(  # skipped
+            Product.objects.for_update_task()
+            .filter(id=product_without_price.id)
+            .exists()
+        )
+        self.product.refresh_from_db()
+        self.assertEqual(
+            {field: getattr(self.product, field) for field in Product.COUNT_FIELDS},
+            {
+                "price_count": 2,
+                "price_currency_count": 2,
+                "location_count": 1,
+                "location_type_osm_country_count": 1,
+                "user_count": 1,
+                "proof_count": 1,
+            },
+        )
+        product_with_deleted_prices.refresh_from_db()
+        self.assertEqual(
+            {
+                getattr(product_with_deleted_prices, field)
+                for field in Product.COUNT_FIELDS
+            },
+            {0},
+        )
+        # nothing to update anymore
+        self.assertEqual(Product.update_task(), 0)
+
+    def test_update_counts(self):
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.price_count, 2)  # price signals
+        self.assertEqual(self.product.proof_count, 0)
+        # update_counts() should fix all counts
+        self.product.update_counts()
+        self.product.refresh_from_db()
+        self.assertEqual(
+            {field: getattr(self.product, field) for field in Product.COUNT_FIELDS},
+            {
+                "price_count": 2,
+                "price_currency_count": 2,
+                "location_count": 1,  # online: no location
+                "location_type_osm_country_count": 1,
+                "user_count": 1,
+                "proof_count": 1,
+            },
+        )
+        # bulk delete prices to skip signals
+        self.product.prices.all().delete()
+        self.product.update_counts()
+        self.product.refresh_from_db()
+        self.assertEqual(
+            {getattr(self.product, field) for field in Product.COUNT_FIELDS}, {0}
+        )
+
     def test_price__min(self):
         self.assertEqual(self.product.price__min(), 1.0)
         self.assertEqual(self.product.price__min(exclude_discounted=True), 2.0)
@@ -256,46 +350,6 @@ class ProductPropertyTest(TestCase):
                 "price__avg": Decimal("2.00"),
             },
         )
-
-    def test_update_price_count(self):
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.price_count, 2)  # price signals
-        self.assertEqual(self.product.price_currency_count, 0)
-        # update_price_count() should fix price counts
-        self.product.update_price_count()
-        self.assertEqual(self.product.price_count, 2)
-        self.assertEqual(self.product.price_currency_count, 2)
-        # bulk delete prices to skip signals
-        self.product.prices.all().delete()
-        self.assertEqual(self.product.price_count, 2)  # should be 0
-        self.assertEqual(self.product.price_currency_count, 2)  # should be 0
-        # update_price_count() should fix price counts
-        self.product.update_price_count()
-        self.assertEqual(self.product.price_count, 0)  # all deleted
-        self.assertEqual(self.product.price_currency_count, 0)
-
-    def test_update_location_count(self):
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.location_count, 0)
-        self.assertEqual(self.product.location_type_osm_country_count, 0)
-        # update_location_count() should fix location counts
-        self.product.update_location_count()
-        self.assertEqual(self.product.location_count, 1)
-        self.assertEqual(self.product.location_type_osm_country_count, 1)
-
-    def test_update_user_count(self):
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.user_count, 0)
-        # update_user_count() should fix user counts
-        self.product.update_user_count()
-        self.assertEqual(self.product.user_count, 1)
-
-    def test_update_proof_count(self):
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.proof_count, 0)
-        # update_proof_count() should fix proof counts
-        self.product.update_proof_count()
-        self.assertEqual(self.product.proof_count, 1)
 
 
 class TestProcessUpdate(TestCase):
