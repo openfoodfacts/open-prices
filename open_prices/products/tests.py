@@ -225,6 +225,12 @@ class ProductPropertyTest(TestCase):
             owner=cls.user.user_id,
         )
 
+    def test_with_counts_fields(self):
+        self.assertEqual(
+            set(Product.objects.with_counts().query.annotations),
+            {f"{field}_annotated" for field in Product.COUNT_FIELDS},
+        )
+
     def test_with_counts(self):
         product = Product.objects.with_counts().get(id=self.product.id)
         self.assertEqual(product.price_count_annotated, 2)
