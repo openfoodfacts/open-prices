@@ -114,14 +114,6 @@ class FlagModelQuerySetTest(TestCase):
             source="unit-test",
         )
 
-    def test_filter_by_content_object(self):
-        flag_price_qs = Flag.objects.filter_by_content_object(self.price)
-        self.assertEqual(flag_price_qs.count(), 1)
-        self.assertEqual(flag_price_qs.first(), self.flag_price)
-        flag_proof_qs = Flag.objects.filter_by_content_object(self.proof)
-        self.assertEqual(flag_proof_qs.count(), 1)
-        self.assertEqual(flag_proof_qs.first(), self.flag_proof)
-
     def test_filter_by_content_type_model(self):
         flag_price_qs = Flag.objects.filter_by_content_type_model("PRICE")
         self.assertEqual(flag_price_qs.count(), 1)
@@ -142,6 +134,14 @@ class FlagModelQuerySetTest(TestCase):
         self.assertEqual(flag_price_proof_qs.count(), 2)
         self.assertIn(self.flag_price, flag_price_proof_qs)
         self.assertIn(self.flag_proof, flag_price_proof_qs)
+
+    def test_filter_by_content_object(self):
+        flag_price_qs = Flag.objects.filter_by_content_object(self.price)
+        self.assertEqual(flag_price_qs.count(), 1)
+        self.assertEqual(flag_price_qs.first(), self.flag_price)
+        flag_proof_qs = Flag.objects.filter_by_content_object(self.proof)
+        self.assertEqual(flag_proof_qs.count(), 1)
+        self.assertEqual(flag_proof_qs.first(), self.flag_proof)
 
 
 class FlagModelPropertyTest(TestCase):
