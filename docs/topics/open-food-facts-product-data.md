@@ -29,6 +29,11 @@ see `open_prices/common/openfoodfacts.py`
 - Barcode scanner
   - thanks to [openfoodfacts-webcomponents](https://github.com/openfoodfacts/openfoodfacts-webcomponents)
 
+### Mobile
+
+- The Open Food Facts mobile app lets users add prices, through the Open Prices API
+  - thanks to [openfoodfacts-dart](https://github.com/openfoodfacts/openfoodfacts-dart)
+
 ## Data sync
 
 - Live, with Redis: Open Prices listens to the Product Opener `product_updates` stream (all 4 flavors). On each `created` / `updated` event, the product is re-fetched from the API of its flavor (`deleted` removes it). See `open_prices/products/management/commands/run_update_listener.py`

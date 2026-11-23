@@ -36,6 +36,14 @@ Limitations:
 - **a shop recently added to OSM can't be found by name**: the Photon (Komoot) database is only synced with OSM once a week, on Tuesdays (see [komoot/photon#614](https://github.com/komoot/photon/issues/614)), so a new shop can be missing for up to a week. Workaround: search by its OSM ID (e.g. `N14365327207`), which goes through Nominatim and is usually up to date within minutes
 - **name search is not very precise**: adding the city or street name helps (e.g. `Carrefour 75013 Paris`)
 
+### Example queries
+
+- search by name (Photon): `https://photon.komoot.io/api/?q=monoprix grenoble`
+- search by name (Nominatim): `https://nominatim.openstreetmap.org/search?q=monoprix grenoble&addressdetails=1&format=json`
+- lookup by OSM ID (Nominatim, as done by the backend with [OSMPythonTools](https://github.com/mocnik-science/osm-python-tools)): `https://nominatim.openstreetmap.org/lookup?osm_ids=N4825695211&format=json`
+- lookup by OSM ID (Overpass): `https://overpass-api.de/api/interpreter?data=[out:json];node(id:652825274);out;`
+- the same location in Open Prices: `https://prices.openfoodfacts.org/api/v1/locations/osm/NODE/652825274`
+
 ## Data sync
 
 Location data is fetched & stored on creation, and not kept in sync automatically.
