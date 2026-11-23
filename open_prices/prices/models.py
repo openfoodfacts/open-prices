@@ -20,7 +20,7 @@ from open_prices.common import (
 )
 from open_prices.locations import constants as location_constants
 from open_prices.locations.models import Location
-from open_prices.moderation.models import Flag, FlagStatus
+from open_prices.moderation.models import Flag
 from open_prices.prices import constants as price_constants
 from open_prices.prices import validators as price_validators
 from open_prices.products.models import Product
@@ -533,9 +533,7 @@ def price_pre_delete_close_flags(sender, instance, **kwargs):
     """
     Keep the flags (moderation history), but close the open ones
     """
-    instance.flags.filter(status=FlagStatus.OPEN).update(
-        status=FlagStatus.CLOSED, updated=timezone.now()
-    )
+    instance.flags.close()
 
 
 @receiver(signals.post_delete, sender=Price)

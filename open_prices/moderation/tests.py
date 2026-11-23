@@ -143,6 +143,16 @@ class FlagModelQuerySetTest(TestCase):
         self.assertEqual(flag_proof_qs.count(), 1)
         self.assertEqual(flag_proof_qs.first(), self.flag_proof)
 
+    def test_close(self):
+        self.assertEqual(Flag.objects.filter(status=FlagStatus.OPEN).count(), 2)
+        self.assertEqual(Flag.objects.filter_by_content_object(self.price).close(), 1)
+        self.flag_price.refresh_from_db()
+        self.assertEqual(self.flag_price.status, FlagStatus.CLOSED)
+        self.flag_proof.refresh_from_db()
+        self.assertEqual(self.flag_proof.status, FlagStatus.OPEN)
+        # already closed: no-op
+        self.assertEqual(Flag.objects.filter_by_content_object(self.price).close(), 0)
+
 
 class FlagModelPropertyTest(TestCase):
     @classmethod

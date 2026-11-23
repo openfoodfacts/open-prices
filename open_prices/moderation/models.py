@@ -36,6 +36,14 @@ class FlagQuerySet(models.QuerySet):
             content_type=ContentType.objects.get_for_model(obj), object_id=obj.id
         )
 
+    def close(self):
+        """
+        Close the open flags (update() skips auto_now, so set updated)
+        """
+        return self.filter(status=FlagStatus.OPEN).update(
+            status=FlagStatus.CLOSED, updated=timezone.now()
+        )
+
 
 class Flag(models.Model):
     CREATE_FIELDS = [
