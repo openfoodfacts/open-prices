@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.120.0](https://github.com/openfoodfacts/open-prices/compare/v1.119.0...v1.120.0) (2026-11-23)
+
+
+### Features
+
+* **Locations:** API: new filter by country code ([#1582](https://github.com/openfoodfacts/open-prices/issues/1582)) ([d9f14ad](https://github.com/openfoodfacts/open-prices/commit/d9f14ad6b70d803a521b32425d77c0e085fed494))
+
+
+### Bug Fixes
+
+* **Admin:** Prices: fix proof_with_link target and display ([#1565](https://github.com/openfoodfacts/open-prices/issues/1565)) ([121d822](https://github.com/openfoodfacts/open-prices/commit/121d82253e34360a330a328b2f027681030723ef))
+* **Moderation:** keep flags when their price or proof is deleted ([#1461](https://github.com/openfoodfacts/open-prices/issues/1461)) ([7760cb4](https://github.com/openfoodfacts/open-prices/commit/7760cb4a8b8aecaebb585a9e12a0b8c91f6bb609))
+* **Products:** sync: also handle Redis `created` events ([#1590](https://github.com/openfoodfacts/open-prices/issues/1590)) ([096f370](https://github.com/openfoodfacts/open-prices/commit/096f37063df8e3a7afe599a6278c9c9505c3d186))
+* **Products:** sync: reset the fields missing from the OxF product ([#1588](https://github.com/openfoodfacts/open-prices/issues/1588)) ([6446eb7](https://github.com/openfoodfacts/open-prices/commit/6446eb709a1aaf2a54402a95ce1701b91c19d83b))
+
+
+### Documentation
+
+* **Wiki:** move the remaining wiki content (Docker commands, OSM example queries, mobile app) to the docs ([#1592](https://github.com/openfoodfacts/open-prices/issues/1592)) ([07f7446](https://github.com/openfoodfacts/open-prices/commit/07f7446a03e8a59e3c7568ae4b2ad9193f28b8fe))
+
+
+### Technical
+
+* **Locations:** update_task: counts as with_*() queryset methods & bulk_update only changed locations ([#1530](https://github.com/openfoodfacts/open-prices/issues/1530)) ([af0ee79](https://github.com/openfoodfacts/open-prices/commit/af0ee7907d682b5e0179f1546fa1cfaae65c80d2))
+* pin actions ([#1468](https://github.com/openfoodfacts/open-prices/issues/1468)) ([9ccf3e5](https://github.com/openfoodfacts/open-prices/commit/9ccf3e56dd17e7e811d2c4c3000ccab1dc58932b))
+* **Products:** disable OxF sync now that we have Redis for all ([#887](https://github.com/openfoodfacts/open-prices/issues/887)) ([272ef01](https://github.com/openfoodfacts/open-prices/commit/272ef010b5eedde075123f9a319910a17aec4bfe))
+* **Products:** sync: only request the needed fields from the OxF product API ([#1587](https://github.com/openfoodfacts/open-prices/issues/1587)) ([f424b09](https://github.com/openfoodfacts/open-prices/commit/f424b098409bce655a070b2ab0f2cbf1cdf85847))
+* **Products:** update_task: counts as with_*() queryset methods & bulk_update only changed products ([#1529](https://github.com/openfoodfacts/open-prices/issues/1529)) ([69dc9ac](https://github.com/openfoodfacts/open-prices/commit/69dc9ac3cddf14c2e3dbd82642bd0762a3100f96))
+* **Users:** update_task: counts as with_*() queryset methods & bulk_update only changed users ([#1531](https://github.com/openfoodfacts/open-prices/issues/1531)) ([8064c54](https://github.com/openfoodfacts/open-prices/commit/8064c542bf5ddee787270af2fce7a7fcdcf4b028))
+
 ## [1.119.0](https://github.com/openfoodfacts/open-prices/compare/v1.118.0...v1.119.0) (2026-11-22)
 
 
