@@ -51,6 +51,17 @@ class UserQuerySetTest(TestCase):
         user_without_badge = qs.get(user_id=self.user_without_price.user_id)
         self.assertEqual(user_without_badge.badge_count_annotated, 0)
 
+    def test_with_counts_fields(self):
+        self.assertEqual(
+            set(User.objects.with_counts().query.annotations),
+            {f"{field}_annotated" for field in User.ANNOTATED_COUNT_FIELDS},
+        )
+        # the other counts are updated separately
+        self.assertCountEqual(
+            User.ANNOTATED_COUNT_FIELDS + User.BADGE_COUNT_FIELDS + ["challenge_count"],
+            User.COUNT_FIELDS,
+        )
+
 
 class UserPropertyTest(TestCase):
     @classmethod
