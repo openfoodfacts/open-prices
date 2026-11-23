@@ -44,16 +44,16 @@ class LocationQuerySet(CountsQuerySetMixin, models.QuerySet):
         from open_prices.proofs.models import Proof
 
         return self.annotate_counts(
-            Price,
-            "location",
-            {
+            related_model=Price,
+            related_field="location",
+            counts={
                 "price_count": Count("id"),
                 "product_count": Count("product_id", distinct=True),
             },
         ).annotate_counts(
-            Proof,  # drafts excluded
-            "location",
-            {
+            related_model=Proof,  # drafts excluded
+            related_field="location",
+            counts={
                 "user_count": Count("owner", distinct=True),
                 "proof_count": Count("id"),
             },
