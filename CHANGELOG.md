@@ -1,5 +1,64 @@
 # Changelog
 
+## [1.120.0](https://github.com/openfoodfacts/open-prices/compare/v1.119.0...v1.120.0) (2026-11-23)
+
+
+### Features
+
+* **Locations:** API: new filter by country code ([#1582](https://github.com/openfoodfacts/open-prices/issues/1582)) ([d9f14ad](https://github.com/openfoodfacts/open-prices/commit/d9f14ad6b70d803a521b32425d77c0e085fed494))
+
+
+### Bug Fixes
+
+* **Admin:** Prices: fix proof_with_link target and display ([#1565](https://github.com/openfoodfacts/open-prices/issues/1565)) ([121d822](https://github.com/openfoodfacts/open-prices/commit/121d82253e34360a330a328b2f027681030723ef))
+* **Moderation:** keep flags when their price or proof is deleted ([#1461](https://github.com/openfoodfacts/open-prices/issues/1461)) ([7760cb4](https://github.com/openfoodfacts/open-prices/commit/7760cb4a8b8aecaebb585a9e12a0b8c91f6bb609))
+* **Products:** sync: also handle Redis `created` events ([#1590](https://github.com/openfoodfacts/open-prices/issues/1590)) ([096f370](https://github.com/openfoodfacts/open-prices/commit/096f37063df8e3a7afe599a6278c9c9505c3d186))
+* **Products:** sync: reset the fields missing from the OxF product ([#1588](https://github.com/openfoodfacts/open-prices/issues/1588)) ([6446eb7](https://github.com/openfoodfacts/open-prices/commit/6446eb709a1aaf2a54402a95ce1701b91c19d83b))
+
+
+### Documentation
+
+* **Wiki:** move the remaining wiki content (Docker commands, OSM example queries, mobile app) to the docs ([#1592](https://github.com/openfoodfacts/open-prices/issues/1592)) ([07f7446](https://github.com/openfoodfacts/open-prices/commit/07f7446a03e8a59e3c7568ae4b2ad9193f28b8fe))
+
+
+### Technical
+
+* **Locations:** update_task: counts as with_*() queryset methods & bulk_update only changed locations ([#1530](https://github.com/openfoodfacts/open-prices/issues/1530)) ([af0ee79](https://github.com/openfoodfacts/open-prices/commit/af0ee7907d682b5e0179f1546fa1cfaae65c80d2))
+* pin actions ([#1468](https://github.com/openfoodfacts/open-prices/issues/1468)) ([9ccf3e5](https://github.com/openfoodfacts/open-prices/commit/9ccf3e56dd17e7e811d2c4c3000ccab1dc58932b))
+* **Products:** disable OxF sync now that we have Redis for all ([#887](https://github.com/openfoodfacts/open-prices/issues/887)) ([272ef01](https://github.com/openfoodfacts/open-prices/commit/272ef010b5eedde075123f9a319910a17aec4bfe))
+* **Products:** sync: only request the needed fields from the OxF product API ([#1587](https://github.com/openfoodfacts/open-prices/issues/1587)) ([f424b09](https://github.com/openfoodfacts/open-prices/commit/f424b098409bce655a070b2ab0f2cbf1cdf85847))
+* **Products:** update_task: counts as with_*() queryset methods & bulk_update only changed products ([#1529](https://github.com/openfoodfacts/open-prices/issues/1529)) ([69dc9ac](https://github.com/openfoodfacts/open-prices/commit/69dc9ac3cddf14c2e3dbd82642bd0762a3100f96))
+* **Users:** update_task: counts as with_*() queryset methods & bulk_update only changed users ([#1531](https://github.com/openfoodfacts/open-prices/issues/1531)) ([8064c54](https://github.com/openfoodfacts/open-prices/commit/8064c542bf5ddee787270af2fce7a7fcdcf4b028))
+
+## [1.119.0](https://github.com/openfoodfacts/open-prices/compare/v1.118.0...v1.119.0) (2026-11-22)
+
+
+### Features
+
+* **Prices:** API: new filter by location country code ([#1570](https://github.com/openfoodfacts/open-prices/issues/1570)) ([1a1f5c3](https://github.com/openfoodfacts/open-prices/commit/1a1f5c354717fcde9e880d938b9328f6b73e335d))
+* **Proofs:** API: new filter by location country code ([#1571](https://github.com/openfoodfacts/open-prices/issues/1571)) ([c23199d](https://github.com/openfoodfacts/open-prices/commit/c23199d2b69c7d3cd485f2295f31a1bcec468ab8))
+
+
+### Bug Fixes
+
+* **API:** custom_exception_handler: return a 400 instead of a 500 on a ValidationError without field names ([#1574](https://github.com/openfoodfacts/open-prices/issues/1574)) ([9bfc5e9](https://github.com/openfoodfacts/open-prices/commit/9bfc5e9136b89ce2f6cfdeae6e642cfe253a8572))
+* **Locations:** API: case-insensitive country code in list_osm_country_cities ([#1566](https://github.com/openfoodfacts/open-prices/issues/1566)) ([488ceb5](https://github.com/openfoodfacts/open-prices/commit/488ceb5890102a5db4a9fb544f5a96fb0f6f7bd6))
+* **Locations:** API: compare: return a 400 instead of a 500 on an invalid date ([#1569](https://github.com/openfoodfacts/open-prices/issues/1569)) ([d4399f8](https://github.com/openfoodfacts/open-prices/commit/d4399f8e4f47339bf1ec216570c7dbdd383e8bf0))
+* **Prices:** API: location name filter: replace the broken __contains with __like ([#1564](https://github.com/openfoodfacts/open-prices/issues/1564)) ([ae32d5d](https://github.com/openfoodfacts/open-prices/commit/ae32d5d2c0a27f91c59fcfd6911edd17ab7e04a8))
+* **Products:** normalize product_language_code before sending it to OFF ([#1567](https://github.com/openfoodfacts/open-prices/issues/1567)) ([5790014](https://github.com/openfoodfacts/open-prices/commit/57900144568497e3e5f2107ba9e653e4d07070c9))
+
+
+### Documentation
+
+* **AGENTS:** PR conventions (title with a scope, small PRs, follow the PR template) ([#1575](https://github.com/openfoodfacts/open-prices/issues/1575)) ([e869d48](https://github.com/openfoodfacts/open-prices/commit/e869d4858399c735a3852bafa5807bf22784fe4f))
+
+
+### Technical
+
+* **Products:** validate the OFF actions payload with serializers ([#1580](https://github.com/openfoodfacts/open-prices/issues/1580)) ([6be2836](https://github.com/openfoodfacts/open-prices/commit/6be2836bcb2b60cd4d1d1f9c49e851d37ea61806))
+* **Proofs:** API: price tag filters: use Meta.fields for the standard lookups ([#1577](https://github.com/openfoodfacts/open-prices/issues/1577)) ([6bba5bb](https://github.com/openfoodfacts/open-prices/commit/6bba5bb1ca82a0c351b41a53c230902ae558573a))
+* **Proofs:** API: receipt item filters: use Meta.fields for the standard lookups ([#1578](https://github.com/openfoodfacts/open-prices/issues/1578)) ([58ff051](https://github.com/openfoodfacts/open-prices/commit/58ff05198ec51a0dd2bfc3d7f9d3228a273aa06f))
+
 ## [1.118.0](https://github.com/openfoodfacts/open-prices/compare/v1.117.0...v1.118.0) (2026-11-21)
 
 

@@ -21,15 +21,43 @@ from django_q.tasks import async_task
 from simple_history.models import HistoricalRecords
 
 from open_prices.common import constants, history, utils
+from open_prices.common.counts import (
+    CountsQuerySetMixin,
+    bulk_update_counts,
+    update_counts,
+)
 from open_prices.common.utils import truncate_decimal
 from open_prices.locations import constants as location_constants
 from open_prices.locations import utils as location_utils
 from open_prices.locations import validators as location_validators
 
 
-class LocationQuerySet(models.QuerySet):
+class LocationQuerySet(CountsQuerySetMixin, models.QuerySet):
     def has_type_osm(self):
         return self.filter(type=location_constants.TYPE_OSM)
+
+    def with_counts(self):
+        """
+        All the COUNT_FIELDS, annotated as "<count field>_annotated"
+        """
+        from open_prices.prices.models import Price
+        from open_prices.proofs.models import Proof
+
+        return self.annotate_counts(
+            related_model=Price,
+            related_field="location",
+            counts={
+                "price_count": Count("id"),
+                "product_count": Count("product_id", distinct=True),
+            },
+        ).annotate_counts(
+            related_model=Proof,  # drafts excluded
+            related_field="location",
+            counts={
+                "user_count": Count("owner", distinct=True),
+                "proof_count": Count("id"),
+            },
+        )
 
     def has_type_online(self):
         return self.filter(type=location_constants.TYPE_ONLINE)
@@ -305,12 +333,9 @@ class Location(models.Model):
     def update_task(cls):
         """
         - Update location field counts
+        - Only the locations with changed counts are updated
         """
-        for location in cls.objects.all():
-            location.update_price_count()
-            location.update_user_count()
-            location.update_product_count()
-            location.update_proof_count()
+        return bulk_update_counts(cls.objects.with_counts(), cls.COUNT_FIELDS)
 
     @property
     def is_type_osm(self) -> bool:
@@ -340,25 +365,8 @@ class Location(models.Model):
         self.price_count = self.prices.count()
         self.save(update_fields=["price_count"])
 
-    def update_user_count(self):
-        from open_prices.proofs.models import Proof
-
-        self.user_count = Proof.objects.filter(
-            location=self
-        ).calculate_field_distinct_count("owner")
-        self.save(update_fields=["user_count"])
-
-    def update_product_count(self):
-        from open_prices.prices.models import Price
-
-        self.product_count = Price.objects.filter(
-            location=self
-        ).calculate_field_distinct_count("product_id")
-        self.save(update_fields=["product_count"])
-
-    def update_proof_count(self):
-        self.proof_count = self.proofs.count()
-        self.save(update_fields=["proof_count"])
+    def update_counts(self):
+        update_counts(self, self.COUNT_FIELDS)
 
 
 @receiver(signals.post_save, sender=Location)

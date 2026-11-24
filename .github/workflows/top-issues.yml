@@ -2,7 +2,7 @@ name: Top issues action
 
 on:
   schedule:
-  - cron:  '0 0 */1 * *'
+  - cron: "0 0 */1 * *"
 #on:
 #  issues:
 #    types: [opened, transferred]
@@ -23,7 +23,7 @@ jobs:
     if: github.repository_owner == 'openfoodfacts'
     steps:
     - name: Run top issues action
-      uses: rickstaa/top-issues-action@v1
+      uses: rickstaa/top-issues-action@v1.3.101
       env:
         github_token: ${{ secrets.GITHUB_TOKEN }}
       with:

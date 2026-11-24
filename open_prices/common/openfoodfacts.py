@@ -133,15 +133,21 @@ def authenticate(username, password):
 
 
 def build_product_dict(product: JSONType, flavor) -> JSONType:
+    from open_prices.products.models import Product
+
     # Step 1: init
     product_dict = dict()
     product_dict["source"] = flavor
     product_dict["source_last_synced"] = timezone.now()
 
     # Step 2: build the product dict
+    # fields missing from the product are reset to their default value,
+    # to avoid keeping stale values (e.g. food scores after a move to OBF)
     for off_field in OFF_CREATE_FIELDS:
         if off_field in product:
             product_dict[off_field] = product[off_field]
+        else:
+            product_dict[off_field] = Product._meta.get_field(off_field).get_default()
 
     # Step 3: cleanup
     # fix product_quantity
@@ -199,7 +205,8 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
         version=APIVersion.v2,
         environment=Environment[settings.ENVIRONMENT],
     )
-    return client.product.get(code)
+    # only request the fields we store (the full product is ~30x bigger)
+    return client.product.get(code, fields=OFF_CREATE_FIELDS)
 
 
 def get_product_dict(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
@@ -415,6 +422,21 @@ def barcode_fix_short_codes_from_usa(barcode: str) -> str:
         if barcode_is_valid(barcode_temp):
             return barcode_temp
     return barcode
+
+
+def normalize_language_code(language_code: str | None) -> str | None:
+    """
+    OFF expects 2-letter language codes
+    e.g. "fr" -> "fr", "nl_BE" -> "nl", "pt-BR" -> "pt"
+
+    :return: the 2-letter language code, or None if invalid
+    """
+    if not language_code:
+        return None
+    language_code = re.split(r"[_-]", language_code.strip().lower())[0]
+    if re.fullmatch(r"[a-z]{2}", language_code):
+        return language_code
+    return None
 
 
 def country_code_to_Country(country_code: str) -> Country:

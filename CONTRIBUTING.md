@@ -40,6 +40,22 @@ uv run --env-file .env python manage.py test
 
 ## Other useful commands
 
+### Docker
+
+```bash
+# logs
+docker compose logs -f api
+docker compose logs -f scheduler
+docker compose logs -f update-listener
+
+# Django shell & database
+docker compose exec api uv run python manage.py shell_plus
+docker compose exec postgres psql -U postgres
+
+# restart
+docker compose restart nginx
+```
+
 ### List packages
 
 ```bash

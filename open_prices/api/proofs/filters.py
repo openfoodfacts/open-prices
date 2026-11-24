@@ -24,6 +24,9 @@ class ProofFilter(django_filters.FilterSet):
         field_name="location__type",
         choices=location_constants.TYPE_CHOICES,
     )
+    location__osm_address_country_code = django_filters.CharFilter(
+        field_name="location__osm_address_country_code", lookup_expr="iexact"
+    )
     tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
     tags__not_contains = ArrayFieldElementContainsFilter(
         field_name="tags", exclude=True
@@ -43,7 +46,6 @@ class ProofFilter(django_filters.FilterSet):
             "location_osm_id": ["exact"],
             "location_osm_type": ["exact"],
             "location_id": ["exact", "in", "isnull"],
-            "location__osm_address_country_code": ["exact"],
             "date": ["exact", "gt", "gte", "lt", "lte", "year", "month"],
             "currency": ["exact"],
             "ready_for_price_tag_validation": ["exact"],
@@ -55,50 +57,33 @@ class ProofFilter(django_filters.FilterSet):
 
 
 class PriceTagFilter(django_filters.FilterSet):
-    status__isnull = django_filters.BooleanFilter(
-        field_name="status", lookup_expr="isnull"
-    )
-    prediction_count__gte = django_filters.NumberFilter(
-        field_name="prediction_count", lookup_expr="gte"
-    )
-    prediction_count__lte = django_filters.NumberFilter(
-        field_name="prediction_count", lookup_expr="lte"
+    proof__location__osm_address_country_code = django_filters.CharFilter(
+        field_name="proof__location__osm_address_country_code", lookup_expr="iexact"
     )
     tags__contains = ArrayFieldElementContainsFilter(field_name="tags")
     tags__not_contains = ArrayFieldElementContainsFilter(
         field_name="tags", exclude=True
     )
-    created__gte = django_filters.DateTimeFilter(
-        field_name="created", lookup_expr="gte"
-    )
-    created__lte = django_filters.DateTimeFilter(
-        field_name="created", lookup_expr="lte"
-    )
 
     class Meta:
         model = PriceTag
-        fields = [
-            "proof_id",
-            "proof__location__osm_address_country_code",
-            "proof__owner",
-            "proof__ready_for_price_tag_validation",
-            "price_id",
-            "status",
-            "prediction_count",
-        ]
+        fields = {
+            "proof_id": ["exact"],
+            "proof__owner": ["exact"],
+            "proof__ready_for_price_tag_validation": ["exact"],
+            "price_id": ["exact"],
+            "status": ["exact", "isnull"],
+            "prediction_count": ["exact", "gte", "lte"],
+            "created": ["gte", "lte"],
+        }
 
 
 class ReceiptItemFilter(django_filters.FilterSet):
-    status__isnull = django_filters.BooleanFilter(
-        field_name="status", lookup_expr="isnull"
-    )
-    created__gte = django_filters.DateTimeFilter(
-        field_name="created", lookup_expr="gte"
-    )
-    created__lte = django_filters.DateTimeFilter(
-        field_name="created", lookup_expr="lte"
-    )
-
     class Meta:
         model = ReceiptItem
-        fields = ["proof_id", "proof__owner", "status"]
+        fields = {
+            "proof_id": ["exact"],
+            "proof__owner": ["exact"],
+            "status": ["exact", "isnull"],
+            "created": ["gte", "lte"],
+        }

@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from freezegun import freeze_time
@@ -13,6 +14,7 @@ from open_prices.common.authentication import (
     get_token_from_header,
     has_token_from_cookie_or_header,
 )
+from open_prices.common.middleware import custom_exception_handler
 from open_prices.common.utils import (
     is_date_in_future,
     is_float,
@@ -136,6 +138,22 @@ class OpenFoodFactsTest(TestCase):
                     BARCODE_TUPLE[1],
                 )
 
+    def test_normalize_language_code(self):
+        for language_code, expected_result in [
+            ("fr", "fr"),
+            ("FR", "fr"),
+            ("nl_BE", "nl"),
+            ("pt-BR", "pt"),
+            ("ach", None),
+            ("", None),
+            (None, None),
+        ]:
+            with self.subTest(language_code=language_code):
+                self.assertEqual(
+                    common_openfoodfacts.normalize_language_code(language_code),
+                    expected_result,
+                )
+
     def test_get_smoothie_app_version(self):
         for source, expected_result in [
             (None, (None, None)),
@@ -196,6 +214,22 @@ class OpenFoodFactsTest(TestCase):
         ]:
             result = common_openfoodfacts.is_smoothie_app_version_leq_4_20(source)
             self.assertEqual(result, expected_result)
+
+
+class CustomExceptionHandlerTest(TestCase):
+    def test_django_validation_error(self):
+        for exc, data in [
+            (ValidationError({"type": ["invalid"]}), {"type": ["invalid"]}),
+            (ValidationError("invalid"), {"detail": ["invalid"]}),
+            (
+                ValidationError(["invalid 1", "invalid 2"]),
+                {"detail": ["invalid 1", "invalid 2"]},
+            ),
+        ]:
+            with self.subTest(exc=exc):
+                response = custom_exception_handler(exc, {})
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.data, data)
 
 
 class UtilsTest(TestCase):
@@ -322,3 +356,22 @@ class TaskSchedulesTest(TestCase):
         self.assertEqual(
             dict(Schedule.objects.values_list("name", "next_run")), next_runs
         )
+
+
+class CountsTest(TestCase):
+    def test_bulk_update_counts(self):
+        from django.db.models import Value
+
+        from open_prices.common.counts import bulk_update_counts
+        from open_prices.products.factories import ProductFactory
+        from open_prices.products.models import Product
+
+        products = [ProductFactory(code=f"012345678910{i}") for i in range(3)]
+        Product.objects.filter(id=products[0].id).update(price_count=5)
+        queryset = Product.objects.annotate(price_count_annotated=Value(0))
+        # batch_size=1: one batch per product
+        self.assertEqual(bulk_update_counts(queryset, ["price_count"], batch_size=1), 1)
+        products[0].refresh_from_db()
+        self.assertEqual(products[0].price_count, 0)
+        # nothing changed
+        self.assertEqual(bulk_update_counts(queryset, ["price_count"], batch_size=2), 0)

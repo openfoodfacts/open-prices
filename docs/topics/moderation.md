@@ -32,6 +32,8 @@ A few contributors have moderation rights (`is_moderator` on the `User`, set via
 
 Before editing or deleting an object, moderators can check its [History](history.md).
 
+When a flagged `Price` or `Proof` is deleted, its flags are kept (moderation history): the open ones are closed, and their `object_id` now points to a deleted object.
+
 ## Automated rules 🤖
 
 Some moderation runs automatically, as scheduled tasks (see `open_prices/common/tasks.py`):

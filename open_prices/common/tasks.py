@@ -145,7 +145,7 @@ CRON_SCHEDULES = {
     # every start of the week
     "update_price_category_tag_task": ("15 2 * * 1", {}),
     "update_location_counts_task": ("20 2 * * 1", {}),
-    "update_product_counts_task": ("30 2 * * 1", {"timeout": 10 * 60 * 60}),
+    "update_product_counts_task": ("30 2 * * 1", {}),
     # every 5 minutes
     "proof_draft_cleanup_task": ("*/5 * * * *", {}),
 }

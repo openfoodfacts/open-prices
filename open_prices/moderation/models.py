@@ -31,6 +31,19 @@ class FlagQuerySet(models.QuerySet):
         model_name_list_lower = [m.lower() for m in model_name_list]
         return self.filter(content_type__model__in=model_name_list_lower)
 
+    def filter_by_content_object(self, obj):
+        return self.filter(
+            content_type=ContentType.objects.get_for_model(obj), object_id=obj.id
+        )
+
+    def close(self):
+        """
+        Close the open flags (update() skips auto_now, so set updated)
+        """
+        return self.filter(status=FlagStatus.OPEN).update(
+            status=FlagStatus.CLOSED, updated=timezone.now()
+        )
+
 
 class Flag(models.Model):
     CREATE_FIELDS = [

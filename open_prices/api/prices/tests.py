@@ -412,10 +412,21 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + f"?location__type={location_constants.TYPE_ONLINE}"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
-        # location__osm_address_country_code
-        url = self.url + "?location__osm_address_country_code=FR"
+        # location__osm_name__like
+        url = self.url + "?location__osm_name__like=monop"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 1)
+        # location__osm_name__contains: removed (__contains is for arrays), ignored
+        url = self.url + "?location__osm_name__contains=monop"
+        response = self.client.get(url)
+        self.assertEqual(
+            response.data["total"], self.client.get(self.url).data["total"]
+        )
+        # location__osm_address_country_code
+        for country_code in ["FR", "fr"]:
+            url = self.url + f"?location__osm_address_country_code={country_code}"
+            response = self.client.get(url)
+            self.assertEqual(response.data["total"], 1)
         url = self.url + "?location__osm_address_country_code=CH"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)

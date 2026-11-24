@@ -5,7 +5,6 @@ A list of rules, to clean up the data
 import logging
 from datetime import timedelta
 
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.db.models.functions import Length
 from django.utils import timezone
@@ -110,17 +109,13 @@ def create_flags_from_price_outliers(only_yesterday: bool = True):
     )
     outliers = list(find_outliers(target_date=target_date))
 
-    # As we cannot directly filter per content type without adding a GenericRelation
-    # to the Price model, we simply fetch the content type associated with the price
-    # table here
-    price_content_type = ContentType.objects.get(app_label="prices", model="price")
     for price in outliers:
         is_higher = price.price >= price.median
-        if Flag.objects.filter(
-            object_id=price.id,
-            content_type=price_content_type,
-            reason=FlagReason.WRONG_PRICE_VALUE,
-        ).count():
+        if (
+            Flag.objects.filter_by_content_object(price)
+            .filter(reason=FlagReason.WRONG_PRICE_VALUE)
+            .exists()
+        ):
             continue
         flag = Flag.objects.create(
             content_object=price,
