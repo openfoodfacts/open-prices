@@ -23,7 +23,7 @@ workflows:
         - 'actions/cache@v6.1.0'
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-python@v7.1.0'
-        - 'astral-sh/setup-uv@v7.6.0'
+        - 'astral-sh/setup-uv@v10.4.0'
         - 'jamesives/github-pages-deploy-action@v4.9.0'
     '.github/workflows/github-projects.yml':
         - 'actions/add-to-project@v2.0.1'
@@ -82,9 +82,9 @@ dependencies:
         commit: 'sha1-0ff4204d59e8e51228ff73bce53f80d53301dee2'
         owner_id: 21979
         repo_id: 186202082
-    'astral-sh/setup-uv@v7.6.0':
-        ref: 'v7.6.0'
-        commit: 'sha1-37802adc94f370d6bfd71619e3f0bf239e1f3b78'
+    'astral-sh/setup-uv@v10.4.0':
+        ref: 'v10.4.0'
+        commit: 'sha1-1db35dd8eee11c5894872e0b383ae6c406cf738d'
         owner_id: 115962839
         repo_id: 846733598
     'docker/build-push-action@v7.4.0':
