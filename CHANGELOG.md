@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.121.0](https://github.com/openfoodfacts/open-prices/compare/v1.120.0...v1.121.0) (2026-11-24)
+
+
+### Features
+
+* **Prices:** API: new filter by product brand ([#1604](https://github.com/openfoodfacts/open-prices/issues/1604)) ([ffcfccf](https://github.com/openfoodfacts/open-prices/commit/ffcfccf73237d5e5ab948fbad6001d7e93c66e6b))
+* **Prices:** API: new filter by product label ([#1605](https://github.com/openfoodfacts/open-prices/issues/1605)) ([76d5179](https://github.com/openfoodfacts/open-prices/commit/76d51799b46f542479d8b868b75258b2dfe7a95f))
+
+
+### Bug Fixes
+
+* **Products:** import_product_db: skip products from another flavor ([#1608](https://github.com/openfoodfacts/open-prices/issues/1608)) ([259ece6](https://github.com/openfoodfacts/open-prices/commit/259ece6cf56811f43c05907206acf34365922592))
+
+
+### Technical
+
+* **Github Actions:** use double quotes in the workflows ([#1596](https://github.com/openfoodfacts/open-prices/issues/1596)) ([6dc4dfb](https://github.com/openfoodfacts/open-prices/commit/6dc4dfb19d6b44c27a6f755b934844d3e019cd93))
+* **Github Actions:** use official workflow lockfile (actions.lock) ([#1593](https://github.com/openfoodfacts/open-prices/issues/1593)) ([13a4f20](https://github.com/openfoodfacts/open-prices/commit/13a4f2015981be8a2750fec9fb648a3d876a5c62))
+* **Github Actions:** verify the workflow lockfile ([#1594](https://github.com/openfoodfacts/open-prices/issues/1594)) ([49c522a](https://github.com/openfoodfacts/open-prices/commit/49c522a44c5934077051f368d65e02e6b4489a1b))
+* **Labeler:** fix concurrency (group by PR number) ([#1597](https://github.com/openfoodfacts/open-prices/issues/1597)) ([28e8885](https://github.com/openfoodfacts/open-prices/commit/28e888530d201b83121a5df4e0390523e920b2d9))
+
 ## [1.120.0](https://github.com/openfoodfacts/open-prices/compare/v1.119.0...v1.120.0) (2026-11-23)
 
 
