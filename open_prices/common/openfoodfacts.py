@@ -45,6 +45,14 @@ OFF_CREATE_FIELDS = [
 ]
 OFF_UPDATE_FIELDS = OFF_CREATE_FIELDS + ["source", "source_last_synced"]
 
+# the product_type of the products of each flavor (in the dumps & Redis events)
+FLAVOR_PRODUCT_TYPE = {
+    Flavor.off: "food",
+    Flavor.obf: "beauty",
+    Flavor.opff: "petfood",
+    Flavor.opf: "product",
+}
+
 
 # Taxonomy mapping generation takes ~200ms, so we cache it to avoid
 # recomputing it for each request.
@@ -286,6 +294,12 @@ def import_product_db(
             continue
         seen_codes.add(product_code)
 
+        # Skip products of another product_type: stale copies of products
+        # moved to another flavor (some products have no product_type)
+        product_type = product.get("product_type")
+        if product_type and product_type != FLAVOR_PRODUCT_TYPE.get(flavor):
+            continue
+
         # Some products have no "lang" field (especially non-OFF products)
         product_lang = product.get("lang", product.get("lc", "en"))
         # Store images & last_modified_t
@@ -336,7 +350,8 @@ def import_product_db(
             ).only("id", *OFF_CREATE_FIELDS)
             # should be at most one (Product.code field is unique)
             existing_product_filter_qs_first = existing_product_filter_qs.first()
-            if force_update:
+            # (the product can be missing, e.g. if it exists with another flavor)
+            if force_update and existing_product_filter_qs_first:
                 # at least 1 OFF_CREATE_FIELDS field should be different to update the product
                 if not next(
                     (
