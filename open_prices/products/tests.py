@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
-from openfoodfacts import Flavor
+from openfoodfacts import APIVersion, Flavor
 from openfoodfacts.redis import ProductUpdateEvent
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
@@ -533,9 +533,66 @@ class GetProductTest(TestCase):
     def test_get_product_only_requests_needed_fields(self, mock_api):
         common_openfoodfacts.get_product("0123456789100", Flavor.obf)
 
+        # API v3.5: same product schema as the JSONL exports
+        self.assertEqual(mock_api.call_args.kwargs["version"], APIVersion.v3_5)
         mock_api.return_value.product.get.assert_called_once_with(
-            "0123456789100", fields=common_openfoodfacts.OFF_CREATE_FIELDS
+            "0123456789100", fields=common_openfoodfacts.OFF_API_FIELDS
         )
+        # renamed fields are requested with their recent name
+        self.assertIn("environmental_score_grade", common_openfoodfacts.OFF_API_FIELDS)
+        self.assertNotIn("ecoscore_grade", common_openfoodfacts.OFF_API_FIELDS)
+
+    @patch("open_prices.common.openfoodfacts.API")
+    def test_get_product_dict_not_found(self, mock_api):
+        # the OFF API v3.5 returns a 404 for unknown & invalid barcodes
+        # (the openfoodfacts library then returns None)
+        mock_api.return_value.product.get.return_value = None
+
+        self.assertEqual(common_openfoodfacts.get_product_dict("0123456789100"), {})
+
+
+class BuildProductDictTest(TestCase):
+    def test_build_product_dict_environmental_score_grade(self):
+        # recent product schema (API v3.5 & JSONL exports)
+        product_dict = common_openfoodfacts.build_product_dict(
+            {"code": "0123456789100", "environmental_score_grade": "b"}, Flavor.off
+        )
+        self.assertEqual(product_dict["ecoscore_grade"], "b")
+        self.assertNotIn("environmental_score_grade", product_dict)
+        # both names: the recent one wins
+        product_dict = common_openfoodfacts.build_product_dict(
+            {
+                "code": "0123456789100",
+                "ecoscore_grade": "c",
+                "environmental_score_grade": "b",
+            },
+            Flavor.off,
+        )
+        self.assertEqual(product_dict["ecoscore_grade"], "b")
+
+    def test_build_product_dict_ecoscore_grade(self):
+        # old product schema
+        product_dict = common_openfoodfacts.build_product_dict(
+            {"code": "0123456789100", "ecoscore_grade": "c"}, Flavor.off
+        )
+        self.assertEqual(product_dict["ecoscore_grade"], "c")
+        # missing: reset to the default value
+        product_dict = common_openfoodfacts.build_product_dict(
+            {"code": "0123456789100"}, Flavor.off
+        )
+        self.assertIsNone(product_dict["ecoscore_grade"])
+
+    def test_build_product_dict_brands_tags(self):
+        # brands_tags are kept as is (with the "xx:" prefix in the recent schema)
+        product_dict = common_openfoodfacts.build_product_dict(
+            {
+                "code": "0123456789100",
+                "brands": "Albert Heijn",
+                "brands_tags": ["xx:albert-heijn"],
+            },
+            Flavor.off,
+        )
+        self.assertEqual(product_dict["brands_tags"], ["xx:albert-heijn"])
 
 
 class TestProductModel(TestCase):
