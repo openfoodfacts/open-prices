@@ -325,6 +325,14 @@ class PriceListFilterApiTest(TestCase):
         url = self.url + "?product__brands_tags__contains=unknown-brand"
         response = self.client.get(url)
         self.assertEqual(response.data["total"], 0)
+        # product__labels_tags__contains (vs labels_tags__contains: category prices)
+        url = self.url + "?product__labels_tags__contains=en:organic"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 1)
+        self.assertEqual(response.data["items"][0]["product_code"], "8001505005707")
+        url = self.url + "?product__labels_tags__contains=unknown-label"
+        response = self.client.get(url)
+        self.assertEqual(response.data["total"], 0)
 
     def test_price_list_filter_by_tags(self):
         self.assertEqual(Price.objects.count(), 5)

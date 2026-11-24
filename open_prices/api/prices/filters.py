@@ -78,6 +78,9 @@ class PriceFilter(django_filters.FilterSet):
     product__brands_tags__contains = ArrayFieldElementContainsFilter(
         field_name="product__brands_tags"
     )
+    product__labels_tags__contains = ArrayFieldElementContainsFilter(
+        field_name="product__labels_tags"
+    )
     labels_tags__contains = ArrayFieldElementContainsFilter(field_name="labels_tags")
     origins_tags__contains = ArrayFieldElementContainsFilter(field_name="origins_tags")
     location__type = django_filters.ChoiceFilter(
