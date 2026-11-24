@@ -44,6 +44,15 @@ OFF_CREATE_FIELDS = [
     "unique_scans_n",
 ]
 OFF_UPDATE_FIELDS = OFF_CREATE_FIELDS + ["source", "source_last_synced"]
+# OFF fields renamed in the recent product schemas (API v3.1+ & JSONL exports)
+# {off_field: product_field}
+OFF_RENAMED_FIELDS = {
+    "environmental_score_grade": "ecoscore_grade",
+}
+# fields requested to the OFF API (with their recent names)
+OFF_API_FIELDS = [
+    field for field in OFF_CREATE_FIELDS if field not in OFF_RENAMED_FIELDS.values()
+] + list(OFF_RENAMED_FIELDS.keys())
 
 # the product_type of the products of each flavor (in the dumps & Redis events)
 FLAVOR_PRODUCT_TYPE = {
@@ -156,6 +165,10 @@ def build_product_dict(product: JSONType, flavor) -> JSONType:
             product_dict[off_field] = product[off_field]
         else:
             product_dict[off_field] = Product._meta.get_field(off_field).get_default()
+    # renamed fields: the recent name wins over the old one (if both are present)
+    for off_field, product_field in OFF_RENAMED_FIELDS.items():
+        if off_field in product:
+            product_dict[product_field] = product[off_field]
 
     # Step 3: cleanup
     # fix product_quantity
@@ -210,11 +223,13 @@ def get_product(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
         password=None,
         country=Country.world,
         flavor=flavor,
-        version=APIVersion.v2,
+        # same product schema as the JSONL exports (see import_product_db)
+        # e.g. brands_tags with the "xx:" prefix
+        version=APIVersion.v3_5,
         environment=Environment[settings.ENVIRONMENT],
     )
     # only request the fields we store (the full product is ~30x bigger)
-    return client.product.get(code, fields=OFF_CREATE_FIELDS)
+    return client.product.get(code, fields=OFF_API_FIELDS)
 
 
 def get_product_dict(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
