@@ -3,6 +3,8 @@
 # Docs: https://gh.io/actions-lockfile
 version: 'v0.0.3'
 workflows:
+    '.github/workflows/actions-lock.yml':
+        - 'actions/checkout@v7.0.1'
     '.github/workflows/auto-assign-pr.yml':
         - 'toshimaru/auto-author-assign@v3.1.1'
     '.github/workflows/codeql.yml':
