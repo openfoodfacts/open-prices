@@ -72,6 +72,20 @@ def base_upload(request: Request, draft: bool = False) -> Response:
             {"file": ["This field is required."]},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    if file.content_type and file.content_type.startswith("image"):
+        try:
+            PIL.Image.open(file)
+        except OSError:
+            return Response(
+                {
+                    "file": [
+                        "Upload a valid image. The file is not an image or is corrupted."
+                    ]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        finally:
+            file.seek(0)
     # NOTE: image will be stored even if the proof serializer fails...
     file_path, mimetype, image_thumb_path = store_file(file)
     image_md5_hash = compute_file_md5(file)
