@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -307,3 +309,18 @@ class ProductOffUploadImageApiTest(TestCase):
         #     content_type="application/json",
         # )
         # self.assertEqual(response.status_code, 200)
+
+    @patch(
+        "open_prices.api.products.views.upload_product_image_in_off",
+        return_value={"status": "ok"},
+    )
+    def test_product_off_upload_image_large_payload(self, mock_upload):
+        large_payload = {"image_data_base64": "a" * (3 * 1024 * 1024)}
+        response = self.client.patch(
+            self.url,
+            large_payload,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_upload.assert_called_once()
