@@ -336,7 +336,8 @@ def import_product_db(
             ).only("id", *OFF_CREATE_FIELDS)
             # should be at most one (Product.code field is unique)
             existing_product_filter_qs_first = existing_product_filter_qs.first()
-            if force_update:
+            # (the product can be missing, e.g. if it exists with another flavor)
+            if force_update and existing_product_filter_qs_first:
                 # at least 1 OFF_CREATE_FIELDS field should be different to update the product
                 if not next(
                     (

@@ -1,11 +1,13 @@
 import datetime
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from freezegun import freeze_time
+from openfoodfacts import Flavor
 from rest_framework.test import APIRequestFactory
 
 from open_prices.common import openfoodfacts as common_openfoodfacts
@@ -23,6 +25,8 @@ from open_prices.common.utils import (
     url_add_missing_https,
     url_keep_only_domain,
 )
+from open_prices.products.factories import ProductFactory
+from open_prices.products.models import Product
 from open_prices.users.factories import SessionFactory
 
 PRICE_8001505005707 = {
@@ -216,6 +220,49 @@ class OpenFoodFactsTest(TestCase):
             self.assertEqual(result, expected_result)
 
 
+class ImportProductDbTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product_off = ProductFactory(
+            code="3017620422003", source=Flavor.off, product_name="OFF product"
+        )
+        cls.product_opff = ProductFactory(
+            code="8001505005707",
+            source=Flavor.opff,
+            product_name="OPFF product",
+            creator=None,
+        )
+
+    def test_import_product_db_force_update(self):
+        last_modified_t = int(
+            datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC).timestamp()
+        )
+        dataset = [
+            # same code as an existing product from another flavor: skipped
+            {
+                "code": "3017620422003",
+                "product_name": "OPFF product with the OFF code",
+                "last_modified_t": last_modified_t,
+            },
+            # existing product from the same flavor: updated
+            {
+                "code": "8001505005707",
+                "product_name": "OPFF product",
+                "creator": "open-prices",
+                "last_modified_t": last_modified_t,
+            },
+        ]
+        with patch.object(common_openfoodfacts, "ProductDataset", return_value=dataset):
+            common_openfoodfacts.import_product_db(
+                flavor=Flavor.opff, force_update=True
+            )
+        self.product_off.refresh_from_db()
+        self.assertEqual(self.product_off.source, Flavor.off)
+        self.assertEqual(self.product_off.product_name, "OFF product")
+        self.product_opff.refresh_from_db()
+        self.assertEqual(self.product_opff.creator, "open-prices")
+
+
 class CustomExceptionHandlerTest(TestCase):
     def test_django_validation_error(self):
         for exc, data in [
@@ -364,7 +411,6 @@ class CountsTest(TestCase):
 
         from open_prices.common.counts import bulk_update_counts
         from open_prices.products.factories import ProductFactory
-        from open_prices.products.models import Product
 
         products = [ProductFactory(code=f"012345678910{i}") for i in range(3)]
         Product.objects.filter(id=products[0].id).update(price_count=5)
