@@ -39,3 +39,7 @@ see `open_prices/common/openfoodfacts.py`
 - Live, with Redis: Open Prices listens to the Product Opener `product_updates` stream (all 4 flavors). On each `created` / `updated` event, the product is re-fetched from the API of its flavor (`deleted` removes it). See `open_prices/products/management/commands/run_update_listener.py`
 - On product creation in Open Prices (e.g. a price for an unknown barcode), the product data is fetched from the Open Food Facts API
 - The daily batch imports of the OxF dumps (`import_product_db`) are disabled in production, but can be re-enabled with the `ENABLE_IMPORT_*_DB_TASK` env variables (e.g. for a full resync)
+- The product data is fetched with the OxF API v3.5, i.e. the same product schema as the dumps. Notes:
+  - `brands_tags` have the `xx:` prefix (e.g. `xx:albert-heijn`): brands are a language-less taxonomy in OxF
+  - the eco-score is `environmental_score_grade` in OxF (renamed in 2024/12), stored in our `ecoscore_grade` field
+- To force a full resync (e.g. after a product schema change), run from a Django shell: `import_product_db(flavor=..., force_update=True)` for each flavor (and `obsolete=True` for OFF)
