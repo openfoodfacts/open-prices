@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.121.1](https://github.com/openfoodfacts/open-prices/compare/v1.121.0...v1.121.1) (2026-11-24)
+
+
+### Bug Fixes
+
+* **Products:** sync on the OFF API v3.5 (instead of v2) (fixes `ecoscore_grade` & `labels_tags`) ([#1610](https://github.com/openfoodfacts/open-prices/issues/1610)) ([93fd2b4](https://github.com/openfoodfacts/open-prices/commit/93fd2b4fbd4012b95b705057686a1d2650dd67fe))
+
 ## [1.121.0](https://github.com/openfoodfacts/open-prices/compare/v1.120.0...v1.121.0) (2026-11-24)
 
 
