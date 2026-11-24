@@ -75,6 +75,9 @@ class PriceFilter(django_filters.FilterSet):
         field_name="product__categories_tags",
         lookup_expr="overlap",
     )
+    product__brands_tags__contains = ArrayFieldElementContainsFilter(
+        field_name="product__brands_tags"
+    )
     labels_tags__contains = ArrayFieldElementContainsFilter(field_name="labels_tags")
     origins_tags__contains = ArrayFieldElementContainsFilter(field_name="origins_tags")
     location__type = django_filters.ChoiceFilter(
