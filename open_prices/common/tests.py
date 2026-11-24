@@ -238,17 +238,32 @@ class ImportProductDbTest(TestCase):
             datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC).timestamp()
         )
         dataset = [
-            # same code as an existing product from another flavor: skipped
+            # existing product from another flavor: skipped
             {
                 "code": "3017620422003",
+                "product_type": "petfood",
                 "product_name": "OPFF product with the OFF code",
                 "last_modified_t": last_modified_t,
             },
             # existing product from the same flavor: updated
             {
                 "code": "8001505005707",
+                "product_type": "petfood",
                 "product_name": "OPFF product",
                 "creator": "open-prices",
+                "last_modified_t": last_modified_t,
+            },
+            # stale copy of a product moved to another flavor: skipped
+            {
+                "code": "5449000000996",
+                "product_type": "beauty",
+                "product_name": "OBF product",
+                "last_modified_t": last_modified_t,
+            },
+            # new product without product_type: created
+            {
+                "code": "3274080005003",
+                "product_name": "New OPFF product",
                 "last_modified_t": last_modified_t,
             },
         ]
@@ -261,6 +276,8 @@ class ImportProductDbTest(TestCase):
         self.assertEqual(self.product_off.product_name, "OFF product")
         self.product_opff.refresh_from_db()
         self.assertEqual(self.product_opff.creator, "open-prices")
+        self.assertFalse(Product.objects.filter(code="5449000000996").exists())
+        self.assertEqual(Product.objects.get(code="3274080005003").source, Flavor.opff)
 
 
 class CustomExceptionHandlerTest(TestCase):
