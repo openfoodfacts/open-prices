@@ -594,6 +594,60 @@ class ProofUploadApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
+        # Test online stores deduplication (issue #1474):
+        # Two online locations without OSM identifiers
+        location_online_a = LocationFactory(
+            type=location_constants.TYPE_ONLINE,
+            website_url="https://store-a.example.com",
+        )
+        location_online_b = LocationFactory(
+            type=location_constants.TYPE_ONLINE,
+            website_url="https://store-b.example.com",
+        )
+
+        online_data_a = {
+            "type": proof_constants.TYPE_RECEIPT,
+            "currency": "EUR",
+            "date": "2024-06-30",
+            "location_id": location_online_a.id,
+            "file": create_fake_image(color="blue"),
+        }
+        response_online_a = self.client.post(
+            self.url,
+            online_data_a,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response_online_a.status_code, 201)
+        proof_online_a_id = response_online_a.data["id"]
+
+        # Same image uploaded for a different online store (store B) => must NOT be treated as duplicate
+        online_data_b = {
+            **online_data_a,
+            "location_id": location_online_b.id,
+            "file": create_fake_image(color="blue"),
+        }
+        response_online_b = self.client.post(
+            self.url,
+            online_data_b,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response_online_b.status_code, 201)
+        self.assertNotEqual(response_online_b.data["id"], proof_online_a_id)
+
+        # Same image uploaded again for store A => SHOULD be treated as duplicate
+        online_data_a_dup = {
+            **online_data_a,
+            "file": create_fake_image(color="blue"),
+        }
+        response_online_a_dup = self.client.post(
+            self.url,
+            online_data_a_dup,
+            headers={"Authorization": f"Bearer {self.user_session.token}"},
+        )
+        self.assertEqual(response_online_a_dup.status_code, 200)
+        self.assertEqual(response_online_a_dup.data["id"], proof_online_a_id)
+        self.assertEqual(response_online_a_dup.data.get("detail"), "duplicate")
+
     def test_proof_create_history(self):
         response = self.client.post(
             self.url,
