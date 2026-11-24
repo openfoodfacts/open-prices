@@ -351,6 +351,11 @@ class ProductOffUploadImageApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         mock_upload.assert_called_once()
+        self.assertEqual(
+            mock_upload.call_args.kwargs["image_data_base64"],
+            large_payload["image_data_base64"],
+        )
+
     def test_product_off_upload_image_invalid_language_code(self):
         for language_code in ["ach", "", True]:
             with self.subTest(language_code=language_code):
