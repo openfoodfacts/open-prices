@@ -1,4 +1,4 @@
-# Add labels to any any pull request with changes to the specified paths
+# Add labels to any pull request with changes to the specified paths
 
 📚 Documentation:
 - changed-files:
@@ -6,6 +6,25 @@
     - 'docs/**'
     - 'mkdocs.yml'
     - 'build_mkdocs.sh'
+    - 'README.md'
+    - 'CONTRIBUTING.md'
+    - 'INSTALL.md'
+    - 'API.md'
+    - 'AGENTS.md'
+
+API:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/api/**'
+    - 'docs/guides/API.md'
+    - 'API.md'
+
+🔐 Auth:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/api/auth/**'
+    - 'open_prices/common/authentication.py'
+    - 'open_prices/common/permission.py'
 
 Proofs:
 - changed-files:
@@ -26,6 +45,12 @@ Products:
     - 'open_prices/api/products/**'
     - 'docs/topics/open-food-facts-product-data.md'
 
+Product data sync:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/common/openfoodfacts.py'
+    - 'docs/topics/open-food-facts-product-data.md'
+
 Prices:
 - changed-files:
   - any-glob-to-any-file:
@@ -37,6 +62,7 @@ Prices:
   - any-glob-to-any-file:
     - 'open_prices/locations/**'
     - 'open_prices/api/locations/**'
+    - 'open_prices/common/openstreetmap.py'
     - 'docs/topics/openstreetmap-location-data.md'
 
 Challenges:
@@ -52,35 +78,117 @@ Moderation:
     - 'open_prices/api/moderation/**'
     - 'docs/topics/moderation.md'
 
+Gamification:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/badges/**'
+    - 'open_prices/api/badges/**'
+    - 'open_prices/challenges/**'
+    - 'open_prices/api/challenges/**'
+    - 'docs/topics/gamification.md'
+
+':bar_chart: Stats':
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/stats/**'
+    - 'open_prices/api/stats/**'
+    - 'scripts/stats/**'
+
 🧽 Data quality:
 - changed-files:
   - any-glob-to-any-file:
+    - 'open_prices/prices/outlier_detection.py'
+    - 'open_prices/common/history.py'
     - 'docs/topics/data-quality.md'
     - 'docs/topics/moderation.md'
     - 'docs/topics/outlier-detection.md'
     - 'docs/topics/history.md'
 
-Gamification:
-- changed-files:
-  - any-glob-to-any-file: 'docs/topics/gamification.md'
-
 machine learning:
 - changed-files:
-  - any-glob-to-any-file: 'docs/topics/ai/**'
+  - any-glob-to-any-file:
+    - 'open_prices/proofs/ml/**'
+    - 'open_prices/proofs/management/commands/run_ml_models.py'
+    - 'docs/topics/ai/**'
+
+OCR:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/proofs/ml/ocr.py'
+    - 'docker/ocr.yml'
+
+price tag:
+- changed-files:
+  - any-glob-to-any-file: 'open_prices/proofs/ml/price_tags.py'
+
+Receipts:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/proofs/ml/receipts.py'
+    - 'open_prices/proofs/ml/receipt_anonymization/**'
+
+Receipt anonymisation:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/proofs/ml/receipt_anonymization/**'
+    - 'scripts/anonymize_receipts.py'
 
 Data exports:
 - changed-files:
   - any-glob-to-any-file:
+    - 'open_prices/common/export_data.py'
+    - 'open_prices/common/tests_export_data.py'
     - 'docs/guides/data.md'
+
+Data imports:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'open_prices/common/import_data.py'
+    - 'open_prices/common/tests_import_data.py'
     - 'docs/guides/import-data.md'
+    - 'scripts/shop_import/**'
+    - 'scripts/gdpr/**'
+
+GDPR imports:
+- changed-files:
+  - any-glob-to-any-file:
+    - '**/*gdpr*'
+    - 'scripts/gdpr/**'
 
 DB migrations:
 - changed-files:
   - any-glob-to-any-file: '**/migrations/**'
 
-GDPR imports:
+🧪 Tests:
 - changed-files:
-  - any-glob-to-any-file: '**/*gdpr*'
+  - any-glob-to-any-file:
+    - '**/tests.py'
+    - '**/tests_*.py'
+    - '**/test_*.py'
+
+scripts:
+- changed-files:
+  - any-glob-to-any-file: 'scripts/**'
+
+🐳 Docker:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'Dockerfile'
+    - '.dockerignore'
+    - 'docker-compose.yml'
+    - 'docker/**'
+
+Django:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'config/**'
+    - 'manage.py'
+
+dependencies:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'pyproject.toml'
+    - 'uv.lock'
 
 # Pull requests that update GitHub Actions code. If you navigate to the folder, you will have a README of what it does
 GitHub Actions:
