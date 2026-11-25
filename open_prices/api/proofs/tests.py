@@ -8,6 +8,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -515,6 +516,39 @@ class ProofUploadApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["location"]["id"], location_online.id)
+
+    def test_proof_create_with_invalid_image(self):
+        for name, file_content in [
+            ("not an image", b"not an image"),
+            ("truncated image", create_fake_image().read()[:20]),
+        ]:
+            with self.subTest(name):
+                response = self.client.post(
+                    self.url,
+                    {
+                        **self.data,
+                        "file": SimpleUploadedFile(
+                            "proof.webp", file_content, content_type="image/webp"
+                        ),
+                    },
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("file", response.data)
+        self.assertEqual(Proof.objects.count(), 0)
+        # valid image: OK
+        response = self.client.post(
+            self.url,
+            {
+                **self.data,
+                "file": SimpleUploadedFile(
+                    "proof.webp",
+                    create_fake_image(color="white").read(),
+                    content_type="image/webp",
+                ),
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.data["image_thumb_path"] is not None)
 
     def test_proof_create_with_app_name(self):
         for params, image_color, result in [
