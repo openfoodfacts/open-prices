@@ -279,6 +279,46 @@ class ImportProductDbTest(TestCase):
         self.assertFalse(Product.objects.filter(code="5449000000996").exists())
         self.assertEqual(Product.objects.get(code="3274080005003").source, Flavor.opff)
 
+    def test_import_product_db_not_modified_since_last_sync(self):
+        last_synced = datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC)
+        ProductFactory(
+            code="3274080005003",
+            source=Flavor.opff,
+            source_last_synced=last_synced,
+            product_name="Synced product",
+        )
+        ProductFactory(
+            code="5449000000996",
+            source=Flavor.opff,
+            source_last_synced=last_synced,
+            product_name="Old product",
+            price_count=3,
+        )
+        dataset = [
+            # not modified since the last sync: skipped
+            {
+                "code": "3274080005003",
+                "product_name": "Synced product (new name)",
+                "last_modified_t": int(last_synced.timestamp()),
+            },
+            # modified since the last sync: updated (other fields kept)
+            {
+                "code": "5449000000996",
+                "product_name": "Modified product",
+                "last_modified_t": int(
+                    (last_synced + datetime.timedelta(days=1)).timestamp()
+                ),
+            },
+        ]
+        with patch.object(common_openfoodfacts, "ProductDataset", return_value=dataset):
+            common_openfoodfacts.import_product_db(flavor=Flavor.opff, batch_size=1)
+        self.assertEqual(
+            Product.objects.get(code="3274080005003").product_name, "Synced product"
+        )
+        product = Product.objects.get(code="5449000000996")
+        self.assertEqual(product.product_name, "Modified product")
+        self.assertEqual(product.price_count, 3)
+
 
 class CustomExceptionHandlerTest(TestCase):
     def test_django_validation_error(self):

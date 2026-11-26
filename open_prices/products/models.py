@@ -1,5 +1,3 @@
-import datetime
-
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -55,26 +53,15 @@ class ProductQuerySet(CountsQuerySetMixin, ApproximateCountQuerySet):
             },
         )
 
-    def to_update_in_sync_task(
-        self,
-        code: str,
-        flavor: str,
-        product_source_last_modified: datetime.datetime = None,
-    ):
+    def to_update_in_sync_task(self, codes: list[str], flavor: str):
         """
-        Goal: OFF sync task, a product should be updated if:
-        - is part of the current flavor sync (or if it has no source (created in Open Prices before OFF))
-        - has been updated since the last sync (or has never been synced)
+        Goal: OFF sync task, a product can be updated if it is part of the
+        current flavor sync (or if it has no source (created in Open Prices before OFF))
+        (the "modified since the last sync" rule is checked per product in the task)
 
-        Usage: open_prices/common/openfoodfacts.py:import_product_db
+        Usage: open_prices/common/openfoodfacts.py:import_product_batch
         """
-        queryset = self.filter(code=code).filter(Q(source=flavor) | Q(source=None))
-        if product_source_last_modified:
-            queryset = queryset.filter(
-                Q(source_last_synced__lt=product_source_last_modified)
-                | Q(source_last_synced=None)
-            )
-        return queryset
+        return self.filter(code__in=codes).filter(Q(source=flavor) | Q(source=None))
 
     def for_update_task(self):
         """

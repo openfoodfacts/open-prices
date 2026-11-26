@@ -1,5 +1,6 @@
 import datetime
 import functools
+import itertools
 import re
 from logging import getLogger
 
@@ -254,55 +255,14 @@ def get_product_dict(code: str, flavor: Flavor = Flavor.off) -> JSONType | None:
     return {}
 
 
-def upsert_products(products: list) -> None:
-    """Create the new products & update the existing ones (by code), in a single query."""
-    from open_prices.products.models import Product
+def iter_dump_products(dataset, flavor: Flavor):
+    """Yield the (code, product_dict, last_modified) of the dump products to import.
 
-    Product.objects.bulk_create(
-        products,
-        update_conflicts=True,
-        update_fields=OFF_UPDATE_FIELDS,
-        unique_fields=["code"],
-    )
-
-
-def import_product_db(
-    flavor: Flavor = Flavor.off,
-    obsolete: bool = False,
-    force_update: bool = False,
-    batch_size: int = 1000,
-) -> None:
-    """Import from DB JSONL dump to create/update product table.
-
-    :param flavor: the flavor of the dataset to import (OFF, OBF, OPFF, OPF)
-    :param obsolete: whether to import the obsolete dataset (only for OFF flavor)
-    :param force_update: whether to force update products even if they have not been modified since (but have at least one of OFF_CREATE_FIELDS to be updated)  # noqa
-    :param batch_size: the number of products to create/update in a single
-      transaction, defaults to 1000
+    Skips the products without a (valid) code, the duplicates, the products of
+    another product_type, and the products without a last_modified date (or
+    modified today).
     """
-    from open_prices.products.models import Product
-
-    print(f"Launching import_product_db (flavor={flavor}, obsolete={obsolete})")
-    existing_product_codes = set(Product.objects.values_list("code", flat=True))
-    existing_product_flavor_codes = set(
-        Product.objects.filter(source=flavor).values_list("code", flat=True)
-    )
-    print(
-        f"Number of existing Product codes (from {flavor}): {len(existing_product_flavor_codes)}"
-    )
-    dataset = ProductDataset(
-        flavor=flavor,
-        dataset_type=DatasetType.jsonl,
-        force_download=True,
-        download_newer=True,
-        obsolete=obsolete,
-    )
-
     seen_codes = set()
-    # new & existing products: both written with an upsert (much faster than bulk_update)
-    products_to_upsert = list()
-    added_count = 0
-    updated_count = 0
     # the dataset was created after the start of the day, every product updated
     # after should be skipped, as we don't know the exact creation time of the
     # dump
@@ -327,24 +287,17 @@ def import_product_db(
         if product_type and product_type != FLAVOR_PRODUCT_TYPE.get(flavor):
             continue
 
-        # Some products have no "lang" field (especially non-OFF products)
-        product_lang = product.get("lang", product.get("lc", "en"))
-        # Store images & last_modified_t
-        product_images: JSONType = product.get("images", {})
-        product_last_modified_t = product.get("last_modified_t")
-
         # Convert last_modified_t to a datetime object
         # (sometimes the field is a string, convert to int first)
+        product_last_modified_t = product.get("last_modified_t")
         if isinstance(product_last_modified_t, str):
             product_last_modified_t = int(product_last_modified_t)
-        product_source_last_modified = (
-            datetime.datetime.fromtimestamp(product_last_modified_t, tz=datetime.UTC)
-            if product_last_modified_t
-            else None
-        )
         # Skip products that have no last_modified date
-        if product_source_last_modified is None:
+        if not product_last_modified_t:
             continue
+        product_source_last_modified = datetime.datetime.fromtimestamp(
+            product_last_modified_t, tz=datetime.UTC
+        )
 
         # Skip products that have been modified today (more recent updates are
         # possible)
@@ -354,55 +307,113 @@ def import_product_db(
 
         # Build product dict to create/update
         product_dict = build_product_dict(product, flavor)
+        product_dict["code"] = product_code
+        # Some products have no "lang" field (especially non-OFF products)
+        product_lang = product.get("lang", product.get("lc", "en"))
         product_dict["image_url"] = generate_main_image_url(
-            product_code, product_images, product_lang, flavor=flavor
+            product_code, product.get("images", {}), product_lang, flavor=flavor
         )
 
-        product_dict["code"] = product_code
+        yield product_code, product_dict, product_source_last_modified
 
-        # Case 1: new OFF product (not in OP database)
-        if product_code not in existing_product_codes:
+
+def import_product_batch(
+    batch: list, flavor: Flavor, force_update: bool = False
+) -> tuple[int, int]:
+    """Create the new products & update the existing ones of a batch.
+
+    :param batch: list of (code, product_dict, last_modified), see iter_dump_products
+    :return: the number of products added & updated
+    """
+    from open_prices.products.models import Product
+
+    codes = [code for code, _, _ in batch]
+    existing_product_codes = set(
+        Product.objects.filter(code__in=codes).values_list("code", flat=True)
+    )
+    # existing products that can be updated (see ProductQuerySet.to_update_in_sync_task)
+    products_to_sync = {
+        product.code: product
+        for product in Product.objects.to_update_in_sync_task(
+            codes=codes, flavor=flavor
+        ).only("code", "source_last_synced", *OFF_CREATE_FIELDS)
+    }
+
+    products_to_upsert = list()
+    added_count = 0
+    updated_count = 0
+    for code, product_dict, product_source_last_modified in batch:
+        # Case 1: new product (not in OP database)
+        if code not in existing_product_codes:
             products_to_upsert.append(Product(**product_dict))
-            existing_product_codes.add(product_code)
             added_count += 1
+            continue
 
         # Case 2: existing product (already in OP database)
-        else:
-            # See product/models.py:ProductQuerySet.to_update_in_sync_task
-            existing_product_filter_qs = Product.objects.to_update_in_sync_task(
-                code=product_code,
-                flavor=flavor,
-                product_source_last_modified=product_source_last_modified
-                if not force_update
-                else None,
-            ).only("id", *OFF_CREATE_FIELDS)
-            # should be at most one (Product.code field is unique)
-            existing_product_filter_qs_first = existing_product_filter_qs.first()
-            # (the product can be missing, e.g. if it exists with another flavor)
-            if force_update and existing_product_filter_qs_first:
-                # at least 1 OFF_CREATE_FIELDS field should be different to update the product
-                if not next(
-                    (
-                        field
-                        for field in OFF_CREATE_FIELDS
-                        if getattr(existing_product_filter_qs_first, field)
-                        != product_dict.get(field)
-                    ),
-                    None,
-                ):
-                    existing_product_filter_qs_first = None
-            if existing_product_filter_qs_first:
-                products_to_upsert.append(Product(**product_dict))
-                updated_count += 1
+        # (the product can be missing, e.g. if it exists with another flavor)
+        existing_product = products_to_sync.get(code)
+        if not existing_product:
+            continue
+        if force_update:
+            # at least 1 OFF_CREATE_FIELDS field should be different to update the product
+            if all(
+                getattr(existing_product, field) == product_dict.get(field)
+                for field in OFF_CREATE_FIELDS
+            ):
+                continue
+        # the product should have been modified since the last sync (or never synced)
+        elif (
+            existing_product.source_last_synced
+            and existing_product.source_last_synced >= product_source_last_modified
+        ):
+            continue
+        products_to_upsert.append(Product(**product_dict))
+        updated_count += 1
 
-        # update the database regularly
-        if len(products_to_upsert) >= batch_size:
-            upsert_products(products_to_upsert)
-            print(f"Products: {added_count} added, {updated_count} updated")
-            products_to_upsert = list()
+    # new & existing products: a single upsert (much faster than bulk_update)
+    Product.objects.bulk_create(
+        products_to_upsert,
+        update_conflicts=True,
+        update_fields=OFF_UPDATE_FIELDS,
+        unique_fields=["code"],
+    )
+    return added_count, updated_count
 
-    # final database update
-    upsert_products(products_to_upsert)
+
+def import_product_db(
+    flavor: Flavor = Flavor.off,
+    obsolete: bool = False,
+    force_update: bool = False,
+    batch_size: int = 1000,
+) -> None:
+    """Import from DB JSONL dump to create/update product table.
+
+    :param flavor: the flavor of the dataset to import (OFF, OBF, OPFF, OPF)
+    :param obsolete: whether to import the obsolete dataset (only for OFF flavor)
+    :param force_update: whether to force update products even if they have not been modified since (but have at least one of OFF_CREATE_FIELDS to be updated)  # noqa
+    :param batch_size: the number of products to create/update in a single
+      transaction, defaults to 1000
+    """
+    print(f"Launching import_product_db (flavor={flavor}, obsolete={obsolete})")
+    dataset = ProductDataset(
+        flavor=flavor,
+        dataset_type=DatasetType.jsonl,
+        force_download=True,
+        download_newer=True,
+        obsolete=obsolete,
+    )
+
+    added_count = 0
+    updated_count = 0
+    products = iter_dump_products(dataset, flavor)
+    while batch := list(itertools.islice(products, batch_size)):
+        batch_added_count, batch_updated_count = import_product_batch(
+            batch, flavor, force_update=force_update
+        )
+        added_count += batch_added_count
+        updated_count += batch_updated_count
+        print(f"Products: {added_count} added, {updated_count} updated")
+
     print(f"Products: {added_count} added, {updated_count} updated. Done!")
 
 
