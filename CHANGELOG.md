@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.121.2](https://github.com/openfoodfacts/open-prices/compare/v1.121.1...v1.121.2) (2026-11-27)
+
+
+### Technical
+
+* **Products:** import_product_db: look up the existing products per batch (instead of one query per product) ([#1613](https://github.com/openfoodfacts/open-prices/issues/1613)) ([3718fb0](https://github.com/openfoodfacts/open-prices/commit/3718fb05fa0414a46744ed86523a9c1ea4705dea))
+* **Products:** import_product_db: upsert the existing products (instead of the slow bulk_update) ([#1612](https://github.com/openfoodfacts/open-prices/issues/1612)) ([cd41e4a](https://github.com/openfoodfacts/open-prices/commit/cd41e4abf1c1c55f048f2d139efba11441576938))
+
 ## [1.121.1](https://github.com/openfoodfacts/open-prices/compare/v1.121.0...v1.121.1) (2026-11-24)
 
 
