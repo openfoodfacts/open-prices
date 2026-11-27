@@ -381,3 +381,7 @@ REDIS_LATEST_ID_KEY = os.getenv(
     "REDIS_LATEST_ID_KEY", "open-prices:product_updates:latest_id"
 )
 ENABLE_REDIS_UPDATES = os.getenv("ENABLE_REDIS_UPDATES") == "True"
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(
+    os.getenv("DATA_UPLOAD_MAX_MEMORY_SIZE", str(10 * 1024 * 1024))
+)  # 10 MB default for base64 image uploads
