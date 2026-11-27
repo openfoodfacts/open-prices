@@ -133,6 +133,7 @@ class PriceQuerySetTest(TestCase):
                 "price__min": 5,
                 "price__max": 10,
                 "price__avg": Decimal("7.67"),
+                "proof__count": 1,
             },
         )
         self.assertEqual(
@@ -142,6 +143,7 @@ class PriceQuerySetTest(TestCase):
                 "price__min": 8,
                 "price__max": 10,
                 "price__avg": 9,
+                "proof__count": 1,
             },
         )
 

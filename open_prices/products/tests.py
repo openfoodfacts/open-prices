@@ -319,6 +319,7 @@ class ProductPropertyTest(TestCase):
                 "price__min": Decimal("1.0"),
                 "price__max": Decimal("2.0"),
                 "price__avg": Decimal("1.50"),
+                "proof__count": 1,
             },
         )
         self.assertEqual(
@@ -328,6 +329,7 @@ class ProductPropertyTest(TestCase):
                 "price__min": Decimal("2.0"),
                 "price__max": Decimal("2.0"),
                 "price__avg": Decimal("2.00"),
+                "proof__count": 0,
             },
         )
 
